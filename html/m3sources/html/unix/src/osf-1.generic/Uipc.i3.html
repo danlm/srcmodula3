@@ -1,0 +1,108 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: unix/src/osf-1.generic/Uipc.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>unix/src/osf-1.generic/Uipc.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+
+INTERFACE <interface>Uipc</interface>;
+
+FROM <A HREF="../../../C/src/Common/Ctypes.i3.html">Ctypes</A> IMPORT char, char_star, long;
+FROM <A HREF="#x1">Utypes</A> IMPORT uid_t, gid_t, mode_t, ushort_t, key_t;
+</PRE>** &lt;sys/ipc.h&gt; **
+
+<P><PRE>TYPE
+  mtyp_t = long;
+
+  struct_ipc_perm = RECORD
+        uid:    uid_t;         (* owner's user id *)
+        gid:    gid_t;         (* owner's group id *)
+        cuid:   uid_t;         (* creator's user id *)
+        cgid:   gid_t;         (* creator's group id *)
+        mode:   mode_t;        (* access modes *)
+        seq:    ushort_t;      (* slot usage sequence number *)
+        key:    key_t;         (* key *)
+      END;
+</PRE>--------------------------------------------------------- _XOPEN_SOURCE ---
+
+<P><PRE>CONST
+  (* common IPC operation flag definitions *)
+  IPC_CREAT  = 8_0001000;               (* create entry if key doesn't exist *)
+  IPC_EXCL   = 8_0002000;               (* fail if key exists *)
+  IPC_NOWAIT = 8_0004000;               (* error if request must wait *)
+
+  (* Keys. *)
+  IPC_PRIVATE : key_t = 0;              (* private key *)
+
+  (* Control Commands. *)
+  IPC_RMID = 0;		(* remove identifier *)
+  IPC_SET  = 1; 	(* set options *)
+  IPC_STAT = 2;		(* get options *)
+</PRE>----------------------------------------------------------- _OSF_SOURCE ---
+  <PRE>IPC_ALLOC = 8_0100000;           (* entry currently allocated *)
+  IPC_R     = 8_0000400;           (* read or receive permission *)
+  IPC_W     = 8_0000200;           (* write or send permission *)
+
+&lt;*EXTERNAL*&gt;
+PROCEDURE ftok (path_name: char_star; project_id: char): key_t;
+
+END Uipc.
+</PRE>
+</inInterface>
+<HR>
+<A NAME="x1">interface Utypes is in:
+</A><UL>
+<LI><A HREF="../aix-3-2/Utypes.i3.html#0TOP0">unix/src/aix-3-2/Utypes.i3</A>
+<LI><A HREF="../aix-ps2-1-2/Utypes.i3.html#0TOP0">unix/src/aix-ps2-1-2/Utypes.i3</A>
+<LI><A HREF="../freebsd-1/Utypes.i3.html#0TOP0">unix/src/freebsd-1/Utypes.i3</A>
+<LI><A HREF="../freebsd-2/Utypes.i3.html#0TOP0">unix/src/freebsd-2/Utypes.i3</A>
+<LI><A HREF="../hpux-7-0/Utypes.i3.html#0TOP0">unix/src/hpux-7-0/Utypes.i3</A>
+<LI><A HREF="../ibm-4-3/Utypes.i3.html#0TOP0">unix/src/ibm-4-3/Utypes.i3</A>
+<LI><A HREF="../irix-5.2/Utypes.i3.html#0TOP0">unix/src/irix-5.2/Utypes.i3</A>
+<LI><A HREF="../linux/Utypes.i3.html#0TOP0">unix/src/linux/Utypes.i3</A>
+<LI><A HREF="../osf-1.ALPHA_OSF/Utypes.i3.html#0TOP0">unix/src/osf-1.ALPHA_OSF/Utypes.i3</A>
+<LI><A HREF="../osf-1.DS3100/Utypes.i3.html#0TOP0">unix/src/osf-1.DS3100/Utypes.i3</A>
+<LI><A HREF="../solaris-2-x/Utypes.i3.html#0TOP0">unix/src/solaris-2-x/Utypes.i3</A>
+<LI><A HREF="../sunos-4-x/Utypes.i3.html#0TOP0">unix/src/sunos-4-x/Utypes.i3</A>
+<LI><A HREF="../sysv-4.0/Utypes.i3.html#0TOP0">unix/src/sysv-4.0/Utypes.i3</A>
+<LI><A HREF="../ultrix-3-1.AP3000/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.AP3000/Utypes.i3</A>
+<LI><A HREF="../ultrix-3-1.ARM/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.ARM/Utypes.i3</A>
+<LI><A HREF="../ultrix-3-1.DS3100/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.DS3100/Utypes.i3</A>
+<LI><A HREF="../ultrix-3-1.NEXT/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.NEXT/Utypes.i3</A>
+<LI><A HREF="../ultrix-3-1.SEQUENT/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.SEQUENT/Utypes.i3</A>
+<LI><A HREF="../ultrix-3-1.SUN3/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.SUN3/Utypes.i3</A>
+<LI><A HREF="../ultrix-3-1.SUN386/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.SUN386/Utypes.i3</A>
+<LI><A HREF="../ultrix-3-1.UMAX/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.UMAX/Utypes.i3</A>
+<LI><A HREF="../ultrix-3-1.VAX/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.VAX/Utypes.i3</A>
+</UL>
+<P>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

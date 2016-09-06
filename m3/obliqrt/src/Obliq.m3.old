@@ -1,0 +1,553 @@
+
+(* Copyright 1991 Digital Equipment Corporation.               *)
+(* Distributed only by permission.                             *)
+
+MODULE Obliq;
+IMPORT Thread, SynOut, SynErr, ObCommand, ObTree, ObPrintTree, ObScope, 
+ObCheck, ObValue, ObEval, ObFrame, ObBuiltIn, ObBuiltInUI, ObBuiltInZeus, 
+NetObj, Fmt;
+
+  REVEAL
+    Env = BRANDED OBJECT
+      scopeEnv: ObScope.Env;
+      checkEnv: ObCheck.Env;
+      valueEnv: ObValue.Env;
+    END;
+
+  VAR 
+    setupDone := FALSE;
+
+  PROCEDURE PackageSetup() =
+  BEGIN
+    IF NOT setupDone THEN
+      setupDone := TRUE;
+      ObCommand.Setup();
+      ObTree.Setup();
+      ObPrintTree.Setup();
+      ObScope.Setup();
+      ObCheck.Setup();
+      ObValue.Setup();
+      ObEval.Setup();
+      ObFrame.Setup();
+      ObBuiltIn.Setup();
+      ObBuiltInUI.Setup();
+      ObBuiltInZeus.Setup();
+      Setup();
+    END;
+  END PackageSetup;
+
+  VAR
+    programCallLocation: SynErr.Location;
+
+  PROCEDURE Setup() =
+  BEGIN
+    Thread.IncDefaultStackSize(64*1024);
+
+    emptyEnv := 
+      NEW(Env, scopeEnv := ObScope.topEnv, checkEnv := ObCheck.topEnv,
+        valueEnv := ObValue.topEnv);
+
+    programCallLocation := 
+      SynErr.NewLineLocation(
+        SynErr.LocationInfo{fileName:="<program call>", line:=0, lineChar:=0,
+          char:=0});
+
+    ObFrame.SaveFrame("");
+
+    ok := ObValue.valOk;
+    true := NEW(ObValue.ValBool, bool:=TRUE);
+    false := NEW(ObValue.ValBool, bool:=FALSE);
+    zero := NEW(ObValue.ValInt, int:=0);
+    one := NEW(ObValue.ValInt, int:=1);
+    zeroPointZero := NEW(ObValue.ValReal, real:=0.0d0);
+    onePointZero := NEW(ObValue.ValReal, real:=1.0d0);
+    FOR i:=0 TO 255 DO char[i] := NEW(ObValue.ValChar, char:=VAL(i, CHAR)) END;
+    emptyText := NEW(ObValue.ValText, text:="");
+
+    sysCallFailure := ObValue.sysCallFailure;
+  END Setup;
+
+  PROCEDURE NewEnv(name: TEXT; val: Val; rest: Env): Env RAISES {Failure} =
+  VAR ideName: ObTree.IdeName;
+  BEGIN
+    TRY
+      ideName := NEW(ObTree.IdeName, text:=name, variant:=0);
+      RETURN NEW(Env,
+        scopeEnv := ObScope.NewTermEnv(programCallLocation, 
+          ideName, rest.scopeEnv),
+        checkEnv := ObCheck.NewTermEnv(ideName, rest.checkEnv),
+        valueEnv := 
+          NEW(ObValue.LocalEnv, name:=ideName, val:=val, rest:=rest.valueEnv)
+        );
+    EXCEPT
+    | SynErr.Fail => 
+        SynOut.Flush(); 
+        RAISE Failure(""); 
+    END;
+  END NewEnv;  
+
+  PROCEDURE EvalTerm(term: Term; env: Env): Val RAISES {Failure} =
+  VAR scopeEnv, freeEnv: ObScope.Env; checkEnv: ObCheck.Env;
+    valueEnv: ObValue.Env; 
+  BEGIN
+    TRY
+      scopeEnv := env.scopeEnv;
+      checkEnv := env.checkEnv;
+      valueEnv := env.valueEnv;
+      freeEnv := NIL;
+      ObScope.ScopeTerm(term, (*in-out*)scopeEnv, (*in-out*)freeEnv);
+      ObScope.UnboundIdes(freeEnv);
+      ObCheck.CheckTerm(term, (*in-out*)checkEnv);
+      RETURN ObEval.Term(term, (*in-out*)valueEnv, NIL, NIL);
+    EXCEPT
+    | SynErr.Fail => 
+        SynOut.Flush(); 
+        RAISE Failure("");
+    | ObValue.Error(packet) => 
+        ObValue.ErrorMsg(packet.msg, packet.location);
+        SynOut.Flush();
+        RAISE Failure(packet.msg);
+    | ObValue.Exception(packet) => 
+        ObValue.ExceptionMsg(packet);
+        SynOut.Flush();
+        RAISE Failure(packet.msg);
+    END;
+  END EvalTerm;
+
+  PROCEDURE EvalPhrase(phrase: Phrase; env: Env): Env RAISES {Failure} =
+  VAR newEnv: Env; freeEnv: ObScope.Env;
+  BEGIN
+    TRY
+      newEnv := 
+          NEW(Env, scopeEnv:=env.scopeEnv,
+              checkEnv:=env.checkEnv, valueEnv:=env.valueEnv);
+      TYPECASE phrase OF
+      | ObTree.PhraseCommand(node) =>
+          ObCommand.Exec(node.name, node.arg, node.set);
+      | ObFrame.Load(node) =>
+          ObFrame.LoadFile(node.name);
+      | ObFrame.Import, ObFrame.Module, ObFrame.Establish, ObFrame.Save,
+        ObFrame.Restore =>
+        (* ----- these require env to keep track of ObFrame.Env *)
+          SynErr.Fault("ObliqParser.EvalPhrase: unimplemented phrase");        
+      | ObTree.PhraseTerm(node) =>
+          freeEnv := NIL;
+          ObScope.ScopeTerm(node.term, 
+            (*in-out*)newEnv.scopeEnv, (*in-out*)freeEnv);
+          ObScope.UnboundIdes(freeEnv);
+          ObCheck.CheckTerm(node.term, (*in-out*)newEnv.checkEnv);
+          EVAL ObEval.Term(node.term, (*in-out*)newEnv.valueEnv, NIL, NIL);
+      END;
+      RETURN newEnv;
+    EXCEPT
+    | SynErr.Fail => 
+        SynOut.Flush(); 
+        RAISE Failure("");
+    | ObValue.Error(packet) => 
+        ObValue.ErrorMsg(packet.msg, packet.location);
+        SynOut.Flush();
+        RAISE Failure(packet.msg);
+    | ObValue.Exception(packet) => 
+        ObValue.ExceptionMsg(packet);
+        SynOut.Flush();
+        RAISE Failure(packet.msg);
+    END;
+  END EvalPhrase;
+
+  PROCEDURE NewBool(bool: BOOLEAN): Val =
+  BEGIN
+    RETURN NEW(ObValue.ValBool, bool:=bool);
+  END NewBool;
+
+  PROCEDURE ToBool(val: Val): BOOLEAN RAISES {Failure} =
+  BEGIN
+    TYPECASE val OF
+    | ObValue.ValBool(node) => RETURN node.bool;
+    ELSE RAISE Failure("ToBool: not an ValBool");
+    END;
+  END ToBool;
+
+  PROCEDURE Is(val1, val2: Val): BOOLEAN =
+  BEGIN
+    RETURN ObValue.Is(val1, val2, SourceLocation("Obliq.Is"));
+  END Is;
+
+  PROCEDURE NewInt(int: INTEGER): Val =
+  BEGIN
+    RETURN NEW(ObValue.ValInt, int:=int);
+  END NewInt;
+
+  PROCEDURE ToInt(val: Val): INTEGER RAISES {Failure} =
+  BEGIN
+    TYPECASE val OF
+    | ObValue.ValInt(node) => RETURN node.int;
+    ELSE RAISE Failure("ToInt: not a ValInt");
+    END;
+  END ToInt;
+
+  PROCEDURE NewReal(real: LONGREAL): Val =
+  BEGIN
+    RETURN NEW(ObValue.ValReal, real:=real);
+  END NewReal;
+
+  PROCEDURE ToReal(val: Val): LONGREAL RAISES {Failure} =
+  BEGIN
+    TYPECASE val OF
+    | ObValue.ValReal(node) => RETURN node.real;
+    ELSE RAISE Failure("ToReal: not a ValReal");
+    END;
+  END ToReal;
+
+  PROCEDURE NewChar(char: CHAR): Val =
+  BEGIN
+    RETURN NEW(ObValue.ValChar, char:=char);
+  END NewChar;
+
+  PROCEDURE ToChar(val: Val): CHAR RAISES {Failure} =
+  BEGIN
+    TYPECASE val OF
+    | ObValue.ValChar(node) => RETURN node.char;
+    ELSE RAISE Failure("ToChar: not a ValChar");
+    END;
+  END ToChar;
+
+  PROCEDURE NewText(text: TEXT): Val =
+  BEGIN
+    RETURN NEW(ObValue.ValText, text:=text);
+  END NewText;
+
+  PROCEDURE ToText(val: Val): TEXT RAISES {Failure} =
+  BEGIN
+    TYPECASE val OF
+    | ObValue.ValText(node) => RETURN node.text;
+    ELSE RAISE Failure("ToText: not a ValText");
+    END;
+  END ToText;
+
+  PROCEDURE NewArray(READONLY vals: Vals): Val =
+  BEGIN
+    RETURN ObValue.NewArray(vals)
+  END NewArray;
+
+  PROCEDURE ArraySize(array: Val): INTEGER RAISES {Failure} =
+  BEGIN
+    TYPECASE array OF
+    | ObValue.ValArray(arr) =>
+        TRY RETURN arr.remote.Size();
+        EXCEPT 
+        | ObValue.ServerError(msg) =>
+            ObValue.ErrorMsg(msg, programCallLocation); SynOut.Flush();
+            RAISE Failure(msg);
+        | NetObj.Error =>
+            ObValue.ErrorMsg("on remote array access", programCallLocation);
+            SynOut.Flush();
+            RAISE Failure("Obliq.ArraySize: net failure");
+        END;
+    ELSE RAISE Failure("Obliq.ArraySize: array expected"); 
+    END;
+  END ArraySize;
+
+  PROCEDURE ArraySelect(array: Val; i: INTEGER): Val RAISES {Failure} =
+  BEGIN
+    TYPECASE array OF
+    | ObValue.ValArray(arr) =>
+        TRY RETURN arr.remote.Get(i);
+        EXCEPT 
+        | ObValue.ServerError(msg) =>
+            ObValue.ErrorMsg(msg, programCallLocation); SynOut.Flush();
+            RAISE Failure(msg);
+        | NetObj.Error =>
+            ObValue.ErrorMsg("on remote array access", programCallLocation);
+            SynOut.Flush();
+            RAISE Failure("Obliq.ArraySelect: net failure");
+        END;
+    ELSE RAISE Failure("Obliq.ArraySelect: array expected"); 
+    END;
+  END ArraySelect;
+
+  PROCEDURE ArrayUpdate(array: Val; i: INTEGER; val: Val) RAISES {Failure} =
+  BEGIN
+    TYPECASE array OF
+    | ObValue.ValArray(arr) =>
+        TRY arr.remote.Set(i, val);
+        EXCEPT
+        | ObValue.ServerError(msg) =>
+            ObValue.ErrorMsg(msg, programCallLocation); SynOut.Flush();
+            RAISE Failure(msg);
+        | NetObj.Error =>
+            ObValue.ErrorMsg("on remote array access", programCallLocation);
+            SynOut.Flush();
+            RAISE Failure("Obliq.ArrayUpdate: net failure");
+        END;
+    ELSE RAISE Failure("Obliq.ArrayUpdate: array expected"); 
+    END;
+  END ArrayUpdate;
+
+  PROCEDURE ToArray(val: Val; VAR(*out*) array: Vals) RAISES{Failure} =
+  VAR size: INTEGER;
+  BEGIN
+    TYPECASE val OF
+    | ObValue.ValArray(arr) =>
+        TRY
+          size := arr.remote.Size();
+          IF size # NUMBER(array) THEN
+            RAISE Failure("Obliq.ToValArray: array sizes do not match"); 
+          END;
+          FOR i:=0 TO size-1 DO array[i] := arr.remote.Get(i) END;
+        EXCEPT 
+        | ObValue.ServerError(msg) =>
+            ObValue.ErrorMsg(msg, programCallLocation); SynOut.Flush();
+            RAISE Failure(msg);
+        | NetObj.Error =>
+            ObValue.ErrorMsg("on remote array access", programCallLocation);
+            SynOut.Flush();
+            RAISE Failure("Obliq.ToValArray: net failure");
+        END;      
+    ELSE RAISE Failure("Obliq.ToValArray: array expected"); 
+    END;    
+  END ToArray;
+
+  PROCEDURE NewIntArray(READONLY array: ARRAY OF INTEGER): Val =
+  VAR vals: REF Vals;
+  BEGIN
+    vals := NEW(REF Vals, NUMBER(array));
+    FOR i:=0 TO NUMBER(array)-1 DO 
+      vals[i] := NEW(ObValue.ValInt, int:=array[i]);
+    END;
+    RETURN NEW(ObValue.ValArray, 
+               remote:=NEW(ObValue.RemArrayServer, array:=vals));
+  END NewIntArray;
+
+  PROCEDURE ToIntArray(val: Val; VAR(*out*) array: ARRAY OF INTEGER) 
+    RAISES{Failure} =
+  VAR size: INTEGER; vals: REF Vals;
+  BEGIN
+    size := ArraySize(val);
+    vals := NEW(REF Vals, size);
+    ToArray(val, (*out*) vals^);
+    FOR i:=0 TO size-1 DO array[i] := ToInt(vals[i]) END;
+  END ToIntArray;
+
+  PROCEDURE NewRealArray(READONLY array: ARRAY OF LONGREAL): Val =
+  VAR vals: REF Vals;
+  BEGIN
+    vals := NEW(REF Vals, NUMBER(array));
+    FOR i:=0 TO NUMBER(array)-1 DO 
+      vals[i] := NEW(ObValue.ValReal, real:=array[i]);
+    END;
+    RETURN NEW(ObValue.ValArray, 
+               remote:=NEW(ObValue.RemArrayServer, array:=vals));
+  END NewRealArray;
+
+  PROCEDURE ToRealArray(val: Val; VAR(*out*) array: ARRAY OF LONGREAL) 
+    RAISES{Failure} =
+  VAR size: INTEGER; vals: REF Vals;
+  BEGIN
+    size := ArraySize(val);
+    vals := NEW(REF Vals, size);
+    ToArray(val, (*out*) vals^);
+    FOR i:=0 TO size-1 DO array[i] := ToReal(vals[i]) END;
+  END ToRealArray;
+
+  PROCEDURE NewTextArray(READONLY array: ARRAY OF TEXT): Val =
+  VAR vals: REF Vals;
+  BEGIN
+    vals := NEW(REF Vals, NUMBER(array));
+    FOR i:=0 TO NUMBER(array)-1 DO 
+      vals[i] := NEW(ObValue.ValText, text:=array[i]);
+    END;
+    RETURN NEW(ObValue.ValArray, 
+               remote:=NEW(ObValue.RemArrayServer, array:=vals));
+  END NewTextArray;
+
+  PROCEDURE ToTextArray(val: Val; VAR(*out*) array: ARRAY OF TEXT) 
+    RAISES{Failure} =
+  VAR size: INTEGER; vals: REF Vals;
+  BEGIN
+    size := ArraySize(val);
+    vals := NEW(REF Vals, size);
+    ToArray(val, (*out*) vals^);
+    FOR i:=0 TO size-1 DO array[i] := ToText(vals[i]) END;
+  END ToTextArray;
+
+  PROCEDURE NewObject(fields: FieldList): Val =
+  BEGIN
+    RETURN ObValue.NewObject(fields, "", FALSE, NIL);
+  END NewObject;
+
+  PROCEDURE NewField(label: TEXT; val: Val; rest: FieldList:=NIL): FieldList =
+  BEGIN
+    RETURN NEW(ObValue.ObjFieldValue, label:=label, val:=val, rest:=rest);
+  END NewField;
+
+  PROCEDURE ObjectSelect(object: Val; label: TEXT): Val RAISES {Failure} =
+  BEGIN
+    TRY
+      TYPECASE object OF
+      | ObValue.ValObj(obj) =>
+          TRY 
+            RETURN obj.remote.Select(label, FALSE);
+          EXCEPT 
+          | ObValue.ServerError(msg) =>
+              ObValue.RaiseError(msg, programCallLocation);
+          | NetObj.Error =>
+              ObValue.RaiseException(ObValue.netException,
+                "on remote object selection", programCallLocation);
+          END;
+      ELSE ObValue.RaiseError("Obliq.ObjectSelect: object expected", 
+             programCallLocation);
+      END;
+    EXCEPT
+    | ObValue.Error(packet) => 
+          ObValue.ErrorMsg(packet.msg, packet.location);
+          SynOut.Flush();
+          RAISE Failure(packet.msg);
+    | ObValue.Exception(packet) => 
+          ObValue.ExceptionMsg(packet);
+          SynOut.Flush();
+          RAISE Failure(packet.msg);
+    END;
+  END ObjectSelect;
+
+  PROCEDURE ObjectInvoke(object: Val; label: TEXT; args: Vals): Val 
+    RAISES {Failure} =
+  BEGIN
+    TRY
+      TYPECASE object OF
+      | ObValue.ValObj(obj) =>
+          TRY 
+            RETURN obj.remote.Invoke(label, NUMBER(args), args, FALSE);
+          EXCEPT 
+          | ObValue.ServerError(msg) =>
+              ObValue.RaiseError(msg, programCallLocation);
+          | NetObj.Error =>
+              ObValue.RaiseException(ObValue.netException,
+                "on remote object invocation", programCallLocation);
+          END;
+      ELSE ObValue.RaiseError("Obliq.ObjectInvoke: object expected", 
+             programCallLocation);
+      END;
+    EXCEPT
+    | ObValue.Error(packet) => 
+          ObValue.ErrorMsg(packet.msg, packet.location);
+          SynOut.Flush();
+          RAISE Failure(packet.msg);
+    | ObValue.Exception(packet) => 
+          ObValue.ExceptionMsg(packet);
+          SynOut.Flush();
+          RAISE Failure(packet.msg);
+    END;
+  END ObjectInvoke;
+
+  PROCEDURE ObjectUpdate(object: Val; label: TEXT; val: Val) RAISES {Failure} =
+  BEGIN
+    TRY
+      TYPECASE object OF
+      | ObValue.ValObj(obj) =>
+          TRY 
+            obj.remote.Update(label, val, FALSE);
+          EXCEPT 
+          | ObValue.ServerError(msg) =>
+              ObValue.RaiseError(msg, programCallLocation);
+          | NetObj.Error =>
+              ObValue.RaiseException(ObValue.netException,
+                "on remote object update", programCallLocation);
+          END;
+      ELSE ObValue.RaiseError("Obliq.ObjectUpdate: object expected", 
+           programCallLocation);
+      END;
+    EXCEPT
+    | ObValue.Error(packet) => 
+          ObValue.ErrorMsg(packet.msg, packet.location);
+          SynOut.Flush();
+          RAISE Failure(packet.msg);
+    | ObValue.Exception(packet) => 
+          ObValue.ExceptionMsg(packet);
+          SynOut.Flush();
+          RAISE Failure(packet.msg);
+    END;
+  END ObjectUpdate;
+
+  PROCEDURE Call(proc: Val; args: ARRAY OF Val): Val RAISES {Failure} =
+  VAR env: ObValue.Env; binders: ObTree.IdeList;
+  BEGIN
+    TRY
+      TYPECASE proc OF
+      | ObValue.ValFun(clos) =>
+        IF clos.fun.bindersNo # NUMBER(args) THEN
+          ObValue.RaiseError("Obliq.Call: Expecting " & 
+            Fmt.Int(clos.fun.bindersNo) & " arguments, not " 
+            & Fmt.Int(NUMBER(args)), programCallLocation);
+        END;
+        env := NIL;
+        binders := clos.fun.binders;
+        FOR i := 0 TO NUMBER(args)-1 DO
+          env := NEW(ObValue.LocalEnv,
+                name := binders.first, val := args[i],
+                rest := env);
+          binders := binders.rest;
+        END;
+        RETURN ObEval.Term(clos.fun.body, (*in-out*)env, clos.global, NIL);
+      ELSE ObValue.RaiseError("Obliq.Call: procedure expected", 
+             programCallLocation);
+      END;
+    EXCEPT
+    | ObValue.Error(packet) => 
+          ObValue.ErrorMsg(packet.msg, packet.location);
+          SynOut.Flush();
+          RAISE Failure(packet.msg);
+    | ObValue.Exception(packet) => 
+          ObValue.ExceptionMsg(packet);
+          SynOut.Flush();
+          RAISE Failure(packet.msg);
+    END;
+  END Call;
+
+  PROCEDURE RaiseError(msg: TEXT) RAISES {ObValue.Error} =
+  BEGIN
+    ObValue.RaiseError(msg, SourceLocation("Obliq.RaiseError"));
+  END RaiseError;
+
+  PROCEDURE RaiseException(exception: ObValue.ValException; msg: TEXT)
+    RAISES{ObValue.Exception} =
+  BEGIN
+    ObValue.RaiseException(exception, msg, 
+      SourceLocation("Obliq.RaiseException"));
+  END RaiseException;
+
+  PROCEDURE RaiseSysCallFailure(self: SysCallClosure; arg: Val): Val  
+    RAISES{ObValue.Error, ObValue.Exception} =
+  BEGIN
+    ObValue.RaiseException(sysCallFailure, "Default sys_call procedure",
+      SourceLocation("Obliq.RaiseSysCallFailure"));
+  END RaiseSysCallFailure;
+
+  PROCEDURE RegisterSysCall(name: TEXT; clos: SysCallClosure) =
+  BEGIN
+    ObValue.RegisterSysCall(name, clos);
+  END RegisterSysCall;
+
+  PROCEDURE SourceLocation(where: TEXT): SynErr.Location =
+  BEGIN
+    RETURN
+      SynErr.NewLineLocation(
+        SynErr.LocationInfo{fileName:=where, line:=0, lineChar:=0, char:=0});
+  END SourceLocation;
+
+  PROCEDURE PrintVal(val: Val; depth:=10) =
+  BEGIN
+    ObValue.PrintVal(val, NIL, depth);
+  END PrintVal;
+
+  PROCEDURE PrintText(text: TEXT) =
+  BEGIN
+    SynOut.Text(text);
+  END PrintText;
+
+  PROCEDURE PrintFlush() =
+  BEGIN
+    SynOut.Flush();
+  END PrintFlush;
+
+BEGIN
+END Obliq.

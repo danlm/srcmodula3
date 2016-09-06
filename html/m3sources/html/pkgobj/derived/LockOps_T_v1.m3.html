@@ -1,0 +1,1537 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: pkgobj/derived/LockOps_T_v1.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>pkgobj/derived/LockOps_T_v1.m3</H2></A><HR>
+<inModule>
+<PRE>MODULE <module>LockOps_T_v1</module> EXPORTS <A HREF="../src/Common/LockOps.i3.html"><implements>LockOps</A></implements>, <A HREF="LockOps_T_v1.i3.html"><implements>LockOps_T_v1</A></implements>;
+
+IMPORT <A HREF="../src/Common/NetPath.i3.html">NetPath</A>, <A HREF="../../thread/src/Common/Thread.i3.html">Thread</A>, <A HREF="../src/Common/LockMethods.i3.html">LockMethods</A>, <A HREF="../../netobjrt/src/NetObj.i3.html">NetObj</A>, <A HREF="../../fingerprint/src/Fingerprint.i3.html">Fingerprint</A>, <A HREF="../../netobjrt/src/StubLib.i3.html">StubLib</A>, <A HREF="../../rw/src/Common/Rd.i3.html">Rd</A>,
+       <A HREF="../../libm3/derived/TextList.i3.html">TextList</A>, <A HREF="../../libm3/derived/AtomList.i3.html">AtomList</A>, <A HREF="../../rw/src/Common/Wr.i3.html">Wr</A>, <A HREF="../src/Common/PackageObj.i3.html">PackageObj</A>, <A HREF="../src/Common/LockOps.i3.html">LockOps</A>, <A HREF="../src/Common/PkgErr.i3.html">PkgErr</A>;
+CONST Protocol: StubLib.StubProtocol = 1;
+
+TYPE
+      Methods = {removeForeign, enumerateDirs, checkDir, removeDir,
+        createDir, createForeign, createCheck, setFingerprint, setEntry,
+        getEntry, enumerate, commit, assign, unlock, lock, remove, create};
+      ReturnCodes = {OK, PkgErr_E, LockOps_CommitFailed,
+        LockOps_LockConflict, LockOps_SynchVersions};
+
+  PROCEDURE <A NAME="Surrogate_create"><procedure>Surrogate_create</procedure></A>(
+      self: LockOps.T;
+      auth_arg: TEXT;
+      pn_arg: NetPath.PN;
+      initialKey_arg: TEXT;
+      version_arg: PackageObj.Version;
+      remoteCheck_arg: BOOLEAN) RAISES {NetObj.Error, PkgErr.E,
+      Thread.Alerted} =
+
+    VAR reuse := FALSE;
+        rep: StubLib.DataRep;
+        c: StubLib.Conn;
+        dataPresent: BOOLEAN; &lt;* NOWARN *&gt;
+
+    BEGIN
+      TRY
+        c := StubLib.StartCall(self, Protocol);
+        TRY
+          StubLib.OutInt32(c, ORD(Methods.create));
+          StubLib.OutRef(c, auth_arg);
+          dataPresent := TRUE;
+          StubLib.OutBoolean(c, dataPresent);
+          IF dataPresent THEN
+            StubLib.OutRef(c, pn_arg.dir);
+            StubLib.OutRef(c, pn_arg.arc);
+            END;
+            StubLib.OutRef(c, initialKey_arg);
+          dataPresent := TRUE;
+          StubLib.OutBoolean(c, dataPresent);
+          IF dataPresent THEN
+            StubLib.OutInteger(c, version_arg.t);
+            StubLib.OutInteger(c, version_arg.vn);
+            END;
+            StubLib.OutInteger(c, ORD(remoteCheck_arg));
+          rep := StubLib.AwaitResult(c);
+          CASE StubLib.InInt32(c, rep) OF
+          | ORD(ReturnCodes.OK) =&gt;
+            reuse := TRUE;
+          | ORD(ReturnCodes.PkgErr_E) =&gt;
+            VAR arg: AtomList.T;
+            BEGIN
+              arg := StubLib.InRef(c, rep, TYPECODE(AtomList.T));
+              reuse := TRUE;
+              RAISE PkgErr.E(arg);
+
+            END;
+          ELSE
+            StubLib.RaiseUnmarshalFailure();
+          END
+        FINALLY
+          StubLib.EndCall(c, reuse);
+        END;
+
+      EXCEPT
+      | Rd.Failure(ec) =&gt; StubLib.RaiseCommFailure(ec);
+      | Wr.Failure(ec) =&gt; StubLib.RaiseCommFailure(ec);
+      END;
+    END Surrogate_create;
+
+  PROCEDURE <A NAME="Surrogate_remove"><procedure>Surrogate_remove</procedure></A>(
+      self: LockOps.T;
+      auth_arg: TEXT;
+      package_arg: NetPath.PN;
+      key_arg: TEXT;
+      reship_arg: BOOLEAN) RAISES {NetObj.Error, PkgErr.E, Thread.Alerted,
+      LockOps.CommitFailed, LockOps.LockConflict} =
+
+    VAR reuse := FALSE;
+        rep: StubLib.DataRep;
+        c: StubLib.Conn;
+        dataPresent: BOOLEAN; &lt;* NOWARN *&gt;
+
+    BEGIN
+      TRY
+        c := StubLib.StartCall(self, Protocol);
+        TRY
+          StubLib.OutInt32(c, ORD(Methods.remove));
+          StubLib.OutRef(c, auth_arg);
+          dataPresent := TRUE;
+          StubLib.OutBoolean(c, dataPresent);
+          IF dataPresent THEN
+            StubLib.OutRef(c, package_arg.dir);
+            StubLib.OutRef(c, package_arg.arc);
+            END;
+            StubLib.OutRef(c, key_arg);
+          StubLib.OutInteger(c, ORD(reship_arg));
+          rep := StubLib.AwaitResult(c);
+          CASE StubLib.InInt32(c, rep) OF
+          | ORD(ReturnCodes.OK) =&gt;
+            reuse := TRUE;
+          | ORD(ReturnCodes.PkgErr_E) =&gt;
+            VAR arg: AtomList.T;
+            BEGIN
+              arg := StubLib.InRef(c, rep, TYPECODE(AtomList.T));
+              reuse := TRUE;
+              RAISE PkgErr.E(arg);
+
+            END;
+          | ORD(ReturnCodes.LockOps_CommitFailed) =&gt;
+            VAR arg: LockOps.CommitFailures;
+            BEGIN
+              arg := StubLib.InRef(c, rep, TYPECODE(LockOps.CommitFailures));
+              reuse := TRUE;
+              RAISE LockOps.CommitFailed(arg);
+
+            END;
+          | ORD(ReturnCodes.LockOps_LockConflict) =&gt;
+            VAR arg: LockOps.Owner;
+            BEGIN
+              arg.key := StubLib.InRef(c, rep, -1);
+              arg.site := StubLib.InRef(c, rep, -1);
+              reuse := TRUE;
+              RAISE LockOps.LockConflict(arg);
+
+            END;
+          ELSE
+            StubLib.RaiseUnmarshalFailure();
+          END
+        FINALLY
+          StubLib.EndCall(c, reuse);
+        END;
+
+      EXCEPT
+      | Rd.Failure(ec) =&gt; StubLib.RaiseCommFailure(ec);
+      | Wr.Failure(ec) =&gt; StubLib.RaiseCommFailure(ec);
+      END;
+    END Surrogate_remove;
+
+  PROCEDURE <A NAME="Surrogate_lock"><procedure>Surrogate_lock</procedure></A>(
+      self: LockOps.T;
+      auth_arg: TEXT;
+      pn_arg: NetPath.PN;
+      version_arg: PackageObj.Version;
+      key_arg: TEXT;
+      keySite_arg: TEXT): PackageObj.Version RAISES {NetObj.Error,
+      PkgErr.E, LockOps.LockConflict, Thread.Alerted} =
+
+    VAR reuse := FALSE;
+        rep: StubLib.DataRep;
+        c: StubLib.Conn;
+        dataPresent: BOOLEAN; &lt;* NOWARN *&gt;
+        res: PackageObj.Version;
+
+    BEGIN
+      TRY
+        c := StubLib.StartCall(self, Protocol);
+        TRY
+          StubLib.OutInt32(c, ORD(Methods.lock));
+          StubLib.OutRef(c, auth_arg);
+          dataPresent := TRUE;
+          StubLib.OutBoolean(c, dataPresent);
+          IF dataPresent THEN
+            StubLib.OutRef(c, pn_arg.dir);
+            StubLib.OutRef(c, pn_arg.arc);
+            END;
+            dataPresent := TRUE;
+          StubLib.OutBoolean(c, dataPresent);
+          IF dataPresent THEN
+            StubLib.OutInteger(c, version_arg.t);
+            StubLib.OutInteger(c, version_arg.vn);
+            END;
+            StubLib.OutRef(c, key_arg);
+          StubLib.OutRef(c, keySite_arg);
+          rep := StubLib.AwaitResult(c);
+          CASE StubLib.InInt32(c, rep) OF
+          | ORD(ReturnCodes.OK) =&gt;
+            res.t := StubLib.InInteger(c, rep, -2147483647, 2147483647);
+            res.vn := StubLib.InInteger(c, rep, -2147483647, 2147483647);
+            reuse := TRUE;
+          | ORD(ReturnCodes.PkgErr_E) =&gt;
+            VAR arg: AtomList.T;
+            BEGIN
+              arg := StubLib.InRef(c, rep, TYPECODE(AtomList.T));
+              reuse := TRUE;
+              RAISE PkgErr.E(arg);
+
+            END;
+          | ORD(ReturnCodes.LockOps_LockConflict) =&gt;
+            VAR arg: LockOps.Owner;
+            BEGIN
+              arg.key := StubLib.InRef(c, rep, -1);
+              arg.site := StubLib.InRef(c, rep, -1);
+              reuse := TRUE;
+              RAISE LockOps.LockConflict(arg);
+
+            END;
+          ELSE
+            StubLib.RaiseUnmarshalFailure();
+          END
+        FINALLY
+          StubLib.EndCall(c, reuse);
+        END;
+
+      EXCEPT
+      | Rd.Failure(ec) =&gt; StubLib.RaiseCommFailure(ec);
+      | Wr.Failure(ec) =&gt; StubLib.RaiseCommFailure(ec);
+      END;
+      RETURN res;
+    END Surrogate_lock;
+
+  PROCEDURE <A NAME="Surrogate_unlock"><procedure>Surrogate_unlock</procedure></A>(
+      self: LockOps.T;
+      auth_arg: TEXT;
+      pn_arg: NetPath.PN;
+      version_arg: PackageObj.Version;
+      key_arg: TEXT;
+      keySite_arg: TEXT;
+      breakRights_arg: LockOps.BreakRights;
+      forceVersion_arg: BOOLEAN) RAISES {NetObj.Error, PkgErr.E,
+      LockOps.CommitFailed, LockOps.LockConflict, LockOps.SynchVersions,
+      Thread.Alerted} =
+
+    VAR reuse := FALSE;
+        rep: StubLib.DataRep;
+        c: StubLib.Conn;
+        dataPresent: BOOLEAN; &lt;* NOWARN *&gt;
+
+    BEGIN
+      TRY
+        c := StubLib.StartCall(self, Protocol);
+        TRY
+          StubLib.OutInt32(c, ORD(Methods.unlock));
+          StubLib.OutRef(c, auth_arg);
+          dataPresent := TRUE;
+          StubLib.OutBoolean(c, dataPresent);
+          IF dataPresent THEN
+            StubLib.OutRef(c, pn_arg.dir);
+            StubLib.OutRef(c, pn_arg.arc);
+            END;
+            dataPresent := TRUE;
+          StubLib.OutBoolean(c, dataPresent);
+          IF dataPresent THEN
+            StubLib.OutInteger(c, version_arg.t);
+            StubLib.OutInteger(c, version_arg.vn);
+            END;
+            StubLib.OutRef(c, key_arg);
+          StubLib.OutRef(c, keySite_arg);
+          StubLib.OutInteger(c, ORD(breakRights_arg));
+          StubLib.OutInteger(c, ORD(forceVersion_arg));
+          rep := StubLib.AwaitResult(c);
+          CASE StubLib.InInt32(c, rep) OF
+          | ORD(ReturnCodes.OK) =&gt;
+            reuse := TRUE;
+          | ORD(ReturnCodes.PkgErr_E) =&gt;
+            VAR arg: AtomList.T;
+            BEGIN
+              arg := StubLib.InRef(c, rep, TYPECODE(AtomList.T));
+              reuse := TRUE;
+              RAISE PkgErr.E(arg);
+
+            END;
+          | ORD(ReturnCodes.LockOps_CommitFailed) =&gt;
+            VAR arg: LockOps.CommitFailures;
+            BEGIN
+              arg := StubLib.InRef(c, rep, TYPECODE(LockOps.CommitFailures));
+              reuse := TRUE;
+              RAISE LockOps.CommitFailed(arg);
+
+            END;
+          | ORD(ReturnCodes.LockOps_LockConflict) =&gt;
+            VAR arg: LockOps.Owner;
+            BEGIN
+              arg.key := StubLib.InRef(c, rep, -1);
+              arg.site := StubLib.InRef(c, rep, -1);
+              reuse := TRUE;
+              RAISE LockOps.LockConflict(arg);
+
+            END;
+          | ORD(ReturnCodes.LockOps_SynchVersions) =&gt;
+            VAR arg: PackageObj.Version;
+            BEGIN
+              arg.t := StubLib.InInteger(c, rep, -2147483647, 2147483647);
+              arg.vn := StubLib.InInteger(c, rep, -2147483647, 2147483647);
+              reuse := TRUE;
+              RAISE LockOps.SynchVersions(arg);
+
+            END;
+          ELSE
+            StubLib.RaiseUnmarshalFailure();
+          END
+        FINALLY
+          StubLib.EndCall(c, reuse);
+        END;
+
+      EXCEPT
+      | Rd.Failure(ec) =&gt; StubLib.RaiseCommFailure(ec);
+      | Wr.Failure(ec) =&gt; StubLib.RaiseCommFailure(ec);
+      END;
+    END Surrogate_unlock;
+
+  PROCEDURE <A NAME="Surrogate_assign"><procedure>Surrogate_assign</procedure></A>(
+      self: LockOps.T;
+      auth_arg: TEXT;
+      pn_arg: NetPath.PN;
+      key_arg: TEXT;
+      keySite_arg: TEXT): PackageObj.Version RAISES {NetObj.Error,
+      PkgErr.E, LockOps.LockConflict, Thread.Alerted} =
+
+    VAR reuse := FALSE;
+        rep: StubLib.DataRep;
+        c: StubLib.Conn;
+        dataPresent: BOOLEAN; &lt;* NOWARN *&gt;
+        res: PackageObj.Version;
+
+    BEGIN
+      TRY
+        c := StubLib.StartCall(self, Protocol);
+        TRY
+          StubLib.OutInt32(c, ORD(Methods.assign));
+          StubLib.OutRef(c, auth_arg);
+          dataPresent := TRUE;
+          StubLib.OutBoolean(c, dataPresent);
+          IF dataPresent THEN
+            StubLib.OutRef(c, pn_arg.dir);
+            StubLib.OutRef(c, pn_arg.arc);
+            END;
+            StubLib.OutRef(c, key_arg);
+          StubLib.OutRef(c, keySite_arg);
+          rep := StubLib.AwaitResult(c);
+          CASE StubLib.InInt32(c, rep) OF
+          | ORD(ReturnCodes.OK) =&gt;
+            res.t := StubLib.InInteger(c, rep, -2147483647, 2147483647);
+            res.vn := StubLib.InInteger(c, rep, -2147483647, 2147483647);
+            reuse := TRUE;
+          | ORD(ReturnCodes.PkgErr_E) =&gt;
+            VAR arg: AtomList.T;
+            BEGIN
+              arg := StubLib.InRef(c, rep, TYPECODE(AtomList.T));
+              reuse := TRUE;
+              RAISE PkgErr.E(arg);
+
+            END;
+          | ORD(ReturnCodes.LockOps_LockConflict) =&gt;
+            VAR arg: LockOps.Owner;
+            BEGIN
+              arg.key := StubLib.InRef(c, rep, -1);
+              arg.site := StubLib.InRef(c, rep, -1);
+              reuse := TRUE;
+              RAISE LockOps.LockConflict(arg);
+
+            END;
+          ELSE
+            StubLib.RaiseUnmarshalFailure();
+          END
+        FINALLY
+          StubLib.EndCall(c, reuse);
+        END;
+
+      EXCEPT
+      | Rd.Failure(ec) =&gt; StubLib.RaiseCommFailure(ec);
+      | Wr.Failure(ec) =&gt; StubLib.RaiseCommFailure(ec);
+      END;
+      RETURN res;
+    END Surrogate_assign;
+
+  PROCEDURE <A NAME="Surrogate_commit"><procedure>Surrogate_commit</procedure></A>(
+      self: LockOps.T;
+      auth_arg: TEXT;
+      pn_arg: NetPath.PN;
+      version_arg: PackageObj.Version;
+      VAR ships_arg: LockOps.ShipArray;
+      reship_arg: BOOLEAN): LockOps.CommitFailures RAISES {NetObj.Error,
+      LockOps.CommitFailed, PkgErr.E, Thread.Alerted} =
+
+    VAR reuse := FALSE;
+        rep: StubLib.DataRep;
+        c: StubLib.Conn;
+        dataPresent: BOOLEAN; &lt;* NOWARN *&gt;
+        res: LockOps.CommitFailures;
+
+    BEGIN
+      TRY
+        c := StubLib.StartCall(self, Protocol);
+        TRY
+          StubLib.OutInt32(c, ORD(Methods.commit));
+          StubLib.OutRef(c, auth_arg);
+          dataPresent := TRUE;
+          StubLib.OutBoolean(c, dataPresent);
+          IF dataPresent THEN
+            StubLib.OutRef(c, pn_arg.dir);
+            StubLib.OutRef(c, pn_arg.arc);
+            END;
+            dataPresent := TRUE;
+          StubLib.OutBoolean(c, dataPresent);
+          IF dataPresent THEN
+            StubLib.OutInteger(c, version_arg.t);
+            StubLib.OutInteger(c, version_arg.vn);
+            END;
+            StubLib.OutInteger(c, NUMBER(ships_arg));
+          dataPresent := TRUE;
+          StubLib.OutBoolean(c, dataPresent);
+          IF dataPresent THEN
+            FOR n1 := 0 TO LAST(ships_arg) DO
+              StubLib.OutRef(c, ships_arg[n1]);
+              END;
+            END;
+            StubLib.OutInteger(c, ORD(reship_arg));
+          rep := StubLib.AwaitResult(c);
+          CASE StubLib.InInt32(c, rep) OF
+          | ORD(ReturnCodes.OK) =&gt;
+            FOR n1 := 0 TO LAST(ships_arg) DO
+              ships_arg[n1] := StubLib.InRef(c, rep, TYPECODE(PackageObj.Ship));
+              END;
+            res := StubLib.InRef(c, rep, TYPECODE(LockOps.CommitFailures));
+            reuse := TRUE;
+          | ORD(ReturnCodes.LockOps_CommitFailed) =&gt;
+            VAR arg: LockOps.CommitFailures;
+            BEGIN
+              arg := StubLib.InRef(c, rep, TYPECODE(LockOps.CommitFailures));
+              reuse := TRUE;
+              RAISE LockOps.CommitFailed(arg);
+
+            END;
+          | ORD(ReturnCodes.PkgErr_E) =&gt;
+            VAR arg: AtomList.T;
+            BEGIN
+              arg := StubLib.InRef(c, rep, TYPECODE(AtomList.T));
+              reuse := TRUE;
+              RAISE PkgErr.E(arg);
+
+            END;
+          ELSE
+            StubLib.RaiseUnmarshalFailure();
+          END
+        FINALLY
+          StubLib.EndCall(c, reuse);
+        END;
+
+      EXCEPT
+      | Rd.Failure(ec) =&gt; StubLib.RaiseCommFailure(ec);
+      | Wr.Failure(ec) =&gt; StubLib.RaiseCommFailure(ec);
+      END;
+      RETURN res;
+    END Surrogate_commit;
+
+  PROCEDURE <A NAME="Surrogate_enumerate"><procedure>Surrogate_enumerate</procedure></A>(
+      self: LockOps.T;
+      dir_arg: TextList.T;
+      site_arg: TEXT;
+      locksOnly_arg: BOOLEAN;
+      localOnly_arg: BOOLEAN;
+      pendingOnly_arg: BOOLEAN): LockOps.EnumList RAISES {NetObj.Error,
+      PkgErr.E, Thread.Alerted} =
+
+    VAR reuse := FALSE;
+        rep: StubLib.DataRep;
+        c: StubLib.Conn;
+        dataPresent: BOOLEAN; &lt;* NOWARN *&gt;
+        res: LockOps.EnumList;
+
+    BEGIN
+      TRY
+        c := StubLib.StartCall(self, Protocol);
+        TRY
+          StubLib.OutInt32(c, ORD(Methods.enumerate));
+          StubLib.OutRef(c, dir_arg);
+          StubLib.OutRef(c, site_arg);
+          StubLib.OutInteger(c, ORD(locksOnly_arg));
+          StubLib.OutInteger(c, ORD(localOnly_arg));
+          StubLib.OutInteger(c, ORD(pendingOnly_arg));
+          rep := StubLib.AwaitResult(c);
+          CASE StubLib.InInt32(c, rep) OF
+          | ORD(ReturnCodes.OK) =&gt;
+            res := StubLib.InRef(c, rep, TYPECODE(LockOps.EnumList));
+            reuse := TRUE;
+          | ORD(ReturnCodes.PkgErr_E) =&gt;
+            VAR arg: AtomList.T;
+            BEGIN
+              arg := StubLib.InRef(c, rep, TYPECODE(AtomList.T));
+              reuse := TRUE;
+              RAISE PkgErr.E(arg);
+
+            END;
+          ELSE
+            StubLib.RaiseUnmarshalFailure();
+          END
+        FINALLY
+          StubLib.EndCall(c, reuse);
+        END;
+
+      EXCEPT
+      | Rd.Failure(ec) =&gt; StubLib.RaiseCommFailure(ec);
+      | Wr.Failure(ec) =&gt; StubLib.RaiseCommFailure(ec);
+      END;
+      RETURN res;
+    END Surrogate_enumerate;
+
+  PROCEDURE <A NAME="Surrogate_getEntry"><procedure>Surrogate_getEntry</procedure></A>(
+      self: LockOps.T;
+      pn_arg: NetPath.PN;
+      goRemote_arg: BOOLEAN): LockOps.RefEntry RAISES {NetObj.Error,
+      PkgErr.E, Thread.Alerted} =
+
+    VAR reuse := FALSE;
+        rep: StubLib.DataRep;
+        c: StubLib.Conn;
+        dataPresent: BOOLEAN; &lt;* NOWARN *&gt;
+        res: LockOps.RefEntry;
+
+    BEGIN
+      TRY
+        c := StubLib.StartCall(self, Protocol);
+        TRY
+          StubLib.OutInt32(c, ORD(Methods.getEntry));
+          dataPresent := TRUE;
+          StubLib.OutBoolean(c, dataPresent);
+          IF dataPresent THEN
+            StubLib.OutRef(c, pn_arg.dir);
+            StubLib.OutRef(c, pn_arg.arc);
+            END;
+            StubLib.OutInteger(c, ORD(goRemote_arg));
+          rep := StubLib.AwaitResult(c);
+          CASE StubLib.InInt32(c, rep) OF
+          | ORD(ReturnCodes.OK) =&gt;
+            res := StubLib.InRef(c, rep, TYPECODE(LockOps.RefEntry));
+            reuse := TRUE;
+          | ORD(ReturnCodes.PkgErr_E) =&gt;
+            VAR arg: AtomList.T;
+            BEGIN
+              arg := StubLib.InRef(c, rep, TYPECODE(AtomList.T));
+              reuse := TRUE;
+              RAISE PkgErr.E(arg);
+
+            END;
+          ELSE
+            StubLib.RaiseUnmarshalFailure();
+          END
+        FINALLY
+          StubLib.EndCall(c, reuse);
+        END;
+
+      EXCEPT
+      | Rd.Failure(ec) =&gt; StubLib.RaiseCommFailure(ec);
+      | Wr.Failure(ec) =&gt; StubLib.RaiseCommFailure(ec);
+      END;
+      RETURN res;
+    END Surrogate_getEntry;
+
+  PROCEDURE <A NAME="Surrogate_setEntry"><procedure>Surrogate_setEntry</procedure></A>(
+      self: LockOps.T;
+      auth_arg: TEXT;
+      pn_arg: NetPath.PN;
+      entry_arg: LockOps.RefEntry) RAISES {NetObj.Error, PkgErr.E,
+      Thread.Alerted} =
+
+    VAR reuse := FALSE;
+        rep: StubLib.DataRep;
+        c: StubLib.Conn;
+        dataPresent: BOOLEAN; &lt;* NOWARN *&gt;
+
+    BEGIN
+      TRY
+        c := StubLib.StartCall(self, Protocol);
+        TRY
+          StubLib.OutInt32(c, ORD(Methods.setEntry));
+          StubLib.OutRef(c, auth_arg);
+          dataPresent := TRUE;
+          StubLib.OutBoolean(c, dataPresent);
+          IF dataPresent THEN
+            StubLib.OutRef(c, pn_arg.dir);
+            StubLib.OutRef(c, pn_arg.arc);
+            END;
+            StubLib.OutRef(c, entry_arg);
+          rep := StubLib.AwaitResult(c);
+          CASE StubLib.InInt32(c, rep) OF
+          | ORD(ReturnCodes.OK) =&gt;
+            reuse := TRUE;
+          | ORD(ReturnCodes.PkgErr_E) =&gt;
+            VAR arg: AtomList.T;
+            BEGIN
+              arg := StubLib.InRef(c, rep, TYPECODE(AtomList.T));
+              reuse := TRUE;
+              RAISE PkgErr.E(arg);
+
+            END;
+          ELSE
+            StubLib.RaiseUnmarshalFailure();
+          END
+        FINALLY
+          StubLib.EndCall(c, reuse);
+        END;
+
+      EXCEPT
+      | Rd.Failure(ec) =&gt; StubLib.RaiseCommFailure(ec);
+      | Wr.Failure(ec) =&gt; StubLib.RaiseCommFailure(ec);
+      END;
+    END Surrogate_setEntry;
+
+  PROCEDURE <A NAME="Surrogate_setFingerprint"><procedure>Surrogate_setFingerprint</procedure></A>(
+      self: LockOps.T;
+      auth_arg: TEXT;
+      pn_arg: NetPath.PN;
+      version_arg: PackageObj.Version;
+      fp_arg: Fingerprint.T) RAISES {NetObj.Error, PkgErr.E,
+      Thread.Alerted} =
+
+    VAR reuse := FALSE;
+        rep: StubLib.DataRep;
+        c: StubLib.Conn;
+        dataPresent: BOOLEAN; &lt;* NOWARN *&gt;
+
+    BEGIN
+      TRY
+        c := StubLib.StartCall(self, Protocol);
+        TRY
+          StubLib.OutInt32(c, ORD(Methods.setFingerprint));
+          StubLib.OutRef(c, auth_arg);
+          dataPresent := TRUE;
+          StubLib.OutBoolean(c, dataPresent);
+          IF dataPresent THEN
+            StubLib.OutRef(c, pn_arg.dir);
+            StubLib.OutRef(c, pn_arg.arc);
+            END;
+            dataPresent := TRUE;
+          StubLib.OutBoolean(c, dataPresent);
+          IF dataPresent THEN
+            StubLib.OutInteger(c, version_arg.t);
+            StubLib.OutInteger(c, version_arg.vn);
+            END;
+            dataPresent := TRUE;
+          StubLib.OutBoolean(c, dataPresent);
+          IF dataPresent THEN
+            FOR i0 := FIRST([0..7]) TO LAST([0..7]) DO
+              StubLib.OutInteger(c, fp_arg.byte[i0]);
+              END;
+            END;
+            rep := StubLib.AwaitResult(c);
+          CASE StubLib.InInt32(c, rep) OF
+          | ORD(ReturnCodes.OK) =&gt;
+            reuse := TRUE;
+          | ORD(ReturnCodes.PkgErr_E) =&gt;
+            VAR arg: AtomList.T;
+            BEGIN
+              arg := StubLib.InRef(c, rep, TYPECODE(AtomList.T));
+              reuse := TRUE;
+              RAISE PkgErr.E(arg);
+
+            END;
+          ELSE
+            StubLib.RaiseUnmarshalFailure();
+          END
+        FINALLY
+          StubLib.EndCall(c, reuse);
+        END;
+
+      EXCEPT
+      | Rd.Failure(ec) =&gt; StubLib.RaiseCommFailure(ec);
+      | Wr.Failure(ec) =&gt; StubLib.RaiseCommFailure(ec);
+      END;
+    END Surrogate_setFingerprint;
+
+  PROCEDURE <A NAME="Surrogate_createCheck"><procedure>Surrogate_createCheck</procedure></A>(self: LockOps.T; pn_arg: NetPath.PN)
+       RAISES {NetObj.Error, PkgErr.E, Thread.Alerted} =
+
+    VAR reuse := FALSE;
+        rep: StubLib.DataRep;
+        c: StubLib.Conn;
+        dataPresent: BOOLEAN; &lt;* NOWARN *&gt;
+
+    BEGIN
+      TRY
+        c := StubLib.StartCall(self, Protocol);
+        TRY
+          StubLib.OutInt32(c, ORD(Methods.createCheck));
+          dataPresent := TRUE;
+          StubLib.OutBoolean(c, dataPresent);
+          IF dataPresent THEN
+            StubLib.OutRef(c, pn_arg.dir);
+            StubLib.OutRef(c, pn_arg.arc);
+            END;
+            rep := StubLib.AwaitResult(c);
+          CASE StubLib.InInt32(c, rep) OF
+          | ORD(ReturnCodes.OK) =&gt;
+            reuse := TRUE;
+          | ORD(ReturnCodes.PkgErr_E) =&gt;
+            VAR arg: AtomList.T;
+            BEGIN
+              arg := StubLib.InRef(c, rep, TYPECODE(AtomList.T));
+              reuse := TRUE;
+              RAISE PkgErr.E(arg);
+
+            END;
+          ELSE
+            StubLib.RaiseUnmarshalFailure();
+          END
+        FINALLY
+          StubLib.EndCall(c, reuse);
+        END;
+
+      EXCEPT
+      | Rd.Failure(ec) =&gt; StubLib.RaiseCommFailure(ec);
+      | Wr.Failure(ec) =&gt; StubLib.RaiseCommFailure(ec);
+      END;
+    END Surrogate_createCheck;
+
+  PROCEDURE <A NAME="Surrogate_createForeign"><procedure>Surrogate_createForeign</procedure></A>(
+      self: LockOps.T;
+      auth_arg: TEXT;
+      pn_arg: NetPath.PN;
+      owningSite_arg: TEXT;
+      instance_arg: PackageObj.Int32) RAISES {NetObj.Error, PkgErr.E,
+      Thread.Alerted} =
+
+    VAR reuse := FALSE;
+        rep: StubLib.DataRep;
+        c: StubLib.Conn;
+        dataPresent: BOOLEAN; &lt;* NOWARN *&gt;
+
+    BEGIN
+      TRY
+        c := StubLib.StartCall(self, Protocol);
+        TRY
+          StubLib.OutInt32(c, ORD(Methods.createForeign));
+          StubLib.OutRef(c, auth_arg);
+          dataPresent := TRUE;
+          StubLib.OutBoolean(c, dataPresent);
+          IF dataPresent THEN
+            StubLib.OutRef(c, pn_arg.dir);
+            StubLib.OutRef(c, pn_arg.arc);
+            END;
+            StubLib.OutRef(c, owningSite_arg);
+          dataPresent := TRUE;
+          StubLib.OutBoolean(c, dataPresent);
+          IF dataPresent THEN
+            StubLib.OutInteger(c, instance_arg);
+            END;
+            rep := StubLib.AwaitResult(c);
+          CASE StubLib.InInt32(c, rep) OF
+          | ORD(ReturnCodes.OK) =&gt;
+            reuse := TRUE;
+          | ORD(ReturnCodes.PkgErr_E) =&gt;
+            VAR arg: AtomList.T;
+            BEGIN
+              arg := StubLib.InRef(c, rep, TYPECODE(AtomList.T));
+              reuse := TRUE;
+              RAISE PkgErr.E(arg);
+
+            END;
+          ELSE
+            StubLib.RaiseUnmarshalFailure();
+          END
+        FINALLY
+          StubLib.EndCall(c, reuse);
+        END;
+
+      EXCEPT
+      | Rd.Failure(ec) =&gt; StubLib.RaiseCommFailure(ec);
+      | Wr.Failure(ec) =&gt; StubLib.RaiseCommFailure(ec);
+      END;
+    END Surrogate_createForeign;
+
+  PROCEDURE <A NAME="Surrogate_createDir"><procedure>Surrogate_createDir</procedure></A>(
+      self: LockOps.T;
+      auth_arg: TEXT;
+      dir_arg: TextList.T) RAISES {NetObj.Error, PkgErr.E, Thread.Alerted} =
+
+    VAR reuse := FALSE;
+        rep: StubLib.DataRep;
+        c: StubLib.Conn;
+        dataPresent: BOOLEAN; &lt;* NOWARN *&gt;
+
+    BEGIN
+      TRY
+        c := StubLib.StartCall(self, Protocol);
+        TRY
+          StubLib.OutInt32(c, ORD(Methods.createDir));
+          StubLib.OutRef(c, auth_arg);
+          StubLib.OutRef(c, dir_arg);
+          rep := StubLib.AwaitResult(c);
+          CASE StubLib.InInt32(c, rep) OF
+          | ORD(ReturnCodes.OK) =&gt;
+            reuse := TRUE;
+          | ORD(ReturnCodes.PkgErr_E) =&gt;
+            VAR arg: AtomList.T;
+            BEGIN
+              arg := StubLib.InRef(c, rep, TYPECODE(AtomList.T));
+              reuse := TRUE;
+              RAISE PkgErr.E(arg);
+
+            END;
+          ELSE
+            StubLib.RaiseUnmarshalFailure();
+          END
+        FINALLY
+          StubLib.EndCall(c, reuse);
+        END;
+
+      EXCEPT
+      | Rd.Failure(ec) =&gt; StubLib.RaiseCommFailure(ec);
+      | Wr.Failure(ec) =&gt; StubLib.RaiseCommFailure(ec);
+      END;
+    END Surrogate_createDir;
+
+  PROCEDURE <A NAME="Surrogate_removeDir"><procedure>Surrogate_removeDir</procedure></A>(
+      self: LockOps.T;
+      auth_arg: TEXT;
+      dir_arg: TextList.T) RAISES {NetObj.Error, PkgErr.E, Thread.Alerted} =
+
+    VAR reuse := FALSE;
+        rep: StubLib.DataRep;
+        c: StubLib.Conn;
+        dataPresent: BOOLEAN; &lt;* NOWARN *&gt;
+
+    BEGIN
+      TRY
+        c := StubLib.StartCall(self, Protocol);
+        TRY
+          StubLib.OutInt32(c, ORD(Methods.removeDir));
+          StubLib.OutRef(c, auth_arg);
+          StubLib.OutRef(c, dir_arg);
+          rep := StubLib.AwaitResult(c);
+          CASE StubLib.InInt32(c, rep) OF
+          | ORD(ReturnCodes.OK) =&gt;
+            reuse := TRUE;
+          | ORD(ReturnCodes.PkgErr_E) =&gt;
+            VAR arg: AtomList.T;
+            BEGIN
+              arg := StubLib.InRef(c, rep, TYPECODE(AtomList.T));
+              reuse := TRUE;
+              RAISE PkgErr.E(arg);
+
+            END;
+          ELSE
+            StubLib.RaiseUnmarshalFailure();
+          END
+        FINALLY
+          StubLib.EndCall(c, reuse);
+        END;
+
+      EXCEPT
+      | Rd.Failure(ec) =&gt; StubLib.RaiseCommFailure(ec);
+      | Wr.Failure(ec) =&gt; StubLib.RaiseCommFailure(ec);
+      END;
+    END Surrogate_removeDir;
+
+  PROCEDURE <A NAME="Surrogate_checkDir"><procedure>Surrogate_checkDir</procedure></A>(self: LockOps.T; dir_arg: TextList.T)
+       RAISES {NetObj.Error, PkgErr.E, Thread.Alerted} =
+
+    VAR reuse := FALSE;
+        rep: StubLib.DataRep;
+        c: StubLib.Conn;
+        dataPresent: BOOLEAN; &lt;* NOWARN *&gt;
+
+    BEGIN
+      TRY
+        c := StubLib.StartCall(self, Protocol);
+        TRY
+          StubLib.OutInt32(c, ORD(Methods.checkDir));
+          StubLib.OutRef(c, dir_arg);
+          rep := StubLib.AwaitResult(c);
+          CASE StubLib.InInt32(c, rep) OF
+          | ORD(ReturnCodes.OK) =&gt;
+            reuse := TRUE;
+          | ORD(ReturnCodes.PkgErr_E) =&gt;
+            VAR arg: AtomList.T;
+            BEGIN
+              arg := StubLib.InRef(c, rep, TYPECODE(AtomList.T));
+              reuse := TRUE;
+              RAISE PkgErr.E(arg);
+
+            END;
+          ELSE
+            StubLib.RaiseUnmarshalFailure();
+          END
+        FINALLY
+          StubLib.EndCall(c, reuse);
+        END;
+
+      EXCEPT
+      | Rd.Failure(ec) =&gt; StubLib.RaiseCommFailure(ec);
+      | Wr.Failure(ec) =&gt; StubLib.RaiseCommFailure(ec);
+      END;
+    END Surrogate_checkDir;
+
+  PROCEDURE <A NAME="Surrogate_enumerateDirs"><procedure>Surrogate_enumerateDirs</procedure></A>(self: LockOps.T; site_arg: TEXT)
+      : LockOps.DirList RAISES {NetObj.Error, PkgErr.E, Thread.Alerted} =
+
+    VAR reuse := FALSE;
+        rep: StubLib.DataRep;
+        c: StubLib.Conn;
+        dataPresent: BOOLEAN; &lt;* NOWARN *&gt;
+        res: LockOps.DirList;
+
+    BEGIN
+      TRY
+        c := StubLib.StartCall(self, Protocol);
+        TRY
+          StubLib.OutInt32(c, ORD(Methods.enumerateDirs));
+          StubLib.OutRef(c, site_arg);
+          rep := StubLib.AwaitResult(c);
+          CASE StubLib.InInt32(c, rep) OF
+          | ORD(ReturnCodes.OK) =&gt;
+            res := StubLib.InRef(c, rep, TYPECODE(LockOps.DirList));
+            reuse := TRUE;
+          | ORD(ReturnCodes.PkgErr_E) =&gt;
+            VAR arg: AtomList.T;
+            BEGIN
+              arg := StubLib.InRef(c, rep, TYPECODE(AtomList.T));
+              reuse := TRUE;
+              RAISE PkgErr.E(arg);
+
+            END;
+          ELSE
+            StubLib.RaiseUnmarshalFailure();
+          END
+        FINALLY
+          StubLib.EndCall(c, reuse);
+        END;
+
+      EXCEPT
+      | Rd.Failure(ec) =&gt; StubLib.RaiseCommFailure(ec);
+      | Wr.Failure(ec) =&gt; StubLib.RaiseCommFailure(ec);
+      END;
+      RETURN res;
+    END Surrogate_enumerateDirs;
+
+  PROCEDURE <A NAME="Surrogate_removeForeign"><procedure>Surrogate_removeForeign</procedure></A>(
+      self: LockOps.T;
+      auth_arg: TEXT;
+      pn_arg: NetPath.PN) RAISES {NetObj.Error, PkgErr.E,
+      LockOps.CommitFailed, Thread.Alerted} =
+
+    VAR reuse := FALSE;
+        rep: StubLib.DataRep;
+        c: StubLib.Conn;
+        dataPresent: BOOLEAN; &lt;* NOWARN *&gt;
+
+    BEGIN
+      TRY
+        c := StubLib.StartCall(self, Protocol);
+        TRY
+          StubLib.OutInt32(c, ORD(Methods.removeForeign));
+          StubLib.OutRef(c, auth_arg);
+          dataPresent := TRUE;
+          StubLib.OutBoolean(c, dataPresent);
+          IF dataPresent THEN
+            StubLib.OutRef(c, pn_arg.dir);
+            StubLib.OutRef(c, pn_arg.arc);
+            END;
+            rep := StubLib.AwaitResult(c);
+          CASE StubLib.InInt32(c, rep) OF
+          | ORD(ReturnCodes.OK) =&gt;
+            reuse := TRUE;
+          | ORD(ReturnCodes.PkgErr_E) =&gt;
+            VAR arg: AtomList.T;
+            BEGIN
+              arg := StubLib.InRef(c, rep, TYPECODE(AtomList.T));
+              reuse := TRUE;
+              RAISE PkgErr.E(arg);
+
+            END;
+          | ORD(ReturnCodes.LockOps_CommitFailed) =&gt;
+            VAR arg: LockOps.CommitFailures;
+            BEGIN
+              arg := StubLib.InRef(c, rep, TYPECODE(LockOps.CommitFailures));
+              reuse := TRUE;
+              RAISE LockOps.CommitFailed(arg);
+
+            END;
+          ELSE
+            StubLib.RaiseUnmarshalFailure();
+          END
+        FINALLY
+          StubLib.EndCall(c, reuse);
+        END;
+
+      EXCEPT
+      | Rd.Failure(ec) =&gt; StubLib.RaiseCommFailure(ec);
+      | Wr.Failure(ec) =&gt; StubLib.RaiseCommFailure(ec);
+      END;
+    END Surrogate_removeForeign;
+
+PROCEDURE <A NAME="Invoke"><procedure>Invoke</procedure></A>(
+    c: StubLib.Conn;
+    obj: NetObj.T;
+    rep: StubLib.DataRep;
+    stubProt: StubLib.StubProtocol)
+    RAISES {NetObj.Error, Rd.Failure,
+            Wr.Failure, Thread.Alerted} =
+  VAR t := NARROW(obj, LockOps.T);
+  BEGIN
+    IF stubProt # Protocol THEN StubLib.RaiseUnmarshalFailure() END;
+    TRY
+      CASE StubLib.InInt32(c, rep) OF
+      | ORD(Methods.create) =&gt; Stub_create(t, c, rep);
+      | ORD(Methods.remove) =&gt; Stub_remove(t, c, rep);
+      | ORD(Methods.lock) =&gt; Stub_lock(t, c, rep);
+      | ORD(Methods.unlock) =&gt; Stub_unlock(t, c, rep);
+      | ORD(Methods.assign) =&gt; Stub_assign(t, c, rep);
+      | ORD(Methods.commit) =&gt; Stub_commit(t, c, rep);
+      | ORD(Methods.enumerate) =&gt; Stub_enumerate(t, c, rep);
+      | ORD(Methods.getEntry) =&gt; Stub_getEntry(t, c, rep);
+      | ORD(Methods.setEntry) =&gt; Stub_setEntry(t, c, rep);
+      | ORD(Methods.setFingerprint) =&gt; Stub_setFingerprint(t, c, rep);
+      | ORD(Methods.createCheck) =&gt; Stub_createCheck(t, c, rep);
+      | ORD(Methods.createForeign) =&gt; Stub_createForeign(t, c, rep);
+      | ORD(Methods.createDir) =&gt; Stub_createDir(t, c, rep);
+      | ORD(Methods.removeDir) =&gt; Stub_removeDir(t, c, rep);
+      | ORD(Methods.checkDir) =&gt; Stub_checkDir(t, c, rep);
+      | ORD(Methods.enumerateDirs) =&gt; Stub_enumerateDirs(t, c, rep);
+      | ORD(Methods.removeForeign) =&gt; Stub_removeForeign(t, c, rep);
+      ELSE
+        StubLib.RaiseUnmarshalFailure();
+      END;
+    EXCEPT
+    | LockOps.SynchVersions(arg) =&gt;
+        StubLib.StartResult(c);
+        StubLib.OutInt32(c, ORD(ReturnCodes.LockOps_SynchVersions));
+        StubLib.OutInteger(c, arg.t);
+StubLib.OutInteger(c, arg.vn);
+
+    | LockOps.LockConflict(arg) =&gt;
+        StubLib.StartResult(c);
+        StubLib.OutInt32(c, ORD(ReturnCodes.LockOps_LockConflict));
+        StubLib.OutRef(c, arg.key);
+StubLib.OutRef(c, arg.site);
+
+    | LockOps.CommitFailed(arg) =&gt;
+        StubLib.StartResult(c);
+        StubLib.OutInt32(c, ORD(ReturnCodes.LockOps_CommitFailed));
+        StubLib.OutRef(c, arg);
+
+    | PkgErr.E(arg) =&gt;
+        StubLib.StartResult(c);
+        StubLib.OutInt32(c, ORD(ReturnCodes.PkgErr_E));
+        StubLib.OutRef(c, arg);
+    END;
+  END Invoke;
+
+PROCEDURE <A NAME="Stub_create"><procedure>Stub_create</procedure></A>(
+    self: LockOps.T;
+    c: StubLib.Conn;
+    &lt;* NOWARN *&gt; rep: StubLib.DataRep) RAISES {NetObj.Error, Rd.Failure,
+    Wr.Failure, Thread.Alerted, PkgErr.E}=
+  VAR auth_arg: TEXT;
+      pn_arg: NetPath.PN;
+      initialKey_arg: TEXT;
+      version_arg: PackageObj.Version;
+      remoteCheck_arg: BOOLEAN;
+      dataPresent: BOOLEAN &lt;* NOWARN *&gt;;
+
+  BEGIN
+    auth_arg := StubLib.InRef(c, rep, -1);
+    dataPresent := StubLib.InBoolean(c);
+    IF dataPresent THEN
+      pn_arg.dir := StubLib.InRef(c, rep, TYPECODE(TextList.T));
+      pn_arg.arc := StubLib.InRef(c, rep, -1);
+      END;
+      initialKey_arg := StubLib.InRef(c, rep, -1);
+    dataPresent := StubLib.InBoolean(c);
+    IF dataPresent THEN
+      version_arg.t := StubLib.InInteger(c, rep, -2147483647, 2147483647);
+      version_arg.vn := StubLib.InInteger(c, rep, -2147483647, 2147483647);
+      END;
+      remoteCheck_arg := VAL(StubLib.InInteger(c, rep, 0,1), BOOLEAN);
+    self.create(auth_arg, pn_arg, initialKey_arg, version_arg, remoteCheck_arg);
+    StubLib.StartResult(c);
+    StubLib.OutInt32(c, ORD(ReturnCodes.OK));
+
+  END Stub_create;
+
+PROCEDURE <A NAME="Stub_remove"><procedure>Stub_remove</procedure></A>(
+    self: LockOps.T;
+    c: StubLib.Conn;
+    &lt;* NOWARN *&gt; rep: StubLib.DataRep) RAISES {NetObj.Error, Rd.Failure,
+    Wr.Failure, Thread.Alerted, PkgErr.E, LockOps.CommitFailed,
+    LockOps.LockConflict}=
+  VAR auth_arg: TEXT;
+      package_arg: NetPath.PN;
+      key_arg: TEXT;
+      reship_arg: BOOLEAN;
+      dataPresent: BOOLEAN &lt;* NOWARN *&gt;;
+
+  BEGIN
+    auth_arg := StubLib.InRef(c, rep, -1);
+    dataPresent := StubLib.InBoolean(c);
+    IF dataPresent THEN
+      package_arg.dir := StubLib.InRef(c, rep, TYPECODE(TextList.T));
+      package_arg.arc := StubLib.InRef(c, rep, -1);
+      END;
+      key_arg := StubLib.InRef(c, rep, -1);
+    reship_arg := VAL(StubLib.InInteger(c, rep, 0,1), BOOLEAN);
+    self.remove(auth_arg, package_arg, key_arg, reship_arg);
+    StubLib.StartResult(c);
+    StubLib.OutInt32(c, ORD(ReturnCodes.OK));
+
+  END Stub_remove;
+
+PROCEDURE <A NAME="Stub_lock"><procedure>Stub_lock</procedure></A>(
+    self: LockOps.T;
+    c: StubLib.Conn;
+    &lt;* NOWARN *&gt; rep: StubLib.DataRep) RAISES {NetObj.Error, Rd.Failure,
+    Wr.Failure, Thread.Alerted, PkgErr.E, LockOps.LockConflict}=
+  VAR auth_arg: TEXT;
+      pn_arg: NetPath.PN;
+      version_arg: PackageObj.Version;
+      key_arg: TEXT;
+      keySite_arg: TEXT;
+      res: PackageObj.Version;
+      dataPresent: BOOLEAN &lt;* NOWARN *&gt;;
+
+  BEGIN
+    auth_arg := StubLib.InRef(c, rep, -1);
+    dataPresent := StubLib.InBoolean(c);
+    IF dataPresent THEN
+      pn_arg.dir := StubLib.InRef(c, rep, TYPECODE(TextList.T));
+      pn_arg.arc := StubLib.InRef(c, rep, -1);
+      END;
+      dataPresent := StubLib.InBoolean(c);
+    IF dataPresent THEN
+      version_arg.t := StubLib.InInteger(c, rep, -2147483647, 2147483647);
+      version_arg.vn := StubLib.InInteger(c, rep, -2147483647, 2147483647);
+      END;
+      key_arg := StubLib.InRef(c, rep, -1);
+    keySite_arg := StubLib.InRef(c, rep, -1);
+    res := self.lock(auth_arg, pn_arg, version_arg, key_arg, keySite_arg);
+    StubLib.StartResult(c);
+    StubLib.OutInt32(c, ORD(ReturnCodes.OK));
+    StubLib.OutInteger(c, res.t);
+    StubLib.OutInteger(c, res.vn);
+
+  END Stub_lock;
+
+PROCEDURE <A NAME="Stub_unlock"><procedure>Stub_unlock</procedure></A>(
+    self: LockOps.T;
+    c: StubLib.Conn;
+    &lt;* NOWARN *&gt; rep: StubLib.DataRep) RAISES {NetObj.Error, Rd.Failure,
+    Wr.Failure, Thread.Alerted, PkgErr.E, LockOps.CommitFailed,
+    LockOps.LockConflict, LockOps.SynchVersions}=
+  VAR auth_arg: TEXT;
+      pn_arg: NetPath.PN;
+      version_arg: PackageObj.Version;
+      key_arg: TEXT;
+      keySite_arg: TEXT;
+      breakRights_arg: LockOps.BreakRights;
+      forceVersion_arg: BOOLEAN;
+      dataPresent: BOOLEAN &lt;* NOWARN *&gt;;
+
+  BEGIN
+    auth_arg := StubLib.InRef(c, rep, -1);
+    dataPresent := StubLib.InBoolean(c);
+    IF dataPresent THEN
+      pn_arg.dir := StubLib.InRef(c, rep, TYPECODE(TextList.T));
+      pn_arg.arc := StubLib.InRef(c, rep, -1);
+      END;
+      dataPresent := StubLib.InBoolean(c);
+    IF dataPresent THEN
+      version_arg.t := StubLib.InInteger(c, rep, -2147483647, 2147483647);
+      version_arg.vn := StubLib.InInteger(c, rep, -2147483647, 2147483647);
+      END;
+      key_arg := StubLib.InRef(c, rep, -1);
+    keySite_arg := StubLib.InRef(c, rep, -1);
+    breakRights_arg := VAL(StubLib.InInteger(c, rep, 0,2), LockOps.BreakRights);
+    forceVersion_arg := VAL(StubLib.InInteger(c, rep, 0,1), BOOLEAN);
+    self.unlock(auth_arg, pn_arg, version_arg, key_arg, keySite_arg, breakRights_arg, forceVersion_arg);
+    StubLib.StartResult(c);
+    StubLib.OutInt32(c, ORD(ReturnCodes.OK));
+
+  END Stub_unlock;
+
+PROCEDURE <A NAME="Stub_assign"><procedure>Stub_assign</procedure></A>(
+    self: LockOps.T;
+    c: StubLib.Conn;
+    &lt;* NOWARN *&gt; rep: StubLib.DataRep) RAISES {NetObj.Error, Rd.Failure,
+    Wr.Failure, Thread.Alerted, PkgErr.E, LockOps.LockConflict}=
+  VAR auth_arg: TEXT;
+      pn_arg: NetPath.PN;
+      key_arg: TEXT;
+      keySite_arg: TEXT;
+      res: PackageObj.Version;
+      dataPresent: BOOLEAN &lt;* NOWARN *&gt;;
+
+  BEGIN
+    auth_arg := StubLib.InRef(c, rep, -1);
+    dataPresent := StubLib.InBoolean(c);
+    IF dataPresent THEN
+      pn_arg.dir := StubLib.InRef(c, rep, TYPECODE(TextList.T));
+      pn_arg.arc := StubLib.InRef(c, rep, -1);
+      END;
+      key_arg := StubLib.InRef(c, rep, -1);
+    keySite_arg := StubLib.InRef(c, rep, -1);
+    res := self.assign(auth_arg, pn_arg, key_arg, keySite_arg);
+    StubLib.StartResult(c);
+    StubLib.OutInt32(c, ORD(ReturnCodes.OK));
+    StubLib.OutInteger(c, res.t);
+    StubLib.OutInteger(c, res.vn);
+
+  END Stub_assign;
+
+PROCEDURE <A NAME="Stub_commit"><procedure>Stub_commit</procedure></A>(
+    self: LockOps.T;
+    c: StubLib.Conn;
+    &lt;* NOWARN *&gt; rep: StubLib.DataRep) RAISES {NetObj.Error, Rd.Failure,
+    Wr.Failure, Thread.Alerted, LockOps.CommitFailed, PkgErr.E}=
+  VAR auth_arg: TEXT;
+      pn_arg: NetPath.PN;
+      version_arg: PackageObj.Version;
+      ships_arg: REF LockOps.ShipArray;
+      reship_arg: BOOLEAN;
+      res: LockOps.CommitFailures;
+      dataPresent: BOOLEAN &lt;* NOWARN *&gt;;
+
+  BEGIN
+    auth_arg := StubLib.InRef(c, rep, -1);
+    dataPresent := StubLib.InBoolean(c);
+    IF dataPresent THEN
+      pn_arg.dir := StubLib.InRef(c, rep, TYPECODE(TextList.T));
+      pn_arg.arc := StubLib.InRef(c, rep, -1);
+      END;
+      dataPresent := StubLib.InBoolean(c);
+    IF dataPresent THEN
+      version_arg.t := StubLib.InInteger(c, rep, -2147483647, 2147483647);
+      version_arg.vn := StubLib.InInteger(c, rep, -2147483647, 2147483647);
+      END;
+      WITH n1 = StubLib.InInteger(c, rep) DO
+      ships_arg := NEW(REF LockOps.ShipArray, n1);
+    END;
+    dataPresent := StubLib.InBoolean(c);
+    IF dataPresent THEN
+      FOR n1 := 0 TO LAST(ships_arg^) DO
+        ships_arg[n1] := StubLib.InRef(c, rep, TYPECODE(PackageObj.Ship));
+        END;
+      END;
+      reship_arg := VAL(StubLib.InInteger(c, rep, 0,1), BOOLEAN);
+    res := self.commit(auth_arg, pn_arg, version_arg, ships_arg^, reship_arg);
+    StubLib.StartResult(c);
+    StubLib.OutInt32(c, ORD(ReturnCodes.OK));
+    FOR n1 := 0 TO LAST(ships_arg^) DO
+      StubLib.OutRef(c, ships_arg[n1]);
+      END;
+    StubLib.OutRef(c, res);
+
+  END Stub_commit;
+
+PROCEDURE <A NAME="Stub_enumerate"><procedure>Stub_enumerate</procedure></A>(
+    self: LockOps.T;
+    c: StubLib.Conn;
+    &lt;* NOWARN *&gt; rep: StubLib.DataRep) RAISES {NetObj.Error, Rd.Failure,
+    Wr.Failure, Thread.Alerted, PkgErr.E}=
+  VAR dir_arg: TextList.T;
+      site_arg: TEXT;
+      locksOnly_arg: BOOLEAN;
+      localOnly_arg: BOOLEAN;
+      pendingOnly_arg: BOOLEAN;
+      res: LockOps.EnumList;
+      dataPresent: BOOLEAN &lt;* NOWARN *&gt;;
+
+  BEGIN
+    dir_arg := StubLib.InRef(c, rep, TYPECODE(TextList.T));
+    site_arg := StubLib.InRef(c, rep, -1);
+    locksOnly_arg := VAL(StubLib.InInteger(c, rep, 0,1), BOOLEAN);
+    localOnly_arg := VAL(StubLib.InInteger(c, rep, 0,1), BOOLEAN);
+    pendingOnly_arg := VAL(StubLib.InInteger(c, rep, 0,1), BOOLEAN);
+    res := self.enumerate(dir_arg, site_arg, locksOnly_arg, localOnly_arg, pendingOnly_arg);
+    StubLib.StartResult(c);
+    StubLib.OutInt32(c, ORD(ReturnCodes.OK));
+    StubLib.OutRef(c, res);
+
+  END Stub_enumerate;
+
+PROCEDURE <A NAME="Stub_getEntry"><procedure>Stub_getEntry</procedure></A>(
+    self: LockOps.T;
+    c: StubLib.Conn;
+    &lt;* NOWARN *&gt; rep: StubLib.DataRep) RAISES {NetObj.Error, Rd.Failure,
+    Wr.Failure, Thread.Alerted, PkgErr.E}=
+  VAR pn_arg: NetPath.PN;
+      goRemote_arg: BOOLEAN;
+      res: LockOps.RefEntry;
+      dataPresent: BOOLEAN &lt;* NOWARN *&gt;;
+
+  BEGIN
+    dataPresent := StubLib.InBoolean(c);
+    IF dataPresent THEN
+      pn_arg.dir := StubLib.InRef(c, rep, TYPECODE(TextList.T));
+      pn_arg.arc := StubLib.InRef(c, rep, -1);
+      END;
+      goRemote_arg := VAL(StubLib.InInteger(c, rep, 0,1), BOOLEAN);
+    res := self.getEntry(pn_arg, goRemote_arg);
+    StubLib.StartResult(c);
+    StubLib.OutInt32(c, ORD(ReturnCodes.OK));
+    StubLib.OutRef(c, res);
+
+  END Stub_getEntry;
+
+PROCEDURE <A NAME="Stub_setEntry"><procedure>Stub_setEntry</procedure></A>(
+    self: LockOps.T;
+    c: StubLib.Conn;
+    &lt;* NOWARN *&gt; rep: StubLib.DataRep) RAISES {NetObj.Error, Rd.Failure,
+    Wr.Failure, Thread.Alerted, PkgErr.E}=
+  VAR auth_arg: TEXT;
+      pn_arg: NetPath.PN;
+      entry_arg: LockOps.RefEntry;
+      dataPresent: BOOLEAN &lt;* NOWARN *&gt;;
+
+  BEGIN
+    auth_arg := StubLib.InRef(c, rep, -1);
+    dataPresent := StubLib.InBoolean(c);
+    IF dataPresent THEN
+      pn_arg.dir := StubLib.InRef(c, rep, TYPECODE(TextList.T));
+      pn_arg.arc := StubLib.InRef(c, rep, -1);
+      END;
+      entry_arg := StubLib.InRef(c, rep, TYPECODE(LockOps.RefEntry));
+    self.setEntry(auth_arg, pn_arg, entry_arg);
+    StubLib.StartResult(c);
+    StubLib.OutInt32(c, ORD(ReturnCodes.OK));
+
+  END Stub_setEntry;
+
+PROCEDURE <A NAME="Stub_setFingerprint"><procedure>Stub_setFingerprint</procedure></A>(
+    self: LockOps.T;
+    c: StubLib.Conn;
+    &lt;* NOWARN *&gt; rep: StubLib.DataRep) RAISES {NetObj.Error, Rd.Failure,
+    Wr.Failure, Thread.Alerted, PkgErr.E}=
+  VAR auth_arg: TEXT;
+      pn_arg: NetPath.PN;
+      version_arg: PackageObj.Version;
+      fp_arg: Fingerprint.T;
+      dataPresent: BOOLEAN &lt;* NOWARN *&gt;;
+
+  BEGIN
+    auth_arg := StubLib.InRef(c, rep, -1);
+    dataPresent := StubLib.InBoolean(c);
+    IF dataPresent THEN
+      pn_arg.dir := StubLib.InRef(c, rep, TYPECODE(TextList.T));
+      pn_arg.arc := StubLib.InRef(c, rep, -1);
+      END;
+      dataPresent := StubLib.InBoolean(c);
+    IF dataPresent THEN
+      version_arg.t := StubLib.InInteger(c, rep, -2147483647, 2147483647);
+      version_arg.vn := StubLib.InInteger(c, rep, -2147483647, 2147483647);
+      END;
+      dataPresent := StubLib.InBoolean(c);
+    IF dataPresent THEN
+      FOR i0 := FIRST([0..7]) TO LAST([0..7]) DO
+        fp_arg.byte[i0] := StubLib.InInteger(c, rep, 0, 255);
+        END;
+      END;
+      self.setFingerprint(auth_arg, pn_arg, version_arg, fp_arg);
+    StubLib.StartResult(c);
+    StubLib.OutInt32(c, ORD(ReturnCodes.OK));
+
+  END Stub_setFingerprint;
+
+PROCEDURE <A NAME="Stub_createCheck"><procedure>Stub_createCheck</procedure></A>(
+    self: LockOps.T;
+    c: StubLib.Conn;
+    &lt;* NOWARN *&gt; rep: StubLib.DataRep) RAISES {NetObj.Error, Rd.Failure,
+    Wr.Failure, Thread.Alerted, PkgErr.E}=
+  VAR pn_arg: NetPath.PN;
+      dataPresent: BOOLEAN &lt;* NOWARN *&gt;;
+
+  BEGIN
+    dataPresent := StubLib.InBoolean(c);
+    IF dataPresent THEN
+      pn_arg.dir := StubLib.InRef(c, rep, TYPECODE(TextList.T));
+      pn_arg.arc := StubLib.InRef(c, rep, -1);
+      END;
+      self.createCheck(pn_arg);
+    StubLib.StartResult(c);
+    StubLib.OutInt32(c, ORD(ReturnCodes.OK));
+
+  END Stub_createCheck;
+
+PROCEDURE <A NAME="Stub_createForeign"><procedure>Stub_createForeign</procedure></A>(
+    self: LockOps.T;
+    c: StubLib.Conn;
+    &lt;* NOWARN *&gt; rep: StubLib.DataRep) RAISES {NetObj.Error, Rd.Failure,
+    Wr.Failure, Thread.Alerted, PkgErr.E}=
+  VAR auth_arg: TEXT;
+      pn_arg: NetPath.PN;
+      owningSite_arg: TEXT;
+      instance_arg: PackageObj.Int32;
+      dataPresent: BOOLEAN &lt;* NOWARN *&gt;;
+
+  BEGIN
+    auth_arg := StubLib.InRef(c, rep, -1);
+    dataPresent := StubLib.InBoolean(c);
+    IF dataPresent THEN
+      pn_arg.dir := StubLib.InRef(c, rep, TYPECODE(TextList.T));
+      pn_arg.arc := StubLib.InRef(c, rep, -1);
+      END;
+      owningSite_arg := StubLib.InRef(c, rep, -1);
+    dataPresent := StubLib.InBoolean(c);
+    IF dataPresent THEN
+      instance_arg := StubLib.InInteger(c, rep, -2147483647, 2147483647);
+      END;
+      self.createForeign(auth_arg, pn_arg, owningSite_arg, instance_arg);
+    StubLib.StartResult(c);
+    StubLib.OutInt32(c, ORD(ReturnCodes.OK));
+
+  END Stub_createForeign;
+
+PROCEDURE <A NAME="Stub_createDir"><procedure>Stub_createDir</procedure></A>(
+    self: LockOps.T;
+    c: StubLib.Conn;
+    &lt;* NOWARN *&gt; rep: StubLib.DataRep) RAISES {NetObj.Error, Rd.Failure,
+    Wr.Failure, Thread.Alerted, PkgErr.E}=
+  VAR auth_arg: TEXT;
+      dir_arg: TextList.T;
+      dataPresent: BOOLEAN &lt;* NOWARN *&gt;;
+
+  BEGIN
+    auth_arg := StubLib.InRef(c, rep, -1);
+    dir_arg := StubLib.InRef(c, rep, TYPECODE(TextList.T));
+    self.createDir(auth_arg, dir_arg);
+    StubLib.StartResult(c);
+    StubLib.OutInt32(c, ORD(ReturnCodes.OK));
+
+  END Stub_createDir;
+
+PROCEDURE <A NAME="Stub_removeDir"><procedure>Stub_removeDir</procedure></A>(
+    self: LockOps.T;
+    c: StubLib.Conn;
+    &lt;* NOWARN *&gt; rep: StubLib.DataRep) RAISES {NetObj.Error, Rd.Failure,
+    Wr.Failure, Thread.Alerted, PkgErr.E}=
+  VAR auth_arg: TEXT;
+      dir_arg: TextList.T;
+      dataPresent: BOOLEAN &lt;* NOWARN *&gt;;
+
+  BEGIN
+    auth_arg := StubLib.InRef(c, rep, -1);
+    dir_arg := StubLib.InRef(c, rep, TYPECODE(TextList.T));
+    self.removeDir(auth_arg, dir_arg);
+    StubLib.StartResult(c);
+    StubLib.OutInt32(c, ORD(ReturnCodes.OK));
+
+  END Stub_removeDir;
+
+PROCEDURE <A NAME="Stub_checkDir"><procedure>Stub_checkDir</procedure></A>(
+    self: LockOps.T;
+    c: StubLib.Conn;
+    &lt;* NOWARN *&gt; rep: StubLib.DataRep) RAISES {NetObj.Error, Rd.Failure,
+    Wr.Failure, Thread.Alerted, PkgErr.E}=
+  VAR dir_arg: TextList.T;
+      dataPresent: BOOLEAN &lt;* NOWARN *&gt;;
+
+  BEGIN
+    dir_arg := StubLib.InRef(c, rep, TYPECODE(TextList.T));
+    self.checkDir(dir_arg);
+    StubLib.StartResult(c);
+    StubLib.OutInt32(c, ORD(ReturnCodes.OK));
+
+  END Stub_checkDir;
+
+PROCEDURE <A NAME="Stub_enumerateDirs"><procedure>Stub_enumerateDirs</procedure></A>(
+    self: LockOps.T;
+    c: StubLib.Conn;
+    &lt;* NOWARN *&gt; rep: StubLib.DataRep) RAISES {NetObj.Error, Rd.Failure,
+    Wr.Failure, Thread.Alerted, PkgErr.E}=
+  VAR site_arg: TEXT;
+      res: LockOps.DirList;
+      dataPresent: BOOLEAN &lt;* NOWARN *&gt;;
+
+  BEGIN
+    site_arg := StubLib.InRef(c, rep, -1);
+    res := self.enumerateDirs(site_arg);
+    StubLib.StartResult(c);
+    StubLib.OutInt32(c, ORD(ReturnCodes.OK));
+    StubLib.OutRef(c, res);
+
+  END Stub_enumerateDirs;
+
+PROCEDURE <A NAME="Stub_removeForeign"><procedure>Stub_removeForeign</procedure></A>(
+    self: LockOps.T;
+    c: StubLib.Conn;
+    &lt;* NOWARN *&gt; rep: StubLib.DataRep) RAISES {NetObj.Error, Rd.Failure,
+    Wr.Failure, Thread.Alerted, PkgErr.E, LockOps.CommitFailed}=
+  VAR auth_arg: TEXT;
+      pn_arg: NetPath.PN;
+      dataPresent: BOOLEAN &lt;* NOWARN *&gt;;
+
+  BEGIN
+    auth_arg := StubLib.InRef(c, rep, -1);
+    dataPresent := StubLib.InBoolean(c);
+    IF dataPresent THEN
+      pn_arg.dir := StubLib.InRef(c, rep, TYPECODE(TextList.T));
+      pn_arg.arc := StubLib.InRef(c, rep, -1);
+      END;
+      self.removeForeign(auth_arg, pn_arg);
+    StubLib.StartResult(c);
+    StubLib.OutInt32(c, ORD(ReturnCodes.OK));
+
+  END Stub_removeForeign;
+
+BEGIN
+  StubLib.Register(TYPECODE(LockOps.T), 1, TYPECODE(Surrogate_LockOps_T), Invoke);
+END LockOps_T_v1.
+</PRE>
+</inModule>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

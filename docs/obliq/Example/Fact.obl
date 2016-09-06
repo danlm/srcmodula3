@@ -1,0 +1,22 @@
+(* Examples of recursion and iteration. *)
+
+module Fact;
+
+let rec recFact: (Int)->Int =
+  proc(n:Int):Int,
+    if n is 0 then 1 else n * recFact(n-1) end;
+  end;
+
+let itFact: (Int)->Int =
+  proc(n:Int):Int,
+    var cnt = n;
+    var acc = 1;
+    loop
+      if cnt is 0 then exit end;
+      acc := cnt * acc;
+      cnt := cnt - 1;
+    end;
+    acc;
+  end;
+
+end module;

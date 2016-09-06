@@ -1,0 +1,18 @@
+(* Pickle utilities.
+  pw("foo", a);
+  let x = pr("foo");
+*)
+
+module Pickle;
+
+let pw = 
+  proc(fn, x)
+    let w = wr_open(fileSys, fn);
+    pickle_write(w, x);
+    wr_close(w);
+  end;
+
+let pr =
+  proc(fn)
+    pickle_read(rd_open(fileSys, fn))
+  end;

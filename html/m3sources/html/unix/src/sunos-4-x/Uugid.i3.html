@@ -1,0 +1,58 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: unix/src/sunos-4-x/Uugid.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>unix/src/sunos-4-x/Uugid.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+
+INTERFACE <interface><A HREF="../hpux-7-0/Uugid.m3.html">Uugid</A></interface>;
+
+FROM <A HREF="../../../C/src/Common/Ctypes.i3.html">Ctypes</A> IMPORT int;
+</PRE>** getuid(2), geteuid(2) - get user identity **
+
+<P><PRE>&lt;*EXTERNAL*&gt; PROCEDURE getuid (): int;
+&lt;*EXTERNAL*&gt; PROCEDURE geteuid (): int;
+</PRE>** getgid(2), getguid(2) - get group identity **
+
+<P><PRE>&lt;*EXTERNAL*&gt; PROCEDURE getgid (): int;
+&lt;*EXTERNAL*&gt; PROCEDURE getegid (): int;
+</PRE>** setreuid(2) - set real and effective user ID's **
+
+<P><PRE>&lt;*EXTERNAL*&gt; PROCEDURE <A HREF="../hpux-7-0/Uugid.m3.html#setreuid">setreuid</A> (ruid, euid: int): int;
+</PRE>** setregid(2) - set real and effective group ID **
+
+<P><PRE>&lt;*EXTERNAL*&gt; PROCEDURE setregid (rgid, egid: int): int;
+
+END Uugid.
+</PRE>
+</inInterface>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

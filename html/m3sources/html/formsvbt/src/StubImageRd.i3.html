@@ -1,0 +1,56 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: formsvbt/src/StubImageRd.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>formsvbt/src/StubImageRd.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+
+INTERFACE <interface><A HREF="StubImageRd.m3.html">StubImageRd</A></interface>;
+
+IMPORT <A HREF="../../ui/src/vbt/PaintOp.i3.html">PaintOp</A>, <A HREF="../../rw/src/Common/Rd.i3.html">Rd</A>, <A HREF="../../ui/src/vbt/VBT.i3.html">VBT</A>;
+IMPORT <A HREF="StubImages.i3.html">StubImages</A> AS Images;
+
+TYPE
+  <A HREF="StubImageRd.m3.html#T">T</A> &lt;: Public;
+  Public = Images.T OBJECT
+           METHODS
+             init (rd           : Rd.T;
+                   start, length: CARDINAL;
+                   op           : PaintOp.T  := PaintOp.Copy;
+                   st   : VBT.ScreenType := NIL;
+                   gamma: REAL           := 1.0  ): T;
+           END;
+
+END StubImageRd.
+</PRE>
+</inInterface>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

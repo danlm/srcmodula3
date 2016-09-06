@@ -1,0 +1,84 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: unix/src/solaris-2-x/Umsg.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>unix/src/solaris-2-x/Umsg.m3</H2></A><HR>
+<inModule>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+
+MODULE <module><implements><A HREF="#x1">Umsg</A></implements></module>;
+
+PROCEDURE <A NAME="MSG_LOCK"><procedure>MSG_LOCK</procedure></A> (&lt;*UNUSED*&gt; x: UNTRACED REF struct_msqid_ds) =
+  BEGIN
+</PRE><BLOCKQUOTE><EM><P>
+    WITH mode = x.msg_perm.mode DO
+      WHILE Word.And (mode, MSG_LCK) # 0 DO
+        mode := Word.Or (mode, MSG_WANT);
+        Unix.sleep (x.msg_first, PMSG); END;
+      mode := Word.Or (mode, MSG_LCK); END;
+</EM></BLOCKQUOTE><PRE>
+  END MSG_LOCK;
+
+PROCEDURE <A NAME="MSG_UNLOCK"><procedure>MSG_UNLOCK</procedure></A> (&lt;*UNUSED*&gt; x: UNTRACED REF struct_msqid_ds) =
+  BEGIN
+</PRE><BLOCKQUOTE><EM><P>
+    WITH mode = x.msg_perm.mode DO
+      IF Word.And (mode, MSG_LCK) = 0 THEN
+        Unix.panic (M3toC.TtoS (<CODE>MSG_UNLOCK</CODE>)); END;
+      IF Word.And (mode, MSG_WANT) # 0 THEN
+        Ultrix.wakeup (x.msg_first); END;
+      mode := Word.And (mode, Word.Not (Word.Or (MSG_WANT, MSG_LCK))); END;
+</EM></BLOCKQUOTE><PRE>
+  END MSG_UNLOCK;
+
+BEGIN
+END Umsg.
+</PRE>
+</inModule>
+<HR>
+<A NAME="x1">interface Umsg is in:
+</A><UL>
+<LI><A HREF="../aix-3-2/Umsg.i3.html#0TOP0">unix/src/aix-3-2/Umsg.i3</A>
+<LI><A HREF="../aix-ps2-1-2/Umsg.i3.html#0TOP0">unix/src/aix-ps2-1-2/Umsg.i3</A>
+<LI><A HREF="../freebsd-1/Umsg.i3.html#0TOP0">unix/src/freebsd-1/Umsg.i3</A>
+<LI><A HREF="../freebsd-2/Umsg.i3.html#0TOP0">unix/src/freebsd-2/Umsg.i3</A>
+<LI><A HREF="../hpux-7-0/Umsg.i3.html#0TOP0">unix/src/hpux-7-0/Umsg.i3</A>
+<LI><A HREF="../ibm-4-3/Umsg.i3.html#0TOP0">unix/src/ibm-4-3/Umsg.i3</A>
+<LI><A HREF="../irix-5.2/Umsg.i3.html#0TOP0">unix/src/irix-5.2/Umsg.i3</A>
+<LI><A HREF="../linux/Umsg.i3.html#0TOP0">unix/src/linux/Umsg.i3</A>
+<LI><A HREF="../osf-1.generic/Umsg.i3.html#0TOP0">unix/src/osf-1.generic/Umsg.i3</A>
+<LI><A HREF="Umsg.i3.html#0TOP0">unix/src/solaris-2-x/Umsg.i3</A>
+<LI><A HREF="../sunos-4-x/Umsg.i3.html#0TOP0">unix/src/sunos-4-x/Umsg.i3</A>
+<LI><A HREF="../sysv-4.0/Umsg.i3.html#0TOP0">unix/src/sysv-4.0/Umsg.i3</A>
+<LI><A HREF="../ultrix-3-1.generic/Umsg.i3.html#0TOP0">unix/src/ultrix-3-1.generic/Umsg.i3</A>
+</UL>
+<P>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

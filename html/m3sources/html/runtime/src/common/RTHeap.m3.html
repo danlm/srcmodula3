@@ -1,0 +1,113 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: runtime/src/common/RTHeap.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>runtime/src/common/RTHeap.m3</H2></A><HR>
+<inModule>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+
+UNSAFE MODULE <module><implements><A HREF="RTHeap.i3.html">RTHeap</A></implements></module>;
+
+IMPORT <A HREF="RTType.i3.html">RTType</A>, <A HREF="RTMisc.i3.html">RTMisc</A>;
+</PRE> If <CODE>r</CODE> is a traced reference, GetDataAdr returns the address of <CODE>r^</CODE>'s
+   data bytes.  If <CODE>r</CODE> is a traced object, GetDataAdr returns the address
+   of <CODE>r</CODE>'s data record's bytes.  It is a checked runtime error if <CODE>r</CODE> is
+   <CODE>NIL</CODE>.  Note that the address can subsequently change unless object
+   mobility is disabled using <CODE>RTCollector</CODE>. 
+
+<P><PRE>PROCEDURE <A NAME="GetDataAdr"><procedure>GetDataAdr</procedure></A> (r: REFANY): ADDRESS =
+  VAR def := RTType.Get(TYPECODE(r));
+  BEGIN
+    IF r = NIL THEN
+      Die (); &lt;*ASSERT FALSE*&gt;
+    ELSIF def.defaultMethods # NIL THEN
+      RETURN LOOPHOLE(r, ADDRESS) + ADRSIZE(ADDRESS);
+    ELSIF def.nDimensions # 0 THEN
+      RETURN LOOPHOLE(r, UNTRACED REF ADDRESS)^;
+    ELSE
+      RETURN LOOPHOLE(r, ADDRESS);
+    END;
+  END GetDataAdr;
+</PRE> If <CODE>r</CODE> is a traced reference, GetDataSize returns the number of <CODE>r^</CODE>'s
+   data bytes.  If <CODE>r</CODE> is a traced object, GetDataSize returns the number
+   of <CODE>r</CODE>'s data record's bytes.  It is a checked runtime error if <CODE>r</CODE> is
+   <CODE>NIL</CODE>. 
+
+<P><PRE>PROCEDURE <A NAME="GetDataSize"><procedure>GetDataSize</procedure></A> (r: REFANY): CARDINAL =
+  VAR
+    def := RTType.Get(TYPECODE(r));
+    sizes: UNTRACED REF INTEGER;
+    n: INTEGER;
+  BEGIN
+    IF r = NIL THEN
+      Die (); &lt;*ASSERT FALSE*&gt;
+    ELSIF def.defaultMethods # NIL THEN
+      RETURN def.dataSize - BYTESIZE(ADDRESS);
+    ELSIF def.nDimensions = 0 THEN
+      RETURN def.dataSize;
+    ELSE (* an open array *)
+      n := 1;
+      sizes := LOOPHOLE(r, ADDRESS) + ADRSIZE(ADDRESS);
+      FOR i := 0 TO def.nDimensions - 1 DO
+        n := n * sizes^;
+        INC(sizes, ADRSIZE(INTEGER));
+      END;
+      RETURN n * def.elementSize;
+    END;
+  END GetDataSize;
+</PRE> If <CODE>r</CODE> is a traced reference to an open array, GetArrayShape returns in
+   <CODE>s[0 ..  n-1]</CODE> the size of each dimension of the n-dimensional open
+   array <CODE>r^</CODE>.  If <CODE>s</CODE> is too large, the extra elements are ignored; if
+   it's too small, the extra sizes are discarded.  It is a checked runtime
+   error if <CODE>r</CODE> is <CODE>NIL</CODE>.  If <CODE>r</CODE> is not a reference to an open array, <CODE>s</CODE>
+   is unchanged. 
+
+<P><PRE>PROCEDURE <A NAME="GetArrayShape"><procedure>GetArrayShape</procedure></A> (r: REFANY; VAR s: ARRAY OF INTEGER) =
+  VAR
+    def := RTType.Get(TYPECODE(r));
+    sizes: UNTRACED REF INTEGER := LOOPHOLE(r, ADDRESS) + ADRSIZE(ADDRESS);
+  BEGIN
+    FOR i := 0 TO MIN(NUMBER(s), def.nDimensions) - 1 DO
+      s[i] := sizes^;
+      INC(sizes, ADRSIZE(sizes^));
+    END;
+  END GetArrayShape;
+
+PROCEDURE <A NAME="Die"><procedure>Die</procedure></A> () =
+  BEGIN
+    RTMisc.FatalError (NIL, 0, &quot;NIL ref passed to RTHeap.GetData&quot;);
+  END Die;
+
+BEGIN
+END RTHeap.
+</PRE>
+</inModule>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

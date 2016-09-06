@@ -1,0 +1,56 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: property/src/MProperty.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>property/src/MProperty.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+
+INTERFACE <interface><A HREF="MProperty.m3.html">MProperty</A></interface>;
+
+IMPORT <A HREF="Property.i3.html">Property</A>, <A HREF="../../thread/src/Common/Thread.i3.html">Thread</A>;
+
+TYPE
+  <A HREF="MProperty.m3.html#Set">Set</A> &lt;: Set_public;
+  Set_public = Property.Set OBJECT
+    m: Thread.Mutex;
+  END;
+</PRE> The methods for an MProperty.Set are equivalent to 
+     'LOCK s.m DO Property.Set.method(s, ...) END;
+
+
+<P><PRE>PROCEDURE <A HREF="MProperty.m3.html#New">New</A>(): Set;
+</PRE><BLOCKQUOTE><EM> Create the empty monitored set. </EM></BLOCKQUOTE><PRE>
+
+END MProperty.
+</PRE>
+</inInterface>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

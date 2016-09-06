@@ -1,0 +1,190 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: m3tk/src/asttrans/M3CLockTrans.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>m3tk/src/asttrans/M3CLockTrans.m3</H2></A><HR>
+<inModule>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+
+MODULE <module><implements><A HREF="M3CLockTrans.i3.html">M3CLockTrans</A></implements></module>;
+
+IMPORT <A HREF="../gast/AST.i3.html">AST</A>, <A HREF="../gast/ASTWalk.i3.html">ASTWalk</A>;
+IMPORT <A HREF="../toolmisc/M3Context.i3.html">M3Context</A>, <A HREF="../toolmisc/M3CUnit.i3.html">M3CUnit</A>, <A HREF="../toolmisc/M3Conventions.i3.html">M3Conventions</A>, <A HREF="../syn/M3CId.i3.html">M3CId</A>;
+IMPORT <A HREF="../ast/M3AST_AS.i3.html">M3AST_AS</A>, <A HREF="../sem/M3CStdTypes.i3.html">M3CStdTypes</A>;
+IMPORT <A HREF="../sem/M3CSearch.i3.html">M3CSearch</A>;
+IMPORT <A HREF="../ast/M3AST_AS_F.i3.html">M3AST_AS_F</A>, <A HREF="../ast/M3AST_SM_F.i3.html">M3AST_SM_F</A>, <A HREF="../ast/M3AST_FE_F.i3.html">M3AST_FE_F</A>, <A HREF="../ast/M3AST_TM_F.i3.html">M3AST_TM_F</A>;
+IMPORT <A HREF="../../DS/SeqM3AST_AS_STM.i3.html">SeqM3AST_AS_STM</A>, <A HREF="../../DS/SeqM3AST_AS_Actual.i3.html">SeqM3AST_AS_Actual</A>, <A HREF="../../DS/SeqM3AST_AS_EXP.i3.html">SeqM3AST_AS_EXP</A>,
+       <A HREF="../../DS/SeqM3AST_AS_Binding.i3.html">SeqM3AST_AS_Binding</A>, <A HREF="../../DS/SeqM3AST_AS_STM_rep.i3.html">SeqM3AST_AS_STM_rep</A>;
+
+CONST
+  ThreadT = &quot;Thread&quot;;
+  AcquireT = &quot;Acquire&quot;;
+  ReleaseT = &quot;Release&quot;;
+  MT = &quot;t__mutex__4678361&quot;;
+
+TYPE
+  SetUnitClosure = M3Context.Closure OBJECT
+  OVERRIDES callback := SetUnit;
+  END;
+
+TYPE
+ SetNodeClosure = ASTWalk.Closure OBJECT
+   c: M3Context.T;
+   cu: M3AST_AS.Compilation_Unit;
+ OVERRIDES
+   callback := SetNode;
+ END;
+
+PROCEDURE <A NAME="Run"><procedure>Run</procedure></A>(c: M3Context.T) RAISES {NoThread}=
+  BEGIN
+    M3Context.ApplyToSet(c, NEW(SetUnitClosure),
+                         M3CUnit.TypeSet{M3CUnit.Type.Module,
+                                         M3CUnit.Type.Module_gen_ins});
+  END Run;
+
+PROCEDURE <A NAME="SetUnit"><procedure>SetUnit</procedure></A>(cl: SetUnitClosure; ut: M3CUnit.Type; name: TEXT;
+    cu: M3AST_AS.Compilation_Unit) RAISES {NoThread}=
+  BEGIN
+    ASTWalk.VisitNodes(cu, NEW(SetNodeClosure, cu := cu, c := cl.context));
+  END SetUnit;
+
+PROCEDURE <A NAME="SetNode"><procedure>SetNode</procedure></A>(cl: SetNodeClosure; n: AST.NODE;
+    vm: ASTWalk.VisitMode) RAISES {NoThread}=
+  BEGIN
+    TYPECASE n OF
+    | NULL =&gt;
+    | M3AST_AS.STM_WSS(t) =&gt;  CheckForLock(cl, t.as_stm_s);
+    | M3AST_AS.SUBSTM_WSS(t) =&gt; CheckForLock(cl, t.as_stm_s);
+    ELSE
+    END; (* typecase *)
+  END SetNode;
+
+PROCEDURE <A NAME="CheckForLock"><procedure>CheckForLock</procedure></A>(cl: SetNodeClosure;
+                       s: SeqM3AST_AS_STM.T) RAISES {NoThread}=
+  VAR
+    iter := SeqM3AST_AS_STM.NewIter(s);
+    stm: M3AST_AS.STM;
+    try_st: M3AST_AS.Try_st;
+    with_st: M3AST_AS.With_st;
+    try_finally: M3AST_AS.Try_finally;
+    m_used_id := M3AST_AS.NewExp_used_id();
+    binding: M3AST_AS.Binding;
+  BEGIN
+    WHILE SeqM3AST_AS_STM.Next(iter, stm) DO
+      TYPECASE stm OF
+      | M3AST_AS.Lock_st(lock_st) =&gt;
+          try_st := M3AST_AS.NewTry_st();
+          try_st.as_stm_s := lock_st.as_stm_s;
+          with_st := M3AST_AS.NewWith_st();
+          binding := M3AST_AS.NewBinding();
+          binding.as_id := M3AST_AS.NewWith_id();
+          binding.as_id.lx_symrep := M3CId.Enter(MT);
+          binding.as_id.sm_type_spec := M3CStdTypes.Mutex();
+          binding.as_id.tmp_unit_id := cl.cu.as_root.as_id;
+          binding.as_exp := lock_st.as_exp;
+          SeqM3AST_AS_Binding.AddFront(with_st.as_binding_s, binding);
+          m_used_id.vUSED_ID.lx_symrep := binding.as_id.lx_symrep;
+          m_used_id.vUSED_ID.sm_def := binding.as_id;
+          m_used_id.sm_exp_type_spec := binding.as_id.sm_type_spec;
+          with_st.as_stm_s := SingleStm(ThreadCall(cl, AcquireT, m_used_id));
+          SeqM3AST_AS_STM.AddRear(with_st.as_stm_s, try_st);
+          try_finally := M3AST_AS.NewTry_finally();
+          try_finally.as_stm_s := SingleStm(ThreadCall(cl, ReleaseT, m_used_id));
+          try_st.as_try_tail := try_finally;
+          ReplaceInSeqSTM(s, stm, with_st);
+      ELSE
+      END; (* typecase *)
+    END; (* while *)
+  END CheckForLock;
+
+PROCEDURE <A NAME="ThreadCall"><procedure>ThreadCall</procedure></A>(cl: SetNodeClosure;
+          t: TEXT; arg: M3AST_AS.EXP): M3AST_AS.STM RAISES {NoThread}=
+  VAR
+    call_st := M3AST_AS.NewCall_st();
+    exp_used_id1, exp_used_id2 := M3AST_AS.NewExp_used_id();
+    call := M3AST_AS.NewCall();
+    actual := M3AST_AS.NewActual();
+    select := M3AST_AS.NewBinary();
+  BEGIN
+    select.as_binary_op := M3AST_AS.NewSelect();
+    select.as_exp1 := exp_used_id1;
+    select.as_exp2 := exp_used_id2;
+    exp_used_id1.vUSED_ID.lx_symrep := M3CId.Enter(ThreadT);
+    exp_used_id2.vUSED_ID.lx_symrep := M3CId.Enter(t);
+    call.as_callexp := select;
+    actual.as_id := NIL; actual.as_exp_type := arg;
+    SeqM3AST_AS_Actual.AddFront(call.as_param_s, actual);
+    SeqM3AST_AS_EXP.AddFront(call.sm_actual_s, arg);
+    FindProc(cl, exp_used_id1.vUSED_ID, exp_used_id2.vUSED_ID);
+    select.sm_exp_type_spec :=
+        NARROW(exp_used_id2.vUSED_ID.sm_def, M3AST_AS.Proc_id).sm_type_spec;
+    exp_used_id2.sm_exp_type_spec := select.sm_exp_type_spec;
+    call.sm_exp_type_spec := M3CStdTypes.Void();
+    call_st.as_call := call;
+    RETURN call_st;
+  END ThreadCall;
+
+PROCEDURE <A NAME="FindProc"><procedure>FindProc</procedure></A>(cl: SetNodeClosure;
+    id1, id2: M3AST_AS.USED_ID) RAISES {NoThread}=
+  VAR
+    thread_cu: M3AST_AS.Compilation_Unit;
+  BEGIN
+    IF M3Context.Find(cl.c, ThreadT, M3CUnit.Type.Interface, thread_cu) THEN
+      id1.sm_def := thread_cu.as_root.as_id;
+      M3CSearch.Export(thread_cu.as_root, id2)
+    ELSE
+      RAISE NoThread
+    END;
+  END FindProc;
+
+PROCEDURE <A NAME="SingleStm"><procedure>SingleStm</procedure></A>(s: M3AST_AS.STM): SeqM3AST_AS_STM.T RAISES {}=
+  VAR seq := SeqM3AST_AS_STM.Null;
+  BEGIN
+    SeqM3AST_AS_STM.AddFront(seq, s);
+    RETURN seq;
+  END SingleStm;
+
+PROCEDURE <A NAME="ReplaceInSeqSTM"><procedure>ReplaceInSeqSTM</procedure></A>(s: SeqM3AST_AS_STM.T;
+    old, new: M3AST_AS.STM) RAISES {}=
+  BEGIN
+    (* here we are using the _priv interfaces to do a replace *)
+    WHILE s # NIL DO
+      IF s.elem = old THEN s.elem := new; RETURN
+      ELSE s := s.next;
+      END;
+    END; (* while *)
+  END ReplaceInSeqSTM;
+
+BEGIN
+END M3CLockTrans.
+</PRE>
+</inModule>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

@@ -1,0 +1,67 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: lego/src/ZGrowVBT.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>lego/src/ZGrowVBT.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM>                                                                           </EM></BLOCKQUOTE><PRE>
+&lt;* PRAGMA LL *&gt;
+&lt;* PRAGMA SUBTYPE *&gt;
+</PRE> A <CODE>ZGrowVBT</CODE> is a switch that has the side effect of reshaping its
+   nearest ancestor subwindow.
+<P>
+   If the initial mouse click is unshifted, the subwindow is lifted to
+   the top of its sibling; otherwise, the subwindow keeps its current
+   top-to-bottom ordering among its siblings.  As the mouse is moved,
+   the cursor changes to give appropriate feedback, and an outline of
+   the subwindow is displayed to show the shape the subwindow will
+   acquire on an uncancelled upclick.  The shape of the subwindow is
+   not actually changed until the uncancelled upclick.  The outline is
+   removed on an uncancelled upclick or on a chord-cancel. 
+
+<P><PRE>INTERFACE <interface><A HREF="ZGrowVBT.m3.html">ZGrowVBT</A></interface>;
+
+IMPORT <A HREF="FeedbackVBT.i3.html">FeedbackVBT</A>, <A HREF="ZMoveVBT.i3.html">ZMoveVBT</A>;
+
+TYPE
+  &lt;* SUBTYPE T &lt;: MulitFilter.T *&gt;
+  <A HREF="ZGrowVBT.m3.html#T">T</A> &lt;: Public;
+  Public = ZMoveVBT.T OBJECT
+           METHODS
+             &lt;* LL &lt;= VBT.mu *&gt;
+             init (f: FeedbackVBT.T): T;
+           END;
+
+END ZGrowVBT.
+</PRE>
+</inInterface>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

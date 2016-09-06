@@ -1,0 +1,75 @@
+(* A calculator with a user interface. The FormsVBT interface was copied
+   verbatim from /proj/m3/pkg/calculator/src/Calculator.fv. *)
+
+module Calculator;
+
+let calc =
+  { protected,
+    interface =>
+     form_fromFile("Calculator.fv"),
+    getDispl =>
+      meth(self)
+        try text_toInt(form_getText(self.interface, "display", ""))
+        except else 0
+        end;
+      end,
+    setDispl =>
+      meth(self,n)
+        form_putText(self.interface, "display", "", fmt_int(n), false)
+      end,
+    mem => 0,
+    building => true,
+    op => meth(s,n,m) m end,
+    digit =>
+      meth(self,n)
+        if self.building
+        then self.setDispl(int_+(int_*(self.getDispl, 10), n))
+        else self.setDispl(n); self.building := true;
+        end
+      end,
+    exec =>
+      meth(self)
+        self.mem := self.op(self.mem, self.getDispl);
+        self.setDispl(self.mem);
+        self.building := false;
+      end,
+    equals =>
+      meth(self) self.exec; self.op := meth(s,n,m) m end end,
+    add =>
+      meth(self) self.exec; self.op := meth(s,n,m) n+m end end,
+    sub =>
+      meth(self) self.exec; self.op := meth(s,n,m) n-m end end,
+    mul =>
+      meth(self) self.exec; self.op := meth(s,n,m) n*m end end,
+    div =>
+      meth(self) 
+        self.exec; 
+        self.op := 
+	  meth(s,n,m) if m is 0 then 0 else n/m end end
+      end,
+   };
+
+(
+
+form_attach(calc.interface, "b0", proc(fv) calc.digit(0) end);
+form_attach(calc.interface, "b1", proc(fv) calc.digit(1) end);
+form_attach(calc.interface, "b2", proc(fv) calc.digit(2) end);
+form_attach(calc.interface, "b3", proc(fv) calc.digit(3) end);
+form_attach(calc.interface, "b4", proc(fv) calc.digit(4) end);
+form_attach(calc.interface, "b5", proc(fv) calc.digit(5) end);
+form_attach(calc.interface, "b6", proc(fv) calc.digit(6) end);
+form_attach(calc.interface, "b7", proc(fv) calc.digit(7) end);
+form_attach(calc.interface, "b8", proc(fv) calc.digit(8) end);
+form_attach(calc.interface, "b9", proc(fv) calc.digit(9) end);
+
+form_attach(calc.interface, "bAdd", proc(fv) calc.add end);
+form_attach(calc.interface, "bSub", proc(fv) calc.sub end);
+form_attach(calc.interface, "bMult", proc(fv) calc.mul end);
+form_attach(calc.interface, "bDiv", proc(fv) calc.div end);
+form_attach(calc.interface, "bEquals", proc(fv) calc.equals end);
+
+form_attach(calc.interface, "quit", proc(fv) form_hide(fv) end);
+
+form_show(calc.interface);
+
+);

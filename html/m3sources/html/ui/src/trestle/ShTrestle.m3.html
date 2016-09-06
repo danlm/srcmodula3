@@ -1,0 +1,347 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: ui/src/trestle/ShTrestle.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>ui/src/trestle/ShTrestle.m3</H2></A><HR>
+<inModule>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM>                                                                           </EM></BLOCKQUOTE><PRE>
+&lt;*PRAGMA LL*&gt;
+
+MODULE <module><implements><A HREF="ShTrestle.i3.html">ShTrestle</A></implements></module>;
+
+             screenOf  := ScreenOf;
+             (* Trestle stuff *)
+             attach    := Attach;
+             delete    := Delete;
+             decorate  := Decorate;
+             iconize   := Iconize;
+             overlap   := Overlap;
+             moveNear  := MoveNear;
+             installOffscreen := InstallOffscreen;
+</PRE><BLOCKQUOTE><EM>           setColorMap := SetColorMap; </EM></BLOCKQUOTE><PRE>
+             getScreens := GetScreens;
+             captureScreen := CaptureScreen;
+             allCeded := AllCeded;
+             tickTime := TickTime;
+             (* some day:
+             swap := Swap;
+             getName := GetName;
+             setScreens := SetScreens;
+             nameList := NameList;
+             moveNearByName := MoveNearByName;
+             swapByName := SwapByName;
+             deleteByName := DeleteByName;
+             takeOverMouse := TakeOverMouse;
+             releaseMouse := ReleaseMouse;
+             setHighlight := SetHighlight;
+             addParent := AddParent;
+             remParent := RemParent;
+             warpCursor := WarpCursor; *)
+             lastCeded := LastCeded;
+             trestleId := TrestleID;
+             windowId := WindowID;
+             updateBuddies := UpdateBuddies;
+
+PROCEDURE <A NAME="ScreenOf"><procedure>ScreenOf</procedure></A> (v: ChildT; ch: VBT.T; READONLY pt: Point.T):
+  Trestle.ScreenOfRec =
+  VAR
+    res    := Trestle.ScreenOf(v, pt);
+    par: T;
+  BEGIN
+    TYPECASE ch OF
+      JoinedVBT.T (cld) =&gt;
+        par := cld.parents;
+        IF par # NIL AND par.link # NIL THEN res.trsl := v END;
+    ELSE                         (*skip*)
+    END;
+    RETURN res
+  END ScreenOf;
+
+PROCEDURE <A NAME="Attach"><procedure>Attach</procedure></A>(t: ChildT; v: VBT.T) RAISES {Failure} =
+  VAR
+    res    := Trestle.ScreenOf(v, pt);
+    par: T;
+  BEGIN
+    TYPECASE ch OF
+      JoinedVBT.T (cld) =&gt;
+        par := cld.parents;
+        IF par # NIL AND par.link # NIL THEN res.trsl := v END;
+    ELSE                         (*skip*)
+    END;
+    RETURN res
+  END Attach;
+
+PROCEDURE <A NAME="Delete"><procedure>Delete</procedure></A>(t: ChildT; v: VBT.T) RAISES {Failure} =
+  BEGIN
+  END Delete;
+
+PROCEDURE <A NAME="Overlap"><procedure>Overlap</procedure></A> (         t : ChildT;
+                            v : VBT.T;
+                            id: Trestle.ScreenID;
+                   READONLY nw: Point.T           ) RAISES {Failure} =
+  BEGIN
+
+  END Overlap;
+
+PROCEDURE <A NAME="MoveNear"><procedure>MoveNear</procedure></A> (tr: ChildT; v, y: VBT.T) RAISES {Failure} =
+  VAR
+    par, zpar, zzpar: T         := NIL;
+    trsl, ztr       : Trestle.T;
+    w, z, zz        : VBT.T     := NIL;
+  BEGIN
+    TYPECASE v OF
+      NULL =&gt;                    (*skip*)
+    | JoinedVBT.T (ch) =&gt;
+        par := ch.parents;
+        IF y # NIL AND TrestleImpl.RootChild(y, ztr, z) THEN
+          TYPECASE ztr OF
+            ChildT (zch) =&gt; zpar := zch.ref.parents
+          ELSE                   (* skip *)
+          END
+        END;
+        zzpar := zpar;
+        WHILE zzpar # NIL DO zzpar.used := FALSE; zzpar := zzpar.link END;
+        WHILE par # NIL DO
+          TRY
+            IF TrestleImpl.RootChild(par, trsl, w) THEN
+              IF zpar # NIL THEN
+                zzpar := zpar;
+                z := NIL;
+                LOOP
+                  IF zzpar = NIL THEN EXIT END;
+                  IF TrestleImpl.RootChild(zzpar, ztr, zz) AND ztr = trsl THEN
+                    z := zzpar;
+                    IF NOT zzpar.used THEN zzpar.used := TRUE; EXIT END
+                  END;
+                  zzpar := zzpar.link
+                END
+              END;
+              trsl.moveNear(w, z)
+            END
+          EXCEPT
+            Failure =&gt;           (* skip *)
+          END;
+          par := par.link
+        END
+    ELSE
+      IF TrestleImpl.RootChild(tr, trsl, w) THEN trsl.moveNear(w, y) END
+    END
+  END MoveNear;
+
+PROCEDURE <A NAME="InstallOffscreen"><procedure>InstallOffscreen</procedure></A> (tr           : ChildT;
+                            v            : VBT.T;
+                            width, height: CARDINAL;
+                            st           : VBT.ScreenType)
+  RAISES {Failure} =
+  VAR
+    par : T;
+    trsl: Trestle.T;
+    w   : VBT.T;
+  BEGIN
+    TYPECASE v OF
+      NULL =&gt;                    (*skip*)
+    | JoinedVBT.T (ch) =&gt;
+        par := ch.parents;
+        WHILE par # NIL DO
+          TRY
+            IF TrestleImpl.RootChild(par, trsl, w) THEN
+              pst := st;
+              IF pst = par.joinST THEN
+                pst := par.st
+              ELSIF pst = par.joinST.bits THEN
+                pst := par.st.bits
+              END;
+              trsl.InstallOffscreen(w, width, height, pst)
+            END
+          EXCEPT
+            Failure =&gt;           (* skip *)
+          END;
+          par := par.link
+        END
+    ELSE
+      IF TrestleImpl.RootChild(tr, trsl, w) THEN
+        trsl.installOffscreen(w, width, height, st)
+      END
+    END
+  END InstallOffscreen;
+
+PROCEDURE <A NAME="Decorate"><procedure>Decorate</procedure></A> (tr: ChildT; v: VBT.T; old, new: TrestleClass.Decoration)
+  RAISES {Failure} =
+  VAR
+    par : T;
+    trsl: Trestle.T;
+    w   : VBT.T;
+  BEGIN
+    TYPECASE v OF
+      NULL =&gt;                    (*skip*)
+    | JoinedVBT.T (ch) =&gt;
+        par := ch.parents;
+        WHILE par # NIL DO
+          TRY
+            IF TrestleImpl.RootChild(par, trsl, w) THEN
+              TrestleImpl.InnerDecorate(trsl, w, new)
+            END
+          EXCEPT
+            Failure =&gt;           (* skip *)
+          END;
+          par := par.link
+        END
+    ELSE
+      IF TrestleImpl.RootChild(tr, trsl, w) THEN
+        TrestleImpl.InnerDecorate(trsl, w, new)
+      END
+    END
+  END Decorate;
+
+PROCEDURE <A NAME="Iconize"><procedure>Iconize</procedure></A> (tr: ChildT; v: VBT.T) RAISES {Failure} =
+  VAR
+    par : T;
+    trsl: Trestle.T;
+    w   : VBT.T;
+  BEGIN
+    TYPECASE v OF
+      NULL =&gt;                    (*skip*)
+    | JoinedVBT.T (ch) =&gt;
+        par := ch.parents;
+        WHILE par # NIL DO
+          TRY
+            IF TrestleImpl.RootChild(par, trsl, w) THEN trsl.iconize(w) END
+          EXCEPT
+            Failure =&gt;           (* skip *)
+          END;
+          par := par.link
+        END
+    ELSE
+      IF TrestleImpl.RootChild(tr, trsl, w) THEN trsl.iconize(w) END
+    END
+  END Iconize;
+
+PROCEDURE <A NAME="AllCeded"><procedure>AllCeded</procedure></A> (tr: ChildT): BOOLEAN RAISES {Failure} =
+  VAR
+    trsl: Trestle.T;
+    v   : VBT.T;
+  BEGIN
+    IF TrestleImpl.RootChild(tr, trsl, v) THEN
+      RETURN Trestle.AllCeded(trsl)
+    ELSE
+      RETURN TRUE
+    END
+  END AllCeded;
+
+PROCEDURE <A NAME="LastCeded"><procedure>LastCeded</procedure></A> (tr: ChildT): VBT.TimeStamp
+  RAISES {Failure, Unimplemented} =
+  VAR
+    trsl: Trestle.T;
+    v   : VBT.T;
+  BEGIN
+    IF TrestleImpl.RootChild(tr, trsl, v) THEN
+      RETURN Trestle.LastCeded(trsl)
+    ELSE
+      RETURN 0
+    END
+  END LastCeded;
+
+PROCEDURE <A NAME="TickTime"><procedure>TickTime</procedure></A> (tr: ChildT): BOOLEAN =
+  VAR
+    trsl: Trestle.T;
+    v   : VBT.T;
+  BEGIN
+    IF TrestleImpl.RootChild(tr, trsl, v) THEN
+      RETURN Trestle.TickTime(trsl)
+    ELSE
+      RETURN 1000p
+    END
+  END TickTime;
+
+PROCEDURE <A NAME="TrestleID"><procedure>TrestleID</procedure></A> (tr: ChildT): TEXT =
+  VAR
+    trsl: Trestle.T;
+    v   : VBT.T;
+  BEGIN
+    IF TrestleImpl.RootChild(tr, trsl, v) THEN
+      RETURN trsl.trestleId()
+    ELSE
+      RETURN &quot;Unattached!&quot;
+    END
+  END TickTime;
+
+PROCEDURE WindowID (tr:ChildT; &lt;* UNUSED *&gt; w: VBT.T): TEXT =
+  VAR
+    trsl: Trestle.T;
+    v   : VBT.T;
+  BEGIN
+    IF TrestleImpl.RootChild(tr, trsl, v) THEN
+      RETURN trsl.windowID(v)
+    ELSE
+      RETURN &quot;0&quot;
+    END
+  END WindowID;
+
+PROCEDURE GetScreens (tr: ChildT): Trestle.ScreenArray RAISES {Failure} =
+  VAR
+    trsl: Trestle.T;
+    v   : VBT.T;
+  BEGIN
+    IF TrestleImpl.RootChild(tr, trsl, v) THEN
+      RETURN trsl.getScreens()
+    ELSE
+      RETURN NIL
+    END
+  END GetScreens;
+
+PROCEDURE CaptureScreen (         tr  : ChildT;
+                                  id  : Trestle.ScreenID;
+                         READONLY clip: Rect.T;
+                         VAR      br  : Region.T          ): ScrnPixmap.T
+  RAISES {Failure} =
+  VAR
+    trsl: Trestle.T;
+    v   : VBT.T;
+  BEGIN
+    IF TrestleImpl.RootChild(tr, trsl, v) THEN
+      RETURN trsl.captureScreen(id, clip, br)
+    ELSE
+      br := Region.FromRect(clip);
+      RETURN NIL
+    END
+  END CaptureScreen;
+
+PROCEDURE UpdateBuddies (ch: VBT.T) =
+  BEGIN
+    &lt;* ASSERT FALSE *&gt;
+  END UpdateBuddies;
+
+BEGIN
+END ShTrestle.
+</PRE>
+</inModule>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

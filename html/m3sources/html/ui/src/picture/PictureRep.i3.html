@@ -1,0 +1,116 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: ui/src/picture/PictureRep.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>ui/src/picture/PictureRep.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+
+INTERFACE <interface><A HREF="#x1">PictureRep</A></interface>;
+</PRE> further detail about the representation of an Picture.T. 
+
+<P><PRE>IMPORT <A HREF="../vbt/Batch.i3.html">Batch</A>, <A HREF="Completion.i3.html">Completion</A>, <A HREF="../../../C/src/Common/Ctypes.i3.html">Ctypes</A>, <A HREF="#x2">Picture</A>, <A HREF="../vbt/VBT.i3.html">VBT</A>, <A HREF="../../../word/src/Word.i3.html">Word</A>;
+FROM <A HREF="#x2">Picture</A> IMPORT TrestleFail, ScreenTypeNotSupported;
+
+REVEAL Picture.T &lt;: Public;
+
+TYPE
+  Public =
+    MUTEX OBJECT
+      allocByCaller := FALSE;
+      (* if TRUE, Picture belongs to the caller, so should not be freed by
+         destroy *)
+      image: Picture.ImageStar := NIL;
+      next : Picture.T         := NIL; (* for free list *)
+    METHODS
+      init (st: VBT.ScreenType; width, height: CARDINAL): Picture.T
+            RAISES {ScreenTypeNotSupported, TrestleFail};
+      initFromImage (st          : VBT.ScreenType;
+                     image       : Picture.ImageStar;
+                     sharedMemory                      := FALSE): Picture.T
+                     RAISES {ScreenTypeNotSupported, TrestleFail};
+
+      attachData (dataPtr: Ctypes.char_star;
+                  shmInfo: Picture.SharedMemInfo := NIL)
+                  RAISES {TrestleFail};
+      detachData () RAISES {TrestleFail};
+
+      destroy ();
+    END;
+</PRE> -- utilities -- 
+
+<P><PRE>PROCEDURE <A HREF="#x3">MakeCompletion</A> (picture: Picture.T): Completion.T;
+</PRE> completions should be got from here, so specific implementations can do
+   extra things with the basic type.  Call the init() method on the
+   result 
+
+<P><PRE>TYPE Lock = RECORD a, b, c: UNTRACED REF Word.T END;
+
+PROCEDURE <A HREF="Picture.m3.html#Freeze">Freeze</A> (picture: Picture.T): Lock;
+PROCEDURE <A HREF="Picture.m3.html#Thaw">Thaw</A> (l: Lock);
+</PRE> To read the contents of an Picture, you must first call <CODE>Freeze</CODE>,
+   preventing the allocator from moving the internal data.  You must then
+   call <CODE>Thaw</CODE>, passing the result of the call to <CODE>Freeze</CODE> when you no
+   longer need the pointers to be maintained correctly. 
+
+<P><PRE>PROCEDURE <A HREF="Picture.m3.html#IncrementBatch">IncrementBatch</A> (ba: Batch.T);
+PROCEDURE <A HREF="Picture.m3.html#DecrementBatch">DecrementBatch</A> (ba: Batch.T);
+</PRE> search the batch and increment or decrement the Completion in any
+   PaintExt.ImageRec's. 
+
+<P><PRE>END PictureRep.
+</PRE>
+</inInterface>
+<HR>
+<A NAME="x1">PictureRep's implementation  is in:
+</A><UL>
+<LI><A HREF="Picture.m3.html#0TOP0">ui/src/picture/Picture.m3</A>
+<LI><A HREF="PictureImpl.m3.html#0TOP0">ui/src/picture/PictureImpl.m3</A>
+<LI><A HREF="../winvbt/PictureImpl.m3.html#0TOP0">ui/src/winvbt/PictureImpl.m3</A>
+<LI><A HREF="../xvbt/PictureImpl.m3.html#0TOP0">ui/src/xvbt/PictureImpl.m3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x2">interface Picture is in:
+</A><UL>
+<LI><A HREF="../../../trestle_by_example/src/common/Picture.i3.html#0TOP0">trestle_by_example/src/common/Picture.i3</A>
+<LI><A HREF="Picture.i3.html#0TOP0">ui/src/picture/Picture.i3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x3">procedure PictureRep.MakeCompletion is in:
+</A><UL>
+<LI><A HREF="PictureImpl.m3.html#MakeCompletion">ui/src/picture/PictureImpl.m3</A>
+<LI><A HREF="../winvbt/PictureImpl.m3.html#MakeCompletion">ui/src/winvbt/PictureImpl.m3</A>
+<LI><A HREF="../xvbt/PictureImpl.m3.html#MakeCompletion">ui/src/xvbt/PictureImpl.m3</A>
+</UL>
+<P>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

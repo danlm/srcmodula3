@@ -1,0 +1,147 @@
+#
+# Last modified on Tue Sep 17 09:29:34 PDT 1996 by najork
+#      modified on Fri Jun 16 10:51:54 PDT 1995 by kalsow
+#
+
+This release (3.6) has been tested on four platforms:
+
+    ALPHA_OSF    Digital Alpha running Digital Unix 3.2
+    DS3100       DECstation running ULTRIX 4.4
+    SPARC        Sun SparcStation running SunOS 4.1.4
+    NT386        PCs running Windows 95, Windows NT 3.51
+                   (Pentium and >32M of RAM recommended)
+
+It should also work on most of the other platforms.  Please send mail
+to "m3-request@src.dec.com" to let us know of any problems.  We're
+actively fixing this release.
+
+The user manual is online at URL
+
+      http://www.research.digital.com/SRC/modula-3/html/home.html
+
+More extensive and up-to-date installation instructions can be found at
+
+      http://www.research.digital.com/SRC/modula-3/html/install.html
+
+
+
+To install the system on platform "XYZ"
+
+   1) For Unix platforms, get "boot-XYZ.tar.gz", "m3cc.tar.gz",
+      "m3.tar.gz", and optionally "m3gdb.tar.gz", "html.tar.gz",
+       and "docs.tar.gz".
+
+         > ftp gatekeeper.dec.com
+         ftp> cd pub/DEC/Modula-3/release-3.5
+         ftp> binary
+         ftp> get boot-XYZ.tar.gz
+         ftp> get m3cc.tar.gz
+         ftp> get m3.tar.gz
+   
+      Here's what they contain:
+
+         boot-XYZ   - the bootstrap compiler for platform XYZ
+         m3cc       - the GCC-based back end
+         m3         - the full SRC Modula-3 sources
+         m3gdb      - a version of gdb modified to recognize Modula-3 symbols
+         html       - a copy of the WWW documentation
+         docs       - misc. documents
+
+      On Windows 95 and Windows NT, you don't need m3cc and m3gdb.
+      Otherwise everything is the same.
+ 
+   2) Unpack "boot-XYZ.tar.gz":
+
+         gunzip < boot-XYZ.tar.gz | tar xpof -
+
+   3) Inside the boot-XYZ directory that gets created,
+      unpack "m3cc.tar.gz".  It's the gcc-based backend.
+
+         cd boot-XYZ
+         gunzip < ../m3cc.tar.gz | tar xpof -
+
+      On Windows 95 and Windows NT, m3cc is not used.  This step should 
+      be skipped.
+
+   4) Edit "boot-XYZ/m3build/templates/XYZ" to match your installation.
+
+      If your native "make" does not support the VPATH feature,
+      ensure that GNU_MAKE in your configuration template is set
+      up to use GNU make.  If you're optimistic, skip this step and
+      see if the next step dies a horrible death trying to build m3cc.
+      See "boot-XYZ/m3cc/gcc/INSTALL" for the gory details about VPATH.
+
+   5) run "m3boot"
+
+   6) run "m3ship"
+
+      At this point a working compiler has been installed, but no
+      libraries.  You may need to tell your shell that new executables
+      (e.g. m3build and m3ship) are present, by resetting your PATH
+      environment variable to include the BIN_INSTALL directory
+      and running rehash, for example.
+
+      Unless the bootstrap is broken, you are done with the boot-XYZ
+      directory.  Leave the directory and if you're feeling brave,
+      delete it.
+
+   7) In a clean directory, unpack the m3 source archive, edit
+      m3/src/m3makefile as you see fit, and build it using the
+      m3build that was installed in step 6:
+
+          > gunzip < ../m3.tar.gz | tar xpof -
+          > cd m3
+          (edit src/m3makefile to build the pieces you want)
+          > m3build
+
+      The top-level m3makefile, m3/src/m3makefile, takes care of building
+      each Modula-3 source package and shipping it.  For your own
+      packages you must run m3build and then explicitly run m3ship.
+
+      SRC Modula-3 started out as a Unix-based environment.  At this point, 
+      most, but not all of the libraries and programs have been ported to 
+      Windows 95/Windows NT.  Moreover, some programs that depend on Trestle 
+      (the "ui" package) remain shaky or plain don't work (e.g. Lectern).
+
+   8) At this point the Modula-3 libraries and utilities are
+      built and installed.  To save space you may delete the
+      compressed tar files, and the boot-XYZ and m3 directories.
+      They are not needed when using SRC Modula-3.
+
+
+More documentation can be found on the Modula-3 home page at URL:
+
+   http://www.research.digital.com/SRC/modula-3/html/home.html
+
+More detailed installation instructions are in
+
+   http://www.research.digital.com/SRC/modula-3/html/install.html
+
+or in the html.tar.gz archive at:
+
+   "html/modula-3/html/install.html"
+
+
+
+This system contains bugs.  We try to maintain an up-to-date list
+of known bugs and patches at
+
+   http://www.research.digital.com/SRC/modula-3/html/patches.html
+
+If you discover bugs or fixes, please send mail to "m3-request@src.dec.com".
+Here are bugs a few to watch out for:
+
+   1) We don't use the gcc optimizer routinely.  In the past it has
+      produced bad code or crashed.  Use the optimizer at your own risk.
+
+   2) The compiler doesn't use Fmt & Lex so its reading and printing
+      of extremely large or small floating-point values is sloppy.
+
+   3) The Windows 95/Windows NT port is very new.  The Windows-port of 
+      Trestle is mostly working, but hasn't been used much.  Network 
+      Objects have not been exercised a lot.
+
+ Enjoy,
+
+    - Bill Kalsow
+    - Marc Najork 

@@ -1,0 +1,80 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: os/src/POSIX/PipePosix.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>os/src/POSIX/PipePosix.m3</H2></A><HR>
+<inModule>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+
+MODULE <module>PipePosix</module> EXPORTS <A HREF="../Common/Pipe.i3.html"><implements>Pipe</A></implements>;
+
+IMPORT <A HREF="../../../C/src/Common/Ctypes.i3.html">Ctypes</A>, <A HREF="FilePosix.i3.html">FilePosix</A>, <A HREF="../Common/OSError.i3.html">OSError</A>, <A HREF="OSErrorPosix.i3.html">OSErrorPosix</A>, <A HREF="#x1">Unix</A>;
+
+PROCEDURE <A NAME="Open"><procedure>Open</procedure></A>(VAR hr, hw: T) RAISES {OSError.E} =
+  VAR fd: ARRAY [0..1] OF Ctypes.int;
+  BEGIN
+    IF Unix.pipe(fd) &lt; 0 THEN OSErrorPosix.Raise() END;
+    hr := FilePosix.NewPipe(fd := fd[Unix.readEnd], ds := FilePosix.Read);
+    hw := FilePosix.NewPipe(fd := fd[Unix.writeEnd], ds := FilePosix.Write)
+  END Open;
+
+BEGIN
+END PipePosix.
+</PRE>
+</inModule>
+<HR>
+<A NAME="x1">interface Unix is in:
+</A><UL>
+<LI><A HREF="../../../unix/src/aix-3-2/Unix.i3.html#0TOP0">unix/src/aix-3-2/Unix.i3</A>
+<LI><A HREF="../../../unix/src/aix-ps2-1-2/Unix.i3.html#0TOP0">unix/src/aix-ps2-1-2/Unix.i3</A>
+<LI><A HREF="../../../unix/src/freebsd-1/Unix.i3.html#0TOP0">unix/src/freebsd-1/Unix.i3</A>
+<LI><A HREF="../../../unix/src/freebsd-2/Unix.i3.html#0TOP0">unix/src/freebsd-2/Unix.i3</A>
+<LI><A HREF="../../../unix/src/hpux-7-0/Unix.i3.html#0TOP0">unix/src/hpux-7-0/Unix.i3</A>
+<LI><A HREF="../../../unix/src/ibm-4-3/Unix.i3.html#0TOP0">unix/src/ibm-4-3/Unix.i3</A>
+<LI><A HREF="../../../unix/src/irix-5.2/Unix.i3.html#0TOP0">unix/src/irix-5.2/Unix.i3</A>
+<LI><A HREF="../../../unix/src/linux/Unix.i3.html#0TOP0">unix/src/linux/Unix.i3</A>
+<LI><A HREF="../../../unix/src/osf-1.ALPHA_OSF/Unix.i3.html#0TOP0">unix/src/osf-1.ALPHA_OSF/Unix.i3</A>
+<LI><A HREF="../../../unix/src/osf-1.DS3100/Unix.i3.html#0TOP0">unix/src/osf-1.DS3100/Unix.i3</A>
+<LI><A HREF="../../../unix/src/solaris-2-x/Unix.i3.html#0TOP0">unix/src/solaris-2-x/Unix.i3</A>
+<LI><A HREF="../../../unix/src/sunos-4-x/Unix.i3.html#0TOP0">unix/src/sunos-4-x/Unix.i3</A>
+<LI><A HREF="../../../unix/src/sysv-4.0/Unix.i3.html#0TOP0">unix/src/sysv-4.0/Unix.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.AP3000/Unix.i3.html#0TOP0">unix/src/ultrix-3-1.AP3000/Unix.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.ARM/Unix.i3.html#0TOP0">unix/src/ultrix-3-1.ARM/Unix.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.DS3100/Unix.i3.html#0TOP0">unix/src/ultrix-3-1.DS3100/Unix.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.NEXT/Unix.i3.html#0TOP0">unix/src/ultrix-3-1.NEXT/Unix.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.SEQUENT/Unix.i3.html#0TOP0">unix/src/ultrix-3-1.SEQUENT/Unix.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.SUN3/Unix.i3.html#0TOP0">unix/src/ultrix-3-1.SUN3/Unix.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.SUN386/Unix.i3.html#0TOP0">unix/src/ultrix-3-1.SUN386/Unix.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.UMAX/Unix.i3.html#0TOP0">unix/src/ultrix-3-1.UMAX/Unix.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.VAX/Unix.i3.html#0TOP0">unix/src/ultrix-3-1.VAX/Unix.i3</A>
+</UL>
+<P>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

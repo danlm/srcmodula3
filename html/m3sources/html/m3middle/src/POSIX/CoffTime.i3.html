@@ -1,0 +1,71 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: m3middle/src/POSIX/CoffTime.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>m3middle/src/POSIX/CoffTime.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM>                                                           </EM></BLOCKQUOTE><PRE>
+</PRE> An OS-independent way to get COFF timestamps 
+
+<P><PRE>INTERFACE <interface><A HREF="#x1">CoffTime</A></interface>;
+
+CONST EpochAdjust = 0.0d0; (* to 1/1/1970 *)
+
+PROCEDURE <A HREF="#x2">Now</A> (): INTEGER;
+
+PROCEDURE <A HREF="#x3">OfFile</A> (file: TEXT): INTEGER;
+
+END CoffTime.
+</PRE>
+</inInterface>
+<HR>
+<A NAME="x1">CoffTime's implementation  is in:
+</A><UL>
+<LI><A HREF="CoffTime.m3.html#0TOP0">m3middle/src/POSIX/CoffTime.m3</A>
+<LI><A HREF="../WIN32/CoffTime.m3.html#0TOP0">m3middle/src/WIN32/CoffTime.m3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x2">procedure CoffTime.Now is in:
+</A><UL>
+<LI><A HREF="CoffTime.m3.html#Now">m3middle/src/POSIX/CoffTime.m3</A>
+<LI><A HREF="../WIN32/CoffTime.m3.html#Now">m3middle/src/WIN32/CoffTime.m3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x3">procedure CoffTime.OfFile is in:
+</A><UL>
+<LI><A HREF="CoffTime.m3.html#OfFile">m3middle/src/POSIX/CoffTime.m3</A>
+<LI><A HREF="../WIN32/CoffTime.m3.html#OfFile">m3middle/src/WIN32/CoffTime.m3</A>
+</UL>
+<P>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

@@ -1,0 +1,81 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: motif/src/Xmacro.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>motif/src/Xmacro.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM>                                                           </EM></BLOCKQUOTE><PRE>
+</PRE>                                                           
+ Contributed by Harry George (hgeorge@eskimo.com), 5/16/95 
+
+<P><PRE>UNSAFE INTERFACE <interface><A HREF="Xmacro.m3.html">Xmacro</A></interface>;
+
+IMPORT <A HREF="../../X11R4/src/Common/Xt.i3.html">Xt</A>;
+FROM <A HREF="../../C/src/Common/Ctypes.i3.html">Ctypes</A> IMPORT
+  char_star,short,unsigned_short;
+
+&lt;*EXTERNAL&quot;XtVaSetValues&quot;*&gt;
+PROCEDURE XtVaSetValues(widget:Xt.Widget;
+		 val1, val2, val3, val4, val5,
+		 val6, val7, val8, val9, val10,
+		 val11,val12,val13,val14,val15,
+		 val16:ADDRESS:=NIL);
+
+&lt;*EXTERNAL&quot;XtVaGetValues&quot;*&gt;
+PROCEDURE XtVaGetValues(widget:Xt.Widget;
+		 val1, val2, val3, val4, val5,
+		 val6, val7, val8, val9, val10,
+		 val11,val12,val13,val14,val15,
+		 val16:ADDRESS:=NIL);
+
+&lt;*EXTERNAL &quot;XtVaCreateManagedWidget&quot;*&gt;
+PROCEDURE XtVaCreateManagedWidget(name:char_star;
+	         widget_class: Xt.WidgetClass;
+		 parent: Xt.Widget;
+		 val1, val2, val3, val4, val5,
+		 val6, val7, val8, val9, val10,
+		 val11,val12,val13,val14,val15,
+		 val16:ADDRESS:=NIL):Xt.Widget;
+
+PROCEDURE <A HREF="Xmacro.m3.html#AddrVal">AddrVal</A>(value:ADDRESS):Xt.ArgVal;
+PROCEDURE <A HREF="Xmacro.m3.html#CharVal">CharVal</A>(value:CHAR):Xt.ArgVal;
+PROCEDURE <A HREF="Xmacro.m3.html#IntVal">IntVal</A>(value:INTEGER):Xt.ArgVal;
+PROCEDURE <A HREF="Xmacro.m3.html#ShortVal">ShortVal</A>(value:short):Xt.ArgVal;
+PROCEDURE <A HREF="Xmacro.m3.html#TextVal">TextVal</A>(value:TEXT):Xt.ArgVal;
+PROCEDURE <A HREF="Xmacro.m3.html#UShortVal">UShortVal</A>(value:unsigned_short):Xt.ArgVal;
+
+PROCEDURE <A HREF="Xmacro.m3.html#XtNewString">XtNewString</A>(str:char_star):char_star;
+
+END Xmacro.
+</PRE>
+</inInterface>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

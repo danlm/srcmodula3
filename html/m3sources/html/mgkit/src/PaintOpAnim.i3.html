@@ -1,0 +1,73 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: mgkit/src/PaintOpAnim.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>mgkit/src/PaintOpAnim.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+
+INTERFACE <interface><A HREF="PaintOpAnim.m3.html">PaintOpAnim</A></interface>;
+
+IMPORT <A HREF="GraphVBT.i3.html">GraphVBT</A>, <A HREF="../../ui/src/vbt/PaintOp.i3.html">PaintOp</A>;
+
+&lt;* PRAGMA LL *&gt;
+
+TYPE
+  RGB = RECORD r, g, b: REAL END;
+  (* The red, green and blue values of a color.  &quot;r&quot;, &quot;g&quot;, &quot;b&quot; should be in
+     the range [0.0 .. 1.0].  (0, 0, 0) is Black, (1, 1, 1) is White *)
+
+  <A HREF="PaintOpAnim.m3.html#T">T</A> &lt;: PublicT;
+  PublicT = OBJECT
+  METHODS
+    init(rgb: RGB): T;
+    (* Initializes self as a &quot;T&quot; with a PaintOp.T whose color is &quot;rgb&quot; *)
+    set(graph: GraphVBT.T; rgb: RGB); &lt;* LL = graph.mu *&gt;
+    (* Set the color of the PaintOp.T associated with self to &quot;rgb&quot; *)
+    get(): RGB;
+    (* Return the color of the PaintOp.T associated with self *)
+    op(): PaintOp.T;
+    (* Return the PaintOp.T associated with self *)
+    animate(graph: GraphVBT.T; animation: Animation); &lt;* LL = graph.mu *&gt;
+    (* Next time &quot;graph.animate&quot; is called, self.set(graph, animation.rgb(time))
+       will be repeatedly called to change the color of T *)
+  END;
+
+  Animation = OBJECT
+  METHODS
+    rgb(time: REAL): RGB;
+    (* &quot;rgb&quot; is called with &quot;time&quot; in the range [0.0 .. 1.0]. *)
+  END;
+
+END PaintOpAnim.
+</PRE>
+</inInterface>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

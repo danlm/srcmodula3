@@ -1,0 +1,60 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: float/src/VAX/RealRep.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>float/src/VAX/RealRep.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM>                                                                           </EM></BLOCKQUOTE><PRE>
+
+INTERFACE <interface>RealRep</interface>;
+</PRE> This interface describes the layout of VAX single precision reals. 
+
+<P><PRE>TYPE
+  T = RECORD (* &quot;f&quot; floating point *)
+    fraction0 : BITS  7 FOR [0..63]         := 0;
+    exponent  : BITS  8 FOR [0..255]        := 0;
+    sign      : BITS  1 FOR [0..1]          := 0;
+    fraction1 : BITS 16 FOR [0..64*1024-1]  := 0;
+  END;
+
+CONST
+  ExponentBias = 128;
+
+CONST
+  NegInf = T { sign := 1, exponent := 255 };
+  PosInf = T { sign := 0, exponent := 255 };
+  Nan    = T { sign := 1, exponent := 0   };
+
+END RealRep.
+</PRE>
+</inInterface>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

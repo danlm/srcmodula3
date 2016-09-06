@@ -1,0 +1,114 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: pkgobj/src/Common/Siphon.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>pkgobj/src/Common/Siphon.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM> Siphon.i3 </EM></BLOCKQUOTE><PRE>
+
+INTERFACE <interface><A HREF="#x1">Siphon</A></interface>;
+
+IMPORT <A HREF="../../../libm3/DS/TextList.i3.html">TextList</A>, <A HREF="../../../netobjrt/src/NetObj.i3.html">NetObj</A>, <A HREF="PackageObj.i3.html">PackageObj</A>, <A HREF="PkgErr.i3.html">PkgErr</A>, <A HREF="LockOps.i3.html">LockOps</A>, <A HREF="../../../thread/src/Common/Thread.i3.html">Thread</A>;
+
+FROM <A HREF="PackageObj.i3.html">PackageObj</A> IMPORT PN, Source;
+FROM <A HREF="LockOps.i3.html">LockOps</A> IMPORT Version, SiteName;
+
+CONST SiphonExportName = &quot;Siphon&quot;;
+
+TYPE
+  Sites = REF ARRAY OF SiteName;
+  SynchKind =
+    {CheckOnly,                (* does nothing *)
+     UpdateSelf,               (* update local site from network *)
+     UpdateAll                 (* push updates from local site to world *)
+     };
+
+TYPE
+  SiteList = TextList.T (* of SiteName *);
+
+TYPE T = NetObj.T OBJECT METHODS
+    ship(
+        package: PN;
+        source: Source;
+        version: Version;
+        caller: SiteName; (* used for stats *)
+        manager: SiteName;
+        fwdSites: SiteList)
+        RAISES {PkgErr.E, NetObj.Error, Thread.Alerted};
+        (* ship a package across the siphon *)
+        (* target should forward this package to &quot;fwdRoute&quot; *)
+    enqueue(
+        package: PN;
+        version: Version;
+        manager: SiteName;
+        forSite: SiteName;
+        urgent: BOOLEAN := FALSE)
+        RAISES {PkgErr.E, NetObj.Error, Thread.Alerted};
+        (* enqueue the named package for transmission *)
+        (* if forSite=NIL,  send to all sites in siphon.config *)
+        (* manager used only if the package has to be created *)
+        (* if urgent, package is put at the beginning of the send queue *)
+    dequeue(
+        package: PN; forSite: SiteName := NIL;
+        interruptSend: BOOLEAN := FALSE) : BOOLEAN
+        RAISES {PkgErr.E, NetObj.Error, Thread.Alerted};
+        (* removes package from send queue regardless of instance *)
+        (* if forSite is NIL, removes package from all send queues *)
+        (* result indicates whether a dequeue actually occured *)
+    synch(kind: SynchKind; package: PN): TEXT
+        RAISES {NetObj.Error, Thread.Alerted};
+        (* initiate skulker synchronization *)
+        (* synchronize all packages if package = NIL*)
+        (* result text tells what happened *)
+        (* if kind=checkOnly, result contains what should be done *)
+    lockserver() : LockOps.T RAISES {PkgErr.E, NetObj.Error, Thread.Alerted};
+    status() : TEXT RAISES {NetObj.Error, Thread.Alerted};
+  END;
+
+PROCEDURE <A HREF="Siphon.m3.html#New">New</A>(site: SiteName): T
+   RAISES {PkgErr.E, NetObj.Error, Thread.Alerted};
+   (* NIL means local site *)
+
+PROCEDURE <A HREF="Siphon.m3.html#SetServerT">SetServerT</A>(t: T; site: SiteName);
+   (* register local server object *)
+
+END Siphon.
+</PRE>
+</inInterface>
+<HR>
+<A NAME="x1">Siphon's implementation  is in:
+</A><UL>
+<LI><A HREF="../../DS/Siphon_T_v1.m3.html#0TOP0">pkgobj/DS/Siphon_T_v1.m3</A>
+<LI><A HREF="Siphon.m3.html#0TOP0">pkgobj/src/Common/Siphon.m3</A>
+</UL>
+<P>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

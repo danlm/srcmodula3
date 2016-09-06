@@ -1,0 +1,50 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: m3linker/src/MxFile.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>m3linker/src/MxFile.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM>                                                             </EM></BLOCKQUOTE><PRE>
+</PRE> File: MxFile.i3                                             
+
+<P><PRE>INTERFACE <interface><A HREF="MxFile.m3.html">MxFile</A></interface>;
+
+IMPORT <A HREF="../../os/src/Common/File.i3.html">File</A>, <A HREF="../../os/src/Common/OSError.i3.html">OSError</A>;
+
+PROCEDURE <A HREF="MxFile.m3.html#Read">Read</A> (f: File.T; VAR(*OUT*)buf: ARRAY OF CHAR; len: INTEGER): INTEGER
+  RAISES {OSError.E};
+</PRE><BLOCKQUOTE><EM> == f.read (LOOPHOLE(buf[0..len-1], ARRAY OF BYTE), mayBlock := TRUE) </EM></BLOCKQUOTE><PRE>
+
+END MxFile.
+</PRE>
+</inInterface>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

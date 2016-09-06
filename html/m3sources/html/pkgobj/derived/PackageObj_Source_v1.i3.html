@@ -1,0 +1,75 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: pkgobj/derived/PackageObj_Source_v1.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>pkgobj/derived/PackageObj_Source_v1.i3</H2></A><HR>
+<inInterface>
+<PRE>INTERFACE <interface><A HREF="PackageObj_Source_v1.m3.html">PackageObj_Source_v1</A></interface>;
+
+IMPORT <A HREF="../../thread/src/Common/Thread.i3.html">Thread</A>, <A HREF="../../netobjrt/src/NetObj.i3.html">NetObj</A>, <A HREF="../../netobjrt/src/StubLib.i3.html">StubLib</A>, <A HREF="../../rw/src/Common/Rd.i3.html">Rd</A>, <A HREF="../../libm3/derived/TextList.i3.html">TextList</A>, <A HREF="../../rw/src/Common/Wr.i3.html">Wr</A>, <A HREF="../src/Common/PackageObj.i3.html">PackageObj</A>, <A HREF="../src/Common/PkgErr.i3.html">PkgErr</A>;
+TYPE Surrogate_PackageObj_Source = PackageObj.Source OBJECT
+      OVERRIDES
+        enum := Surrogate_enum;
+        pullFile := Surrogate_pullFile;
+        links := Surrogate_links;
+      END;
+
+PROCEDURE <A HREF="PackageObj_Source_v1.m3.html#Surrogate_enum">Surrogate_enum</A>(self: PackageObj.Source): PackageObj.Enum
+     RAISES {NetObj.Error, PkgErr.E, Thread.Alerted};
+
+PROCEDURE <A HREF="PackageObj_Source_v1.m3.html#Surrogate_pullFile">Surrogate_pullFile</A>(self: PackageObj.Source; path: TextList.T)
+    : Rd.T RAISES {NetObj.Error, PkgErr.E, Thread.Alerted};
+
+PROCEDURE <A HREF="PackageObj_Source_v1.m3.html#Surrogate_links">Surrogate_links</A>(self: PackageObj.Source): PackageObj.ExportLinks
+     RAISES {NetObj.Error, PkgErr.E, Thread.Alerted};
+
+PROCEDURE <A HREF="PackageObj_Source_v1.m3.html#Stub_enum">Stub_enum</A>(
+    self: PackageObj.Source;
+    c: StubLib.Conn;
+    rep: StubLib.DataRep) RAISES {NetObj.Error, Rd.Failure, Wr.Failure,
+    Thread.Alerted, PkgErr.E};
+
+PROCEDURE <A HREF="PackageObj_Source_v1.m3.html#Stub_pullFile">Stub_pullFile</A>(
+    self: PackageObj.Source;
+    c: StubLib.Conn;
+    rep: StubLib.DataRep) RAISES {NetObj.Error, Rd.Failure, Wr.Failure,
+    Thread.Alerted, PkgErr.E};
+
+PROCEDURE <A HREF="PackageObj_Source_v1.m3.html#Stub_links">Stub_links</A>(
+    self: PackageObj.Source;
+    c: StubLib.Conn;
+    rep: StubLib.DataRep) RAISES {NetObj.Error, Rd.Failure, Wr.Failure,
+    Thread.Alerted, PkgErr.E};
+
+END PackageObj_Source_v1.
+</PRE>
+</inInterface>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

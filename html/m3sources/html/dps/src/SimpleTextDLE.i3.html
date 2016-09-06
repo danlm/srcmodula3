@@ -1,0 +1,66 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: dps/src/SimpleTextDLE.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>dps/src/SimpleTextDLE.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+
+INTERFACE <interface><A HREF="SimpleTextDLE.m3.html">SimpleTextDLE</A></interface>;
+</PRE>  A SimpleTextDLE.Eis a subclass of a DisplayList.E.  
+<P>
+    The SimpleTextDLE.E displays its <CODE>text</CODE> field using
+    the default font.
+<P>
+    The text value may be changed by calling the Replace method. 
+
+<P><PRE>IMPORT <A HREF="DisplayList.i3.html">DisplayList</A>, <A HREF="DPS.i3.html">DPS</A>, <A HREF="DPSWindow.i3.html">DPSWindow</A>;
+
+TYPE E = DisplayList.E OBJECT
+  initialized: BOOLEAN:= FALSE;
+  text: TEXT := &quot;&quot;; lines: REF ARRAY OF TEXT
+ METHODS
+  Replace (text: TEXT; t: DPSWindow.T := NIL) := Replace;
+ OVERRIDES
+  Repaint := Repaint;
+  Mouse := Mouse;
+  END;
+
+PROCEDURE <A HREF="SimpleTextDLE.m3.html#Init">Init</A> (e: E; window: DPSWindow.T);
+
+PROCEDURE <A HREF="SimpleTextDLE.m3.html#Repaint">Repaint</A> (e: E; box: DPS.Box; only: REFANY := NIL): TEXT;
+PROCEDURE <A HREF="SimpleTextDLE.m3.html#Mouse">Mouse</A> (e: E; window: DPSWindow.T; event: DPS.MouseEvent): BOOLEAN;
+PROCEDURE <A HREF="SimpleTextDLE.m3.html#Replace">Replace</A> (e: E; text: TEXT; window: DPSWindow.T := NIL);
+
+  END SimpleTextDLE.
+</PRE>
+</inInterface>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

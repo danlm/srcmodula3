@@ -1,0 +1,58 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: runtime/src/common/RTWeakRef.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>runtime/src/common/RTWeakRef.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE> <CODE>RTWeakRef</CODE> is a private interface. 
+
+<P><PRE>INTERFACE <interface><A HREF="RTCollector.m3.html">RTWeakRef</A></interface>;
+</PRE> This is the low-level (<CODE>runtime</CODE>) interface for weak refs.  This
+   interface is used by the higher-level WeakRef.  In fact, the following
+   abstractions are currently the same 
+
+<P><PRE>TYPE WeakRef =
+  RECORD
+    byte: ARRAY [0..7] OF BITS 8 FOR [0..255]
+  END;
+
+PROCEDURE <A HREF="RTCollector.m3.html#WeakRefFromRef">WeakRefFromRef</A> (r: REFANY; p: WeakRefCleanUpProc := NIL):
+  WeakRef;
+
+PROCEDURE <A HREF="RTCollector.m3.html#WeakRefToRef">WeakRefToRef</A> (READONLY w: WeakRef): REFANY;
+
+TYPE WeakRefCleanUpProc = PROCEDURE (READONLY w: WeakRef; r: REFANY);
+
+END RTWeakRef.
+</PRE>
+</inInterface>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

@@ -1,0 +1,287 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: X11R4/src/Common/XtN.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>X11R4/src/Common/XtN.m3</H2></A><HR>
+<inModule>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE> File: XtN.i3							
+
+<P>
+<P><PRE>UNSAFE MODULE <module><implements><A HREF="XtN.i3.html">XtN</A></implements></module>;
+</PRE>==============================================================
+	The X11 R4 Interface for Modula 3			
+								
+	Resource names corresponding to:			
+			X11 R4 Intrinsic			
+			X11 R4 Athena Widget Set		
+==============================================================
+
+<P>
+<P><PRE>FROM <A HREF="../../../C/src/Common/M3toC.i3.html">M3toC</A> IMPORT TtoS;
+
+PROCEDURE <A NAME="ForceToLoadAnImplementation"><procedure>ForceToLoadAnImplementation</procedure></A> () =
+BEGIN
+END ForceToLoadAnImplementation;
+
+BEGIN
+
+  accelerators                   := TtoS(&quot;accelerators&quot;);
+  allowHoriz                     := TtoS(&quot;allowHoriz&quot;);
+  allowResize                    := TtoS(&quot;allowResize&quot;);
+  allowShellResize               := TtoS(&quot;allowShellResize&quot;);
+  allowVert                      := TtoS(&quot;allowVert&quot;);
+  analog                         := TtoS(&quot;analog&quot;);
+  ancestorSensitive              := TtoS(&quot;ancestorSensitive&quot;);
+  argc                           := TtoS(&quot;argc&quot;);
+  argv                           := TtoS(&quot;argv&quot;);
+  autoFill                       := TtoS(&quot;autoFill&quot;);
+  background                     := TtoS(&quot;background&quot;);
+  backgroundPixmap               := TtoS(&quot;backgroundPixmap&quot;);
+  backingStore                   := TtoS(&quot;backingStore&quot;);
+  baseHeight                     := TtoS(&quot;baseHeight&quot;);
+  baseWidth                      := TtoS(&quot;baseWidth&quot;);
+  betweenCursor                  := TtoS(&quot;betweenCursor&quot;);
+  bitmap                         := TtoS(&quot;bitmap&quot;);
+  border                         := TtoS(&quot;borderColor&quot;);
+  borderColor                    := TtoS(&quot;borderColor&quot;);
+  borderPixmap                   := TtoS(&quot;borderPixmap&quot;);
+  borderWidth                    := TtoS(&quot;borderWidth&quot;);
+  bottom                         := TtoS(&quot;bottom&quot;);
+  bottomMargin                   := TtoS(&quot;bottomMargin&quot;);
+  callback                       := TtoS(&quot;callback&quot;);
+  checkCommand                   := TtoS(&quot;checkCommand&quot;);
+  children                       := TtoS(&quot;children&quot;);
+  chime                          := TtoS(&quot;chime&quot;);
+  colormap                       := TtoS(&quot;colormap&quot;);
+  columnSpacing                  := TtoS(&quot;columnSpacing&quot;);
+  columnWidth                    := TtoS(&quot;columnWidth&quot;);
+  cornerRoundPercent             := TtoS(&quot;cornerRoundPercent&quot;);
+  createPopupChildProc           := TtoS(&quot;createPopupChildProc&quot;);
+  cursor                         := TtoS(&quot;cursor&quot;);
+  dataCompression                := TtoS(&quot;dataCompression&quot;);
+  defaultColumns                 := TtoS(&quot;defaultColumns&quot;);
+  defaultDistance                := TtoS(&quot;defaultDistance&quot;);
+  depth                          := TtoS(&quot;depth&quot;);
+  destroyCallback                := TtoS(&quot;destroyCallback&quot;);
+  dialogHOffset                  := TtoS(&quot;dialogHOffset&quot;);
+  dialogVOffset                  := TtoS(&quot;dialogVOffset&quot;);
+  displayCaret                   := TtoS(&quot;displayCaret&quot;);
+  displayNonprinting             := TtoS(&quot;displayNonprinting&quot;);
+  displayPosition                := TtoS(&quot;displayPosition&quot;);
+  echo                           := TtoS(&quot;echo&quot;);
+  editType                       := TtoS(&quot;editType&quot;);
+  emptyPixmap                    := TtoS(&quot;emptyPixmap&quot;);
+  emptyPixmapMask                := TtoS(&quot;emptyPixmapMask&quot;);
+  file                           := TtoS(&quot;file&quot;);
+  flip                           := TtoS(&quot;flip&quot;);
+  font                           := TtoS(&quot;font&quot;);
+  forceBars                      := TtoS(&quot;forceBars&quot;);
+  forceColumns                   := TtoS(&quot;forceColumns&quot;);
+  foreground                     := TtoS(&quot;foreground&quot;);
+  fromHoriz                      := TtoS(&quot;fromHoriz&quot;);
+  fromVert                       := TtoS(&quot;fromVert&quot;);
+  fullPixmap                     := TtoS(&quot;fullPixmap&quot;);
+  fullPixmapMask                 := TtoS(&quot;fullPixmapMask&quot;);
+  function                       := TtoS(&quot;function&quot;);
+  geometry                       := TtoS(&quot;geometry&quot;);
+  getValue                       := TtoS(&quot;getValue&quot;);
+  gripCursor                     := TtoS(&quot;gripCursor&quot;);
+  gripIndent                     := TtoS(&quot;gripIndent&quot;);
+  gripTranslations               := TtoS(&quot;gripTranslations&quot;);
+  hSpace                         := TtoS(&quot;hSpace&quot;);
+  hand                           := TtoS(&quot;hands&quot;);
+  height                         := TtoS(&quot;height&quot;);
+  heightInc                      := TtoS(&quot;heightInc&quot;);
+  highlight                      := TtoS(&quot;highlight&quot;);
+  highlightThickness             := TtoS(&quot;highlightThickness&quot;);
+  horizDistance                  := TtoS(&quot;horizDistance&quot;);
+  horizontalBetweenCursor        := TtoS(&quot;horizontalBetweenCursor&quot;);
+  horizontalGripCursor           := TtoS(&quot;horizontalGripCursor&quot;);
+  icon                           := TtoS(&quot;icon&quot;);
+  iconMask                       := TtoS(&quot;iconMask&quot;);
+  iconName                       := TtoS(&quot;iconName&quot;);
+  iconNameEncoding               := TtoS(&quot;iconNameEncoding&quot;);
+  iconPixmap                     := TtoS(&quot;iconPixmap&quot;);
+  iconWindow                     := TtoS(&quot;iconWindow&quot;);
+  iconX                          := TtoS(&quot;iconX&quot;);
+  iconY                          := TtoS(&quot;iconY&quot;);
+  iconic                         := TtoS(&quot;iconic&quot;);
+  index                          := TtoS(&quot;index&quot;);
+  initialResourcesPersistent     := TtoS(&quot;initialResourcesPersistent&quot;);
+  initialState                   := TtoS(&quot;initialState&quot;);
+  innerHeight                    := TtoS(&quot;innerHeight&quot;);
+  innerWidth                     := TtoS(&quot;innerWidth&quot;);
+  innerWindow                    := TtoS(&quot;innerWindow&quot;);
+  input                          := TtoS(&quot;input&quot;);
+  insensitiveBorder              := TtoS(&quot;insensitiveBorder&quot;);
+  insertPosition                 := TtoS(&quot;insertPosition&quot;);
+  internalBorderColor            := TtoS(&quot;internalBorderColor&quot;);
+  internalBorderWidth            := TtoS(&quot;internalBorderWidth&quot;);
+  internalHeight                 := TtoS(&quot;internalHeight&quot;);
+  internalWidth                  := TtoS(&quot;internalWidth&quot;);
+  jumpProc                       := TtoS(&quot;jumpProc&quot;);
+  jumpScroll                     := TtoS(&quot;jumpScroll&quot;);
+  justify                        := TtoS(&quot;justify&quot;);
+  knobHeight                     := TtoS(&quot;knobHeight&quot;);
+  knobIndent                     := TtoS(&quot;knobIndent&quot;);
+  knobPixel                      := TtoS(&quot;knobPixel&quot;);
+  knobWidth                      := TtoS(&quot;knobWidth&quot;);
+  label                          := TtoS(&quot;label&quot;);
+  labelClass                     := TtoS(&quot;labelClass&quot;);
+  left                           := TtoS(&quot;left&quot;);
+  leftBitmap                     := TtoS(&quot;leftBitmap&quot;);
+  leftCursor                     := TtoS(&quot;leftCursor&quot;);
+  leftMargin                     := TtoS(&quot;leftMargin&quot;);
+  length                         := TtoS(&quot;length&quot;);
+  lineWidth                      := TtoS(&quot;lineWidth&quot;);
+  list                           := TtoS(&quot;list&quot;);
+  longest                        := TtoS(&quot;longest&quot;);
+  lowerCursor                    := TtoS(&quot;lowerCursor&quot;);
+  lowerRight                     := TtoS(&quot;lowerRight&quot;);
+  mappedWhenManaged              := TtoS(&quot;mappedWhenManaged&quot;);
+  max                            := TtoS(&quot;max&quot;);
+  maxAspectX                     := TtoS(&quot;maxAspectX&quot;);
+  maxAspectY                     := TtoS(&quot;maxAspectY&quot;);
+  maxHeight                      := TtoS(&quot;maxHeight&quot;);
+  maxWidth                       := TtoS(&quot;maxWidth&quot;);
+  menuEntry                      := TtoS(&quot;menuEntry&quot;);
+  menuName                       := TtoS(&quot;menuName&quot;);
+  menuOnScreen                   := TtoS(&quot;menuOnScreen&quot;);
+  min                            := TtoS(&quot;min&quot;);
+  minAspectX                     := TtoS(&quot;minAspectX&quot;);
+  minAspectY                     := TtoS(&quot;minAspectY&quot;);
+  minHeight                      := TtoS(&quot;minHeight&quot;);
+  minScale                       := TtoS(&quot;minScale&quot;);
+  minWidth                       := TtoS(&quot;minWidth&quot;);
+  minimumThumb                   := TtoS(&quot;minimumThumb&quot;);
+  name                           := TtoS(&quot;name&quot;);
+  notify                         := TtoS(&quot;notify&quot;);
+  numChildren                    := TtoS(&quot;numChildren&quot;);
+  numberStrings                  := TtoS(&quot;numberStrings&quot;);
+  onceOnly                       := TtoS(&quot;onceOnly&quot;);
+  orientation                    := TtoS(&quot;orientation&quot;);
+  overrideRedirect               := TtoS(&quot;overrideRedirect&quot;);
+  padding                        := TtoS(&quot;padding&quot;);
+  parameter                      := TtoS(&quot;parameter&quot;);
+  pasteBuffer                    := TtoS(&quot;pasteBuffer&quot;);
+  pieceSize                      := TtoS(&quot;pieceSize&quot;);
+  pixmap                         := TtoS(&quot;pixmap&quot;);
+  popdownCallback                := TtoS(&quot;popdownCallback&quot;);
+  popupCallback                  := TtoS(&quot;popupCallback&quot;);
+  popupOnEntry                   := TtoS(&quot;popupOnEntry&quot;);
+  position                       := TtoS(&quot;position&quot;);
+  preferredPaneSize              := TtoS(&quot;preferredPaneSize&quot;);
+  radioData                      := TtoS(&quot;radioData&quot;);
+  radioGroup                     := TtoS(&quot;radioGroup&quot;);
+  refigureMode                   := TtoS(&quot;refigureMode&quot;);
+  resizable                      := TtoS(&quot;resizable&quot;);
+  resize                         := TtoS(&quot;resize&quot;);
+  resizeToPreferred              := TtoS(&quot;resizeToPreferred&quot;);
+  reverseVideo                   := TtoS(&quot;reverseVideo&quot;);
+  right                          := TtoS(&quot;right&quot;);
+  rightBitmap                    := TtoS(&quot;rightBitmap&quot;);
+  rightCursor                    := TtoS(&quot;rightCursor&quot;);
+  rightMargin                    := TtoS(&quot;rightMargin&quot;);
+  rowHeight                      := TtoS(&quot;rowHeight&quot;);
+  rowSpacing                     := TtoS(&quot;rowSpacing&quot;);
+  saveUnder                      := TtoS(&quot;saveUnder&quot;);
+  scale                          := TtoS(&quot;scale&quot;);
+  screen                         := TtoS(&quot;screen&quot;);
+  scrollDCursor                  := TtoS(&quot;scrollDCursor&quot;);
+  scrollHCursor                  := TtoS(&quot;scrollHCursor&quot;);
+  scrollHorizontal               := TtoS(&quot;scrollHorizontal&quot;);
+  scrollLCursor                  := TtoS(&quot;scrollLCursor&quot;);
+  scrollProc                     := TtoS(&quot;scrollProc&quot;);
+  scrollRCursor                  := TtoS(&quot;scrollRCursor&quot;);
+  scrollUCursor                  := TtoS(&quot;scrollUCursor&quot;);
+  scrollVCursor                  := TtoS(&quot;scrollVCursor&quot;);
+  scrollVertical                 := TtoS(&quot;scrollVertical&quot;);
+  selectTypes                    := TtoS(&quot;selectTypes&quot;);
+  selection                      := TtoS(&quot;selection&quot;);
+  selectionArray                 := TtoS(&quot;selectionArray&quot;);
+  sensitive                      := TtoS(&quot;sensitive&quot;);
+  shapeStyle                     := TtoS(&quot;shapeStyle&quot;);
+  shapeWindow                    := TtoS(&quot;shapeWindow&quot;);
+  showGrip                       := TtoS(&quot;showGrip&quot;);
+  shown                          := TtoS(&quot;shown&quot;);
+  skipAdjust                     := TtoS(&quot;skipAdjust&quot;);
+  space                          := TtoS(&quot;space&quot;);
+  state                          := TtoS(&quot;state&quot;);
+  stipple                        := TtoS(&quot;stipple&quot;);
+  string                         := TtoS(&quot;string&quot;);
+  templateResource               := TtoS(&quot;templateResource&quot;);
+  textOptions                    := TtoS(&quot;textOptions&quot;);
+  textSink                       := TtoS(&quot;textSink&quot;);
+  textSource                     := TtoS(&quot;textSource&quot;);
+  thickness                      := TtoS(&quot;thickness&quot;);
+  thumb                          := TtoS(&quot;thumb&quot;);
+  thumbProc                      := TtoS(&quot;thumbProc&quot;);
+  title                          := TtoS(&quot;title&quot;);
+  titleEncoding                  := TtoS(&quot;titleEncoding&quot;);
+  top                            := TtoS(&quot;top&quot;);
+  topMargin                      := TtoS(&quot;topMargin&quot;);
+  topOfThumb                     := TtoS(&quot;topOfThumb&quot;);
+  transient                      := TtoS(&quot;transient&quot;);
+  transientFor                   := TtoS(&quot;transientFor&quot;);
+  translations                   := TtoS(&quot;translations&quot;);
+  type                           := TtoS(&quot;type&quot;);
+  unrealizeCallback              := TtoS(&quot;unrealizeCallback&quot;);
+  update                         := TtoS(&quot;update&quot;);
+  upperCursor                    := TtoS(&quot;upperCursor&quot;);
+  useBottom                      := TtoS(&quot;useBottom&quot;);
+  useRight                       := TtoS(&quot;useRight&quot;);
+  useStringInPlace               := TtoS(&quot;useStringInPlace&quot;);
+  vSpace                         := TtoS(&quot;vSpace&quot;);
+  value                          := TtoS(&quot;value&quot;);
+  vertDistance                   := TtoS(&quot;vertDistance&quot;);
+  vertSpace                      := TtoS(&quot;vertSpace&quot;);
+  verticalBetweenCursor          := TtoS(&quot;verticalBetweenCursor&quot;);
+  verticalGripCursor             := TtoS(&quot;verticalGripCursor&quot;);
+  verticalList                   := TtoS(&quot;verticalList&quot;);
+  visual                         := TtoS(&quot;visual&quot;);
+  vmunix                         := TtoS(&quot;vmunix&quot;);
+  volume                         := TtoS(&quot;volume&quot;);
+  waitForWm                      := TtoS(&quot;waitforwm&quot;);
+  width                          := TtoS(&quot;width&quot;);
+  widthInc                       := TtoS(&quot;widthInc&quot;);
+  winGravity                     := TtoS(&quot;winGravity&quot;);
+  window                         := TtoS(&quot;window&quot;);
+  windowGroup                    := TtoS(&quot;windowGroup&quot;);
+  wmTimeout                      := TtoS(&quot;wmTimeout&quot;);
+  wrap                           := TtoS(&quot;wrap&quot;);
+  x                              := TtoS(&quot;x&quot;);
+  y                              := TtoS(&quot;y&quot;);
+
+END XtN.
+</PRE>
+</inModule>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

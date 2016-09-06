@@ -1,0 +1,243 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: gef/src/GEFAlg.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>gef/src/GEFAlg.m3</H2></A><HR>
+<inModule>
+<PRE><A HREF="../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+
+MODULE <module><implements><A HREF="GEFAlg.i3.html">GEFAlg</A></implements></module>;
+
+IMPORT <A HREF="../../zeus/src/Algorithm.i3.html">Algorithm</A>, <A HREF="../../atom/src/Atom.i3.html">Atom</A>, <A HREF="../../fmtlex/src/Fmt.i3.html">Fmt</A>, <A HREF="../DS/gefeventIE.i3.html">gefeventIE</A>, <A HREF="GEFLisp.i3.html">GEFLisp</A>, <A HREF="../../libm3/DS/RefList.i3.html">RefList</A>, <A HREF="../../slisp/src/SLisp.i3.html">SLisp</A>, <A HREF="../../slisp/src/SLispClass.i3.html">SLispClass</A>,
+       <A HREF="../../sx/src/Sx.i3.html">Sx</A>, <A HREF="../../thread/src/Common/Thread.i3.html">Thread</A>, <A HREF="../../zeus/src/ZeusCodeView.i3.html">ZeusCodeView</A>, <A HREF="../../zeus/src/ZeusPanel.i3.html">ZeusPanel</A>;
+
+REVEAL
+  <A NAME="Interp">Interp</A> = PublicInterp BRANDED OBJECT
+    alg: Algorithm.T
+  OVERRIDES
+    init := InitInterp;
+    error := ParseError;
+  END;
+
+PROCEDURE <A NAME="ParseError"><procedure>ParseError</procedure></A> (&lt;* UNUSED *&gt; t: Interp; msg: TEXT): REFANY
+  RAISES {SLisp.Error} =
+  BEGIN
+    ZeusPanel.ReportError(msg);
+    RAISE SLisp.Error;
+  END ParseError;
+
+PROCEDURE <A NAME="InitInterp"><procedure>InitInterp</procedure></A> (interp: Interp; alg: Algorithm.T): Interp =
+  BEGIN
+    EVAL SLisp.T.init(interp);
+    interp.alg := alg;
+    interp.defineFun(NEW(SLisp.Builtin, name := &quot;StartFeedback&quot;, minArgs := 0,
+                         maxArgs :=0, apply := StartFeedback));
+    interp.defineFun(NEW(SLisp.Builtin, name := &quot;EndFeedback&quot;, minArgs := 0,
+                         maxArgs := 0, apply := EndFeedback));
+    interp.defineFun(NEW(SLisp.Builtin, name := &quot;Event&quot;, minArgs := 1,
+                         maxArgs := LAST(INTEGER), apply := Event));
+    interp.defineFun(NEW(SLisp.Builtin, name := &quot;Update&quot;, minArgs := 1,
+                         maxArgs := LAST(INTEGER), apply := Update));
+    interp.defineFun(NEW(SLisp.Builtin, name := &quot;Pause&quot;, minArgs := 0,
+                         maxArgs := 0, apply := Pause));
+    interp.defineFun(
+      NEW(SLisp.Builtin, name := &quot;CodeViewEvent&quot;, minArgs := 1,
+          maxArgs := 1, apply := CodeViewEvent));
+    interp.defineFun(
+      NEW(SLisp.Builtin, name := &quot;CodeViewProc&quot;, minArgs := 1,
+          maxArgs := 1, apply := CodeViewProc));
+    interp.defineFun(
+      NEW(SLisp.Builtin, name := &quot;CodeViewExit&quot;, minArgs := 0,
+          maxArgs := 0, apply := CodeViewExit));
+
+    GEFLisp.ZeusifyInterp(interp);
+
+    RETURN interp;
+  END InitInterp;
+
+PROCEDURE <A NAME="Update"><procedure>Update</procedure></A> (&lt;*UNUSED*&gt; self: SLisp.Builtin;
+                            i   : SLisp.T;
+                            args: RefList.T      ): REFANY
+  RAISES {SLisp.Error} =
+  BEGIN
+    RETURN Event1(i, args, TRUE);
+  END Update;
+
+PROCEDURE <A NAME="Event"><procedure>Event</procedure></A> (&lt;*UNUSED*&gt; self: SLisp.Builtin;
+                            i   : SLisp.T;
+                            args: RefList.T      ): REFANY
+  RAISES {SLisp.Error} =
+ BEGIN
+    RETURN Event1(i, args, FALSE);
+  END Event;
+
+PROCEDURE <A NAME="StartFeedback"><procedure>StartFeedback</procedure></A> (&lt;*UNUSED*&gt;   self: SLisp.Builtin;
+                                      i   : SLisp.T;
+                         &lt;* UNUSED *&gt; args: RefList.T      ): REFANY
+  RAISES {SLisp.Error} =
+  VAR interp: Interp := i;
+  BEGIN
+    TRY ZeusPanel.StartFeedback(interp.alg) EXCEPT | Thread.Alerted =&gt; END;
+    RETURN interp.varEval(&quot;t&quot;);
+  END StartFeedback;
+
+PROCEDURE <A NAME="EndFeedback"><procedure>EndFeedback</procedure></A> (&lt;*UNUSED*&gt;   self: SLisp.Builtin;
+                                    i   : SLisp.T;
+                       &lt;* UNUSED *&gt; args: RefList.T      ): REFANY
+  RAISES {SLisp.Error} =
+  VAR interp: Interp := i;
+  BEGIN
+    TRY ZeusPanel.EndFeedback(interp.alg) EXCEPT | Thread.Alerted =&gt; END;
+    RETURN interp.varEval(&quot;t&quot;);
+  END EndFeedback;
+
+PROCEDURE <A NAME="Event1"><procedure>Event1</procedure></A> (i: SLisp.T; args: RefList.T; update: BOOLEAN): REFANY
+  RAISES {SLisp.Error} =
+  VAR
+    interp: Interp := i;
+    name           := interp.eval(args.head);
+  &lt;* FATAL Sx.PrintError *&gt;
+  BEGIN
+    TRY
+      TYPECASE name OF
+      | NULL =&gt; RETURN interp.error(&quot;No name given for event&quot;);
+      | TEXT (nm) =&gt;
+          IF update THEN
+            gefeventIE.Update(
+              interp.alg, nm,
+              GEFLisp.QuoteList(GEFLisp.EvalList(interp, args.tail)));
+          ELSE
+            gefeventIE.Event(
+              interp.alg, nm,
+              GEFLisp.QuoteList(GEFLisp.EvalList(interp, args.tail)));
+          END;
+      ELSE
+        RETURN interp.error(Fmt.F(&quot;Bad value given for event name: %s&quot;,
+                                  SLispClass.SxToText(name)));
+      END;
+    EXCEPT
+    | Thread.Alerted =&gt; RAISE SLisp.Error
+    END;
+    RETURN NIL;
+  END Event1;
+
+PROCEDURE <A NAME="Pause"><procedure>Pause</procedure></A> (&lt;*UNUSED*&gt;   self: SLisp.Builtin;
+                              i   : SLisp.T;
+                 &lt;* UNUSED *&gt; args: RefList.T         ): REFANY
+  RAISES {SLisp.Error} =
+  VAR interp: Interp := i;
+  BEGIN
+    TRY
+      gefeventIE.Pause(interp.alg);
+    EXCEPT
+    | Thread.Alerted =&gt; RAISE SLisp.Error
+    END;
+    RETURN NIL;
+  END Pause;
+
+PROCEDURE <A NAME="CodeViewEvent"><procedure>CodeViewEvent</procedure></A> (&lt;*UNUSED*&gt; self: SLisp.Builtin;
+                                    i   : SLisp.T;
+                                    args: RefList.T         ): REFANY
+  RAISES {SLisp.Error} =
+  VAR
+    interp: Interp := i;
+    line           := interp.eval(args.head);
+  BEGIN
+    TRY
+      TYPECASE line OF
+      | NULL =&gt;
+          RETURN interp.error(&quot;No value given for CodeView event line&quot;);
+      | SLisp.Integer (ri) =&gt; ZeusCodeView.Event(interp.alg, ri^);
+      ELSE
+        RETURN interp.error(&quot;Bad value given for CodeView event line&quot;);
+      END;
+    EXCEPT
+    | Thread.Alerted =&gt; RAISE SLisp.Error
+    END;
+    RETURN NIL
+  END CodeViewEvent;
+
+PROCEDURE <A NAME="CodeViewProc"><procedure>CodeViewProc</procedure></A> (&lt;*UNUSED*&gt; self: SLisp.Builtin;
+                                   i   : SLisp.T;
+                                   args: RefList.T         ): REFANY
+  RAISES {SLisp.Error} =
+  VAR
+    interp: Interp := i;
+    proc           := interp.eval(args.head);
+  BEGIN
+    TRY
+      TYPECASE proc OF
+      | NULL =&gt;
+          RETURN interp.error(&quot;No name given for CodeView procedure&quot;);
+      | TEXT (nm) =&gt; ZeusCodeView.Event(interp.alg, procedureName := nm);
+      ELSE
+        RETURN interp.error(&quot;Bad value given for CodeView procedure&quot;);
+      END;
+    EXCEPT
+    | Thread.Alerted =&gt; RAISE SLisp.Error
+    END;
+    RETURN NIL
+  END CodeViewProc;
+
+PROCEDURE <A NAME="CodeViewExit"><procedure>CodeViewExit</procedure></A> (&lt;*UNUSED*&gt;   self: SLisp.Builtin;
+                                     i   : SLisp.T;
+                        &lt;* UNUSED *&gt; args: RefList.T         ): REFANY
+  RAISES {SLisp.Error} =
+  VAR interp: Interp := i;
+  BEGIN
+    TRY
+      ZeusCodeView.Exit(interp.alg);
+      RETURN NIL
+    EXCEPT
+    | Thread.Alerted =&gt; RAISE SLisp.Error
+    END;
+  END CodeViewExit;
+
+PROCEDURE <A NAME="Feedback"><procedure>Feedback</procedure></A> (interp: Interp; function: TEXT; args: RefList.T) =
+  &lt;* FATAL SLisp.Error *&gt;
+  BEGIN
+    WITH atom = Atom.FromText(function),
+         fun  = interp.lookup(atom, SLispClass.LookupMode.LookupOnly) DO
+      TRY
+        IF fun # NIL AND fun.funDefined THEN
+          EVAL interp.eval(RefList.Cons(atom, args));
+        END;
+      EXCEPT
+      | SLisp.Error =&gt;
+      END;
+    END;
+  END Feedback;
+
+BEGIN
+END GEFAlg.
+</PRE>
+</inModule>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

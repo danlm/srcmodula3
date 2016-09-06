@@ -1,0 +1,381 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: gef/src/GEFClass.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>gef/src/GEFClass.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+
+INTERFACE <interface><A HREF="GEFClass.m3.html">GEFClass</A></interface>;
+
+&lt;* PRAGMA LL *&gt;
+
+IMPORT <A HREF="../../atom/src/Atom.i3.html">Atom</A>, <A HREF="../../color/src/Color.i3.html">Color</A>, <A HREF="../../ui/src/vbt/Font.i3.html">Font</A>, <A HREF="../../formsvbt/src/FormsVBT.i3.html">FormsVBT</A>, <A HREF="GEF.i3.html">GEF</A>, <A HREF="GEFError.i3.html">GEFError</A>, <A HREF="../../libm3/DS/RefList.i3.html">RefList</A>, <A HREF="../../ui/src/vbt/PaintOp.i3.html">PaintOp</A>,
+       <A HREF="../../slisp/src/SLisp.i3.html">SLisp</A>, <A HREF="../../thread/src/Common/Thread.i3.html">Thread</A>;
+
+VAR
+  mu: MUTEX;
+
+TYPE
+  S_exp = REFANY;
+  Elem = REFANY;
+  Name = Atom.T;
+  Names = REF ARRAY OF Name;
+
+TYPE
+  RInt = REF INTEGER;
+  RReal = REF REAL;
+  RBool = REF BOOLEAN;
+  RefRGB = REF Color.T;
+
+TYPE
+  Ints = REF ARRAY OF INTEGER;
+  Reals = REF ARRAY OF REAL;
+  Bools = REF ARRAY OF BOOLEAN;
+  Texts = REF ARRAY OF TEXT;
+  Elems = REF ARRAY OF Elem;
+
+PROCEDURE <A HREF="GEFClass.m3.html#Parse">Parse</A> (t              : T;
+                 sx             : S_exp;
+                 showAllElements: BOOLEAN     ) RAISES {Thread.Alerted};
+&lt;* LL &lt; mu *&gt;
+</PRE><BLOCKQUOTE><EM> Parse <CODE>sx</CODE> reporting any errors or successfully incorporating <CODE>sx</CODE> into
+   <CODE>t</CODE>.   If <CODE>showAllElements</CODE> then make sure all elements are
+   visible.
+</EM></BLOCKQUOTE><PRE>
+
+PROCEDURE <A HREF="GEFClass.m3.html#IncrementalParse">IncrementalParse</A> (t: T; sx: S_exp)  RAISES {Thread.Alerted};
+&lt;* LL = mu *&gt;
+</PRE><BLOCKQUOTE><EM> Parse <CODE>sx</CODE> reporting any errors or successfully adding <CODE>sx</CODE> in the
+   current state of <CODE>t</CODE>. </EM></BLOCKQUOTE><PRE>
+
+TYPE
+  T = GEF.T;
+
+TYPE
+  Interval = REF RECORD start, end: CARDINAL END;
+
+TYPE
+  TPublic =
+    GEF.TPublic OBJECT
+      &lt;* LL = mu *&gt;
+      showAllElements: BOOLEAN;
+      (* &quot;showAllElements&quot; gets passed to &quot;finish&quot; methods, all elements should be made
+         visible if TRUE *)
+
+      interp: SLisp.T;
+      (* the interpreter for the GEF lisp language *)
+    END;
+
+REVEAL
+  T &lt;: TPublic;
+
+TYPE
+  <A HREF="GEFClass.m3.html#ParseObject">ParseObject</A> &lt;: POPublic;
+  POPublic =
+    OBJECT
+      args: TEXT;
+      (* &quot;args&quot; is an s-expression describing the fields and types of an
+         object defined by self.
+
+         Every args list must include a &quot;Name&quot; field giving the name of the
+         object The args list may include any number of entries of the
+         following form:
+
+         (Field &lt;index value of field&gt; &lt;name of field&gt; &lt;type&gt; &lt;number of
+         values&gt; &lt;(list of field values names)&gt; &lt;(list of field value defaults)&gt;)
+
+         Every &quot;Field&quot; must have some value for all entries.
+
+         &lt;index value of field&gt; is an integer.
+
+         &lt;name of field&gt; is a text or symbol.
+
+         &lt;type&gt; is one of: &quot;Boolean&quot;, &quot;Integer&quot;, &quot;Real&quot;, &quot;Text&quot;,
+         &quot;Elem&quot;, &quot;Sx&quot;, &quot;ColorSpec&quot;, &quot;FontSpec&quot; or it can be a list of
+         enumerated values e.g. &quot;(Rectangle Ellipse)&quot;.
+
+         &lt;number of values&gt; is an integer or &quot;Infinity&quot;
+         NOTE: There can not be an infinite number of &quot;Boolean&quot;, &quot;Integer&quot;,
+         &quot;Real&quot; or enumerated values.
+
+         &quot;&lt;(list of field value names)&gt;&quot; may be &quot;NIL&quot; (empty list: &quot;()&quot;)
+         or it is a list of names of the components of the field (say
+         x and y components of a position).  If the number of values is
+         &quot;Infinity&quot; then &quot;&lt;(list of field values names)&gt;&quot; must be &quot;NIL&quot;.
+
+         a &quot;Sx&quot; value is any Sx expression passed as an uninterpreted Sx.T
+
+         a &quot;FontSpec&quot; is the name of a font (for X, a full &quot;Stars and Bars&quot;
+         font name is recommended, or it is the special value &quot;BuiltIn&quot;
+         for the builtin font, or it is a list of font properties (a
+         &quot;*&quot; for a text matches anything for that property):
+
+         (Foundry &lt;text&gt;) - default &quot;*&quot;
+         (Family &lt;text&gt;) - default &quot;Helvetica&quot;
+         (Weight &lt;text&gt;) - default &quot;Medium&quot;
+         (Slant  &lt;one of &quot;R&quot;, &quot;I&quot;, &quot;O&quot;, &quot;RI&quot;, &quot;RO&quot;, &quot;OT&quot;&gt;) - default &quot;R&quot;
+         (Size &lt;real&gt;) - default 0.0353 (10pt in default world and size)
+
+         Examples of font specs:
+
+         &quot;BuiltIn&quot;
+         &quot;-Adobe-Symbol-Medium-R-Normal--*-0.05-*-*-*-*-ISO8859-1&quot;
+         (Family &quot;Helvetica&quot;) (Slant &quot;R&quot;) (Size 0.05)
+
+         A &quot;FontSpec&quot; is converted to a Text when the SetText
+         method is called.
+
+         A &quot;ColorSpec&quot; is the name of a color, the special values &quot;Bg&quot; and
+         &quot;Fg&quot; for the builtin PaintOp.Bg and PaintOp.Fg or it can be
+         3 real numbers in the range 0.0 .. 1.0 giving the red, green
+         and blue values of the color.  &quot;0 0 0&quot; is black, &quot;1 1 1&quot; is white.
+
+         Examples of color specs:
+
+         &quot;Bg&quot;
+         &quot;Fg&quot;
+         &quot;Red&quot;
+         0.3 0.3 0.7
+
+         Every args list implicitly includes a specification
+         &quot;(Field xxx Name Text 1 () ())&quot;.  The setText/getText methods
+         of the object are not called for the &quot;Name&quot; field.  GEFClass
+         maintains the mapping between names and objects.  Objects that
+         have no name given in the sx expression, get unique generated names.
+         *)
+
+      fv: TEXT;
+      (* &quot;fv&quot; is the text string describing a formsvbt form for displaying
+         and editing the properties of this parse object.  If &quot;fv&quot; is not
+         set when &quot;RegisterParseObject&quot; is called, it will be generated from &quot;args&quot;. *)
+    METHODS
+      &lt;* LL = mu *&gt;
+      create (t: T; id: INTEGER): Elem;
+      (* Create and return a default object associated with t.  Return &quot;id&quot;
+         from the &quot;getId&quot; method  *)
+
+      delete (t: T; elem: Elem);
+      (* Clean up and delete &quot;elem&quot; *)
+
+      setInt (t: T; elem: Elem; field: INTEGER; value: Ints) RAISES {GEFError.T};
+      setReal (t: T; elem: Elem; field: INTEGER; value: Reals) RAISES {GEFError.T};
+      setBool (t: T; elem: Elem; field: INTEGER; value: Bools) RAISES {GEFError.T};
+      setText (t: T; elem: Elem; field: INTEGER; value: Texts) RAISES {GEFError.T};
+      setElem (t: T; elem: Elem; field: INTEGER; value: Elems) RAISES {GEFError.T};
+      (*| Set &quot;field&quot; in &quot;obj&quot; to &quot;value&quot;.
+
+          &quot;field&quot; comes from the index value given for the field when the element was
+          registered.
+
+         &quot;value&quot; is a REF ARRAY OF &lt;valueType&gt; where the number of elements
+         in the array comes from the field descriptor.
+
+         The value types are the expected ones except for Colors, Fonts and Enums.
+
+         Sx's are passed as Elems (REFANY) to the setElem method and are Sx.T.
+
+         Colors are Texts and are either the name of the color or the 3 reals
+         giving the RGB of the color.  Call &quot;PaintOpFromColor&quot; or &quot;RGBFromColor&quot;
+         to convert the text to the desired form (includes caching to reduce
+         resource use).
+
+         Fonts are a text giving the name of the font.  Call &quot;FontFromName&quot;
+         to convert the text name to a font (includes caching to reduce resource
+         use).
+
+         Enums are INTEGERs where each element is the ORD value
+         of the associated enumerated value.
+      *)
+
+      getId(t: T; elem: Elem): INTEGER;
+      (* return the id of &quot;elem&quot; *)
+
+      finish (t: T; elem: Elem) RAISES {GEFError.T, Thread.Alerted};
+      (* finish any work involved in creating &quot;obj&quot;, installing,
+         initializing, consistency checks, etc...
+
+         should also check t.showAllVisible.  If TRUE then try to
+         make object visible.
+      *)
+
+      isType (elem: Elem): BOOLEAN;
+      (* returns TRUE is &quot;obj&quot; is a subtype of the type &quot;create&quot; returns *)
+    END;
+</PRE><PRE>
+      Examples of s-expressions for &quot;args&quot;:
+</PRE>
+   ((Name Graph)
+    (Field 0 World Real 4 (west east north south) (0.0 1.0 0.0 1.0))
+    (Field 1 Margin Real 1 () (0.0))
+    (Field 2 PixelSizeDivisor Integer 2 (x y) (1 1))
+    (Field 3 Aspect Real 1 () (0.0))
+    (Field 4 ClientProps Sx 1 () ())
+    (Field 5 Contents Elem Infinity () ()))
+<P>
+<P>
+   ((Name Vertex)
+    (Field 0 Shape (Rectangle Ellipse) 1 () (Rectangle))
+    (Field 1 Pos Real 2 (x y) (0.0 0.0))
+    (Field 2 Size Real 2 (width height) (0.0 0.0))
+    (Field 3 Color ColorSpec 1 () (Fg))
+    (Field 4 Label Text 1 () ())
+    (Field 5 Font Text 1 () (BuiltIn))
+    (Field 6 FontColor ColorSpec 1 () (Fg))
+    (Field 7 BorderWidth Real 1 () (0.0))
+    (Field 8 BorderColor ColorSpec 1 () (Fg)))
+<P>
+   Note: It is not necessary for the field indices to be either 0 based,
+         sequential or small.  They only have to be unique.
+<P>
+   
+<PRE>PROCEDURE <A HREF="GEFClass.m3.html#RegisterParseObject">RegisterParseObject</A> (po: ParseObject);
+&lt;* LL &lt; mu *&gt;
+</PRE><BLOCKQUOTE><EM> Register a parsing object </EM></BLOCKQUOTE><PRE>
+</PRE> ------------------ General utilities -------------------- 
+
+<P><PRE>&lt;* LL &lt; mu *&gt;
+PROCEDURE <A HREF="GEFClass.m3.html#ReportError">ReportError</A> (fv: FormsVBT.T; msg: TEXT);
+
+&lt;* LL = mu *&gt;
+PROCEDURE <A HREF="GEFClass.m3.html#FontFromName">FontFromName</A> (name: TEXT): Font.T RAISES {GEFError.T};
+PROCEDURE <A HREF="GEFClass.m3.html#NameFromFont">NameFromFont</A> (font: Font.T): TEXT RAISES {GEFError.T};
+PROCEDURE <A HREF="GEFClass.m3.html#PaintOpFromColor">PaintOpFromColor</A> (color: TEXT): PaintOp.T RAISES {GEFError.T, Thread.Alerted};
+PROCEDURE <A HREF="GEFClass.m3.html#ColorFromPaintOp">ColorFromPaintOp</A> (op: PaintOp.T): TEXT RAISES {GEFError.T};
+PROCEDURE <A HREF="GEFClass.m3.html#RGBFromColor">RGBFromColor</A> (color: TEXT): Color.T RAISES {GEFError.T, Thread.Alerted};
+PROCEDURE <A HREF="GEFClass.m3.html#ColorFromRGB">ColorFromRGB</A> (rgb: Color.T): TEXT RAISES {GEFError.T};
+
+&lt;* LL &lt; mu *&gt;
+PROCEDURE <A HREF="GEFClass.m3.html#ParseObjectFromElem">ParseObjectFromElem</A>(elem: Elem): ParseObject;
+</PRE><BLOCKQUOTE><EM> returns the parse object that created <CODE>elem</CODE> </EM></BLOCKQUOTE><PRE>
+
+&lt;* LL = mu *&gt;
+PROCEDURE <A HREF="GEFClass.m3.html#GenName">GenName</A> (): TEXT;
+</PRE><BLOCKQUOTE><EM> Generate a unique name for an element </EM></BLOCKQUOTE><PRE>
+
+&lt;* LL &lt; mu *&gt;
+PROCEDURE <A HREF="GEFClass.m3.html#ElemFromName">ElemFromName</A> (t: T; name: TEXT): Elem RAISES {GEFError.T};
+PROCEDURE <A HREF="GEFClass.m3.html#NameFromElem">NameFromElem</A> (t: T; elem: Elem): TEXT;
+</PRE> ----------------- GEVClass utilities --------------------- 
+<PRE>&lt;* LL &lt; mu *&gt;
+PROCEDURE <A HREF="GEFClass.m3.html#GetElemField">GetElemField</A>(t: T; elem: Elem; field: TEXT): REFANY RAISES {GEFError.T};
+</PRE><BLOCKQUOTE><EM> returns the values associated with <CODE>field</CODE> in  <CODE>elem</CODE>.  The 
+   values returned are READONLY.  </EM></BLOCKQUOTE><PRE>
+
+&lt;* LL &lt; mu *&gt;
+PROCEDURE <A HREF="GEFClass.m3.html#SetElemField">SetElemField</A>(t: T; elem: Elem; field: TEXT; values: REFANY)
+  RAISES {GEFError.T};
+</PRE><BLOCKQUOTE><EM> set <CODE>field</CODE> in  <CODE>elem</CODE> to <CODE>values</CODE> </EM></BLOCKQUOTE><PRE>
+
+&lt;* LL &lt; mu *&gt;
+PROCEDURE <A HREF="GEFClass.m3.html#GetRange">GetRange</A> (t: T; obj: REFANY; VAR (* OUT *) start, end: CARDINAL);
+</PRE><BLOCKQUOTE><EM> get the range of characters describing obj in t'&lt;s editor display </EM></BLOCKQUOTE><PRE>
+
+&lt;* LL &lt; mu *&gt;
+PROCEDURE <A HREF="GEFClass.m3.html#UpdateRange">UpdateRange</A> (t: T; obj: REFANY; start, end, length: CARDINAL);
+</PRE><BLOCKQUOTE><EM> Adjust all character ranges after <CODE>start</CODE> by (<CODE>end</CODE> - <CODE>start</CODE>) - <CODE>length</CODE>.  </EM></BLOCKQUOTE><PRE>
+
+&lt;* LL &lt; mu *&gt;
+PROCEDURE <A HREF="GEFClass.m3.html#GetFV">GetFV</A> (t: T; elem: REFANY): FormsVBT.T;
+</PRE><BLOCKQUOTE><EM> Get the form (uninstalled) displaying the value of elem </EM></BLOCKQUOTE><PRE>
+
+&lt;* LL &lt; mu *&gt;
+PROCEDURE <A HREF="GEFClass.m3.html#SetElemFromFV">SetElemFromFV</A>(t: T; elem: Elem; fv: FormsVBT.T) RAISES {GEFError.T};
+</PRE><BLOCKQUOTE><EM> Set properties of <CODE>elem</CODE> from the values in <CODE>fv</CODE>. </EM></BLOCKQUOTE><PRE>
+
+&lt;* LL &lt; mu *&gt;
+PROCEDURE <A HREF="GEFClass.m3.html#CreateElemFromFV">CreateElemFromFV</A> (t: T; fv: FormsVBT.T): Elem
+  RAISES {GEFError.T, Thread.Alerted};
+</PRE><BLOCKQUOTE><EM> Create an element from the values in <CODE>fv</CODE>. </EM></BLOCKQUOTE><PRE>
+
+&lt;* LL &lt; mu *&gt;
+PROCEDURE <A HREF="GEFClass.m3.html#SetFVFromElem">SetFVFromElem</A>(t: T; elem: Elem; fv: FormsVBT.T) RAISES {GEFError.T};
+</PRE><BLOCKQUOTE><EM> Set values of <CODE>fv</CODE> from the properties in <CODE>elem</CODE>. </EM></BLOCKQUOTE><PRE>
+
+TYPE InstallClosure = OBJECT METHODS install (fv: FormsVBT.T) END;
+
+&lt;* LL &lt; mu *&gt;
+PROCEDURE <A HREF="GEFClass.m3.html#AddParseObjectsToMenu">AddParseObjectsToMenu</A> (fv     : FormsVBT.T;
+                                 menu   : TEXT;
+                                 closure: InstallClosure     );
+</PRE><BLOCKQUOTE><EM> Add a menu button item for each registered parse object to <CODE>menu</CODE> in
+   <CODE>fv</CODE>.  Call <CODE>closure</CODE>.install with the new fv file for the selected
+   parse object type when the item is selected by the user. </EM></BLOCKQUOTE><PRE>
+
+&lt;* LL &lt; mu *&gt;
+PROCEDURE <A HREF="GEFClass.m3.html#SxFromElem">SxFromElem</A> (t: T; elem: Elem): S_exp;
+</PRE><BLOCKQUOTE><EM> Return the s_exp describing <CODE>elem</CODE> </EM></BLOCKQUOTE><PRE>
+
+TYPE
+  ElementList = REF ARRAY OF
+                      RECORD
+                        type : TEXT;
+                        names: REF ARRAY OF TEXT;
+                      END;
+
+&lt;* LL &lt; mu *&gt;
+PROCEDURE <A HREF="GEFClass.m3.html#AllElements">AllElements</A> (t: T): ElementList;
+</PRE> --------------------- GEFLisp utilities -------------------------- 
+
+<P><PRE>&lt;* LL &lt; mu *&gt;
+PROCEDURE <A HREF="GEFClass.m3.html#CreateElemFromPO">CreateElemFromPO</A> (t: T; po: ParseObject): Elem
+  RAISES {GEFError.T, Thread.Alerted};
+</PRE><BLOCKQUOTE><EM> Create an element using <CODE>po</CODE> in the current environment of <CODE>t</CODE>. </EM></BLOCKQUOTE><PRE>
+
+&lt;* LL &lt; mu *&gt;
+PROCEDURE <A HREF="GEFClass.m3.html#GetProp">GetProp</A> (t: T; elem: Elem; prop: S_exp): RefList.T
+  RAISES {GEFError.T, Thread.Alerted};
+</PRE><BLOCKQUOTE><EM> Returns a READONLY list of the value(s) of field <CODE>prop</CODE> of <CODE>elem</CODE>.  <CODE>prop</CODE> 
+   should be a name of a property of <CODE>elem</CODE>.
+</EM></BLOCKQUOTE><PRE>
+
+&lt;* LL &lt; mu *&gt;
+PROCEDURE <A HREF="GEFClass.m3.html#SetProp">SetProp</A> (t: T; elem: Elem; prop: S_exp; value: RefList.T)
+  RAISES {GEFError.T, Thread.Alerted};
+</PRE><BLOCKQUOTE><EM> Set <CODE>elem</CODE>s field <CODE>prop</CODE> to <CODE>value</CODE>. <CODE>prop</CODE>  should be a name of a property of <CODE>elem</CODE>.
+</EM></BLOCKQUOTE><PRE>
+
+&lt;* LL &lt; mu *&gt;
+PROCEDURE <A HREF="GEFClass.m3.html#Delete">Delete</A>(t: T; elem: Elem) RAISES {GEFError.T, Thread.Alerted};
+</PRE><BLOCKQUOTE><EM> Delete <CODE>elem</CODE> </EM></BLOCKQUOTE><PRE>
+</PRE> ------------------------ GEFA Utilities ------------------- 
+
+<P><PRE>&lt;* LL &lt; mu *&gt;
+PROCEDURE <A HREF="GEFClass.m3.html#UpdateElemField">UpdateElemField</A>(t: T; elem: Elem; field: TEXT; values: REFANY)
+  RAISES {GEFError.T};
+</PRE><BLOCKQUOTE><EM> update <CODE>field</CODE> in  <CODE>elem</CODE> to <CODE>values</CODE>.  Doesn't actually set elem's elem's
+   value, but updates the value stored by GEF.  Used for when an vertex
+   moves to update the position. </EM></BLOCKQUOTE><PRE>
+
+END GEFClass.
+</PRE>
+</inInterface>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

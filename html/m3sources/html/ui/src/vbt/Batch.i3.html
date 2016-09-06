@@ -1,0 +1,62 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: ui/src/vbt/Batch.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>ui/src/vbt/Batch.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM>                                                                           </EM></BLOCKQUOTE><PRE>
+</PRE> Batch.def, by msm &amp; cgn, Wed May  6 16:57:44 1987 
+
+<P><PRE>&lt;*PRAGMA LL*&gt;
+</PRE> A <CODE>Batch.T</CODE> is a data structure containing a sequence of
+   <CODE>VBT</CODE> painting commands.  Batches are untraced: they must be
+   explicitly allocated and freed using the procedures in
+   this interface.  
+
+<P><PRE>INTERFACE <interface><A HREF="Batch.m3.html">Batch</A></interface>;
+
+TYPE <A HREF="BatchRep.i3.html#T">T</A> &lt;: ADDRESS;
+
+PROCEDURE <A HREF="Batch.m3.html#New">New</A>(len: INTEGER := -1): T;
+</PRE><BLOCKQUOTE><EM> Allocate a batch containing at least <CODE>len</CODE> <CODE>Word.Ts</CODE>. </EM></BLOCKQUOTE><PRE>
+</PRE> If <CODE>len = -1</CODE>, the number of <CODE>Word.T</CODE>s in the result will be
+   <CODE>VBTTuning.BatchSize</CODE>.  Initially the clip and scroll source are
+   <CODE>Rect.Empty</CODE>.  
+
+<P><PRE>PROCEDURE <A HREF="Batch.m3.html#Free">Free</A>(VAR ba: T);
+</PRE><BLOCKQUOTE><EM> Return <CODE>ba</CODE> to the free list and set <CODE>ba := NIL</CODE>.  </EM></BLOCKQUOTE><PRE>
+</PRE> <CODE>Free(ba)</CODE> is a checked runtime error if <CODE>ba</CODE> is <CODE>NIL</CODE>. 
+
+<P><PRE>END Batch.
+</PRE>
+</inInterface>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

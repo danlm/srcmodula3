@@ -1,0 +1,142 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: pkgobj/src/POSIX/osf/Umount.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>pkgobj/src/POSIX/osf/Umount.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+
+INTERFACE <interface>Umount</interface>;
+
+IMPORT <A HREF="#x1">Unix</A>, <A HREF="#x2">Utypes</A>;
+
+FROM <A HREF="../../../../C/src/Common/Ctypes.i3.html">Ctypes</A> IMPORT char_star, int, short;
+
+TYPE
+  mount_name = ARRAY [0..Unix.MaxPathLen-1] OF CHAR;
+
+  fsid_t = Utypes.quad;
+
+  struct_statfs_star = UNTRACED REF struct_statfs;
+  struct_statfs = RECORD
+    f_type: short;                 (* type of filesystem (see below) *)
+    f_flags: short;                (* copy of mount flags *)
+    f_fsize: int;                  (* fundamental filesystem block size *)
+    f_bsize: int;                  (* optimal transfer block size *)
+    f_blocks: int;                 (* total data blocks in file system *)
+    f_bfree: int;                  (* free blocks in fs *)
+    f_bavail: int;                 (* free blocks avail to non-su *)
+    f_files: int;                  (* total file nodes in file system *)
+    f_ffree: int;                  (* free file nodes in fs *)
+    f_fsid: fsid_t;                (* file system id *)
+    f_spare: ARRAY [0..8] OF int;  (* spare for later *)
+    f_mntonname: mount_name;       (* directory on which mounted *)
+    f_mntfromname: mount_name;     (* mounted filesystem *)
+    mount_info: ARRAY [0..10] OF int;
+  END;
+
+CONST    (* flags in struct_statfs.flags *)
+  M_RONLY =        16_0001;          (* read only filesystem *)
+  M_SYNCHRONOUS =  16_0002;          (* file system written synchronously *)
+  M_NOEXEC =       16_0004;          (* can't exec from filesystem *)
+  M_NOSUID =       16_0008;          (* don't honor setuid bits on fs *)
+  M_NODEV =        16_0010;          (* don't interpret special files *)
+
+  M_EXPORTED =     16_0100;          (* export flag *)
+  M_EXRDONLY =     16_0200;          (* export read-only *)
+  M_EXRDMOSTLY =   16_0400;          (* exported ro to most *)
+
+  M_LOCAL =        16_1000;          (* filesystem is stored locally *)
+  M_QUOTA =        16_2000;          (* quotas are enabled on filesystem *)
+
+&lt;*EXTERNAL*&gt; PROCEDURE statfs (
+         path: char_star;
+         statfs: struct_statfs_star;
+         length: int) : int;
+
+END Umount.
+</PRE>
+</inInterface>
+<HR>
+<A NAME="x1">interface Unix is in:
+</A><UL>
+<LI><A HREF="../../../../unix/src/aix-3-2/Unix.i3.html#0TOP0">unix/src/aix-3-2/Unix.i3</A>
+<LI><A HREF="../../../../unix/src/aix-ps2-1-2/Unix.i3.html#0TOP0">unix/src/aix-ps2-1-2/Unix.i3</A>
+<LI><A HREF="../../../../unix/src/freebsd-1/Unix.i3.html#0TOP0">unix/src/freebsd-1/Unix.i3</A>
+<LI><A HREF="../../../../unix/src/freebsd-2/Unix.i3.html#0TOP0">unix/src/freebsd-2/Unix.i3</A>
+<LI><A HREF="../../../../unix/src/hpux-7-0/Unix.i3.html#0TOP0">unix/src/hpux-7-0/Unix.i3</A>
+<LI><A HREF="../../../../unix/src/ibm-4-3/Unix.i3.html#0TOP0">unix/src/ibm-4-3/Unix.i3</A>
+<LI><A HREF="../../../../unix/src/irix-5.2/Unix.i3.html#0TOP0">unix/src/irix-5.2/Unix.i3</A>
+<LI><A HREF="../../../../unix/src/linux/Unix.i3.html#0TOP0">unix/src/linux/Unix.i3</A>
+<LI><A HREF="../../../../unix/src/osf-1.ALPHA_OSF/Unix.i3.html#0TOP0">unix/src/osf-1.ALPHA_OSF/Unix.i3</A>
+<LI><A HREF="../../../../unix/src/osf-1.DS3100/Unix.i3.html#0TOP0">unix/src/osf-1.DS3100/Unix.i3</A>
+<LI><A HREF="../../../../unix/src/solaris-2-x/Unix.i3.html#0TOP0">unix/src/solaris-2-x/Unix.i3</A>
+<LI><A HREF="../../../../unix/src/sunos-4-x/Unix.i3.html#0TOP0">unix/src/sunos-4-x/Unix.i3</A>
+<LI><A HREF="../../../../unix/src/sysv-4.0/Unix.i3.html#0TOP0">unix/src/sysv-4.0/Unix.i3</A>
+<LI><A HREF="../../../../unix/src/ultrix-3-1.AP3000/Unix.i3.html#0TOP0">unix/src/ultrix-3-1.AP3000/Unix.i3</A>
+<LI><A HREF="../../../../unix/src/ultrix-3-1.ARM/Unix.i3.html#0TOP0">unix/src/ultrix-3-1.ARM/Unix.i3</A>
+<LI><A HREF="../../../../unix/src/ultrix-3-1.DS3100/Unix.i3.html#0TOP0">unix/src/ultrix-3-1.DS3100/Unix.i3</A>
+<LI><A HREF="../../../../unix/src/ultrix-3-1.NEXT/Unix.i3.html#0TOP0">unix/src/ultrix-3-1.NEXT/Unix.i3</A>
+<LI><A HREF="../../../../unix/src/ultrix-3-1.SEQUENT/Unix.i3.html#0TOP0">unix/src/ultrix-3-1.SEQUENT/Unix.i3</A>
+<LI><A HREF="../../../../unix/src/ultrix-3-1.SUN3/Unix.i3.html#0TOP0">unix/src/ultrix-3-1.SUN3/Unix.i3</A>
+<LI><A HREF="../../../../unix/src/ultrix-3-1.SUN386/Unix.i3.html#0TOP0">unix/src/ultrix-3-1.SUN386/Unix.i3</A>
+<LI><A HREF="../../../../unix/src/ultrix-3-1.UMAX/Unix.i3.html#0TOP0">unix/src/ultrix-3-1.UMAX/Unix.i3</A>
+<LI><A HREF="../../../../unix/src/ultrix-3-1.VAX/Unix.i3.html#0TOP0">unix/src/ultrix-3-1.VAX/Unix.i3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x2">interface Utypes is in:
+</A><UL>
+<LI><A HREF="../../../../unix/src/aix-3-2/Utypes.i3.html#0TOP0">unix/src/aix-3-2/Utypes.i3</A>
+<LI><A HREF="../../../../unix/src/aix-ps2-1-2/Utypes.i3.html#0TOP0">unix/src/aix-ps2-1-2/Utypes.i3</A>
+<LI><A HREF="../../../../unix/src/freebsd-1/Utypes.i3.html#0TOP0">unix/src/freebsd-1/Utypes.i3</A>
+<LI><A HREF="../../../../unix/src/freebsd-2/Utypes.i3.html#0TOP0">unix/src/freebsd-2/Utypes.i3</A>
+<LI><A HREF="../../../../unix/src/hpux-7-0/Utypes.i3.html#0TOP0">unix/src/hpux-7-0/Utypes.i3</A>
+<LI><A HREF="../../../../unix/src/ibm-4-3/Utypes.i3.html#0TOP0">unix/src/ibm-4-3/Utypes.i3</A>
+<LI><A HREF="../../../../unix/src/irix-5.2/Utypes.i3.html#0TOP0">unix/src/irix-5.2/Utypes.i3</A>
+<LI><A HREF="../../../../unix/src/linux/Utypes.i3.html#0TOP0">unix/src/linux/Utypes.i3</A>
+<LI><A HREF="../../../../unix/src/osf-1.ALPHA_OSF/Utypes.i3.html#0TOP0">unix/src/osf-1.ALPHA_OSF/Utypes.i3</A>
+<LI><A HREF="../../../../unix/src/osf-1.DS3100/Utypes.i3.html#0TOP0">unix/src/osf-1.DS3100/Utypes.i3</A>
+<LI><A HREF="../../../../unix/src/solaris-2-x/Utypes.i3.html#0TOP0">unix/src/solaris-2-x/Utypes.i3</A>
+<LI><A HREF="../../../../unix/src/sunos-4-x/Utypes.i3.html#0TOP0">unix/src/sunos-4-x/Utypes.i3</A>
+<LI><A HREF="../../../../unix/src/sysv-4.0/Utypes.i3.html#0TOP0">unix/src/sysv-4.0/Utypes.i3</A>
+<LI><A HREF="../../../../unix/src/ultrix-3-1.AP3000/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.AP3000/Utypes.i3</A>
+<LI><A HREF="../../../../unix/src/ultrix-3-1.ARM/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.ARM/Utypes.i3</A>
+<LI><A HREF="../../../../unix/src/ultrix-3-1.DS3100/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.DS3100/Utypes.i3</A>
+<LI><A HREF="../../../../unix/src/ultrix-3-1.NEXT/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.NEXT/Utypes.i3</A>
+<LI><A HREF="../../../../unix/src/ultrix-3-1.SEQUENT/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.SEQUENT/Utypes.i3</A>
+<LI><A HREF="../../../../unix/src/ultrix-3-1.SUN3/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.SUN3/Utypes.i3</A>
+<LI><A HREF="../../../../unix/src/ultrix-3-1.SUN386/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.SUN386/Utypes.i3</A>
+<LI><A HREF="../../../../unix/src/ultrix-3-1.UMAX/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.UMAX/Utypes.i3</A>
+<LI><A HREF="../../../../unix/src/ultrix-3-1.VAX/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.VAX/Utypes.i3</A>
+</UL>
+<P>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

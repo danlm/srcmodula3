@@ -1,0 +1,231 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: pkgobj/src/Common/NetPath.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>pkgobj/src/Common/NetPath.m3</H2></A><HR>
+<inModule>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM> NetPath.m3 </EM></BLOCKQUOTE><PRE>
+
+MODULE <module><implements><A HREF="NetPath.i3.html">NetPath</A></implements></module>;
+
+IMPORT <A HREF="../../../os/src/Common/Pathname.i3.html">Pathname</A>, <A HREF="../../../text/src/Text.i3.html">Text</A>, <A HREF="../../../libm3/DS/TextList.i3.html">TextList</A>, <A HREF="../../../libm3/DS/TextSeq.i3.html">TextSeq</A>, <A HREF="../../../word/src/Word.i3.html">Word</A>;
+
+CONST
+  DirSepChar = '/';   (* this is not Unix, but our own path syntax *)
+  DirSepCharStr = &quot;/&quot;;
+
+PROCEDURE <A NAME="Equal"><procedure>Equal</procedure></A>(t1, t2: T) : BOOLEAN =
+  BEGIN
+    WHILE t1 # NIL DO
+      IF t2 = NIL THEN RETURN FALSE; END;
+      IF NOT Text.Equal(t1.head, t2.head) THEN RETURN FALSE; END;
+      t1 := t1.tail;
+      t2 := t2.tail;
+    END;
+    RETURN (t2 = NIL);
+  END Equal;
+
+PROCEDURE <A NAME="Hash"><procedure>Hash</procedure></A>(t: T) : Word.T =
+  BEGIN
+    WHILE t.tail # NIL DO t := t.tail; END;
+    RETURN Text.Hash(t.head);
+  END Hash;
+
+PROCEDURE <A NAME="Compare"><procedure>Compare</procedure></A>(t1, t2: T) : [-1..1] =
+  VAR c:  [-1..1];
+  BEGIN
+    WHILE t1 # NIL DO
+      IF t2 = NIL THEN RETURN -1; END;
+      c := Text.Compare(t1.head, t2.head);
+      IF c # 0 THEN RETURN c; END;
+      t1 := t1.tail;
+      t2 := t2.tail;
+    END;
+    IF t2 # NIL THEN RETURN 1; END;
+    RETURN 0;
+  END Compare;
+
+PROCEDURE <A NAME="Check"><procedure>Check</procedure></A>(t: T) : BOOLEAN =
+  BEGIN
+    WHILE t # NIL DO
+      IF NOT CheckArc(t.head) THEN RETURN FALSE; END;
+      t := t.tail;
+    END;
+    RETURN TRUE;
+  END Check;
+
+PROCEDURE <A NAME="CheckArc"><procedure>CheckArc</procedure></A>(arc: TEXT) : BOOLEAN =
+  BEGIN
+    (* check char sets here *)
+    RETURN (arc = NIL) OR NOT Text.Empty(arc);
+  END CheckArc;
+
+PROCEDURE <A NAME="ToText"><procedure>ToText</procedure></A>(t: T) : TEXT =
+  VAR text: TEXT := NIL;
+  BEGIN
+    IF t = NIL THEN RETURN &quot;&quot;; END;
+    WHILE t # NIL DO
+      IF text = NIL THEN
+        text := t.head;
+      ELSE
+        text := text &amp; DirSepCharStr &amp; t.head;
+      END;
+      t := t.tail;
+    END;
+    RETURN text;
+  END ToText;
+
+PROCEDURE <A NAME="FromText"><procedure>FromText</procedure></A>(text: TEXT) : T RAISES {Invalid} =
+  VAR i, ii := 0;
+      len: CARDINAL;
+      res: TextList.T := NIL;
+  PROCEDURE NextSub(start, end: CARDINAL) RAISES {Invalid} =
+    VAR t: TEXT;
+    BEGIN
+      IF start = end THEN RETURN; END;
+      t := Text.Sub(text, start, end-start);
+      IF NOT CheckArc(t) THEN RAISE Invalid; END;
+      res := TextList.Cons(t, res);
+    END NextSub;
+  BEGIN
+    text := StripOldArcs(text);
+    len := Text.Length(text);
+    WHILE ii &lt; len DO
+      i := Text.FindChar(text, DirSepChar, ii);
+      IF i &lt; 0 THEN EXIT; END;
+      IF i = 0 THEN RAISE Invalid; END;
+      NextSub(ii, i);
+      ii := i + 1;
+    END;
+    NextSub(ii, Text.Length(text));
+    RETURN TextList.ReverseD(res);
+  END FromText;
+
+PROCEDURE <A NAME="ToRelFN"><procedure>ToRelFN</procedure></A>(t: T) : TEXT =
+  VAR text: TEXT := NIL;
+  BEGIN
+    IF t = NIL THEN RETURN &quot;&quot;; END;
+    WHILE t # NIL DO
+      IF text = NIL THEN
+        text := t.head;
+      ELSE
+        text := Pathname.Join(text, t.head, NIL);
+      END;
+      t := t.tail;
+    END;
+    RETURN text;
+  END ToRelFN;
+
+PROCEDURE <A NAME="FromRelFN"><procedure>FromRelFN</procedure></A>(text: TEXT) : T RAISES {Invalid} =
+  VAR s: TextSeq.T;
+      res: TextList.T := NIL;
+  BEGIN
+    IF Pathname.Absolute(text) THEN RAISE Invalid; END;
+    TRY
+      s := Pathname.Decompose(text);
+    EXCEPT
+    | Pathname.Invalid =&gt; RAISE Invalid;
+    END;
+    FOR i := s.size()-1 TO 1 BY -1 DO
+      VAR arc := s.get(i); BEGIN
+        IF NOT Text.Empty(arc) THEN
+          IF NOT CheckArc(arc) THEN RAISE Invalid; END;
+          res := TextList.Cons(arc, res);
+        END;
+      END;
+    END;
+    RETURN res;
+  END FromRelFN;
+
+PROCEDURE <A NAME="Parent"><procedure>Parent</procedure></A>(t: T) : T =
+  BEGIN
+    IF t = NIL OR t.tail = NIL THEN RETURN NIL; END;
+    RETURN TextList.Cons(t.head, Parent(t.tail));
+  END Parent;
+
+PROCEDURE <A NAME="EqualPN"><procedure>EqualPN</procedure></A>(pn1, pn2: PN) : BOOLEAN =
+  BEGIN
+    IF NOT Equal(pn1.dir, pn2.dir) THEN RETURN FALSE; END;
+    RETURN Text.Equal(pn1.arc, pn2.arc);
+  END EqualPN;
+
+PROCEDURE <A NAME="PNToText"><procedure>PNToText</procedure></A>(pn: PN) : TEXT =
+  BEGIN
+    IF pn.dir = NIL THEN RETURN pn.arc; END;
+    RETURN ToText(pn.dir) &amp; DirSepCharStr &amp; pn.arc;
+  END PNToText;
+
+PROCEDURE <A NAME="PNFromText"><procedure>PNFromText</procedure></A>(text: TEXT) : PN RAISES {Invalid} =
+  VAR pn: PN;
+      l := FromText(text);
+  BEGIN
+    IF l = NIL THEN RAISE Invalid; END;
+    IF l.tail = NIL THEN
+      pn.dir := NIL;
+      pn.arc := l.head;
+    ELSE
+      pn.dir := l;
+      WHILE l.tail.tail # NIL DO l := l.tail; END;
+      pn.arc := l.tail.head;
+      l.tail := NIL;
+    END;
+    RETURN pn;
+  END PNFromText;
+
+CONST ProjStr = &quot;/proj/&quot;;
+      PkgStr = &quot;/pkg/&quot;;
+
+PROCEDURE <A NAME="StripOldArcs"><procedure>StripOldArcs</procedure></A>(t: TEXT) : TEXT =
+    (* maps /proj/x/y/z -&gt; x/y/z *)
+    (* maps /proj/x/pkg/z -&gt; x/z *)
+  VAR i: INTEGER;
+  BEGIN
+    IF t = NIL OR Text.Empty(t) OR Text.GetChar(t, 0) # DirSepChar THEN
+      RETURN t;
+    END;
+    IF NOT Text.Equal(ProjStr, Text.Sub(t, 0, Text.Length(ProjStr))) THEN
+      RETURN t;
+    END;
+    t := Text.Sub(t, Text.Length(ProjStr), LAST(CARDINAL));
+    i := Text.FindChar(t, DirSepChar);
+    IF i &gt; 0 AND Text.Equal(PkgStr, Text.Sub(t, i, Text.Length(PkgStr))) THEN
+      t := Text.Sub(t, 0, i+1) &amp;
+           Text.Sub(t, i+Text.Length(PkgStr), LAST(CARDINAL));
+    END;
+    RETURN t;
+  END StripOldArcs;
+
+BEGIN
+END NetPath.
+</PRE>
+</inModule>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

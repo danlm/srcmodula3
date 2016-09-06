@@ -1,0 +1,460 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: obliqrt/src/ObValue.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>obliqrt/src/ObValue.i3</H2></A><HR>
+<inInterface>
+<PRE>
+<A HREF="../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+
+INTERFACE <interface><A HREF="#x1">ObValue</A></interface>;
+IMPORT <A HREF="../../synloc/src/SynWr.i3.html">SynWr</A>, <A HREF="../../synloc/src/SynLocation.i3.html">SynLocation</A>, <A HREF="../../rw/src/Common/Rd.i3.html">Rd</A>, <A HREF="../../rw/src/Common/Wr.i3.html">Wr</A>, <A HREF="ObTree.i3.html">ObTree</A>, <A HREF="../../netobjrt/src/NetObj.i3.html">NetObj</A>, <A HREF="../../thread/src/Common/Thread.i3.html">Thread</A>, <A HREF="../../libm3/DS/AtomList.i3.html">AtomList</A>;
+
+  EXCEPTION
+    Exception(ExceptionPacket); (* trappable     *)
+    Error(ErrorPacket);         (* only trappable by try-else *)
+    ServerError(TEXT);  (* like Error, but has no location info;
+                           immediately converted to Error
+                           on the way back from a server *)
+  TYPE
+    ErrorPacket =
+      BRANDED &quot;ErrorPacket&quot; OBJECT
+        msg: TEXT;
+        location: SynLocation.T;
+      END;
+
+    ExceptionPacket =
+      BRANDED &quot;ExceptionPacket&quot; OBJECT
+        msg: TEXT;
+        location: SynLocation.T;
+        exception: ValException;
+        data: Val;
+      END;
+
+    <A HREF="ObValue.m3.html#Tbl">Tbl</A> &lt;: REFANY;
+
+  TYPE
+    Vals = ARRAY OF Val;
+
+    Env = BRANDED OBJECT
+	name: ObTree.IdeName;
+        rest: Env;
+      END;
+
+    LocalEnv =
+      Env BRANDED OBJECT
+	val: Val;
+      END;
+
+    GlobalEnv =
+      REF Vals;
+
+    Val =
+      BRANDED &quot;Val&quot; OBJECT
+      END;
+
+    ValOk =
+      Val BRANDED &quot;ValOk&quot; OBJECT
+      END;
+
+    ValBool =
+      Val BRANDED &quot;ValBool&quot; OBJECT
+	bool: BOOLEAN;
+      END;
+
+    ValChar =
+      Val BRANDED &quot;ValChar&quot; OBJECT
+	char: CHAR;
+      END;
+
+    ValText =
+      Val BRANDED &quot;ValText&quot; OBJECT
+	text: TEXT; (* Non-NIL ! *)
+      END;
+
+    ValInt =
+      Val BRANDED &quot;ValInt&quot; OBJECT
+	int: INTEGER;
+	temp: BOOLEAN:=FALSE;
+      END;
+
+    ValReal =
+      Val BRANDED &quot;ValReal&quot; OBJECT
+	real: LONGREAL;
+	temp: BOOLEAN:=FALSE;
+      END;
+
+    ValException =
+      Val BRANDED &quot;ValException&quot; OBJECT
+        name: TEXT;
+      END;
+
+    ValOption =
+      Val BRANDED &quot;ValOption&quot; OBJECT
+	tag: TEXT;
+        val: Val;
+      END;
+
+    ValVar =
+      Val BRANDED &quot;ValVar&quot; OBJECT
+        remote: RemVar;
+      END;
+
+    ValArray =
+      Val BRANDED &quot;ValArray&quot; OBJECT
+	remote: RemArray;
+      END;
+
+    ValFun =
+      Val BRANDED &quot;ValFun&quot; OBJECT
+        fun: ObTree.TermFun;
+	global: GlobalEnv;
+      END;
+
+    ValMeth =
+      Val BRANDED &quot;ValMeth&quot; OBJECT
+        meth: ObTree.TermMeth;
+	global: GlobalEnv;
+      END;
+
+    ValAlias =
+      Val BRANDED &quot;ValAlias&quot; OBJECT
+	label: TEXT;
+	labelIndexHint: INTEGER;
+        obj: ValObj;
+      END;
+
+    ValAnything = (* to be subtyped *)
+      Val BRANDED &quot;ValAnything&quot; OBJECT
+        what: TEXT; (* Only used for printing. *)
+        picklable: BOOLEAN;
+      METHODS
+        Is(other: ValAnything): BOOLEAN := IsSelfOther;
+          (* Override with what you want the &quot;is&quot; primitive to do
+             to determine equality of two ValAnything values.
+             The default method returns self=other. *)
+        Print(): TEXT := PrintWhat;
+          (* Override with a routine to print this value.
+             The default method returns the &quot;what&quot;field. *)
+        Copy(tbl: Tbl; loc: SynLocation.T): ValAnything
+            RAISES {Error, NetObj.Error} := CopyError;
+          (* Override with a routine that makes a copy of this value
+             (the default CopyError raises error, CopyId returns self).
+               Use this pattern:
+               IF tbl.Get(self, (*out*)newVal) THEN RETURN newVal END;
+               newVal := NEW(ValAnything, what:=self.what,
+                              ... all private fields set to NIL ... );
+               EVAL tbl.Put(self, newVal);
+               ... fill private fields, possibly calling:
+                   newVal.field:=ObValue.CopyVal(self.field, tbl, loc) ...
+               RETURN newVal;
+          *)
+      END;
+
+    ValObj =
+      Val BRANDED &quot;ValObj&quot; OBJECT
+        remote: RemObj;
+      END;
+
+    ObjFields =
+      ARRAY OF RECORD
+        label: TEXT;
+        field: Val;
+        (* ValMeth for method fields,
+           ValAlias for alias fields,
+           other Val for value fields *)
+      END;
+
+    ValEngine =
+      Val BRANDED &quot;ValEngine&quot; OBJECT
+        remote: RemEngine;
+      END;
+
+    ValFileSystem =
+      ValAnything BRANDED &quot;ValFileSystem&quot; OBJECT
+        remote: RemFileSystem;
+      OVERRIDES
+        Is := FileSystemIs;
+        Copy := CopyId;
+      END;
+
+    ValProcessor =
+      ValAnything BRANDED &quot;ValProcessor&quot; OBJECT
+      OVERRIDES
+        Copy := CopyId;
+      END;
+
+    RemVar =
+      NetObj.T BRANDED &quot;RemVar&quot; OBJECT
+      METHODS
+        Get(): Val RAISES {NetObj.Error};
+        Set(val: Val) RAISES {NetObj.Error};
+      END;
+
+    <A HREF="ObValue.m3.html#RemVarServer">RemVarServer</A> &lt;:
+      RemVar;
+
+   RemArray =
+     NetObj.T BRANDED &quot;RemArray&quot; OBJECT
+     METHODS
+       Size(): INTEGER
+           RAISES {NetObj.Error};
+       Get(i: INTEGER): Val
+           RAISES {ServerError, NetObj.Error};
+       Set(i: INTEGER; val: Val)
+           RAISES {ServerError, NetObj.Error};
+       Sub(start,size: INTEGER): ValArray
+           RAISES {ServerError, NetObj.Error};
+         (* Extract the subarray self[start for size]. *)
+       Upd(start, size: INTEGER; READONLY other: REF Vals)
+           RAISES {ServerError, NetObj.Error};
+         (* Update self[start for size] with other[0 for size]. *)
+       Obtain(): REF Vals RAISES {NetObj.Error};
+         (* Return self.array if local, or a copy of it if remote.
+            Modifying the result of Obtain may violate network transparency. *)
+     END;
+
+   <A HREF="ObValue.m3.html#RemArrayServer">RemArrayServer</A> &lt;:
+     RemArray;
+
+    RemObj =
+      NetObj.T BRANDED &quot;RemObj&quot; OBJECT
+      METHODS
+        Who(VAR(*out*) protected, serialized: BOOLEAN): TEXT
+          RAISES {NetObj.Error};
+        Select(label: TEXT; internal: BOOLEAN; VAR hint: INTEGER): Val
+          RAISES {Error, Exception, ServerError, NetObj.Error};
+        Invoke(label: TEXT; argNo: INTEGER; READONLY args: Vals;
+          internal: BOOLEAN; VAR hint: INTEGER): Val
+          RAISES {Error, Exception, ServerError, NetObj.Error};
+        Update(label: TEXT; val: Val; internal: BOOLEAN;
+          VAR hint: INTEGER) RAISES {ServerError, NetObj.Error};
+        Redirect(val: Val; internal: BOOLEAN)
+          RAISES {ServerError, NetObj.Error};
+        Has(label: TEXT; VAR hint: INTEGER): BOOLEAN RAISES {NetObj.Error};
+          (* Whether a field called label exists. *)
+        Obtain(internal: BOOLEAN): REF ObjFields
+          RAISES {ServerError, NetObj.Error};
+          (* Return self.fields if local, or a copy of it if remote.
+             Modifying the result of Obtain may violate network transparency.
+             *)
+      END;
+
+    <A HREF="ObValue.m3.html#RemObjServer">RemObjServer</A> &lt;:
+      RemObjServerPublic;
+    RemObjServerPublic =
+      RemObj BRANDED &quot;RemObjServerPublic&quot; OBJECT
+        who: TEXT;
+        sync: Sync;
+      END;
+    (* RemObjServer, a subtype of RemObj, is the standard implementation of
+       local objects. Another subtype of RemObj is automatically produced by
+       the Network Objects stub generator, for remote surrogates. Further
+       subtypes of RemObj can be defined and used as client-specific
+       pseudo-objects. In the latter case, the result of Who is used for
+       printing; copying, cloning, and pickling operate on the results of
+       Who and Obtain.
+       *)
+
+    Sync =
+      BRANDED &quot;Sync&quot; OBJECT
+        mutex: Thread.Mutex;
+      END;
+
+    RemEngine =
+      NetObj.T BRANDED &quot;RemEngine&quot; OBJECT
+      METHODS
+        Who(): TEXT RAISES {NetObj.Error};
+        Eval(proc: Val; mySelf: RemObj): Val
+          RAISES {Error, Exception, ServerError, NetObj.Error};
+      END;
+
+    RemEngineServer =
+      RemEngine BRANDED &quot;RemEngineServer&quot; OBJECT
+        who: TEXT;
+        arg: Val;
+      OVERRIDES
+        Who := EngineWho;
+        Eval := EngineEval;
+      END;
+
+    RemFileSystem =
+      NetObj.T BRANDED &quot;RemFileSystem&quot; OBJECT
+      METHODS
+        OpenRead(fileName: TEXT): Rd.T RAISES {NetObj.Error, ServerError};
+        OpenWrite(fileName: TEXT): Wr.T RAISES {NetObj.Error, ServerError};
+        OpenAppend(fileName: TEXT): Wr.T RAISES {NetObj.Error, ServerError};
+      END;
+
+    <A HREF="ObValue.m3.html#RemFileSystemServer">RemFileSystemServer</A> &lt;: RemFileSystem;
+
+    ArgArray = ARRAY [1..8] OF Val;
+
+  VAR
+    valOk: Val;
+    netException, threadAlerted: ValException;
+    showNetObjMsgs: BOOLEAN;
+    machineAddress: TEXT;
+    localProcessor: ValProcessor;
+
+  PROCEDURE <A HREF="ObValue.m3.html#Setup">Setup</A>();
+  (* To be called before any other use of this module. *)
+
+  PROCEDURE <A HREF="ObValue.m3.html#Is">Is</A>(v1,v2: Val; location: SynLocation.T): BOOLEAN;
+
+  PROCEDURE <A HREF="ObValue.m3.html#NewText">NewText</A>(text: TEXT): Val;
+    (* Create an Obliq text containing a non-NIL m3 TEXT. *)
+
+  PROCEDURE <A HREF="ObValue.m3.html#NewVar">NewVar</A>(val: Val): ValVar;
+    (* Create a new variable. *)
+
+  PROCEDURE <A HREF="ObValue.m3.html#NewArray">NewArray</A>(READONLY vals: Vals): ValArray;
+    (* Create a new array. *)
+  PROCEDURE <A HREF="ObValue.m3.html#NewArrayFromVals">NewArrayFromVals</A>(vals: REF Vals): ValArray;
+    (* Careful: the vals passed in are shared and may get modified later. *)
+  PROCEDURE <A HREF="ObValue.m3.html#ArrayCat">ArrayCat</A>(vals1, vals2: REF Vals): Val RAISES {};
+
+  PROCEDURE <A HREF="ObValue.m3.html#NewObject">NewObject</A>(READONLY fields: ObjFields;
+    who: TEXT:=&quot;&quot;; protected: BOOLEAN:=FALSE; sync: Sync:=NIL): ValObj;
+    (* Create a new object. *)
+  PROCEDURE <A HREF="ObValue.m3.html#NewObjectFromFields">NewObjectFromFields</A>(fields: REF ObjFields;
+    who: TEXT; protected: BOOLEAN; sync: Sync): ValObj;
+    (* Careful: the fields passed in are shared and may get modified later. *)
+  PROCEDURE <A HREF="ObValue.m3.html#ObjClone1">ObjClone1</A>(remObj: RemObj; mySelf: RemObj): ValObj
+      RAISES {ServerError, NetObj.Error};
+    (* mySelf is the object invoking cloning, if any, or NIL.
+       Then cloning is self-inflicted if remObj=mySelf. *)
+  PROCEDURE <A HREF="ObValue.m3.html#ObjClone">ObjClone</A>(READONLY remObjs: ARRAY OF RemObj;
+    mySelf: RemObj): ValObj
+    RAISES {ServerError, NetObj.Error};
+    (* mySelf is the object invoking cloning, if any, or NIL.
+       Then cloning is self-inflicted for any remObjs[i]=mySelf. *)
+
+  PROCEDURE <A HREF="ObValue.m3.html#NewAlias">NewAlias</A>(obj: ValObj; label: TEXT; location: SynLocation.T)
+    : ValAlias RAISES {Error, Exception};
+
+  PROCEDURE <A HREF="ObValue.m3.html#EngineWho">EngineWho</A>(self: RemEngineServer): TEXT RAISES {NetObj.Error};
+  PROCEDURE <A HREF="ObValue.m3.html#EngineEval">EngineEval</A>(self: RemEngineServer; proc: Val; mySelf: RemObj): Val
+          RAISES {Error, Exception, ServerError, NetObj.Error};
+
+  PROCEDURE <A HREF="ObValue.m3.html#NewFileSystem">NewFileSystem</A>(readOnly: BOOLEAN): ValFileSystem;
+  PROCEDURE <A HREF="ObValue.m3.html#FileSystemIs">FileSystemIs</A>(self: ValFileSystem; other: ValAnything): BOOLEAN;
+
+  PROCEDURE <A HREF="ObValue.m3.html#SameException">SameException</A>(exc1, exc2: ValException): BOOLEAN;
+
+  PROCEDURE <A HREF="ObValue.m3.html#RaiseError">RaiseError</A>(msg: TEXT; location: SynLocation.T) RAISES {Error};
+  PROCEDURE <A HREF="ObValue.m3.html#RaiseException">RaiseException</A>(exception: ValException; msg: TEXT;
+    loc: SynLocation.T) RAISES {Exception};
+  PROCEDURE <A HREF="ObValue.m3.html#RaiseNetException">RaiseNetException</A>(msg: TEXT; atoms: AtomList.T; loc: SynLocation.T)
+    RAISES {Exception};
+
+  PROCEDURE <A HREF="ObValue.m3.html#ErrorMsg">ErrorMsg</A>(swr: SynWr.T; packet: ErrorPacket);
+  PROCEDURE <A HREF="ObValue.m3.html#ExceptionMsg">ExceptionMsg</A>(wr: SynWr.T; packet: ExceptionPacket);
+
+  PROCEDURE <A HREF="ObValue.m3.html#BadOp">BadOp</A>(pkg, op: TEXT; location: SynLocation.T) RAISES {Error};
+  PROCEDURE <A HREF="ObValue.m3.html#BadArgType">BadArgType</A>(argNo: INTEGER; expected, pkg, op: TEXT;
+    location: SynLocation.T) RAISES {Error};
+  PROCEDURE <A HREF="ObValue.m3.html#BadArgVal">BadArgVal</A>(argNo: INTEGER; expected, pkg, op: TEXT;
+    location: SynLocation.T) RAISES {Error};
+  PROCEDURE <A HREF="ObValue.m3.html#BadArgsNoMsg">BadArgsNoMsg</A>(desired, found: INTEGER;
+    routineKind, routineName: TEXT): TEXT;
+
+  PROCEDURE <A HREF="ObValue.m3.html#IsSelfOther">IsSelfOther</A>(self, other: ValAnything): BOOLEAN;
+  PROCEDURE <A HREF="ObValue.m3.html#PrintWhat">PrintWhat</A>(self: ValAnything): TEXT;
+  PROCEDURE <A HREF="ObValue.m3.html#CopyError">CopyError</A>(self: ValAnything; tbl: Tbl;
+                      loc: SynLocation.T): ValAnything RAISES {Error};
+  PROCEDURE <A HREF="ObValue.m3.html#CopyId">CopyId</A>(self: ValAnything; tbl: Tbl;
+                   loc: SynLocation.T): ValAnything;
+
+  PROCEDURE <A HREF="ObValue.m3.html#InhibitTransmission">InhibitTransmission</A>(tc: INTEGER; reason: TEXT);
+  (* Inhibits the network transmission of any object whose type has
+     typecode &quot;tc&quot;; an obliq exception will result. To be used on all
+     M3 types that are embedded in obliq values but that have only
+     &quot;local&quot; meaning, such as threads. The reason should be a string
+     like &quot;threads cannot be transmitted/duplicated&quot;. *)
+
+  PROCEDURE <A HREF="ObValue.m3.html#NewTbl">NewTbl</A>(): Tbl;
+  (* A new empty table for CopyVal. *)
+
+  PROCEDURE <A HREF="ObValue.m3.html#CopyVal">CopyVal</A>(val: Val; tbl: Tbl; loc: SynLocation.T): Val
+    RAISES {Error, NetObj.Error};
+  (* Make a complete local copy of val, preserving sharing and circularities.
+     Substructures are fetched over the network, if necessary. Protected
+     objects and non-transferrable values produce errors. *)
+
+  PROCEDURE <A HREF="ObValue.m3.html#CopyValToLocal">CopyValToLocal</A>(val: Val; tbl: Tbl; loc: SynLocation.T)
+    : Val RAISES {Error, NetObj.Error};
+  PROCEDURE <A HREF="ObValue.m3.html#CopyLocalToVal">CopyLocalToVal</A>(val: Val; tbl: Tbl; loc: SynLocation.T)
+    : Val RAISES {Error, NetObj.Error};
+  (* Internal use only. *)
+
+  VAR
+    sysCallFailure: ValException;
+
+  TYPE
+    SysCallClosure = OBJECT
+    METHODS
+      SysCall(READONLY args: Vals; loc: SynLocation.T:=NIL): Val
+        RAISES{Error, Exception};
+      (* To be overridden. It should return an obliq Val, or raise an error
+         by calling RaiseError, or raise an exception by calling
+         RaiseException. The raised exception should normally be
+         sysCallFailure. The loc parameter should be passed through whenever
+         appropriate, or appriate error locations should be synthesized.
+         Alternatively, errors and exceptions may be left uncought, so
+         that they propagate back to Obliq; however this may result
+         in poor error location reporting. *)
+    END;
+
+  PROCEDURE <A HREF="ObValue.m3.html#RegisterSysCall">RegisterSysCall</A>(name: TEXT; clos: SysCallClosure);
+    (* To register a Modula-3 procedure that can be called from Obliq,
+       under a given name. Re-registering for the same name overrides
+       the previous proc for that name. Use clos=NIL to unregister. *)
+
+  PROCEDURE <A HREF="ObValue.m3.html#FetchSysCall">FetchSysCall</A>(name: TEXT; VAR(*out*) clos: SysCallClosure): BOOLEAN;
+    (* To fetch a registered Modula-3 procedure by its given name.
+       Returns FALSE if not found. *)
+
+END ObValue.
+</PRE>
+</inInterface>
+<HR>
+<A NAME="x1">ObValue's implementation  is in:
+</A><UL>
+<LI><A HREF="../DS/ObValue_RemArray_v1.m3.html#0TOP0">obliqrt/DS/ObValue_RemArray_v1.m3</A>
+<LI><A HREF="../DS/ObValue_RemEngine_v1.m3.html#0TOP0">obliqrt/DS/ObValue_RemEngine_v1.m3</A>
+<LI><A HREF="../DS/ObValue_RemFileSystem_v1.m3.html#0TOP0">obliqrt/DS/ObValue_RemFileSystem_v1.m3</A>
+<LI><A HREF="../DS/ObValue_RemObj_v1.m3.html#0TOP0">obliqrt/DS/ObValue_RemObj_v1.m3</A>
+<LI><A HREF="../DS/ObValue_RemVar_v1.m3.html#0TOP0">obliqrt/DS/ObValue_RemVar_v1.m3</A>
+<LI><A HREF="ObValue.m3.html#0TOP0">obliqrt/src/ObValue.m3</A>
+</UL>
+<P>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

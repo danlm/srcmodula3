@@ -1,0 +1,186 @@
+head	1.4;
+access;
+symbols;
+locks; strict;
+
+
+1.4
+date	91.01.11.06.06.11;	author muller;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	90.12.22.22.07.41;	author muller;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	90.08.31.12.01.55;	author muller;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	90.03.19.13.02.01;	author muller;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.4
+log
+@*** empty log message ***
+@
+text
+@# Copyright (C) 1990, Digital Equipment Corporation.
+# All rights reserved.
+# See the file COPYRIGHT for a full description.
+
+# Last modified on Fri Jan 11 06:00:34 1991 by muller
+
+set edit off
+dir .ROOT/system/compiler/misc
+dir .ROOT/system/compiler/builtinOps
+dir .ROOT/system/compiler/builtinTypes
+dir .ROOT/system/compiler/builtinWord
+dir .ROOT/system/compiler/exprs		
+dir .ROOT/system/compiler/stmts
+dir .ROOT/system/compiler/types
+dir .ROOT/system/compiler/values
+dir .ROOT/system/runtime
+dir .ROOT/system/corelib/coreos
+dir .ROOT/system/corelib/runtime
+dir .ROOT/system/corelib/main
+dir .ROOT/system/corelib/text
+dir .ROOT/system/corelib/time
+dir .ROOT/system/corelib/thread
+dir .ROOT/system/corelib/word
+dir .ROOT/system/corelib/C
+dir .ROOT/system/corelib/convert
+dir .ROOT/system/corelib/fmt
+dir .ROOT/system/corelib/scan
+dir .ROOT/system/corelib/rd
+dir .ROOT/system/corelib/wr
+dir .ROOT/system/corelib/textrw
+dir .ROOT/system/corelib/filerw
+dir .ROOT/system/corelib/fingerprint
+dir .ROOT/system/corelib/tables
+dir .ROOT/system/corelib/list
+
+define dc
+exec-file .ROOT/system/compiler/m3compiler
+symbol-file .ROOT/system/compiler/m3compiler
+end
+
+define cm
+run -D.:.ROOT/system/corelib/Interfaces:.ROOT/tests -o Main.mc Main.m3
+end
+
+define ct
+run -D.:.ROOT/system/corelib/Interfaces:.ROOT/tests -o Test.mc Test.m3
+end
+
+define ci
+run -D.:.ROOT/system/corelib/Interfaces:.ROOT/tests -o Test.ic Test.i3
+end
+
+define ca
+run -D.:.ROOT/system/corelib/Interfaces:.ROOT/tests -o A.ic A.i3
+end
+
+define cb
+run -D.:.ROOT/system/corelib/Interfaces:.ROOT/tests -o B.ic B.i3
+end
+@
+
+
+1.3
+log
+@*** empty log message ***
+@
+text
+@d5 1
+a5 1
+# Last modified on Fri Dec 21 20:36:18 1990 by muller
+a7 2
+exec-file .ROOT/system/compiler/m3compiler
+symbol-file .ROOT/system/compiler/m3compiler
+d35 5
+@
+
+
+1.2
+log
+@*** empty log message ***
+@
+text
+@d5 1
+a5 1
+# Last modified on Fri Aug 31 00:47:18 1990 by muller
+d8 2
+a33 1
+dir .ROOT/system/corelib/files
+d39 1
+a39 1
+run -D.:.ROOT/system/corelib/Interfaces -o Main.mc Main.m3
+d43 1
+a43 1
+run -D.:.ROOT/system/corelib/Interfaces -o Test.mc Test.m3
+d47 1
+a47 1
+run -D.:.ROOT/system/corelib/Interfaces -o Test.ic Test.i3
+d50 7
+@
+
+
+1.1
+log
+@1.4+epsilon
+@
+text
+@d5 1
+a5 1
+# Last modified on Fri Jan 26 03:25:32 1990 by muller
+d8 41
+a48 38
+dir .ROOT/compiler/misc
+dir .ROOT/compiler/builtinOps
+dir .ROOT/compiler/builtinTypes
+dir .ROOT/compiler/exprs		
+dir .ROOT/compiler/stmts
+dir .ROOT/compiler/types
+dir .ROOT/compiler/values
+dir .ROOT/compiler/VAX
+dir .ROOT/compiler/word
+dir .ROOT/runtime/C
+dir .ROOT/runtime/VAX
+dir .ROOT/runtime/gcalloc
+dir .ROOT/runtime/os
+dir .ROOT/runtime/kernel
+dir .ROOT/runtime/text
+dir .ROOT/runtime/thread
+dir .ROOT/runtime/time
+dir .ROOT/runtime/word
+dir .ROOT/lib/fmt
+dir .ROOT/lib/parseparams
+dir .ROOT/lib/formatter
+dir .ROOT/lib/random
+dir .ROOT/lib/geometry
+dir .ROOT/lib/rd
+dir .ROOT/lib/interfaces
+dir .ROOT/lib/scan
+dir .ROOT/lib/list
+dir .ROOT/lib/statistics
+dir .ROOT/lib/tables
+dir .ROOT/lib/textrw
+dir .ROOT/lib/types
+dir .ROOT/lib/autoflushwr
+dir .ROOT/lib/uid
+dir .ROOT/lib/convert
+dir .ROOT/lib/math
+dir .ROOT/lib/wr
+dir .ROOT/lib/files
+dir .ROOT/lib/fingerprint
+@

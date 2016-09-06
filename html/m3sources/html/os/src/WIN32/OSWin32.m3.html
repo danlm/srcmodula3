@@ -1,0 +1,66 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: os/src/WIN32/OSWin32.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>os/src/WIN32/OSWin32.m3</H2></A><HR>
+<inModule>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+
+UNSAFE MODULE <module><implements><A HREF="OSWin32.i3.html">OSWin32</A></implements></module>;
+
+IMPORT <A HREF="../../../win32/src/WinBase.i3.html">WinBase</A>;
+
+VAR
+  inited := FALSE;
+  win95 := FALSE;
+
+PROCEDURE <A NAME="Win95"><procedure>Win95</procedure></A>(): BOOLEAN =
+  BEGIN
+    IF NOT inited THEN
+      inited := TRUE;
+      VAR
+        os_version : WinBase.OSVERSIONINFO;
+        b: INTEGER;
+      BEGIN
+        os_version.dwOSVersionInfoSize := BYTESIZE (os_version);
+        b := WinBase.GetVersionEx (ADR (os_version));
+        &lt;*ASSERT b # 0*&gt;
+        win95 := os_version.dwPlatformId = WinBase.VER_PLATFORM_WIN32_WINDOWS;
+      END;
+    END;
+    RETURN win95;
+  END Win95;
+
+BEGIN
+END OSWin32.
+</PRE>
+</inModule>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

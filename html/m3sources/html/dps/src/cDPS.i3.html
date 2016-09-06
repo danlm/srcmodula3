@@ -1,0 +1,67 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: dps/src/cDPS.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>dps/src/cDPS.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+
+INTERFACE <interface><A HREF="cDPS.m3.html">cDPS</A></interface>;
+
+IMPORT <A HREF="DPS.i3.html">DPS</A>;
+
+  &lt;*EXTERNAL*&gt; PROCEDURE doinitialize ();
+
+  &lt;*EXTERNAL*&gt; PROCEDURE docreatesimplewindow (ctx: DPS.T; width, height: INTEGER := 600);
+
+  &lt;*EXTERNAL*&gt; PROCEDURE dosendps (ctx: DPS.T; string: UNTRACED REF CHAR);
+  &lt;*EXTERNAL*&gt; PROCEDURE dosendpsnervously (ctx: DPS.T; string: UNTRACED REF CHAR): INTEGER;
+
+  &lt;*EXTERNAL*&gt; PROCEDURE stufftransforms ( win: DPS.T );
+  &lt;*EXTERNAL*&gt; PROCEDURE transformtodps ( win: DPS.T;
+     x, y: INTEGER; ux, uy: UNTRACED REF REAL );
+
+  &lt;*EXTERNAL*&gt; PROCEDURE xyupathhit (ctx: INTEGER; x, y: REAL; upath: UNTRACED REF CHAR): INTEGER;
+
+  &lt;*EXTERNAL*&gt; PROCEDURE doprocessinputs ( dpy: INTEGER;
+     win, event: UNTRACED REF INTEGER;
+     but, modifiers: UNTRACED REF INTEGER;
+     x, y, w, h: UNTRACED REF INTEGER );
+
+  &lt;*EXTERNAL*&gt; PROCEDURE doflush (ctx: DPS.T);
+  &lt;*EXTERNAL*&gt; PROCEDURE dowait (ctx: DPS.T);
+
+  &lt;*EXTERNAL*&gt; PROCEDURE noticeCursor (win: DPS.T);
+
+  END cDPS.
+</PRE>
+</inInterface>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

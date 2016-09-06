@@ -1,0 +1,65 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: mgkit/src/GraphAnim.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>mgkit/src/GraphAnim.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+
+INTERFACE <interface><A HREF="GraphAnim.m3.html">GraphAnim</A></interface>;
+
+IMPORT <A HREF="GraphVBT.i3.html">GraphVBT</A>, <A HREF="../../libm3/DS/RefList.i3.html">RefList</A>;
+
+&lt;* PRAGMA LL *&gt;
+</PRE> This interface contains a collection of procedures for animating motions on
+   a collection of <CODE>GraphVBT.Vertex</CODE>.   Even if a vertex is mentioned multiple
+   times in the list, it is only moved once.  
+
+<P><PRE>PROCEDURE <A HREF="GraphAnim.m3.html#Rotate">Rotate</A> (center     : GraphVBT.Vertex;
+                  angle : REAL;
+                  vertices   : RefList.T (* of GraphVBT.Vertex *));
+&lt;* LL.sup =  RefList.First(SELF.vertices).graph.mu *&gt;
+</PRE><BLOCKQUOTE><EM> Rotate <CODE>vertices</CODE> around <CODE>center</CODE> by <CODE>angle</CODE> degrees.  Positive
+   degrees move in the clockwise direction when x increases to the right
+   and y increases downward.  Reversing the polarity of x or y reverses
+   the direction of rotation.  Reversing the polarity of both x and y,
+   leaves the direction of rotation unchanged. </EM></BLOCKQUOTE><PRE>
+
+PROCEDURE <A HREF="GraphAnim.m3.html#MoveAlongEdges">MoveAlongEdges</A> (edges   : RefList.T (* of GraphVBT.Edge *);
+                          vertices: RefList.T (* of GraphVBT.Vertex *));
+&lt;* LL.sup =  RefList.First(SELF.vertices).graph.mu *&gt;
+</PRE><BLOCKQUOTE><EM> Move <CODE>vertices</CODE> along <CODE>edges</CODE>.  The time spent moving along each edge is
+   roughly proportionate to the edge's length. </EM></BLOCKQUOTE><PRE>
+
+END GraphAnim.
+</PRE>
+</inInterface>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

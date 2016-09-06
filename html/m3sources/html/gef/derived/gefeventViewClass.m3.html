@@ -1,0 +1,106 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: gef/derived/gefeventViewClass.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>gef/derived/gefeventViewClass.m3</H2></A><HR>
+<inModule>
+<PRE><A HREF="../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE>********************************************************************
+<PRE>
+      *  NOTE: This file is generated automatically from the event 
+      *        definition file gefevent.evt.
+ </PRE>
+********************************************************************
+
+<P><PRE>MODULE <module><implements><A HREF="gefeventViewClass.i3.html">gefeventViewClass</A></implements></module>;
+
+&lt;* NOWARN *&gt; IMPORT <A HREF="../../libm3/derived/RefList.i3.html">RefList</A>;
+&lt;* NOWARN *&gt; IMPORT <A HREF="../../slisp/src/SLispClass.i3.html">SLispClass</A>;
+IMPORT <A HREF="gefeventAlgClass.i3.html">gefeventAlgClass</A>;
+IMPORT <A HREF="../../zeus/src/ViewClass.i3.html">ViewClass</A>, <A HREF="../../zeus/src/ZeusClass.i3.html">ZeusClass</A>;
+
+&lt;* PRAGMA LL *&gt;
+
+REVEAL
+  <A NAME="T">T</A> = Public BRANDED OBJECT
+      OVERRIDES
+        &lt;* LL.sup = VBT.mu *&gt;
+        isCompat := IsCompat;
+        &lt;* LL.sup &lt; VBT.mu *&gt;
+        oeInit := Init;
+        oeEvent := Event;
+        oePause := Pause;
+        &lt;* LL.sup = VBT.mu *&gt;
+        ueUpdate := Update;
+      END;
+
+PROCEDURE <A NAME="IsCompat"><procedure>IsCompat</procedure></A>(&lt;*UNUSED*&gt; v: T; alg: ZeusClass.T): BOOLEAN =
+  &lt;* LL.sup = VBT.mu *&gt;
+  BEGIN
+    RETURN ISTYPE(alg, gefeventAlgClass.T)
+  END IsCompat;
+
+PROCEDURE <A NAME="Init"><procedure>Init</procedure></A> (view: T
+    ; &lt;*UNUSED*&gt; files: RefList.T
+) =
+  &lt;* LL.sup &lt; VBT.mu *&gt;
+  BEGIN
+    view.evtHandled := FALSE;
+  END Init;
+PROCEDURE <A NAME="Event"><procedure>Event</procedure></A> (view: T
+    ; &lt;*UNUSED*&gt; name: TEXT
+    ; &lt;*UNUSED*&gt; args: RefList.T
+) =
+  &lt;* LL.sup &lt; VBT.mu *&gt;
+  BEGIN
+    view.evtHandled := FALSE;
+  END Event;
+PROCEDURE <A NAME="Pause"><procedure>Pause</procedure></A> (view: T
+) =
+  &lt;* LL.sup &lt; VBT.mu *&gt;
+  BEGIN
+    view.evtHandled := FALSE;
+  END Pause;
+
+PROCEDURE <A NAME="Update"><procedure>Update</procedure></A> (view: T
+    ; &lt;*UNUSED*&gt; name: TEXT
+    ; &lt;*UNUSED*&gt; args: RefList.T
+) =
+  &lt;* LL.sup = VBT.mu *&gt;
+  BEGIN
+    view.evtHandled := FALSE;
+  END Update;
+
+BEGIN
+END gefeventViewClass.
+</PRE>
+</inModule>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

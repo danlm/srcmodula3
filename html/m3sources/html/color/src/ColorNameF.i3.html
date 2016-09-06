@@ -1,0 +1,62 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: color/src/ColorNameF.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>color/src/ColorNameF.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE> Created by meehan on Fri Aug 14 22:09:04 PDT 1992                         
+
+<P>
+<P><PRE>INTERFACE <interface><A HREF="ColorName.m3.html">ColorNameF</A></interface>;
+
+IMPORT <A HREF="Color.i3.html">Color</A>, <A HREF="ColorName.i3.html">ColorName</A>, <A HREF="../../libm3/DS/TextIntTbl.i3.html">TextIntTbl</A>, <A HREF="../../libm3/DS/TextRefTbl.i3.html">TextRefTbl</A>;
+
+VAR table: TextIntTbl.T;
+</PRE><BLOCKQUOTE><EM> Maps NormalizeName(name) to index into Basic.  Used for name -&gt; color. </EM></BLOCKQUOTE><PRE>
+
+TYPE Cache = MUTEX OBJECT table: TextRefTbl.T END;
+
+VAR nameCache: Cache;
+</PRE><BLOCKQUOTE><EM> cache of normalized names that have been looked up: </EM></BLOCKQUOTE><PRE>
+
+PROCEDURE <A HREF="ColorName.m3.html#NormalizeName">NormalizeName</A> (a: TEXT): TEXT;
+</PRE><BLOCKQUOTE><EM> Deletes all whitespace in <CODE>a</CODE> and converts to lower case </EM></BLOCKQUOTE><PRE>
+
+TYPE NotInTable = PROCEDURE (name: TEXT): Color.T RAISES {ColorName.NotFound};
+
+PROCEDURE <A HREF="ColorName.m3.html#LowerCaseToRGB">LowerCaseToRGB</A> (name: TEXT; p: NotInTable): Color.T
+  RAISES {ColorName.NotFound};
+
+END ColorNameF.
+</PRE>
+</inInterface>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

@@ -1,0 +1,58 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: rw/src/Common/AutoFlushWr.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>rw/src/Common/AutoFlushWr.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+
+INTERFACE <interface><A HREF="AutoFlushWr.m3.html">AutoFlushWr</A></interface>;
+</PRE> Writers that are automatically flushed; useful for writing to
+   terminals. 
+
+<P><PRE>IMPORT <A HREF="Wr.i3.html">Wr</A>, <A HREF="../../../time/src/Common/Time.i3.html">Time</A>;
+
+TYPE
+  <A HREF="AutoFlushWr.m3.html#T">T</A> &lt;: Public;
+  Public = Wr.T OBJECT METHODS init (ch: Wr.T; p: Time.T := -1.0D0): T END;
+</PRE> After wr := NEW(T).init(ch), everything written to wr will be forwarded 
+   to ch (that is, target(wr) = target(ch)).  Furthermore, wr will 
+   be flushed automatically by a background thread every p seconds 
+   (approximately).  If p is less than 0, it defaults to a value that is 
+   reasonable for writing to terminals.  The child ch must be unlocked 
+   when init is called. After ch has been passed to init, you must not 
+   operate on ch (except implicitly through wr).  Flushing wr flushes 
+   ch; closing wr closes ch. 
+
+<P><PRE>END AutoFlushWr.
+</PRE>
+</inInterface>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

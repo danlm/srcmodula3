@@ -1,0 +1,58 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: m3linker/src/MxFile.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>m3linker/src/MxFile.m3</H2></A><HR>
+<inModule>
+<PRE><A HREF="../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM>                                                             </EM></BLOCKQUOTE><PRE>
+</PRE> File: MxFile.i3                                             
+
+<P><PRE>UNSAFE MODULE <module><implements><A HREF="MxFile.i3.html">MxFile</A></implements></module>;
+
+IMPORT <A HREF="../../os/src/Common/File.i3.html">File</A>, <A HREF="../../os/src/Common/OSError.i3.html">OSError</A>;
+
+CONST BIG = 16_1000000; (* 2^24 =&gt; 16M *)
+TYPE BufPtr = UNTRACED REF ARRAY [0..BIG-1] OF File.Byte;
+
+PROCEDURE <A NAME="Read"><procedure>Read</procedure></A> (f: File.T; VAR(*OUT*)buf: ARRAY OF CHAR; len: INTEGER): INTEGER
+  RAISES {OSError.E} =
+  VAR ptr := LOOPHOLE (ADR (buf[0]), BufPtr);
+  BEGIN
+    RETURN f.read (SUBARRAY (ptr^, 0, MIN (len, NUMBER (buf))),
+                   mayBlock := TRUE);
+  END Read;
+
+BEGIN
+END MxFile.
+</PRE>
+</inModule>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

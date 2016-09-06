@@ -1,0 +1,73 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: dps/src/PopupMenuDLE.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>dps/src/PopupMenuDLE.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+
+INTERFACE <interface><A HREF="PopupMenuDLE.m3.html">PopupMenuDLE</A></interface>;
+
+IMPORT <A HREF="DisplayList.i3.html">DisplayList</A>, <A HREF="DPS.i3.html">DPS</A>, <A HREF="DLWindow.i3.html">DLWindow</A>, <A HREF="DPSWindow.i3.html">DPSWindow</A>;
+
+TYPE Item = OBJECT
+  text: TEXT := &quot;&quot;; context: REFANY := NIL;
+  textPlace: DPS.Place; hot: BOOLEAN := FALSE;
+ METHODS
+  Proc ();
+  END;
+
+TYPE T = DisplayList.T OBJECT
+  initialized: BOOLEAN := FALSE;
+  hot: BOOLEAN := FALSE;
+  items: REF ARRAY OF Item;
+ METHODS
+  Popup (place: DPS.Place; window: DLWindow.T) := Popup;
+ OVERRIDES
+  Repaint := Repaint;
+  Mouse := Mouse;
+  END;
+
+TYPE E = T;
+
+PROCEDURE <A HREF="PopupMenuDLE.m3.html#Repaint">Repaint</A> (t: T; box: DPS.Box; only: REFANY := NIL): TEXT;
+PROCEDURE <A HREF="PopupMenuDLE.m3.html#Mouse">Mouse</A> (t: T; window: DPSWindow.T; event: DPS.MouseEvent): BOOLEAN;
+
+PROCEDURE <A HREF="PopupMenuDLE.m3.html#Init">Init</A> (t: T; window: DPSWindow.T);
+
+PROCEDURE <A HREF="PopupMenuDLE.m3.html#Popup">Popup</A> (t: T; place: DPS.Place; window: DLWindow.T);
+
+PROCEDURE <A HREF="PopupMenuDLE.m3.html#ProcIsReallyNIL">ProcIsReallyNIL</A> (i: Item);
+
+  END PopupMenuDLE.
+</PRE>
+</inInterface>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

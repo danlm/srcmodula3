@@ -1,0 +1,52 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: runtime/src/common/RTModule.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>runtime/src/common/RTModule.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE> This interface provides a safe interface to the runtime
+   table of modules. 
+
+<P><PRE>INTERFACE <interface><A HREF="RTModule.m3.html">RTModule</A></interface>;
+
+IMPORT <A HREF="RT0.i3.html">RT0</A>;
+
+PROCEDURE <A HREF="RTModule.m3.html#Count">Count</A> (): CARDINAL;
+</PRE><BLOCKQUOTE><EM> returns the number of registered modules. They are indexed [0..Count-1]. </EM></BLOCKQUOTE><PRE>
+
+PROCEDURE <A HREF="RTModule.m3.html#Get">Get</A> (m: CARDINAL): RT0.ModulePtr;
+</PRE><BLOCKQUOTE><EM> returns a pointer to the module information for module 'm'. </EM></BLOCKQUOTE><PRE>
+
+END RTModule.
+</PRE>
+</inInterface>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

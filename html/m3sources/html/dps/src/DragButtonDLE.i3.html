@@ -1,0 +1,60 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: dps/src/DragButtonDLE.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>dps/src/DragButtonDLE.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+
+INTERFACE <interface><A HREF="DragButtonDLE.m3.html">DragButtonDLE</A></interface>;
+
+IMPORT <A HREF="ButtonDLE.i3.html">ButtonDLE</A>, <A HREF="DPS.i3.html">DPS</A>, <A HREF="DPSWindow.i3.html">DPSWindow</A>;
+
+TYPE E = ButtonDLE.E OBJECT
+ METHODS
+  Down (t: DPSWindow.T; event: DPS.MouseEvent) := Down;
+  Move (t: DPSWindow.T; event: DPS.MouseEvent) := Move;
+  Up (t: DPSWindow.T; event: DPS.MouseEvent) := Up;
+ OVERRIDES
+  Mouse := Mouse;
+  END;
+
+PROCEDURE <A HREF="DragButtonDLE.m3.html#Init">Init</A> (e: E; t: DPSWindow.T);
+
+PROCEDURE <A HREF="DragButtonDLE.m3.html#Mouse">Mouse</A> (e: E; t: DPSWindow.T; event: DPS.MouseEvent): BOOLEAN;
+PROCEDURE <A HREF="DragButtonDLE.m3.html#Down">Down</A> (e: E; t: DPSWindow.T; event: DPS.MouseEvent);
+PROCEDURE <A HREF="DragButtonDLE.m3.html#Move">Move</A> (e: E; t: DPSWindow.T; event: DPS.MouseEvent);
+PROCEDURE <A HREF="DragButtonDLE.m3.html#Up">Up</A> (e: E; t: DPSWindow.T; event: DPS.MouseEvent);
+
+  END DragButtonDLE.
+</PRE>
+</inInterface>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

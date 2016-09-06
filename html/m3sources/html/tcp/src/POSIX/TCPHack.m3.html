@@ -1,0 +1,100 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: tcp/src/POSIX/TCPHack.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>tcp/src/POSIX/TCPHack.m3</H2></A><HR>
+<inModule>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM> Created on Sat Jan 11 15:49:00 PST 1992 by wobber </EM></BLOCKQUOTE><PRE>
+
+UNSAFE MODULE <module><implements><A HREF="TCPHack.i3.html">TCPHack</A></implements></module>;
+
+IMPORT <A HREF="#x1">Uin</A>, <A HREF="#x2">Usocket</A>;
+
+CONST TCP_NODELAY = 1;
+
+PROCEDURE <A NAME="RefetchError"><procedure>RefetchError</procedure></A>(fd: INTEGER): BOOLEAN =
+  VAR optbuf: INTEGER := 0;   optlen := BYTESIZE(optbuf);
+  BEGIN
+    RETURN Usocket.getsockopt(fd, Uin.IPPROTO_TCP, TCP_NODELAY,
+                              ADR(optbuf), ADR(optlen)) &gt;= 0;
+  END RefetchError;
+
+BEGIN
+END TCPHack.
+</PRE>
+</inModule>
+<HR>
+<A NAME="x1">interface Uin is in:
+</A><UL>
+<LI><A HREF="../../../unix/src/aix-3-2/Uin.i3.html#0TOP0">unix/src/aix-3-2/Uin.i3</A>
+<LI><A HREF="../../../unix/src/aix-ps2-1-2/Uin.i3.html#0TOP0">unix/src/aix-ps2-1-2/Uin.i3</A>
+<LI><A HREF="../../../unix/src/freebsd-1/Uin.i3.html#0TOP0">unix/src/freebsd-1/Uin.i3</A>
+<LI><A HREF="../../../unix/src/freebsd-2/Uin.i3.html#0TOP0">unix/src/freebsd-2/Uin.i3</A>
+<LI><A HREF="../../../unix/src/hpux-7-0/Uin.i3.html#0TOP0">unix/src/hpux-7-0/Uin.i3</A>
+<LI><A HREF="../../../unix/src/ibm-4-3/Uin.i3.html#0TOP0">unix/src/ibm-4-3/Uin.i3</A>
+<LI><A HREF="../../../unix/src/irix-5.2/Uin.i3.html#0TOP0">unix/src/irix-5.2/Uin.i3</A>
+<LI><A HREF="../../../unix/src/linux/Uin.i3.html#0TOP0">unix/src/linux/Uin.i3</A>
+<LI><A HREF="../../../unix/src/osf-1.ALPHA_OSF/Uin.i3.html#0TOP0">unix/src/osf-1.ALPHA_OSF/Uin.i3</A>
+<LI><A HREF="../../../unix/src/osf-1.DS3100/Uin.i3.html#0TOP0">unix/src/osf-1.DS3100/Uin.i3</A>
+<LI><A HREF="../../../unix/src/solaris-2-x/Uin.i3.html#0TOP0">unix/src/solaris-2-x/Uin.i3</A>
+<LI><A HREF="../../../unix/src/sunos-4-x/Uin.i3.html#0TOP0">unix/src/sunos-4-x/Uin.i3</A>
+<LI><A HREF="../../../unix/src/sysv-4.0/Uin.i3.html#0TOP0">unix/src/sysv-4.0/Uin.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.AP3000/Uin.i3.html#0TOP0">unix/src/ultrix-3-1.AP3000/Uin.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.ARM/Uin.i3.html#0TOP0">unix/src/ultrix-3-1.ARM/Uin.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.DS3100/Uin.i3.html#0TOP0">unix/src/ultrix-3-1.DS3100/Uin.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.NEXT/Uin.i3.html#0TOP0">unix/src/ultrix-3-1.NEXT/Uin.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.SEQUENT/Uin.i3.html#0TOP0">unix/src/ultrix-3-1.SEQUENT/Uin.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.SUN3/Uin.i3.html#0TOP0">unix/src/ultrix-3-1.SUN3/Uin.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.SUN386/Uin.i3.html#0TOP0">unix/src/ultrix-3-1.SUN386/Uin.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.UMAX/Uin.i3.html#0TOP0">unix/src/ultrix-3-1.UMAX/Uin.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.VAX/Uin.i3.html#0TOP0">unix/src/ultrix-3-1.VAX/Uin.i3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x2">interface Usocket is in:
+</A><UL>
+<LI><A HREF="../../../unix/src/aix-3-2/Usocket.i3.html#0TOP0">unix/src/aix-3-2/Usocket.i3</A>
+<LI><A HREF="../../../unix/src/aix-ps2-1-2/Usocket.i3.html#0TOP0">unix/src/aix-ps2-1-2/Usocket.i3</A>
+<LI><A HREF="../../../unix/src/freebsd-1/Usocket.i3.html#0TOP0">unix/src/freebsd-1/Usocket.i3</A>
+<LI><A HREF="../../../unix/src/freebsd-2/Usocket.i3.html#0TOP0">unix/src/freebsd-2/Usocket.i3</A>
+<LI><A HREF="../../../unix/src/hpux-7-0/Usocket.i3.html#0TOP0">unix/src/hpux-7-0/Usocket.i3</A>
+<LI><A HREF="../../../unix/src/ibm-4-3/Usocket.i3.html#0TOP0">unix/src/ibm-4-3/Usocket.i3</A>
+<LI><A HREF="../../../unix/src/irix-5.2/Usocket.i3.html#0TOP0">unix/src/irix-5.2/Usocket.i3</A>
+<LI><A HREF="../../../unix/src/linux/Usocket.i3.html#0TOP0">unix/src/linux/Usocket.i3</A>
+<LI><A HREF="../../../unix/src/osf-1.generic/Usocket.i3.html#0TOP0">unix/src/osf-1.generic/Usocket.i3</A>
+<LI><A HREF="../../../unix/src/solaris-2-x/Usocket.i3.html#0TOP0">unix/src/solaris-2-x/Usocket.i3</A>
+<LI><A HREF="../../../unix/src/sunos-4-x/Usocket.i3.html#0TOP0">unix/src/sunos-4-x/Usocket.i3</A>
+<LI><A HREF="../../../unix/src/sysv-4.0/Usocket.i3.html#0TOP0">unix/src/sysv-4.0/Usocket.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.generic/Usocket.i3.html#0TOP0">unix/src/ultrix-3-1.generic/Usocket.i3</A>
+</UL>
+<P>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

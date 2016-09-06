@@ -1,0 +1,69 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: trestle_by_example/src/feedback/Feedback.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>trestle_by_example/src/feedback/Feedback.m3</H2></A><HR>
+<inModule>
+<PRE>MODULE <module><implements><A HREF="../../../main/src/Main.i3.html">Main</A></implements></module>;
+
+IMPORT <A HREF="../../../ui/src/vbt/Trestle.i3.html">Trestle</A>, <A HREF="../../../ui/src/vbt/VBT.i3.html">VBT</A>, <A HREF="../../../ui/src/split/TextVBT.i3.html">TextVBT</A>, <A HREF="../../../lego/src/SwitchVBT.i3.html">SwitchVBT</A>, <A HREF="../../../lego/src/ShadowedFeedbackVBT.i3.html">ShadowedFeedbackVBT</A>,
+       <A HREF="../../../lego/src/BorderedFeedbackVBT.i3.html">BorderedFeedbackVBT</A>;
+IMPORT <A HREF="../../../ui/src/split/HVSplit.i3.html">HVSplit</A>, <A HREF="../../../ui/src/split/HVBar.i3.html">HVBar</A>, <A HREF="../../../geometry/src/Axis.i3.html">Axis</A>, <A HREF="../../../ui/src/vbt/Font.i3.html">Font</A>, <A HREF="../../../lego/src/Shadow.i3.html">Shadow</A>, <A HREF="../../../ui/src/vbt/PaintOp.i3.html">PaintOp</A>, <A HREF="../../../vbtkitutils/src/Pts.i3.html">Pts</A>;
+FROM <A HREF="../common/Colors.i3.html">Colors</A> IMPORT lblue, dblue, red, white;
+
+CONST
+  times14 = &quot;-*-times-*-r-*-*-14-*-*-*-*-*-*-*&quot;;
+  size    = 1.0;                 (* border size in millimeters. *)
+
+PROCEDURE <A NAME="NoAction"><procedure>NoAction</procedure></A> (v: SwitchVBT.T; READONLY cd: VBT.MouseRec) =
+  BEGIN (* Do nothing *)
+  END NoAction;
+
+VAR
+  font  := Font.FromName(ARRAY OF TEXT{times14});
+  pts   := Pts.FromMM(2.0 * size); (* shadow size in points *)
+  text1 := TextVBT.New(&quot;Push1&quot;, fnt := font);
+  text2 := TextVBT.New(&quot;Push2&quot;, fnt := font);
+  sh    := Shadow.New(size := pts, light := lblue, dark := dblue);
+  sfb   := NEW(ShadowedFeedbackVBT.T).init(ch := text1, shadow := sh);
+  sw1   := NEW(SwitchVBT.T, callback := NoAction).init(sfb);
+  pair  := PaintOp.Pair(white, red);
+  bfb := NEW(BorderedFeedbackVBT.T).init(
+           ch := text2, size := size, op := pair);
+  sw2  := NEW(SwitchVBT.T, callback := NoAction).init(bfb);
+  main := HVSplit.Cons(Axis.T.Hor, sw1, HVBar.New(op := PaintOp.Bg), sw2);
+BEGIN
+  Trestle.Install(main);
+  Trestle.AwaitDelete(main)
+END Main.
+</PRE>
+</inModule>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

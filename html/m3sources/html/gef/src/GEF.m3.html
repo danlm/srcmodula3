@@ -1,0 +1,1807 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: gef/src/GEF.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>gef/src/GEF.m3</H2></A><HR>
+<inModule>
+<PRE><A HREF="../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM>                                                                           </EM></BLOCKQUOTE><PRE>
+
+MODULE <module>GEF</module> EXPORTS <A HREF="GEF.i3.html"><implements>GEF</A></implements>, <A HREF="GEFInternal.i3.html"><implements>GEFInternal</A></implements>;
+
+IMPORT <A HREF="../../geometry/src/Axis.i3.html">Axis</A>, <A HREF="#x1">Filename</A>, <A HREF="../../rw/src/Common/FileRd.i3.html">FileRd</A>, <A HREF="../../fmtlex/src/Fmt.i3.html">Fmt</A>, <A HREF="GEFClass.i3.html">GEFClass</A>, <A HREF="GEFError.i3.html">GEFError</A>, <A HREF="../../mgkit/src/GraphVBT.i3.html">GraphVBT</A>,
+       <A HREF="../../mgkit/src/GraphVBTExtras.i3.html">GraphVBTExtras</A>, <A HREF="../../libm3/DS/RefList.i3.html">RefList</A>, <A HREF="#x2">Math</A>, <A HREF="../../os/src/Common/OSError.i3.html">OSError</A>, <A HREF="../../ui/src/vbt/PaintOp.i3.html">PaintOp</A>, <A HREF="../../geometry/src/Point.i3.html">Point</A>, <A HREF="../../mg/src/R2.i3.html">R2</A>, <A HREF="../../rw/src/Common/Rd.i3.html">Rd</A>,
+       <A HREF="../../libm3/DS/IntRefTbl.i3.html">IntRefTbl</A>, <A HREF="../../vbtkitutils/src/Rsrc.i3.html">Rsrc</A>, <A HREF="../../slisp/src/SLispClass.i3.html">SLispClass</A>, <A HREF="../../sx/src/Sx.i3.html">Sx</A>, <A HREF="../../text/src/Text.i3.html">Text</A>, <A HREF="../../rw/src/Common/TextRd.i3.html">TextRd</A>, <A HREF="../../thread/src/Common/Thread.i3.html">Thread</A>, <A HREF="../../ui/src/vbt/VBT.i3.html">VBT</A>;
+
+&lt;* PRAGMA LL *&gt;
+
+&lt;* FATAL Fatal, Sx.PrintError, Thread.Alerted *&gt;
+EXCEPTION Fatal;
+
+VAR
+  mu := NEW(Thread.Mutex);
+</PRE> ******************** Initialization ******************************
+
+
+<P><PRE>PROCEDURE <A NAME="InitFromFile"><procedure>InitFromFile</procedure></A> (t              : T;
+                        filename       : TEXT;
+                        intervals      : IntRefTbl.T;
+                        showAllElements: BOOLEAN     )
+  RAISES {GEFError.T, Rd.Failure, Thread.Alerted} =
+  VAR rd: Rd.T;
+  BEGIN
+    TRY
+      rd := FileRd.Open(Filename.ExpandTilde(filename));
+      TRY
+        InitFromRd(t, rd, intervals, showAllElements)
+      FINALLY
+        Rd.Close(rd)
+      END
+    EXCEPT
+    | OSError.E, Filename.Error =&gt;
+        RAISE GEFError.T(&quot;Could not open filename: &quot; &amp; filename)
+    END
+  END InitFromFile;
+
+PROCEDURE <A NAME="InitFromText"><procedure>InitFromText</procedure></A> (t              : T;
+                        description    : TEXT;
+                        intervals      : IntRefTbl.T;
+                        showAllElements: BOOLEAN     )
+  RAISES {GEFError.T, Thread.Alerted} =          &lt;* FATAL Rd.Failure *&gt;
+  BEGIN
+    InitFromRd(t, TextRd.New(description), intervals, showAllElements)
+  END InitFromText;
+
+PROCEDURE <A NAME="InitFromRsrc"><procedure>InitFromRsrc</procedure></A> (t              : T;
+                        name           : TEXT;
+                        path           : Rsrc.Path;
+                        intervals      : IntRefTbl.T;
+                        showAllElements: BOOLEAN     )
+  RAISES {GEFError.T, Rd.Failure, Rsrc.NotFound, Thread.Alerted} =
+  VAR rd: Rd.T;
+  BEGIN
+    rd := Rsrc.Open(name, path);
+    TRY InitFromRd(t, rd, intervals, showAllElements) FINALLY Rd.Close(rd) END
+  END InitFromRsrc;
+
+TYPE
+  ReaderClosure = Thread.SizedClosure OBJECT
+                    t      : T;
+                    rd     : Rd.T;
+                    errType: ErrType;
+                    errArg : REFANY;
+                    intervals  : IntRefTbl.T;
+                  OVERRIDES
+                    apply := Read
+                  END;
+  ErrType = {ReadError, EndOfFile, Failure, Alerted};
+
+PROCEDURE <A NAME="Read"><procedure>Read</procedure></A> (rc: ReaderClosure): S_exp =
+  VAR
+    exp  : S_exp;
+    gotIt        := FALSE;
+  BEGIN
+    TRY
+      exp := SLispClass.ReadToTable(rc.rd, rc.intervals);
+      gotIt := TRUE;
+      IF Rd.EOF(rc.rd) THEN RETURN exp END; (* Check for extra garbage: *)
+      EVAL Sx.Read(rc.rd);
+      RAISE Sx.ReadError(&quot;extra characters on input&quot;)
+    EXCEPT
+    | Sx.ReadError (txt) =&gt;
+        rc.errArg := txt;
+        rc.errType := ErrType.ReadError
+    | Rd.EndOfFile =&gt;
+        IF gotIt THEN RETURN exp END;
+        rc.errType := ErrType.EndOfFile
+    | Rd.Failure (ref) =&gt; rc.errArg := ref; rc.errType := ErrType.Failure
+    | Thread.Alerted =&gt; rc.errType := ErrType.Alerted
+    END; (* If there's an error, we return the ReaderClosure itself. *)
+    RETURN rc
+  END Read;
+
+PROCEDURE <A NAME="InitFromRd"><procedure>InitFromRd</procedure></A> (t              : T;
+                      rd             : Rd.T;
+                      intervals      : IntRefTbl.T;
+                      showAllElements: BOOLEAN      )
+  RAISES {GEFError.T, Rd.Failure, Thread.Alerted} =
+  VAR
+    reader := Thread.Fork(NEW(ReaderClosure, t := t, rd := rd,
+                              intervals := intervals, stackSize := 10000));
+  (* to get a big stack *)
+  BEGIN
+    TRY
+      TYPECASE Thread.AlertJoin(reader) OF
+      | ReaderClosure (rc) =&gt;
+          CASE rc.errType OF
+          | ErrType.ReadError =&gt;
+              RAISE GEFError.T(Text.Cat(&quot;Sx.ReadError: &quot;, rc.errArg))
+          | ErrType.EndOfFile =&gt; RAISE GEFError.T(&quot;End of input&quot;)
+          | ErrType.Failure =&gt; RAISE Rd.Failure(rc.errArg)
+          | ErrType.Alerted =&gt; RAISE Thread.Alerted
+          END
+      | S_exp (desc) =&gt; InitFromSx(t, desc, showAllElements)
+      END
+    EXCEPT
+    | Thread.Alerted =&gt; Thread.Alert(reader);
+    END;
+  END InitFromRd;
+
+PROCEDURE <A NAME="InitFromSx"><procedure>InitFromSx</procedure></A> (t              : T;
+                      sx             : S_exp;
+                      showAllElements: BOOLEAN     )
+  RAISES {GEFError.T, Thread.Alerted} =
+  BEGIN
+    LOCK mu DO GEFClass.Parse(t, sx, showAllElements); END;
+  END InitFromSx;
+</PRE> ******************************* Misc ******************************* 
+
+<P><PRE>PROCEDURE <A NAME="MoveElem"><procedure>MoveElem</procedure></A> (t: T; elem: REFANY; pt: Point.T) =
+  &lt;* FATAL GEFError.T *&gt;
+  BEGIN
+    TYPECASE elem OF
+    | Vertex (vertex) =&gt;
+        VAR
+          reals: Reals := GEFClass.GetElemField(t, elem, &quot;Pos&quot;);
+          pos          := GraphVBTExtras.ScreenPtToWorldPos(t, pt);
+        BEGIN
+          reals[0] := pos[0];
+          reals[1] := pos[1];
+          GEFClass.SetElemField(t, elem, &quot;Pos&quot;, reals);
+          vertex.posCovered := TRUE;
+          LOCK t.mu DO vertex.move(pos); END;
+          vertex.posCovered := FALSE;
+        END;
+    ELSE
+    END;
+  END MoveElem;
+
+PROCEDURE <A NAME="AddElem"><procedure>AddElem</procedure></A> (t: T; elem: REFANY) =
+  VAR
+    elems: Elems := GEFClass.GetElemField(t, t, &quot;Contents&quot;);
+  &lt;* FATAL GEFError.T *&gt;
+  BEGIN
+    WITH new = NEW(Elems, NUMBER(elems^) + 1) DO
+      SUBARRAY(new^, 0, NUMBER(elems^)) := elems^;
+      new[LAST(new^)] := elem;
+      GEFClass.SetElemField(t, t, &quot;Contents&quot;, new);
+    END;
+  END AddElem;
+
+PROCEDURE <A NAME="RedisplayImage"><procedure>RedisplayImage</procedure></A> (t: T) =
+  BEGIN
+    t.redisplay();
+  END RedisplayImage;
+</PRE> ********************************* Graph ********************** 
+
+<P><PRE>TYPE
+  ParseObject = GEFClass.ParseObject;
+  Elem = GEFClass.Elem;
+
+  Elems = GEFClass.Elems;
+  Ints = GEFClass.Ints;
+  Bools = GEFClass.Bools;
+  Reals = GEFClass.Reals;
+  Texts = GEFClass.Texts;
+
+TYPE
+  GraphParseObject = ParseObject OBJECT
+                     OVERRIDES
+                       create  := GraphCreate;
+                       delete  := GraphDelete;
+                       getId   := GraphGetId;
+                       setReal := GraphSetReal;
+                       setInt  := GraphSetInt;
+                       setElem := GraphSetElem;
+                       finish  := GraphFinish;
+                       isType  := GraphIsType;
+                     END;
+
+PROCEDURE <A NAME="GraphCreate"><procedure>GraphCreate</procedure></A> (&lt;* UNUSED *&gt; gpo: ParseObject; t: T; id: INTEGER):
+  S_exp =
+  BEGIN
+    t.id := id;
+    RETURN t;
+  END GraphCreate;
+
+PROCEDURE <A NAME="GraphDelete"><procedure>GraphDelete</procedure></A> (&lt;* UNUSED *&gt; po  : ParseObject;
+                       &lt;* UNUSED *&gt; t   : T;
+                       &lt;* UNUSED *&gt; elem: Elem         ) =
+  BEGIN
+  END GraphDelete;
+
+PROCEDURE <A NAME="GraphGetId"><procedure>GraphGetId</procedure></A> (&lt;* UNUSED *&gt; gpo : ParseObject;
+                                   t   : T;
+                      &lt;* UNUSED *&gt; elem: Elem         ): INTEGER =
+  BEGIN
+    RETURN t.id
+  END GraphGetId;
+
+TYPE
+  GraphFieldType =
+    {World, Margin, PixelSizeDivisor, Aspect, PrefSize, ClientData, Contents};
+
+PROCEDURE <A NAME="GraphSetReal"><procedure>GraphSetReal</procedure></A> (&lt;* UNUSED *&gt; gpo  : ParseObject;
+                        &lt;* UNUSED *&gt; t    : T;
+                                     elem : Elem;
+                                     field: INTEGER;
+                                     value: Reals        )
+  RAISES {GEFError.T} =
+  VAR graph := NARROW(elem, T);
+  BEGIN
+    LOCK graph.mu DO
+      CASE VAL(field, GraphFieldType) OF
+      | GraphFieldType.World =&gt;
+          graph.setWorld(GraphVBT.WorldRectangle{
+                            value[0], value[1], value[2], value[3]});
+      | GraphFieldType.Margin =&gt; graph.setMargin(value[0]);
+      | GraphFieldType.Aspect =&gt; graph.setAspect(value[0]);
+      | GraphFieldType.PrefSize =&gt;
+          graph.setPreferredSize(ARRAY Axis.T OF REAL{value[0], value[1]});
+      ELSE
+        RAISE Fatal;
+      END;
+    END
+  END GraphSetReal;
+
+PROCEDURE <A NAME="GraphSetInt"><procedure>GraphSetInt</procedure></A> (&lt;* UNUSED *&gt; gpo  : ParseObject;
+                       &lt;* UNUSED *&gt; t    : T;
+                                    elem : Elem;
+                                    field: INTEGER;
+                                    value: Ints         )
+  RAISES {GEFError.T} =
+  VAR graph := NARROW(elem, T);
+  BEGIN
+    LOCK graph.mu DO
+      CASE VAL(field, GraphFieldType) OF
+      | GraphFieldType.PixelSizeDivisor =&gt;
+          WITH psd1 = value[0],
+               psd2 = value[1]  DO
+            IF psd1 &lt; 0 OR psd2 &lt; 0 THEN
+              RAISE
+                GEFError.T(
+                  Fmt.F(&quot;Bad PixelSizeDivisors (must be positive): %s %s&quot;,
+                        Fmt.Int(psd1), Fmt.Int(psd2)))
+            END;
+            graph.setPixelSizeDivisor(
+              ARRAY [0 .. 1] OF CARDINAL{psd1, psd2});
+          END;
+      ELSE
+        RAISE Fatal;
+      END;
+    END;
+  END GraphSetInt;
+
+PROCEDURE <A NAME="GraphSetElem"><procedure>GraphSetElem</procedure></A> (&lt;* UNUSED *&gt; gpo  : ParseObject;
+                                     t    : T;
+                                     elem : Elem;
+                                     field: INTEGER;
+                                     value: Elems        ) RAISES {GEFError.T} =
+  VAR graph := NARROW(elem, T);
+  BEGIN
+    LOCK t.mu DO
+      CASE VAL(field, GraphFieldType) OF
+      | GraphFieldType.ClientData =&gt;
+          graph.clientData := value[0];
+      | GraphFieldType.Contents =&gt;
+          IF graph.elems = NIL OR (NUMBER(graph.elems^) # NUMBER(value^)) THEN
+            graph.elems := NEW(Elems, NUMBER(value^));
+          END;
+          graph.elems^ := value^;
+      ELSE
+        RAISE Fatal;
+      END;
+    END;
+  END GraphSetElem;
+
+PROCEDURE <A NAME="GraphFinish"><procedure>GraphFinish</procedure></A> (&lt;* UNUSED *&gt; gpo    : ParseObject;
+                                    t      : T;
+                       &lt;* UNUSED *&gt; graphRA: REFANY       )
+  RAISES {GEFError.T} =
+  BEGIN
+    VBT.Mark(t);
+  END GraphFinish;
+
+PROCEDURE <A NAME="GraphIsType"><procedure>GraphIsType</procedure></A>(&lt;* UNUSED *&gt; po: ParseObject; obj: REFANY): BOOLEAN =
+  BEGIN
+    RETURN ISTYPE(obj, T);
+  END GraphIsType;
+</PRE> ************************************** Vertex **************************** 
+
+<P><PRE>REVEAL
+  <A NAME="Vertex">Vertex</A> = VPublic BRANDED OBJECT
+    initialized := FALSE;
+    posCovered := FALSE;
+    id: INTEGER;
+    zOrder: ZOrder;
+  OVERRIDES
+    move := VertexSetPos;
+    setSize := VertexSetSize;
+    setShape := VertexSetShape;
+    setLabel := VertexSetLabel;
+    setColor := VertexSetColor;
+    setFont := VertexSetFont;
+    setFontColor := VertexSetFontColor;
+    setBorder := VertexSetBorder;
+    setBorderColor := VertexSetBorderColor;
+    toFront := VertexToFront;
+    toBack := VertexToBack;
+  END;
+
+&lt;* INLINE *&gt;
+PROCEDURE <A NAME="NewPos"><procedure>NewPos</procedure></A> (pos: R2.T): GEFClass.Reals =
+  VAR res := NEW(GEFClass.Reals, 2);
+  BEGIN
+    res^ := pos;
+    RETURN res;
+  END NewPos;
+
+PROCEDURE <A NAME="VertexSetPos"><procedure>VertexSetPos</procedure></A> (t       : Vertex;
+                        pos     : R2.T;
+                        animated: BOOLEAN;
+                        start := 0.0; stop := 0.0;
+                        path    : GraphVBT.AnimationPath) =
+  &lt;* FATAL GEFError.T *&gt;
+  BEGIN
+    IF t.initialized THEN
+      GraphVBT.Vertex.move(t, pos, animated, start, stop, path);
+      (* motion can come from rotates, moves, etc. and the position
+         GEF stores for the vertex should be updated whenever it changes.
+         It is easier (and somewhat less efficient) to update the
+         value from here. SCG 19 Feb. 1993 *)
+      IF NOT t.posCovered THEN
+        GEFClass.UpdateElemField(t.graph, t, &quot;Pos&quot;, NewPos(pos));
+      END;
+    ELSE
+      t.pos := pos;
+    END;
+  END VertexSetPos;
+
+PROCEDURE <A NAME="VertexSetSize"><procedure>VertexSetSize</procedure></A> (t: Vertex; size: R2.T) =
+  BEGIN
+    IF t.initialized THEN
+      GraphVBT.Vertex.setSize(t, size);
+    ELSE
+      t.size := size;
+    END;
+  END VertexSetSize;
+
+PROCEDURE <A NAME="VertexSetShape"><procedure>VertexSetShape</procedure></A> (t: Vertex; shape: GraphVBT.VertexShape) =
+  BEGIN
+    IF t.initialized THEN
+      GraphVBT.Vertex.setShape(t, shape);
+    ELSE
+      t.shape := shape;
+    END;
+  END VertexSetShape;
+
+PROCEDURE <A NAME="VertexSetColor"><procedure>VertexSetColor</procedure></A> (t: Vertex; color: PaintOp.T) =
+  BEGIN
+    IF t.initialized THEN
+      GraphVBT.Vertex.setColor(t, color);
+    ELSE
+      t.color := color;
+    END;
+  END VertexSetColor;
+
+PROCEDURE <A NAME="VertexSetLabel"><procedure>VertexSetLabel</procedure></A> (t: Vertex; v: TEXT) =
+  BEGIN
+    IF t.initialized THEN
+      GraphVBT.Vertex.setLabel(t, v);
+    ELSE
+      t.label := v;
+    END;
+  END VertexSetLabel;
+
+PROCEDURE <A NAME="VertexSetFont"><procedure>VertexSetFont</procedure></A> (t: Vertex; v: GraphVBT.WorldFont) =
+  BEGIN
+    IF t.initialized THEN
+      GraphVBT.Vertex.setFont(t, v);
+    ELSE
+      t.font := v;
+    END;
+  END VertexSetFont;
+
+PROCEDURE <A NAME="VertexSetFontColor"><procedure>VertexSetFontColor</procedure></A> (t: Vertex; v: PaintOp.T) =
+  BEGIN
+    IF t.initialized THEN
+      GraphVBT.Vertex.setFontColor(t, v);
+    ELSE
+      t.fontColor := v;
+    END;
+  END VertexSetFontColor;
+
+PROCEDURE <A NAME="VertexSetBorder"><procedure>VertexSetBorder</procedure></A> (t: Vertex; v: REAL) =
+  BEGIN
+    IF t.initialized THEN
+      GraphVBT.Vertex.setBorder(t, v);
+    ELSE
+      t.border := v;
+    END;
+  END VertexSetBorder;
+
+PROCEDURE <A NAME="VertexSetBorderColor"><procedure>VertexSetBorderColor</procedure></A> (t: Vertex; v: PaintOp.T) =
+  BEGIN
+    IF t.initialized THEN
+      GraphVBT.Vertex.setBorderColor(t, v);
+    ELSE
+      t.fontColor := v;
+    END;
+  END VertexSetBorderColor;
+
+PROCEDURE <A NAME="VertexToFront"><procedure>VertexToFront</procedure></A>(t: Vertex; zOrder: GraphVBT.ZOrder) =
+  BEGIN
+    IF t.initialized THEN
+      GraphVBT.Vertex.toFront(t, zOrder);
+    ELSE
+      t.zOrder := front[zOrder]
+    END;
+  END VertexToFront;
+
+PROCEDURE <A NAME="VertexToBack"><procedure>VertexToBack</procedure></A>(t: Vertex; zOrder: GraphVBT.ZOrder) =
+  BEGIN
+    IF t.initialized THEN
+      GraphVBT.Vertex.toBack(t, zOrder);
+    ELSE
+      t.zOrder := back[zOrder]
+    END;
+  END VertexToBack;
+
+TYPE
+  VertexParseObject = ParseObject OBJECT
+                        zOrder: ZOrder;
+                      OVERRIDES
+                        create  := VertexCreate;
+                        delete := VertexDelete;
+                        getId   := VertexGetId;
+                        setReal := VertexSetReal;
+                        setText := VertexSetText;
+                        setInt  := VertexSetEnum;
+                        finish  := VertexFinish;
+                        isType  := VertexIsType;
+                      END;
+
+PROCEDURE <A NAME="VertexCreate"><procedure>VertexCreate</procedure></A> (&lt;* UNUSED *&gt; gpo: VertexParseObject;
+                                     t  : T;
+                                     id : INTEGER            ): REFANY =
+  BEGIN
+    RETURN NEW(Vertex, graph := t, id := id)
+  END VertexCreate;
+
+PROCEDURE <A NAME="VertexDelete"><procedure>VertexDelete</procedure></A> (&lt;* UNUSED *&gt; po  : ParseObject;
+                       &lt;* UNUSED *&gt; t   : T;
+                       elem: Elem         ) =
+  BEGIN
+    NARROW(elem, Vertex).remove();
+  END VertexDelete;
+
+PROCEDURE <A NAME="VertexGetId"><procedure>VertexGetId</procedure></A> (&lt;* UNUSED *&gt; gpo : ParseObject;
+                       &lt;* UNUSED *&gt; t   : T;
+                                    elem: Elem         ): INTEGER =
+  BEGIN
+    RETURN NARROW(elem, Vertex).id
+  END VertexGetId;
+
+TYPE
+  VertexFieldType = {Shape, Pos, Size, Color, Label, Font, FontColor,
+    BorderWidth, BorderColor, ZOrder};
+
+PROCEDURE <A NAME="VertexSetText"><procedure>VertexSetText</procedure></A> (&lt;* UNUSED *&gt; gpo  : ParseObject;
+                                      t    : T;
+                                      elem : Elem;
+                                      field: INTEGER;
+                                      value: Texts        )
+  RAISES {GEFError.T} =
+  VAR vertex := NARROW(elem, Vertex);
+  BEGIN
+    LOCK t.mu DO
+      CASE VAL(field, VertexFieldType) OF
+      | VertexFieldType.Label =&gt; vertex.setLabel(value[0])
+      | VertexFieldType.Font =&gt;
+          vertex.setFont(GraphVBTExtras.WorldFontFromFont(
+                           GEFClass.FontFromName(value[0])))
+      | VertexFieldType.Color =&gt;
+          vertex.setColor(GEFClass.PaintOpFromColor(value[0]))
+      | VertexFieldType.FontColor =&gt;
+          vertex.setFontColor(GEFClass.PaintOpFromColor(value[0]))
+      | VertexFieldType.BorderColor =&gt;
+          vertex.setFontColor(GEFClass.PaintOpFromColor(value[0]))
+      ELSE
+        RAISE Fatal;
+      END;
+    END
+  END VertexSetText;
+
+PROCEDURE <A NAME="VertexSetReal"><procedure>VertexSetReal</procedure></A> (&lt;* UNUSED *&gt; gpo  : ParseObject;
+                                      t    : T;
+                                      elem : Elem;
+                                      field: INTEGER;
+                                      value: Reals        )
+  RAISES {GEFError.T} =
+  VAR vertex := NARROW(elem, Vertex);
+  BEGIN
+    LOCK t.mu DO
+      CASE VAL(field, VertexFieldType) OF
+      | VertexFieldType.Pos =&gt;
+          vertex.posCovered := TRUE;
+          vertex.move(R2.T{value[0], value[1]});
+          vertex.posCovered := FALSE;
+      | VertexFieldType.Size =&gt;
+          WITH size = R2.T{value[0], value[1]} DO
+            IF size[0] &lt; 0.0 OR size[1] &lt; 0.0 THEN
+              RAISE GEFError.T(&quot;Can't have vertex size &lt; 0&quot;);
+            END;
+            vertex.setSize(size)
+          END;
+      | VertexFieldType.BorderWidth =&gt;
+          WITH size = value[0] DO
+            IF size &lt; 0.0 THEN
+              RAISE GEFError.T(&quot;Can't have vertex border width &lt; 0&quot;);
+            END;
+            vertex.setBorder(value[0]);
+          END;
+      ELSE
+        RAISE Fatal;
+      END;
+    END
+  END VertexSetReal;
+
+PROCEDURE <A NAME="VertexSetEnum"><procedure>VertexSetEnum</procedure></A> (&lt;* UNUSED *&gt; gpo  : ParseObject;
+                                      t    : T;
+                                      elem : Elem;
+                                      field: INTEGER;
+                                      value: Ints            )
+  RAISES {GEFError.T} =
+  VAR vertex := NARROW(elem, Vertex);
+  BEGIN
+    LOCK t.mu DO
+      CASE VAL(field, VertexFieldType) OF
+      | VertexFieldType.Shape =&gt;
+          vertex.setShape(VAL(value[0], GraphVBT.VertexShape))
+      | VertexFieldType.ZOrder =&gt;
+          CASE VAL(value[0], ZOrder) OF
+          | ZOrder.FgFront =&gt; vertex.toFront(GraphVBT.ZOrder.Foreground)
+          | ZOrder.FgBack =&gt; vertex.toBack(GraphVBT.ZOrder.Foreground)
+          | ZOrder.NormalFront =&gt; vertex.toFront(GraphVBT.ZOrder.Normal)
+          | ZOrder.NormalBack =&gt; vertex.toBack(GraphVBT.ZOrder.Normal)
+          | ZOrder.BgFront =&gt; vertex.toFront(GraphVBT.ZOrder.Background)
+          | ZOrder.BgBack =&gt; vertex.toBack(GraphVBT.ZOrder.Background)
+          END;
+      ELSE
+        RAISE Fatal;
+      END;
+    END
+  END VertexSetEnum;
+
+CONST
+  VertexMinSize = R2.T{1.0, 1.0};
+
+PROCEDURE <A NAME="VertexFinish"><procedure>VertexFinish</procedure></A> (&lt;* UNUSED *&gt; gpo     : VertexParseObject;
+                                     t       : T;
+                                     vertexRA: REFANY             ) =
+  VAR vertex := NARROW(vertexRA, Vertex);
+  BEGIN
+    IF t.showAllElements AND vertex.size = R2.Origin THEN
+      vertex.size := VertexMinSize;
+    END;
+    EVAL vertex.init();
+    vertex.initialized := TRUE;
+    CASE vertex.zOrder OF
+    | ZOrder.FgFront =&gt; vertex.toFront(GraphVBT.ZOrder.Foreground)
+    | ZOrder.FgBack =&gt; vertex.toBack(GraphVBT.ZOrder.Foreground)
+    | ZOrder.NormalFront =&gt; vertex.toFront(GraphVBT.ZOrder.Normal)
+    | ZOrder.NormalBack =&gt; vertex.toBack(GraphVBT.ZOrder.Normal)
+    | ZOrder.BgFront =&gt; vertex.toFront(GraphVBT.ZOrder.Background)
+    | ZOrder.BgBack =&gt; vertex.toBack(GraphVBT.ZOrder.Background)
+    END;
+  END VertexFinish;
+
+PROCEDURE <A NAME="VertexIsType"><procedure>VertexIsType</procedure></A> (&lt;* UNUSED *&gt; po: ParseObject; obj: REFANY):
+  BOOLEAN =
+  BEGIN
+    RETURN ISTYPE(obj, Vertex);
+  END VertexIsType;
+</PRE> ******************************* Edge ***************************** 
+
+<P><PRE>REVEAL
+  <A NAME="Edge">Edge</A> = EPublic BRANDED OBJECT
+           initialized            := FALSE;
+           id         : INTEGER;
+           zOrder     : ZOrder;
+         OVERRIDES
+           move       := EdgeMove;
+           setWidth   := EdgeSetWidth;
+           setColor   := EdgeSetColor;
+           setArrow   := EdgeSetArrow;
+           toFront    := EdgeToFront;
+           toBack     := EdgeToBack;
+         END;
+
+PROCEDURE <A NAME="EdgeMove"><procedure>EdgeMove</procedure></A>(e: Edge; v0, v1, c0, c1: GraphVBT.Vertex; animated: BOOLEAN; start := 0.0; stop := 1.0) =
+  BEGIN
+    IF e.initialized THEN
+      GraphVBT.Edge.move(e, v0, v1, c0, c1, animated, start, stop);
+    ELSE
+      e.vertex0 := v0;
+      e.vertex1 := v1;
+      e.control0 := c0;
+      e.control1 := c1;
+    END;
+  END EdgeMove;
+
+PROCEDURE <A NAME="EdgeSetWidth"><procedure>EdgeSetWidth</procedure></A>(e: Edge; w: REAL) =
+  BEGIN
+    IF e.initialized THEN
+      GraphVBT.Edge.setWidth(e, w)
+    ELSE
+      e.width := w;
+    END;
+  END EdgeSetWidth;
+
+PROCEDURE <A NAME="EdgeSetColor"><procedure>EdgeSetColor</procedure></A>(e: Edge; c: PaintOp.T) =
+  BEGIN
+    IF e.initialized THEN
+      GraphVBT.Edge.setColor(e, c)
+    ELSE
+      e.color := c;
+    END;
+  END EdgeSetColor;
+
+PROCEDURE <A NAME="EdgeSetArrow"><procedure>EdgeSetArrow</procedure></A>(e: Edge; a: ARRAY [0 .. 1] OF BOOLEAN) =
+  BEGIN
+    IF e.initialized THEN
+      GraphVBT.Edge.setArrow(e, a)
+    ELSE
+      e.arrow := a;
+    END;
+  END EdgeSetArrow;
+
+PROCEDURE <A NAME="EdgeToFront"><procedure>EdgeToFront</procedure></A>(t: Edge; zOrder: GraphVBT.ZOrder) =
+  BEGIN
+    IF t.initialized THEN
+      GraphVBT.Edge.toFront(t, zOrder);
+    ELSE
+      t.zOrder := front[zOrder]
+    END;
+  END EdgeToFront;
+
+PROCEDURE <A NAME="EdgeToBack"><procedure>EdgeToBack</procedure></A>(t: Edge; zOrder: GraphVBT.ZOrder) =
+  BEGIN
+    IF t.initialized THEN
+      GraphVBT.Edge.toBack(t, zOrder);
+    ELSE
+      t.zOrder := back[zOrder]
+    END;
+  END EdgeToBack;
+
+TYPE
+  EdgeParseObject = ParseObject OBJECT
+                    OVERRIDES
+                      create  := EdgeCreate;
+                      delete := EdgeDelete;
+                      getId   := EdgeGetId;
+                      setBool := EdgeSetBool;
+                      setText := EdgeSetText;
+                      setElem := EdgeSetElem;
+                      setInt := EdgeSetEnum;
+                      setReal := EdgeSetReal;
+                      finish  := EdgeFinish;
+                      isType  := EdgeIsType;
+                    END;
+
+PROCEDURE <A NAME="EdgeCreate"><procedure>EdgeCreate</procedure></A> (&lt;* UNUSED *&gt; gpo: EdgeParseObject;
+                      &lt;* UNUSED *&gt; t  : T;
+                                   id : INTEGER          ): REFANY =
+  BEGIN
+    RETURN NEW(Edge, id := id)
+    (* cannot call init here since edge needs vertices to be set before
+       init.  Alternative could be to fix GraphVBT.InitEdge to ignore
+       edge, vertexHighlight, polygon if no vertices... *)
+  END EdgeCreate;
+
+PROCEDURE <A NAME="EdgeDelete"><procedure>EdgeDelete</procedure></A> (&lt;* UNUSED *&gt; po  : ParseObject;
+                       &lt;* UNUSED *&gt; t   : T;
+                       elem: Elem         ) =
+  BEGIN
+    NARROW(elem, Edge).remove();
+  END EdgeDelete;
+
+PROCEDURE <A NAME="EdgeGetId"><procedure>EdgeGetId</procedure></A> (&lt;* UNUSED *&gt; gpo : ParseObject;
+                     &lt;* UNUSED *&gt; t   : T;
+                                  elem: Elem         ): INTEGER =
+  BEGIN
+    RETURN NARROW(elem, Edge).id
+  END EdgeGetId;
+
+TYPE
+  EdgeFieldType = {Vertices, Controls, Width, Color, Arrow, ZOrder};
+
+PROCEDURE <A NAME="EdgeSetText"><procedure>EdgeSetText</procedure></A> (&lt;* UNUSED *&gt; gpo  : ParseObject;
+                                    t    : T;
+                                    elem : Elem;
+                                    field: INTEGER;
+                                    value: Texts        ) RAISES {GEFError.T} =
+  VAR edge := NARROW(elem, Edge);
+  BEGIN
+    LOCK t.mu DO
+      CASE VAL(field, EdgeFieldType) OF
+      | EdgeFieldType.Color =&gt; edge.setColor(GEFClass.PaintOpFromColor(value[0]))
+      ELSE
+        RAISE Fatal;
+      END;
+    END;
+  END EdgeSetText;
+
+PROCEDURE <A NAME="EdgeSetElem"><procedure>EdgeSetElem</procedure></A> (&lt;* UNUSED *&gt; gpo  : ParseObject;
+                                    t    : T;
+                                    elem : Elem;
+                                    field: INTEGER;
+                                    value: Elems        )
+  RAISES {GEFError.T} =
+  VAR
+    edge           := NARROW(elem, Edge);
+    c0, c1: Vertex;
+  BEGIN
+    LOCK t.mu DO
+      CASE VAL(field, EdgeFieldType) OF
+      | EdgeFieldType.Vertices =&gt;
+          IF NUMBER(value^) # 2 THEN
+            RAISE GEFError.T(&quot;Must give 2 elements for edge vertices&quot;);
+          ELSIF NOT ISTYPE(value[0], Vertex)
+                  OR NOT ISTYPE(value[1], Vertex) THEN
+            RAISE
+              GEFError.T(&quot;Element given for edge vertex is not a Vertex&quot;);
+          END;
+          edge.move(value[0], value[1], edge.control0, edge.control1);
+      | EdgeFieldType.Controls =&gt;
+          IF NUMBER(value^) # 2 THEN
+            c0 := NIL;
+            c1 := NIL;
+          ELSIF NOT ISTYPE(value[0], Vertex)
+                  OR NOT ISTYPE(value[1], Vertex) THEN
+            RAISE
+              GEFError.T(
+                &quot;Element given for edge control vertex is not a Vertex&quot;);
+          ELSE
+            c0 := value[0];
+            c1 := value[1];
+          END;
+          edge.move(edge.vertex0, edge.vertex1, c0, c1)
+      ELSE
+        RAISE Fatal;
+      END;
+    END;
+  END EdgeSetElem;
+
+PROCEDURE <A NAME="EdgeSetEnum"><procedure>EdgeSetEnum</procedure></A> (&lt;* UNUSED *&gt; gpo  : ParseObject;
+                                      t    : T;
+                                      elem : Elem;
+                                      field: INTEGER;
+                                      value: Ints            )
+  RAISES {GEFError.T} =
+  VAR edge := NARROW(elem, Edge);
+  BEGIN
+    LOCK t.mu DO
+      CASE VAL(field, EdgeFieldType) OF
+      | EdgeFieldType.ZOrder =&gt;
+          CASE VAL(value[0], ZOrder) OF
+          | ZOrder.FgFront =&gt; edge.toFront(GraphVBT.ZOrder.Foreground)
+          | ZOrder.FgBack =&gt; edge.toBack(GraphVBT.ZOrder.Foreground)
+          | ZOrder.NormalFront =&gt; edge.toFront(GraphVBT.ZOrder.Normal)
+          | ZOrder.NormalBack =&gt; edge.toBack(GraphVBT.ZOrder.Normal)
+          | ZOrder.BgFront =&gt; edge.toFront(GraphVBT.ZOrder.Background)
+          | ZOrder.BgBack =&gt; edge.toBack(GraphVBT.ZOrder.Background)
+          END;
+      ELSE
+        RAISE Fatal;
+      END;
+    END
+  END EdgeSetEnum;
+
+PROCEDURE <A NAME="EdgeSetReal"><procedure>EdgeSetReal</procedure></A> (&lt;* UNUSED *&gt; gpo  : ParseObject;
+                                    t    : T;
+                                    elem : Elem;
+                                    field: INTEGER;
+                                    value: Reals        ) RAISES {GEFError.T} =
+  VAR edge := NARROW(elem, Edge);
+  BEGIN
+    LOCK t.mu DO
+      CASE VAL(field, EdgeFieldType) OF
+      | EdgeFieldType.Width =&gt; edge.setWidth(value[0])
+      ELSE
+        RAISE Fatal;
+      END;
+    END;
+  END EdgeSetReal;
+
+PROCEDURE <A NAME="EdgeSetBool"><procedure>EdgeSetBool</procedure></A> (&lt;* UNUSED *&gt; gpo  : ParseObject;
+                                    t    : T;
+                                    elem : Elem;
+                                    field: INTEGER;
+                                    value: Bools        ) RAISES {GEFError.T} =
+  VAR edge := NARROW(elem, Edge);
+  BEGIN
+    LOCK t.mu DO
+      CASE VAL(field, EdgeFieldType) OF
+      | EdgeFieldType.Arrow =&gt;
+          edge.setArrow(ARRAY [0 .. 1] OF BOOLEAN{value[0], value[1]})
+      ELSE
+        RAISE Fatal;
+      END;
+    END;
+  END EdgeSetBool;
+
+CONST
+  MinEdgeSize = 0.4;
+
+PROCEDURE <A NAME="EdgeFinish"><procedure>EdgeFinish</procedure></A> (&lt;* UNUSED *&gt; gpo   : EdgeParseObject;
+                                   t     : T;
+                                   edgeRA: REFANY           )
+  RAISES {GEFError.T} =
+  VAR edge := NARROW(edgeRA, Edge);
+  BEGIN
+    IF edge.vertex0 = NIL OR edge.vertex1 = NIL THEN
+      RAISE GEFError.T(&quot;Edge missing vertex&quot;)
+    END;
+    IF t.showAllElements AND edge.width = 0.0 THEN edge.width := MinEdgeSize END;
+    EVAL edge.init();
+    edge.initialized := TRUE;
+    CASE edge.zOrder OF
+    | ZOrder.FgFront =&gt; edge.toFront(GraphVBT.ZOrder.Foreground)
+    | ZOrder.FgBack =&gt; edge.toBack(GraphVBT.ZOrder.Foreground)
+    | ZOrder.NormalFront =&gt; edge.toFront(GraphVBT.ZOrder.Normal)
+    | ZOrder.NormalBack =&gt; edge.toBack(GraphVBT.ZOrder.Normal)
+    | ZOrder.BgFront =&gt; edge.toFront(GraphVBT.ZOrder.Background)
+    | ZOrder.BgBack =&gt; edge.toBack(GraphVBT.ZOrder.Background)
+    END;
+  END EdgeFinish;
+
+PROCEDURE <A NAME="EdgeIsType"><procedure>EdgeIsType</procedure></A> (&lt;* UNUSED *&gt; po: ParseObject; obj: REFANY): BOOLEAN =
+  BEGIN
+    RETURN ISTYPE(obj, Edge);
+  END EdgeIsType;
+</PRE> ***************************** Vertex Highlight  *********************** 
+
+<P><PRE>REVEAL
+  <A NAME="VertexHighlight">VertexHighlight</A> = VHPublic BRANDED OBJECT
+                      initialized            := FALSE;
+                      id         : INTEGER;
+                      zOrder     : ZOrder;
+                    OVERRIDES
+                      move        := HighlightMove;
+                      setBorder := HighlightSetBorder;
+                      setColor    := HighlightSetColor;
+                      toFront     := HighlightToFront;
+                      toBack      := HighlightToBack;
+                    END;
+
+PROCEDURE <A NAME="HighlightMove"><procedure>HighlightMove</procedure></A> (t       : VertexHighlight;
+                         vertex  : GraphVBT.Vertex;
+                         animated: BOOLEAN; start := 0.0; stop := 1.0         ) =
+  BEGIN
+    IF t.initialized THEN
+      GraphVBT.VertexHighlight.move(t, vertex, animated, start, stop)
+    ELSE
+      t.vertex := vertex;
+    END;
+  END HighlightMove;
+
+PROCEDURE <A NAME="HighlightSetBorder"><procedure>HighlightSetBorder</procedure></A> (t: VertexHighlight; border: R2.T) =
+  BEGIN
+    IF t.initialized THEN
+      GraphVBT.VertexHighlight.setBorder(t, border);
+    ELSE
+      t.border := border;
+    END;
+  END HighlightSetBorder;
+
+PROCEDURE <A NAME="HighlightSetColor"><procedure>HighlightSetColor</procedure></A> (t: VertexHighlight; color: PaintOp.T) =
+  BEGIN
+    IF t.initialized THEN
+      GraphVBT.VertexHighlight.setColor(t, color)
+    ELSE
+      t.color := color;
+    END;
+  END HighlightSetColor;
+
+PROCEDURE <A NAME="HighlightToFront"><procedure>HighlightToFront</procedure></A>(t: VertexHighlight; zOrder: GraphVBT.ZOrder) =
+  BEGIN
+    IF t.initialized THEN
+      GraphVBT.VertexHighlight.toFront(t, zOrder);
+    ELSE
+      t.zOrder := front[zOrder]
+    END;
+  END HighlightToFront;
+
+PROCEDURE <A NAME="HighlightToBack"><procedure>HighlightToBack</procedure></A>(t: VertexHighlight; zOrder: GraphVBT.ZOrder) =
+  BEGIN
+    IF t.initialized THEN
+      GraphVBT.VertexHighlight.toBack(t, zOrder);
+    ELSE
+      t.zOrder := back[zOrder]
+    END;
+  END HighlightToBack;
+
+TYPE
+  HighlightParseObject = ParseObject OBJECT
+                         OVERRIDES
+                           create  := HighlightCreate;
+                           delete := HighlightDelete;
+                           getId   := HighlightGetId;
+                           setText := HighlightSetText;
+                           setReal := HighlightSetReal;
+                           setElem := HighlightSetElem;
+                           setInt := HighlightSetEnum;
+                           finish  := HighlightFinish;
+                           isType  := HighlightIsType;
+                         END;
+
+PROCEDURE <A NAME="HighlightCreate"><procedure>HighlightCreate</procedure></A> (&lt;* UNUSED *&gt; gpo: HighlightParseObject;
+                           &lt;* UNUSED *&gt; t  : T;
+                                        id : INTEGER               ):
+  REFANY =
+  BEGIN
+    RETURN NEW(VertexHighlight, id := id)
+  END HighlightCreate;
+
+PROCEDURE <A NAME="HighlightDelete"><procedure>HighlightDelete</procedure></A> (&lt;* UNUSED *&gt; po  : ParseObject;
+                       &lt;* UNUSED *&gt; t   : T;
+                       elem: Elem         ) =
+  BEGIN
+    NARROW(elem, VertexHighlight).remove();
+  END HighlightDelete;
+
+PROCEDURE <A NAME="HighlightGetId"><procedure>HighlightGetId</procedure></A> (&lt;* UNUSED *&gt; gpo : ParseObject;
+                       &lt;* UNUSED *&gt; t   : T;
+                                    elem: Elem         ): INTEGER =
+  BEGIN
+    RETURN NARROW(elem, VertexHighlight).id
+  END HighlightGetId;
+
+TYPE
+  HighlightFieldType = {Vertex, Border, Color, ZOrder};
+
+PROCEDURE <A NAME="HighlightSetText"><procedure>HighlightSetText</procedure></A> (&lt;* UNUSED *&gt; gpo  : HighlightParseObject;
+                                         t    : T;
+                                         elem : Elem;
+                                         field: INTEGER;
+                                         value: Texts                 )
+  RAISES {GEFError.T} =
+  VAR highlight := NARROW(elem, VertexHighlight);
+  BEGIN
+    LOCK t.mu DO
+      CASE VAL(field, HighlightFieldType) OF
+      | HighlightFieldType.Color =&gt;
+          highlight.setColor(GEFClass.PaintOpFromColor(value[0]))
+      ELSE
+        RAISE Fatal;
+      END;
+    END;
+  END HighlightSetText;
+
+PROCEDURE <A NAME="HighlightSetElem"><procedure>HighlightSetElem</procedure></A> (&lt;* UNUSED *&gt; gpo  : HighlightParseObject;
+                                         t    : T;
+                                         elem : Elem;
+                                         field: INTEGER;
+                                         value: Elems                 )
+  RAISES {GEFError.T} =
+  VAR highlight := NARROW(elem, VertexHighlight);
+  BEGIN
+    LOCK t.mu DO
+      CASE VAL(field, HighlightFieldType) OF
+      | HighlightFieldType.Vertex =&gt;
+          IF NUMBER(value^) # 1 OR NOT ISTYPE(value[0], Vertex) THEN
+            RAISE GEFError.T(&quot;Element given for highlight vertex is not a vertex&quot;)
+          END;
+          highlight.move(value[0]);
+      ELSE
+        RAISE Fatal;
+      END;
+    END;
+  END HighlightSetElem;
+
+PROCEDURE <A NAME="HighlightSetEnum"><procedure>HighlightSetEnum</procedure></A> (&lt;* UNUSED *&gt; gpo  : ParseObject;
+                                      t    : T;
+                                      elem : Elem;
+                                      field: INTEGER;
+                                      value: Ints            )
+  RAISES {GEFError.T} =
+  VAR highlight := NARROW(elem, VertexHighlight);
+  BEGIN
+    LOCK t.mu DO
+      CASE VAL(field, HighlightFieldType) OF
+      | HighlightFieldType.ZOrder =&gt;
+          CASE VAL(value[0], ZOrder) OF
+          | ZOrder.FgFront =&gt; highlight.toFront(GraphVBT.ZOrder.Foreground)
+          | ZOrder.FgBack =&gt; highlight.toBack(GraphVBT.ZOrder.Foreground)
+          | ZOrder.NormalFront =&gt; highlight.toFront(GraphVBT.ZOrder.Normal)
+          | ZOrder.NormalBack =&gt; highlight.toBack(GraphVBT.ZOrder.Normal)
+          | ZOrder.BgFront =&gt; highlight.toFront(GraphVBT.ZOrder.Background)
+          | ZOrder.BgBack =&gt; highlight.toBack(GraphVBT.ZOrder.Background)
+          END;
+      ELSE
+        RAISE Fatal;
+      END;
+    END
+  END HighlightSetEnum;
+
+PROCEDURE <A NAME="HighlightSetReal"><procedure>HighlightSetReal</procedure></A> (&lt;* UNUSED *&gt; gpo  : ParseObject;
+                                         t    : T;
+                                         elem : Elem;
+                                         field: INTEGER;
+                                         value: Reals                 )
+  RAISES {GEFError.T} =
+  VAR highlight := NARROW(elem, VertexHighlight);
+  BEGIN
+    LOCK t.mu DO
+      CASE VAL(field, HighlightFieldType) OF
+      | HighlightFieldType.Border =&gt;
+          highlight.setBorder(R2.T{value[0], value[1]})
+      ELSE
+        RAISE Fatal;
+      END;
+    END
+  END HighlightSetReal;
+
+CONST
+  MinBorderSize = R2.T{1.0, 1.0};
+
+PROCEDURE <A NAME="HighlightFinish"><procedure>HighlightFinish</procedure></A> (&lt;* UNUSED *&gt; gpo        : ParseObject;
+                                        t          : T;
+                                        highlightRA: REFANY                )
+  RAISES {GEFError.T} =
+  VAR highlight := NARROW(highlightRA, VertexHighlight);
+  BEGIN
+    IF highlight.vertex = NIL THEN
+      RAISE GEFError.T(&quot;Highlight missing vertex&quot;)
+    END;
+    IF t.showAllElements AND highlight.border = R2.Origin THEN
+      highlight.border := MinBorderSize
+    END;
+    highlight.initialized := TRUE;
+    EVAL highlight.init();
+    CASE highlight.zOrder OF
+    | ZOrder.FgFront =&gt; highlight.toFront(GraphVBT.ZOrder.Foreground)
+    | ZOrder.FgBack =&gt; highlight.toBack(GraphVBT.ZOrder.Foreground)
+    | ZOrder.NormalFront =&gt; highlight.toFront(GraphVBT.ZOrder.Normal)
+    | ZOrder.NormalBack =&gt; highlight.toBack(GraphVBT.ZOrder.Normal)
+    | ZOrder.BgFront =&gt; highlight.toFront(GraphVBT.ZOrder.Background)
+    | ZOrder.BgBack =&gt; highlight.toBack(GraphVBT.ZOrder.Background)
+    END;
+
+  END HighlightFinish;
+
+PROCEDURE <A NAME="HighlightIsType"><procedure>HighlightIsType</procedure></A> (&lt;* UNUSED *&gt; po: ParseObject; obj: REFANY):
+  BOOLEAN =
+  BEGIN
+    RETURN ISTYPE(obj, VertexHighlight);
+  END HighlightIsType;
+</PRE> ********************************* Polygons *********************** 
+
+<P><PRE>REVEAL
+  <A NAME="Polygon">Polygon</A> = PPublic BRANDED OBJECT
+              initialized            := FALSE;
+              id         : INTEGER;
+              zOrder     : ZOrder;
+            OVERRIDES
+              move     := PolygonMove;
+              setColor := PolygonSetColor;
+             toFront   := PolygonToFront;
+             toBack   := PolygonToBack;
+          END;
+
+PROCEDURE <A NAME="PolygonMove"><procedure>PolygonMove</procedure></A> (t       : Polygon;
+                       vertices: RefList.T;
+                       animated: BOOLEAN;
+                       start                 := 0.0;
+                       stop                  := 1.0  ) =
+  BEGIN
+    IF t.initialized THEN
+      GraphVBT.Polygon.move(t, vertices, animated, start, stop);
+    ELSE
+      t.vertices := vertices;
+    END;
+  END PolygonMove;
+
+PROCEDURE <A NAME="PolygonSetColor"><procedure>PolygonSetColor</procedure></A> (t: Polygon; color: PaintOp.T) =
+  BEGIN
+    IF t.initialized THEN
+      GraphVBT.Polygon.setColor(t, color)
+    ELSE
+      t.color := color;
+    END;
+  END PolygonSetColor;
+
+PROCEDURE <A NAME="PolygonToFront"><procedure>PolygonToFront</procedure></A>(t: Polygon; zOrder: GraphVBT.ZOrder) =
+  BEGIN
+    IF t.initialized THEN
+      GraphVBT.Polygon.toFront(t, zOrder);
+    ELSE
+      t.zOrder := front[zOrder]
+    END;
+  END PolygonToFront;
+
+PROCEDURE <A NAME="PolygonToBack"><procedure>PolygonToBack</procedure></A>(t: Polygon; zOrder: GraphVBT.ZOrder) =
+  BEGIN
+    IF t.initialized THEN
+      GraphVBT.Polygon.toBack(t, zOrder);
+    ELSE
+      t.zOrder := back[zOrder]
+    END;
+  END PolygonToBack;
+
+TYPE
+  PolygonParseObject = ParseObject OBJECT
+  OVERRIDES
+    create := PolygonCreate;
+    delete := PolygonDelete;
+    getId := PolygonGetId;
+    setText := PolygonSetText;
+    setElem := PolygonSetElem;
+    setInt := PolygonSetEnum;
+    finish := PolygonFinish;
+    isType := PolygonIsType;
+  END;
+
+PROCEDURE <A NAME="PolygonCreate"><procedure>PolygonCreate</procedure></A> (&lt;* UNUSED *&gt; gpo: ParseObject;
+                         &lt;* UNUSED *&gt; t  : T;
+                                      id : INTEGER             ): REFANY =
+  BEGIN
+    RETURN NEW(Polygon, id := id)
+  END PolygonCreate;
+
+PROCEDURE <A NAME="PolygonDelete"><procedure>PolygonDelete</procedure></A> (&lt;* UNUSED *&gt; po  : ParseObject;
+                         &lt;* UNUSED *&gt; t   : T;
+                                      elem: Elem         ) =
+  BEGIN
+    NARROW(elem, Polygon).remove();
+  END PolygonDelete;
+
+PROCEDURE <A NAME="PolygonGetId"><procedure>PolygonGetId</procedure></A> (&lt;* UNUSED *&gt; gpo : ParseObject;
+                        &lt;* UNUSED *&gt; t   : T;
+                                     elem: Elem         ): INTEGER =
+  BEGIN
+    RETURN NARROW(elem, Polygon).id
+  END PolygonGetId;
+
+TYPE
+  PolygonFieldType = {Vertices, Color, ZOrder};
+
+PROCEDURE <A NAME="PolygonSetText"><procedure>PolygonSetText</procedure></A> (&lt;* UNUSED *&gt; gpo  : ParseObject;
+                                       t    : T;
+                                       elem : Elem;
+                                       field: INTEGER;
+                                       value: Texts        )
+  RAISES {GEFError.T} =
+  VAR polygon := NARROW(elem, Polygon);
+  BEGIN
+    LOCK t.mu DO
+      CASE VAL(field, PolygonFieldType) OF
+      | PolygonFieldType.Color =&gt;
+          polygon.setColor(GEFClass.PaintOpFromColor(value[0]))
+      ELSE
+        RAISE Fatal;
+      END;
+    END
+  END PolygonSetText;
+
+PROCEDURE <A NAME="PolygonSetElem"><procedure>PolygonSetElem</procedure></A> (&lt;* UNUSED *&gt; gpo  : ParseObject;
+                                       t    : T;
+                                       elem : Elem;
+                                       field: INTEGER;
+                                       value: Elems        )
+  RAISES {GEFError.T} =
+  VAR
+    polygon             := NARROW(elem, Polygon);
+    vertices: RefList.T;
+  BEGIN
+    LOCK t.mu DO
+      CASE VAL(field, PolygonFieldType) OF
+      | PolygonFieldType.Vertices =&gt;
+          FOR i := 0 TO LAST(value^) DO
+            TYPECASE value[i] OF
+            | Vertex =&gt;
+            | RefList.T (l) =&gt;
+                IF i = 0 THEN
+                   RAISE GEFError.T(
+                      &quot;First element of a polygon must be a Vertex, not a list&quot;);
+                END;
+                IF RefList.Length(l) = 3 THEN
+                  FOR i := 0 TO 2 DO
+                    IF NOT ISTYPE(RefList.Nth(l, i), Vertex) THEN
+                      RAISE
+                        GEFError.T(
+                          Fmt.F(
+                            &quot;Element %s given in polygon vertex list is not a Vertex&quot;,
+                            Fmt.Int(i)));
+                    END;
+                  END;
+                ELSE
+                  RAISE
+                    GEFError.T(
+                      Fmt.F(
+                        &quot;Vertex list for a curved polygon edge has %s elements, but must have 3&quot;,
+                        Fmt.Int(RefList.Length(l))));
+                END;
+            ELSE
+              RAISE GEFError.T(
+                      &quot;Element given for polygon vertex is not a Vertex&quot;);
+            END;
+            vertices := RefList.Cons(value[i], vertices);
+          END;
+          polygon.move(RefList.ReverseD(vertices));
+      ELSE
+        RAISE Fatal;
+      END;
+    END
+  END PolygonSetElem;
+
+PROCEDURE <A NAME="PolygonSetEnum"><procedure>PolygonSetEnum</procedure></A> (&lt;* UNUSED *&gt; gpo  : ParseObject;
+                                      t    : T;
+                                      elem : Elem;
+                                      field: INTEGER;
+                                      value: Ints            )
+  RAISES {GEFError.T} =
+  VAR polygon := NARROW(elem, Polygon);
+  BEGIN
+    LOCK t.mu DO
+      CASE VAL(field, PolygonFieldType) OF
+      | PolygonFieldType.ZOrder =&gt;
+          CASE VAL(value[0], ZOrder) OF
+          | ZOrder.FgFront =&gt; polygon.toFront(GraphVBT.ZOrder.Foreground)
+          | ZOrder.FgBack =&gt; polygon.toBack(GraphVBT.ZOrder.Foreground)
+          | ZOrder.NormalFront =&gt; polygon.toFront(GraphVBT.ZOrder.Normal)
+          | ZOrder.NormalBack =&gt; polygon.toBack(GraphVBT.ZOrder.Normal)
+          | ZOrder.BgFront =&gt; polygon.toFront(GraphVBT.ZOrder.Background)
+          | ZOrder.BgBack =&gt; polygon.toBack(GraphVBT.ZOrder.Background)
+          END;
+      ELSE
+        RAISE Fatal;
+      END;
+    END
+  END PolygonSetEnum;
+
+PROCEDURE <A NAME="PolygonFinish"><procedure>PolygonFinish</procedure></A> (&lt;* UNUSED *&gt; gpo      : PolygonParseObject;
+                         &lt;* UNUSED *&gt; t        : T;
+                                      polygonRA: REFANY              )
+  RAISES {GEFError.T} =
+  VAR polygon := NARROW(polygonRA, Polygon);
+  BEGIN
+    IF polygon.vertices = NIL THEN
+      RAISE GEFError.T(&quot;Polygon missing vertices&quot;)
+    END;
+    polygon.initialized := TRUE;
+    EVAL polygon.init();
+    CASE polygon.zOrder OF
+    | ZOrder.FgFront =&gt; polygon.toFront(GraphVBT.ZOrder.Foreground)
+    | ZOrder.FgBack =&gt; polygon.toBack(GraphVBT.ZOrder.Foreground)
+    | ZOrder.NormalFront =&gt; polygon.toFront(GraphVBT.ZOrder.Normal)
+    | ZOrder.NormalBack =&gt; polygon.toBack(GraphVBT.ZOrder.Normal)
+    | ZOrder.BgFront =&gt; polygon.toFront(GraphVBT.ZOrder.Background)
+    | ZOrder.BgBack =&gt; polygon.toBack(GraphVBT.ZOrder.Background)
+    END;
+  END PolygonFinish;
+
+PROCEDURE <A NAME="PolygonIsType"><procedure>PolygonIsType</procedure></A>(&lt;* UNUSED *&gt; po: ParseObject; obj: REFANY): BOOLEAN =
+  BEGIN
+    RETURN ISTYPE(obj, Polygon);
+  END PolygonIsType;
+
+REVEAL
+  <A NAME="Arc">Arc</A> = ArcInternal BRANDED OBJECT
+          id                : INTEGER;
+          center            : Vertex;
+          radius            : REAL;
+          start, stop       : REAL;
+          a11, a12, a21, a22: REAL;
+          color             : PaintOp.T;
+          width             : REAL;
+          arrows            : ARRAY [0 .. 1] OF BOOLEAN;
+          zOrder            : ZOrder;
+        END;
+
+TYPE
+  ArcParseObject = ParseObject OBJECT
+                   OVERRIDES
+                     create  := ArcCreate;
+                     delete := ArcDelete;
+                     getId   := ArcGetId;
+                     setBool := ArcSetBool;
+                     setText := ArcSetText;
+                     setElem := ArcSetElem;
+                     setInt := ArcSetEnum;
+                     setReal := ArcSetReal;
+                     finish  := ArcFinish;
+                     isType  := ArcIsType;
+                   END;
+
+  ArcFieldType = {Center, Radius, Angle, Transformation, Width, Color, Arrow, ZOrder};
+
+PROCEDURE <A NAME="ArcCreate"><procedure>ArcCreate</procedure></A> (&lt;* UNUSED *&gt; gpo: ParseObject;
+                     &lt;* UNUSED *&gt; t  : T;
+                                  id : INTEGER      ): REFANY =
+  BEGIN
+    RETURN NEW(Arc, id := id)
+  END ArcCreate;
+
+PROCEDURE <A NAME="ArcDelete"><procedure>ArcDelete</procedure></A> (&lt;* UNUSED *&gt; po  : ParseObject;
+                     &lt;* UNUSED *&gt; t   : T;
+                                  elem: Elem         ) =
+  BEGIN
+    DeleteArc(elem);
+  END ArcDelete;
+
+PROCEDURE <A NAME="ArcGetId"><procedure>ArcGetId</procedure></A> (&lt;* UNUSED *&gt; gpo : ParseObject;
+                    &lt;* UNUSED *&gt; t   : T;
+                                 elem: Elem         ): INTEGER =
+  BEGIN
+    TYPECASE elem OF
+    | Arc (arc) =&gt; RETURN arc.id
+    | ArcEdge (e) =&gt; RETURN e.arc.id
+    ELSE
+      RAISE Fatal;
+    END;
+  END ArcGetId;
+
+PROCEDURE <A NAME="ArcSetText"><procedure>ArcSetText</procedure></A> (&lt;* UNUSED *&gt; gpo  : ParseObject;
+                                   t    : T;
+                                   elem : Elem;
+                                   field: INTEGER;
+                                   value: Texts        )
+  RAISES {GEFError.T} =
+  VAR arc := NARROW(elem, Arc);
+  BEGIN
+    LOCK t.mu DO
+      CASE VAL(field, ArcFieldType) OF
+      | ArcFieldType.Color =&gt;
+          arc.color := GEFClass.PaintOpFromColor(value[0]);
+          IF arc.edges # NIL THEN
+            FOR i := 0 TO LAST(arc.edges^) DO
+              arc.edges[i].setColor(arc.color);
+            END;
+          END;
+      ELSE
+        RAISE Fatal;
+      END;
+    END
+  END ArcSetText;
+
+PROCEDURE <A NAME="ArcSetElem"><procedure>ArcSetElem</procedure></A> (&lt;* UNUSED *&gt; gpo  : ParseObject;
+                                   t    : T;
+                                   elem : Elem;
+                                   field: INTEGER;
+                                   value: Elems        )
+  RAISES {GEFError.T} =
+  VAR arc := NARROW(elem, Arc); remake:= FALSE;
+  BEGIN
+    LOCK t.mu DO
+      CASE VAL(field, ArcFieldType) OF
+      | ArcFieldType.Center =&gt;
+          IF NUMBER(value^) # 1 OR NOT ISTYPE(value[0], Vertex) THEN
+            RAISE
+              GEFError.T(&quot;Element given for arc center is not a vertex&quot;)
+          END;
+          arc.center := value[0];
+          remake := arc.edges # NIL;
+      ELSE
+        RAISE Fatal;
+      END;
+    END;
+    IF remake THEN MakeArc(t, arc) END;
+  END ArcSetElem;
+
+PROCEDURE <A NAME="ArcSetEnum"><procedure>ArcSetEnum</procedure></A> (&lt;* UNUSED *&gt; gpo  : ParseObject;
+                                      t    : T;
+                                      elem : Elem;
+                                      field: INTEGER;
+                                      value: Ints            )
+  RAISES {GEFError.T} =
+  VAR arc := NARROW(elem, Arc);
+  BEGIN
+    LOCK t.mu DO
+      CASE VAL(field, ArcFieldType) OF
+      | ArcFieldType.ZOrder =&gt;
+          arc.zOrder := VAL(value[0], ZOrder);
+      ELSE
+        RAISE Fatal;
+      END;
+    END
+  END ArcSetEnum;
+
+PROCEDURE <A NAME="ArcSetBool"><procedure>ArcSetBool</procedure></A> (&lt;* UNUSED *&gt; gpo  : ParseObject;
+                                   t    : T;
+                                   elem : Elem;
+                                   field: INTEGER;
+                                   value: Bools        )
+  RAISES {GEFError.T} =
+  VAR arc := NARROW(elem, Arc);
+  BEGIN
+    LOCK t.mu DO
+      CASE VAL(field, ArcFieldType) OF
+      | ArcFieldType.Arrow =&gt;
+          arc.arrows[0] := value[0];
+          arc.arrows[1] := value[1];
+          IF arc.edges # NIL THEN
+            IF NUMBER(arc.edges^) = 1 THEN
+              arc.edges[0].setArrow(arc.arrows);
+            ELSE
+              arc.edges[0].setArrow(
+                ARRAY [0 .. 1] OF BOOLEAN{value[0], FALSE});
+              arc.edges[LAST(arc.edges^)].setArrow(
+                ARRAY [0 .. 1] OF BOOLEAN{FALSE, value[1]});
+            END;
+          END;
+      ELSE
+        RAISE Fatal;
+      END;
+    END
+  END ArcSetBool;
+
+PROCEDURE <A NAME="ArcSetReal"><procedure>ArcSetReal</procedure></A> (&lt;* UNUSED *&gt; gpo  : ParseObject;
+                                   t    : T;
+                                   elem : Elem;
+                                   field: INTEGER;
+                                   value: Reals        )
+  RAISES {GEFError.T} =
+  VAR
+    arc    := NARROW(elem, Arc);
+    remake := FALSE;
+  BEGIN
+    LOCK t.mu DO
+      CASE VAL(field, ArcFieldType) OF
+      | ArcFieldType.Radius =&gt;
+          arc.radius := value[0];
+          remake := arc.edges # NIL;
+      | ArcFieldType.Angle =&gt;
+          arc.start := value[0];
+          arc.stop := value[1];
+          remake := arc.edges # NIL;
+      | ArcFieldType.Transformation =&gt;
+          arc.a11 := value[0];
+          arc.a12 := value[1];
+          arc.a21 := value[2];
+          arc.a22 := value[3];
+          remake := arc.edges # NIL;
+      | ArcFieldType.Width =&gt;
+          arc.width := value[0];
+          IF arc.edges # NIL THEN
+            FOR i := 0 TO LAST(arc.edges^) DO
+              arc.edges[i].setWidth(arc.width);
+            END;
+          END;
+      ELSE
+        RAISE Fatal;
+      END;
+    END;
+    IF remake THEN MakeArc(t, arc) END;
+  END ArcSetReal;
+
+CONST
+  Epsilon = 0.001;
+
+PROCEDURE <A NAME="ArcFinish"><procedure>ArcFinish</procedure></A> (&lt;* UNUSED *&gt; po: ParseObject; t: T; elem: Elem)
+  RAISES {GEFError.T} =
+  VAR arc := NARROW(elem, Arc);
+  BEGIN
+    IF arc.center = NIL THEN RAISE GEFError.T(&quot;Arc missing center&quot;) END;
+    MakeArc(t, arc);
+  END ArcFinish;
+
+PROCEDURE <A NAME="DeleteArc"><procedure>DeleteArc</procedure></A>(arc: Arc) =
+  BEGIN
+    IF arc.edges # NIL THEN
+      FOR i := 0 TO LAST(arc.edges^) DO
+        arc.edges[i].remove();
+      END;
+      arc.edges := NIL;
+    END;
+  END DeleteArc;
+
+PROCEDURE <A NAME="MakeArc"><procedure>MakeArc</procedure></A>(t: T; arc: Arc) =
+  VAR
+    start                 := arc.start;
+    stop                  := arc.stop;
+    deg         : REAL;
+    qstart, qend: INTEGER;
+  BEGIN
+    DeleteArc(arc);
+    deg := ABS(stop - start);
+    IF deg &lt;= 90.0 THEN
+      arc.edges := NEW(Edges, 1);
+      arc.edges[0] := MakeArcEdge(t, arc, start, stop);
+    ELSIF deg &lt; 180.0 THEN
+      arc.edges := NEW(Edges, 2);
+      arc.edges[0] := MakeArcEdge(t, arc, start, (stop + start) / 2.0);
+      arc.edges[1] := MakeArcEdge(t, arc, (stop + start) / 2.0, stop);
+    ELSIF stop &gt; start THEN
+      qstart := CEILING((start + Epsilon) / 90.0);
+      qend := FLOOR((stop - Epsilon) / 90.0);
+      arc.edges := NEW(Edges, 2 + qend - qstart);
+      arc.edges[0] := MakeArcEdge(t, arc, start, FLOAT(qstart) * 90.0);
+      FOR i := qstart TO MIN(qend, qstart+4) - 1 DO
+        arc.edges[1 + i - qstart] :=
+          MakeArcEdge(t, arc, FLOAT(i) * 90.0, FLOAT(i + 1) * 90.0);
+      END;
+      (* for multiple rotations, reuse paths *)
+      FOR i := 4 TO qend - qstart DO
+        arc.edges[i + 1] := arc.edges[i - 3]
+      END;
+      arc.edges[1 + qend - qstart] :=
+        MakeArcEdge(t, arc, FLOAT(qend) * 90.0, stop);
+    ELSE
+      qstart := FLOOR((start - Epsilon) / 90.0);
+      qend := CEILING((stop + Epsilon) / 90.0);
+      arc.edges := NEW(Edges, 2 + qstart - qend);
+      arc.edges[0] := MakeArcEdge(t, arc, start, FLOAT(qstart) * 90.0);
+      FOR i := qstart TO MAX(qend, qstart-4) + 1 BY -1 DO
+        arc.edges[1 + i - qstart] :=
+          MakeArcEdge(t, arc, FLOAT(i) * 90.0, FLOAT(i - 1) * 90.0);
+      END;
+      (* for multiple rotations, reuse paths *)
+      FOR i := 4 TO qstart - qend DO
+        arc.edges[i + 1] := arc.edges[i - 3]
+      END;
+      arc.edges[1 + qend - qstart] :=
+        MakeArcEdge(t, arc, FLOAT(qend) * 90.0, stop);
+    END;
+  END MakeArc;
+</PRE> ABS(stop - start) &lt;= 90.0 
+<PRE>PROCEDURE <A NAME="MakeArcEdge"><procedure>MakeArcEdge</procedure></A> (t: T; arc: Arc; start, stop: REAL): ArcEdge =
+  VAR
+    edge := NEW(
+              ArcEdge, arc := arc, width := arc.width, color := arc.color);
+    v0, v1, c0, c1: R2.T;
+    theta         : LONGREAL;
+    x             : REAL;
+  BEGIN
+    (* make angles counter-clockwise rather than clockwise *)
+    start := -start;
+    stop := -stop;
+    theta := FLOAT(ABS(stop - start) * Math.Degree, LONGREAL);
+    IF ABS(theta) &lt; 0.001d0 THEN
+      (* shouldn't happen? *)
+      edge.vertex0 := NEW(GraphVBT.Vertex, graph := t).init();
+      edge.vertex1 := edge.vertex0;
+      EVAL edge.init();
+      CASE arc.zOrder OF
+      | ZOrder.FgFront =&gt; edge.toFront(GraphVBT.ZOrder.Foreground)
+      | ZOrder.FgBack =&gt; edge.toBack(GraphVBT.ZOrder.Foreground)
+      | ZOrder.NormalFront =&gt; edge.toFront(GraphVBT.ZOrder.Normal)
+      | ZOrder.NormalBack =&gt; edge.toBack(GraphVBT.ZOrder.Normal)
+      | ZOrder.BgFront =&gt; edge.toFront(GraphVBT.ZOrder.Background)
+      | ZOrder.BgBack =&gt; edge.toBack(GraphVBT.ZOrder.Background)
+      END;
+      RETURN edge
+    ELSE
+      (* old calculation for mid-point of bezier lying on the arc WITH d =
+         1.0d0 - Math.cos(theta) DO x := FLOAT(4.0d0 / 3.0d0 *
+         (Math.sqrt(2.0d0 * d) - Math.sin(theta)) / d); END; *)
+      (* have pts 0.3373 and 0.6627 along the bezier lie on arc (values
+         from Lyle Ramshaw)
+
+         formula for x based on theta (from Maple with help from Andre
+         Broder) *)
+      WITH s = Math.sin(theta),
+           c = Math.cos(theta)  DO
+        x := FLOAT((-1.89411484d0 * s
+                      + Math.sqrt(
+                          (1.0588516d0 * c + 7.89411484d0) * (1.0d0 - c)))
+                     / (3.0d0 * (0.55294258d0 - 0.44705742d0 * c)));
+      END;
+      IF start &gt; stop THEN x := -x END;
+      v0 := Pt(start);
+      v1 := Pt(stop);
+      c0 := R2.Add(v0, R2.Scale(x, R2.T{-v0[1], v0[0]}));
+      c1 := R2.Add(v1, R2.Scale(x, R2.T{v1[1], -v1[0]}));
+    END;
+    edge.vertex0 :=
+      NEW(GraphVBT.Vertex, pos := Xform(arc, v0), graph := t).init();
+    edge.vertex1 :=
+      NEW(GraphVBT.Vertex, pos := Xform(arc, v1), graph := t).init();
+    edge.control0 :=
+      NEW(GraphVBT.Vertex, pos := Xform(arc, c0), graph := t).init();
+    edge.control1 :=
+      NEW(GraphVBT.Vertex, pos := Xform(arc, c1), graph := t).init();
+    EVAL edge.init();
+    CASE arc.zOrder OF
+    | ZOrder.FgFront =&gt; edge.toFront(GraphVBT.ZOrder.Foreground)
+    | ZOrder.FgBack =&gt; edge.toBack(GraphVBT.ZOrder.Foreground)
+    | ZOrder.NormalFront =&gt; edge.toFront(GraphVBT.ZOrder.Normal)
+    | ZOrder.NormalBack =&gt; edge.toBack(GraphVBT.ZOrder.Normal)
+    | ZOrder.BgFront =&gt; edge.toFront(GraphVBT.ZOrder.Background)
+    | ZOrder.BgBack =&gt; edge.toBack(GraphVBT.ZOrder.Background)
+    END;
+    RETURN edge
+  END MakeArcEdge;
+
+&lt;* INLINE *&gt;
+PROCEDURE <A NAME="Pt"><procedure>Pt</procedure></A> (ang: REAL): R2.T =
+  VAR theta := FLOAT(ang * Math.Degree, LONGREAL);
+  BEGIN
+    RETURN R2.T{FLOAT(Math.cos(theta)), FLOAT(Math.sin(theta))};
+  END Pt;
+
+PROCEDURE <A NAME="Xform"><procedure>Xform</procedure></A>(arc: Arc; pt: R2.T): R2.T =
+  VAR x := pt[0] * arc.radius; y := pt[1] * arc.radius;
+  BEGIN
+    RETURN R2.T{arc.a11 * x + arc.a12 * y + arc.center.pos[0],
+                arc.a21 * x + arc.a22 * y + arc.center.pos[1]}
+  END Xform;
+
+PROCEDURE <A NAME="ArcIsType"><procedure>ArcIsType</procedure></A>(&lt;* UNUSED *&gt; po: ParseObject; obj: REFANY): BOOLEAN =
+  BEGIN
+    RETURN ISTYPE(obj, Arc) OR ISTYPE(obj, ArcEdge);
+  END ArcIsType;
+
+CONST
+  ZOrders = &quot;(FgFront FgBack NormalFront NormalBack BgFront BgBack)&quot;;
+  front = ARRAY GraphVBT.ZOrder OF
+            ZOrder{ZOrder.FgFront, ZOrder.NormalFront, ZOrder.BgFront};
+  back = ARRAY GraphVBT.ZOrder OF
+           ZOrder{ZOrder.FgBack, ZOrder.NormalBack, ZOrder.BgBack};
+
+TYPE
+  ZOrder = {FgFront, FgBack, NormalFront, NormalBack, BgFront, BgBack};
+
+BEGIN
+  GEFClass.RegisterParseObject(
+    NEW(
+      GraphParseObject,
+      args :=
+        &quot;((Name Graph)&quot;
+          &amp; Fmt.F(
+              &quot;(Field %s World Real 4 (west east north south) (0.0 1.0 0.0 1.0))&quot;,
+              Fmt.Int(ORD(GraphFieldType.World)))
+          &amp; Fmt.F(&quot;(Field %s Margin Real 1 () (0.0))&quot;,
+                  Fmt.Int(ORD(GraphFieldType.Margin)))
+          &amp; Fmt.F(&quot;(Field %s PixelSizeDivisor Integer 2 (hor ver) (1 1))&quot;,
+                  Fmt.Int(ORD(GraphFieldType.PixelSizeDivisor)))
+          &amp; Fmt.F(&quot;(Field %s Aspect Real 1 () (0.0))&quot;,
+                  Fmt.Int(ORD(GraphFieldType.Aspect)))
+          &amp; Fmt.F(
+              &quot;(Field %s PrefSize Real 2 (width height) (100.0 100.0))&quot;,
+              Fmt.Int(ORD(GraphFieldType.PrefSize)))
+          &amp; Fmt.F(&quot;(Field %s ClientData Sx 1 () (0.0))&quot;,
+                  Fmt.Int(ORD(GraphFieldType.ClientData)))
+          &amp; Fmt.F(&quot;(Field %s Contents Elem Infinity () ()))&quot;,
+                  Fmt.Int(ORD(GraphFieldType.Contents)))));
+
+  GEFClass.RegisterParseObject(
+    NEW(
+      VertexParseObject,
+      args :=
+        &quot;((Name Vertex)&quot;
+          &amp; Fmt.F(&quot;(Field %s Shape (Rectangle Ellipse) 1 () (Rectangle))&quot;,
+                  Fmt.Int(ORD(VertexFieldType.Shape)))
+          &amp; Fmt.F(&quot;(Field %s Pos Real 2 (x y) (0.0 0.0))&quot;,
+                  Fmt.Int(ORD(VertexFieldType.Pos)))
+          &amp; Fmt.F(&quot;(Field %s Size Real 2 (width height) (0.0 0.0))&quot;,
+                  Fmt.Int(ORD(VertexFieldType.Size)))
+          &amp; Fmt.F(&quot;(Field %s Color ColorSpec 1 () (Fg))&quot;,
+                  Fmt.Int(ORD(VertexFieldType.Color)))
+          &amp; Fmt.F(&quot;(Field %s ZOrder %s 1 () (NormalFront))&quot;,
+                  Fmt.Int(ORD(VertexFieldType.ZOrder)), ZOrders)
+          &amp; Fmt.F(&quot;(Field %s Label Text 1 () ())&quot;,
+                  Fmt.Int(ORD(VertexFieldType.Label)))
+          &amp; Fmt.F(&quot;(Field %s Font FontSpec 1 () (BuiltIn))&quot;,
+                  Fmt.Int(ORD(VertexFieldType.Font)))
+          &amp; Fmt.F(&quot;(Field %s FontColor ColorSpec 1 () (Fg))&quot;,
+                  Fmt.Int(ORD(VertexFieldType.FontColor)))
+          &amp; Fmt.F(&quot;(Field %s BorderWidth Real 1 () (0.0))&quot;,
+                  Fmt.Int(ORD(VertexFieldType.BorderWidth)))
+      (*| FontColor is used in GraphVBT for BorderColor
+                &amp; Fmt.F(&quot;(Field %s BorderColor ColorSpec 1 () (Black)))&quot;,
+                        Fmt.Int(ORD(VertexFieldType.BorderColor)))
+      *)
+         &amp; &quot;)&quot;
+      ));
+
+  GEFClass.RegisterParseObject(
+    NEW(
+      EdgeParseObject,
+      args :=
+        &quot;((Name Edge)&quot;
+          &amp; Fmt.F(&quot;(Field %s Vertices Elem 2 (vertex0 vertex1) ())&quot;,
+                  Fmt.Int(ORD(EdgeFieldType.Vertices)))
+          &amp; Fmt.F(&quot;(Field %s Controls Elem 2 (control0 control1) ())&quot;,
+                  Fmt.Int(ORD(EdgeFieldType.Controls)))
+          &amp; Fmt.F(&quot;(Field %s Width Real 1 () (0.007))&quot;,
+                  Fmt.Int(ORD(EdgeFieldType.Width)))
+          &amp; Fmt.F(&quot;(Field %s Color ColorSpec 1 () (Fg))&quot;,
+                  Fmt.Int(ORD(EdgeFieldType.Color)))
+          &amp; Fmt.F(&quot;(Field %s ZOrder %s 1 () (NormalFront))&quot;,
+                  Fmt.Int(ORD(EdgeFieldType.ZOrder)), ZOrders)
+          &amp; Fmt.F(&quot;(Field %s Arrows Boolean 2 (vertex0 vertex1) (FALSE FALSE)))&quot;,
+                  Fmt.Int(ORD(EdgeFieldType.Arrow)))));
+
+  GEFClass.RegisterParseObject(
+    NEW(HighlightParseObject,
+        args :=
+          &quot;((Name VertexHighlight)&quot;
+            &amp; Fmt.F(&quot;(Field %s Vertex Elem 1 () ())&quot;,
+                    Fmt.Int(ORD(HighlightFieldType.Vertex)))
+            &amp; Fmt.F(&quot;(Field %s Border Real 2 (width height) (0.0 0.0))&quot;,
+                    Fmt.Int(ORD(HighlightFieldType.Border)))
+            &amp; Fmt.F(&quot;(Field %s ZOrder %s 1 () (NormalFront))&quot;,
+                    Fmt.Int(ORD(HighlightFieldType.ZOrder)), ZOrders)
+            &amp; Fmt.F(&quot;(Field %s Color ColorSpec 1 () (Fg)))&quot;,
+                    Fmt.Int(ORD(HighlightFieldType.Color)))));
+
+  GEFClass.RegisterParseObject(
+    NEW(PolygonParseObject,
+        args := &quot;((Name Polygon)&quot;
+                  &amp; Fmt.F(&quot;(Field %s Vertices Elem Infinity () ())&quot;,
+                          Fmt.Int(ORD(PolygonFieldType.Vertices)))
+                  &amp; Fmt.F(&quot;(Field %s ZOrder %s 1 () (NormalFront))&quot;,
+                          Fmt.Int(ORD(PolygonFieldType.ZOrder)), ZOrders)
+                  &amp; Fmt.F(&quot;(Field %s Color ColorSpec 1 () (Fg)))&quot;,
+                          Fmt.Int(ORD(PolygonFieldType.Color)))));
+
+  GEFClass.RegisterParseObject(
+    NEW(
+      ArcParseObject,
+      args :=
+        &quot;((Name Arc)&quot;
+          &amp; Fmt.F(&quot;(Field %s Center Elem 1 () ())&quot;,
+                  Fmt.Int(ORD(ArcFieldType.Center)))
+          &amp; Fmt.F(&quot;(Field %s Radius Real 1 () (1.0))&quot;,
+                  Fmt.Int(ORD(ArcFieldType.Radius)))
+          &amp; Fmt.F(&quot;(Field %s Angle Real 2 (start stop) (0.0 360.0))&quot;,
+                  Fmt.Int(ORD(ArcFieldType.Angle)))
+          &amp; Fmt.F(&quot;(Field %s Transformation Real 4 (a11 a12 a21 a22) (1.0 0.0 0.0 1.0))&quot;,
+                  Fmt.Int(ORD(ArcFieldType.Transformation)))
+          &amp; Fmt.F(&quot;(Field %s Width Real 1 () (0.007))&quot;,
+                  Fmt.Int(ORD(ArcFieldType.Width)))
+          &amp; Fmt.F(&quot;(Field %s Color ColorSpec 1 () (Fg))&quot;,
+                  Fmt.Int(ORD(ArcFieldType.Color)))
+          &amp; Fmt.F(&quot;(Field %s ZOrder %s 1 () (NormalFront))&quot;,
+                  Fmt.Int(ORD(ArcFieldType.ZOrder)), ZOrders)
+          &amp; Fmt.F(&quot;(Field %s Arrow Boolean 2 (first last) (FALSE FALSE)))&quot;,
+                  Fmt.Int(ORD(ArcFieldType.Arrow)))));
+
+END GEF.
+</PRE>
+</inModule>
+<HR>
+<A NAME="x1">interface Filename is in:
+</A><UL>
+<LI><A HREF="../../filename/src/POSIX/Filename.i3.html#0TOP0">filename/src/POSIX/Filename.i3</A>
+<LI><A HREF="../../filename/src/WINNT/Filename.i3.html#0TOP0">filename/src/WINNT/Filename.i3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x2">interface Math is in:
+</A><UL>
+<LI><A HREF="../../arith/src/POSIX/Math.i3.html#0TOP0">arith/src/POSIX/Math.i3</A>
+<LI><A HREF="../../arith/src/WIN32/Math.i3.html#0TOP0">arith/src/WIN32/Math.i3</A>
+</UL>
+<P>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

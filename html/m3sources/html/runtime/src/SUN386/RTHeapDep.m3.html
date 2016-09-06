@@ -1,0 +1,62 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: runtime/src/SUN386/RTHeapDep.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>runtime/src/SUN386/RTHeapDep.m3</H2></A><HR>
+<inModule>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+
+MODULE <module><implements><A HREF="../common/RTHeapDep.i3.html">RTHeapDep</A></implements></module>;
+</PRE> VM protection is currently unimplemented on this architecture.  If
+   you wish to implement it, you might wish to use the DS3100 version as
+   a guide. 
+
+<P><PRE>PROCEDURE <A NAME="Protect"><procedure>Protect</procedure></A> (&lt;* UNUSED *&gt; p                 : Page;
+                   &lt;* UNUSED *&gt; n                 : CARDINAL;
+                   &lt;* UNUSED *&gt; readable, writable: BOOLEAN   ) =
+  BEGIN
+    &lt;* ASSERT FALSE *&gt;
+  END Protect;
+
+PROCEDURE <A NAME="TimeUsed"><procedure>TimeUsed</procedure></A> (): REAL =
+  BEGIN
+    &lt;* ASSERT FALSE *&gt;
+  END TimeUsed;
+
+PROCEDURE <A NAME="VMFaultTime"><procedure>VMFaultTime</procedure></A> (): REAL =
+  BEGIN
+    &lt;* ASSERT FALSE *&gt;
+  END VMFaultTime;
+
+BEGIN END RTHeapDep.
+</PRE>
+</inModule>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

@@ -1,0 +1,56 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: types/src/Refany.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>types/src/Refany.m3</H2></A><HR>
+<inModule>
+<PRE><A HREF="../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+
+MODULE <module><implements><A HREF="Refany.i3.html">Refany</A></implements></module>;
+
+IMPORT <A HREF="../../word/src/Word.i3.html">Word</A>;
+
+PROCEDURE <A NAME="Equal"><procedure>Equal</procedure></A>(r1, r2: T): BOOLEAN = BEGIN RETURN r1 = r2 END Equal;
+
+EXCEPTION Error; &lt;*FATAL Error*&gt;
+
+PROCEDURE <A NAME="Hash"><procedure>Hash</procedure></A>(&lt;*UNUSED*&gt; r: T): Word.T = BEGIN RAISE Error END Hash;
+
+PROCEDURE <A NAME="Compare"><procedure>Compare</procedure></A> (&lt;*UNUSED*&gt; r1, r2: T): [-1 .. 1] =
+  BEGIN
+    RAISE Error
+  END Compare;
+
+BEGIN
+END Refany.
+</PRE>
+</inModule>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

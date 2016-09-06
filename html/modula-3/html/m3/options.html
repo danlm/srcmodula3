@@ -1,0 +1,239 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: Compiler options</TITLE>
+</HEAD>
+<BODY BGCOLOR="#ffffff" VLINK="#006633">
+
+<H2>Compiler options</H2>
+<P>
+
+The compiler recognizes many options.  They are divided into
+the following classes:
+<UL>
+<LI><A HREF="#output">final output options</A>
+<LI><A HREF="#tracing">diagnostic messages</A>
+<LI><A HREF="#first-pass">front-end</A>
+<LI><A HREF="#second-pass">back-end</A>
+<LI><A HREF="#linking">linking</A>
+<LI><A HREF="#misc">miscellaneous</A>
+</UL>
+<P>
+
+<A NAME="output">
+<H3>Final output options</H3>
+</A>
+<P>
+
+The following options determine the final result:
+<UL>
+
+<LI> <B>-o</B> <I>name</I>  Build the program <I>name</I>.
+
+<LI> <B>-a</B> <I>name</I>  Build the library <I>name</I>.
+
+<LI> <B>-c</B>  Stop after producing objects and keep
+<I>.o</I>, <I>.io</I>, and <I>.mo</I> files.
+
+<LI> <B>-C</B>  Stop after producing C code and keep 
+<I>.ic</I> and  <I>.mc</I> files.
+
+<LI> <B>-S</B>  Stop after producing assembly code and keep 
+<I>.s</I>, <I>.is</I> and <I>.ms</I> files.
+</UL>
+<P>
+
+At most one output option can be specified.
+If none is present, "<B>-o a.out</B>" is assumed.
+<P>
+
+<A NAME="tracing">
+<H3>Diagnostic messages</H3>
+</A>
+<P>
+
+The following options determine how much
+<B>m3</B> reports on stdout.
+<UL>
+<LI> <B>-silent</B> print only the error messages.
+<LI> <B>-why</B> explain why each compilation is needed.
+<LI> <B>-commands</B> print the compilation commands as they are started.
+<LI> <B>-verbose</B> print what happens to each file.
+<LI> <B>-debug</B> print everything, including internal debugging information.
+<LI> <B>-times</B> print a breakdown of elapsed time.
+</UL>
+<P>
+
+<A NAME="first-pass">
+<H3>Front-end options </H3>
+</A>
+<P>
+
+The following options are passed to the front-end:
+<UL>
+<LI> <B>-A</B> Do not generate code to check the &lt;*ASSERT...*&gt; pragmas.
+<LI> <B>-D</B> <I>defPath</I>  Changes the search path to locate
+Modula-3 interfaces and generic sources.
+<I>defPath</I> is a list of directory names, separated by ":". If 
+this list is empty, the search path is set to empty. Otherwise, the
+given directories are prepended to the current search path.
+<LI> <B>-v</B>
+very verbose: show compilation steps as they are performed
+(implies <B>-verbose</B> and <B>-w0</B>).
+<LI> <B>-w</B> <I>[n]</I> Print messages from level n and above. The default is
+<B>-w3</B>.
+The levels are:
+(0) informational,
+(1) "fussy" warnings,
+(2) warnings,
+and
+(3) errors.
+</UL>
+<P>
+
+<A NAME="second-pass">
+<H3>Back end options </H3>
+</A>
+<P>
+
+The following options are passed to the back-end (i.e. passes 1, 6, 7, 8):
+<UL>
+<LI> <B>-g</B> generate debugging symbols.
+<LI> <B>-g</B><I>x</I> Passed unchanged to pass 1.
+<LI> <B>-O</B> optimize.
+<LI> <B>-O</B><I>x</I> Passed unchanged to pass 1.
+</UL>
+<P>
+
+The actual arguments passed to the back-end for the
+<B>\-g</B> and <B>\-O</B>
+options are part of the
+<A HREF="../m3build/m3build.html">m3build</A> configuration.
+<P>
+
+<A NAME="linking">
+<H3>  Linking options </H3>
+</A>
+<P>
+
+The following options are passed to the linker when producing
+a program and are used in "make" mode.
+<UL>
+<LI> <B>-L</B><I>libPath</I> Changes the search path to locate libraries.
+<I>libPath</I>
+is a list of directory names, separated by ":". If 
+this list is empty, the search path is set to empty. Otherwise, the
+given directories are prepended to the current search path.
+This argument is not passed to the linker since
+<B>m3</B>
+does the name resolution for libraries.
+
+<LI> <B>-l</B><I>name</I>
+Search for the library named
+<B>lib</B><I>name</I><B>.a</B>
+along the library search path. If the library is found, the resolved
+named is passed to the linker. Otherwise, the library should not
+contain Modula-3 objects and this option is passed to the linker. 
+
+<LI> <B>-nostd</B>
+omit the standard libraries
+from final link step.
+The standard libraries are part of the
+<A HREF="../m3build/m3build.html">m3build</A> configuration.
+</UL>
+<P>
+
+<A NAME="misc">
+<H3>  Miscellaneous options </H3>
+</A>
+<P>
+
+The remaining options are:
+<UL>
+<LI> <B>-F</B><I>file</I>
+Process each non-blank line of <I>file</I>
+as if it appeared as an argument on the command line.
+
+<LI> <B>-keep</B>
+Keep intermediate files (<I>.ic</I>, <I>.mc</I>, <I>.o</I>,
+<I>.io</I>, <I>.mo</I> and the initialization code file <I>_m3main.c</I>)
+created by the compiler. Normally, these files are deleted.
+
+<LI>
+<B>-make</B>
+compile only those sources that are newer than their
+corresponding objects or whose imports have changed
+since they were last compiled.  The default mode is for
+<B>m3</B>
+to compile all given sources.
+The default invocation by
+<A HREF="../m3build/m3build.html">m3build</A>
+includes <B>-make</B>.
+
+<LI> <B>-X</B><I>n@arg1[@arg2...]@</I>
+Add <I>arg1 arg2 ...</I>
+to the arguments to pass 
+<I>n</I>
+of the compiler.  You can replace 
+<B>@</B>
+by any character of your choice.
+Pass 0 is the Modula-3 to IL compiler,
+pass 1 is the C compiler,
+pass 2 is the C compiler used as a linker,
+pass 3 constructs library archives (ar),
+pass 4 builds the table of contents for a library (ranlib),
+pass 5 invokes the linker to build overlays,
+pass 6 is the IL to assembly translator,
+pass 7 is assembler,
+and pass 8 is the object file patcher.
+<P>
+
+For example, normally the compiler generates Modula-3 line information in
+the intermediate code; -X0@-C@ prevents that.  If you want specialized
+debugging or optimization flags,
+you can pass the proper options to the C compiler,
+for example -X1@-O@, -X1@-O2@ or -X1@-g3@.
+<P>
+
+<LI> <B>-Y</B><I>n@Program[@arg1@arg2...]@</I>
+Substitute
+<I>Program arg1 arg2 ...</I>
+for pass
+<I>n</I>
+of the compiler. You can replace 
+<B>@</B>
+by any character of your choice.
+The passes are numbered as above.
+The default values for each of the passes
+is part of the site specific configuration described
+below.
+<P>
+
+<LI> <B>-Z</B>
+Compile object files for line-based coverage analysis by
+<B>analyze_coverage</B>(1).
+Coverage data will be available only for those modules that have been
+compiled with this option.  To produce the coverage data, you must also
+link your program with this option.
+<P>
+
+<LI> <B>-?</B>
+Print the executable used for the various passes as well as the value
+of the search paths.
+</UL>
+<P>
+
+<HR>
+<A HREF="../home.html">[Modula-3 home page]</A>
+<P>
+<A HREF="mailto:m3-request@src.dec.com">
+<ADDRESS>m3-request@src.dec.com</ADDRESS></A>
+<PRE>
+Last modified on Thu Jan  4 11:09:09 PST 1996 by heydon
+     modified on Thu Apr 21 12:15:56 PDT 1994 by kalsow
+     modified on Fri Feb  7 00:38:19 PST 1992 by muller
+</PRE>
+
+Copyright (C) 1992, 1996, Digital Equipment Corporation. All rights reserved.<BR>
+See the <A HREF="http://www.research.digital.com/SRC/m3sources/html/COPYRIGHT.html">COPYRIGHT</A> for a full description.
+</BODY>
+</HTML>

@@ -1,0 +1,55 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: bundleintf/src/Bundle.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>bundleintf/src/Bundle.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM>                                                                       </EM></BLOCKQUOTE><PRE>
+</PRE> This interface is part of the <CODE>m3bundle</CODE> facility. See the manpage 
+   for <CODE>m3bundle</CODE> for details. 
+
+<P><PRE>INTERFACE <interface><A HREF="Bundle.m3.html">Bundle</A></interface>;
+
+TYPE T &lt;: REFANY;
+
+PROCEDURE <A HREF="Bundle.m3.html#Get">Get</A> (bundle: T; element: TEXT): TEXT;
+</PRE><BLOCKQUOTE><EM> If an element namemd <CODE>element</CODE> was bundled into <CODE>bundle</CODE>, then
+   return the contents of <CODE>element</CODE> as a <CODE>TEXT</CODE>.  Otherwise, 
+   return NIL. </EM></BLOCKQUOTE><PRE>
+</PRE>********* UNIMPLEMENTED *********
+<PRE>PROCEDURE <A HREF="Bundle.m3.html#Elts">Elts</A> (bundle: T): REF ARRAY OF TEXT;
+</PRE><BLOCKQUOTE><EM> Returns a list of elements that are bundled into <CODE>bundle</CODE>. </EM></BLOCKQUOTE><PRE>
+
+END Bundle.
+</PRE>
+</inInterface>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

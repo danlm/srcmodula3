@@ -1,0 +1,298 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: unix/src/ultrix-3-1.SEQUENT/Utypes.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>unix/src/ultrix-3-1.SEQUENT/Utypes.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+
+INTERFACE <interface><A HREF="#x1">Utypes</A></interface>;
+
+FROM <A HREF="../../../C/src/Common/Ctypes.i3.html">Ctypes</A> IMPORT
+	long, unsigned_long, int, unsigned_int, short, unsigned_short,
+        unsigned_char, signed_char;
+</PRE>** &lt;sys/types.h&gt; **
+
+<P>
+ * Basic system types and major/minor device constructing/busting macros.
+ 
+
+<P> major part of a device 
+<PRE>PROCEDURE <A HREF="#x2">major</A> (x: int): int;
+</PRE> minor part of a device 
+<PRE>PROCEDURE <A HREF="#x3">minor</A> (x: int): int;
+</PRE> make a device number 
+<PRE>PROCEDURE <A HREF="#x4">makedev</A> (x, y: int): dev_t;
+
+TYPE
+  s_char  = signed_char;
+  u_char  = unsigned_char;
+  u_short = unsigned_short;
+  u_int   = unsigned_int;
+  uint    = unsigned_int;               (* sys V compatibility *)
+  u_long  = unsigned_long;
+  ushort  = unsigned_short;             (* sys III compat *)
+</PRE> #ifdef vax 
+  <PRE>struct__physadr = RECORD r: ARRAY [0..0] OF int; END;
+  physadr         = UNTRACED REF struct__physadr;
+
+  struct_label_t = RECORD val: ARRAY [0..13] OF int; END;
+  label_t        = struct_label_t;
+</PRE><BLOCKQUOTE><EM>#endif</EM></BLOCKQUOTE><PRE>
+
+  struct__quad = RECORD val: ARRAY [0..1] OF long; END;
+  quad         = struct__quad;
+  daddr_t      = long;
+  caddr_t      = ADDRESS;
+  ino_t        = u_long;
+  gno_t        = u_long;
+  cnt_t        = short;               (* sys V compatibility *)
+  swblk_t      = long;
+  size_t       = int;
+  time_t       = int;
+  dev_t        = short;
+  off_t        = int;
+  paddr_t      = long;                (* sys V compatibility *)
+  key_t        = long;                (* sys V compatibility *)
+  clock_t      = int;                 (* POSIX compliance    *)
+  mode_t       = u_short;             (* POSIX compliance    *)
+  nlink_t      = short;               (* POSIX compliance    *)
+  uid_t        = short;               (* POSIX compliance    *)
+  pid_t        = int;                 (* POSIX compliance    *)
+  gid_t        = short;               (* POSIX compliance    *)
+
+CONST
+  NBBY = 8;                           (* number of bits in a byte *)
+
+  (*
+   * Select uses bit masks of file descriptors in longs.
+   * These macros manipulate such bit fields (the filesystem macros use chars).
+   * FD_SETSIZE may be defined by the user, but the default here
+   * should be &gt;= NOFILE (param.h).
+   *)
+  FD_SETSIZE = 64;
+
+  (* How many things we'll allow select to use. 0 if unlimited *)
+  MAXSELFD = 64;
+
+TYPE
+  fd_mask        = long;
+
+CONST
+  NFDBITS = BYTESIZE (fd_mask) * NBBY;      (* bits per mask (power of 2!)*)
+  NFDSHIFT = 5;                             (* Shift based on above *)
+
+PROCEDURE <A HREF="#x5">howmany</A> (x, y: int): int;
+
+TYPE
+  struct_fd_set = RECORD
+       fds_bits: ARRAY [0 ..
+                        (FD_SETSIZE + NFDBITS - 1) DIV NFDBITS -1] OF fd_mask;
+    END;
+  fd_set = struct_fd_set;
+
+PROCEDURE <A HREF="#x6">FD_SET</A>   (n: int; p: UNTRACED REF fd_set): int;
+PROCEDURE <A HREF="#x7">FD_CLEAR</A> (n: int; p: UNTRACED REF fd_set): int;
+PROCEDURE <A HREF="#x8">FD_ISSET</A> (n: int; p: UNTRACED REF fd_set): int;
+PROCEDURE <A HREF="#x9">FD_ZERO</A>  (p: UNTRACED REF fd_set);
+
+END Utypes.
+</PRE>
+</inInterface>
+<HR>
+<A NAME="x1">Utypes's implementation  is in:
+</A><UL>
+<LI><A HREF="../aix-3-2/Utypes.m3.html#0TOP0">unix/src/aix-3-2/Utypes.m3</A>
+<LI><A HREF="../aix-ps2-1-2/Utypes.m3.html#0TOP0">unix/src/aix-ps2-1-2/Utypes.m3</A>
+<LI><A HREF="../freebsd-1/Utypes.m3.html#0TOP0">unix/src/freebsd-1/Utypes.m3</A>
+<LI><A HREF="../freebsd-2/Utypes.m3.html#0TOP0">unix/src/freebsd-2/Utypes.m3</A>
+<LI><A HREF="../hpux-7-0/Utypes.m3.html#0TOP0">unix/src/hpux-7-0/Utypes.m3</A>
+<LI><A HREF="../ibm-4-3/Utypes.m3.html#0TOP0">unix/src/ibm-4-3/Utypes.m3</A>
+<LI><A HREF="../irix-5.2/Utypes.m3.html#0TOP0">unix/src/irix-5.2/Utypes.m3</A>
+<LI><A HREF="../linux/Utypes.m3.html#0TOP0">unix/src/linux/Utypes.m3</A>
+<LI><A HREF="../osf-1.ALPHA_OSF/Utypes.m3.html#0TOP0">unix/src/osf-1.ALPHA_OSF/Utypes.m3</A>
+<LI><A HREF="../osf-1.DS3100/Utypes.m3.html#0TOP0">unix/src/osf-1.DS3100/Utypes.m3</A>
+<LI><A HREF="../solaris-2-x/Utypes.m3.html#0TOP0">unix/src/solaris-2-x/Utypes.m3</A>
+<LI><A HREF="../sunos-4-x/Utypes.m3.html#0TOP0">unix/src/sunos-4-x/Utypes.m3</A>
+<LI><A HREF="../sysv-4.0/Utypes.m3.html#0TOP0">unix/src/sysv-4.0/Utypes.m3</A>
+<LI><A HREF="../ultrix-3-1.generic/Utypes.m3.html#0TOP0">unix/src/ultrix-3-1.generic/Utypes.m3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x2">procedure Utypes.major is in:
+</A><UL>
+<LI><A HREF="../aix-3-2/Utypes.m3.html#major">unix/src/aix-3-2/Utypes.m3</A>
+<LI><A HREF="../aix-ps2-1-2/Utypes.m3.html#major">unix/src/aix-ps2-1-2/Utypes.m3</A>
+<LI><A HREF="../freebsd-1/Utypes.m3.html#major">unix/src/freebsd-1/Utypes.m3</A>
+<LI><A HREF="../freebsd-2/Utypes.m3.html#major">unix/src/freebsd-2/Utypes.m3</A>
+<LI><A HREF="../hpux-7-0/Utypes.m3.html#major">unix/src/hpux-7-0/Utypes.m3</A>
+<LI><A HREF="../ibm-4-3/Utypes.m3.html#major">unix/src/ibm-4-3/Utypes.m3</A>
+<LI><A HREF="../linux/Utypes.m3.html#major">unix/src/linux/Utypes.m3</A>
+<LI><A HREF="../osf-1.ALPHA_OSF/Utypes.m3.html#major">unix/src/osf-1.ALPHA_OSF/Utypes.m3</A>
+<LI><A HREF="../osf-1.DS3100/Utypes.m3.html#major">unix/src/osf-1.DS3100/Utypes.m3</A>
+<LI><A HREF="../solaris-2-x/Utypes.m3.html#major">unix/src/solaris-2-x/Utypes.m3</A>
+<LI><A HREF="../sunos-4-x/Utypes.m3.html#major">unix/src/sunos-4-x/Utypes.m3</A>
+<LI><A HREF="../sysv-4.0/Utypes.m3.html#major">unix/src/sysv-4.0/Utypes.m3</A>
+<LI><A HREF="../ultrix-3-1.generic/Utypes.m3.html#major">unix/src/ultrix-3-1.generic/Utypes.m3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x3">procedure Utypes.minor is in:
+</A><UL>
+<LI><A HREF="../aix-3-2/Utypes.m3.html#minor">unix/src/aix-3-2/Utypes.m3</A>
+<LI><A HREF="../aix-ps2-1-2/Utypes.m3.html#minor">unix/src/aix-ps2-1-2/Utypes.m3</A>
+<LI><A HREF="../freebsd-1/Utypes.m3.html#minor">unix/src/freebsd-1/Utypes.m3</A>
+<LI><A HREF="../freebsd-2/Utypes.m3.html#minor">unix/src/freebsd-2/Utypes.m3</A>
+<LI><A HREF="../hpux-7-0/Utypes.m3.html#minor">unix/src/hpux-7-0/Utypes.m3</A>
+<LI><A HREF="../ibm-4-3/Utypes.m3.html#minor">unix/src/ibm-4-3/Utypes.m3</A>
+<LI><A HREF="../linux/Utypes.m3.html#minor">unix/src/linux/Utypes.m3</A>
+<LI><A HREF="../osf-1.ALPHA_OSF/Utypes.m3.html#minor">unix/src/osf-1.ALPHA_OSF/Utypes.m3</A>
+<LI><A HREF="../osf-1.DS3100/Utypes.m3.html#minor">unix/src/osf-1.DS3100/Utypes.m3</A>
+<LI><A HREF="../solaris-2-x/Utypes.m3.html#minor">unix/src/solaris-2-x/Utypes.m3</A>
+<LI><A HREF="../sunos-4-x/Utypes.m3.html#minor">unix/src/sunos-4-x/Utypes.m3</A>
+<LI><A HREF="../sysv-4.0/Utypes.m3.html#minor">unix/src/sysv-4.0/Utypes.m3</A>
+<LI><A HREF="../ultrix-3-1.generic/Utypes.m3.html#minor">unix/src/ultrix-3-1.generic/Utypes.m3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x4">procedure Utypes.makedev is in:
+</A><UL>
+<LI><A HREF="../aix-3-2/Utypes.m3.html#makedev">unix/src/aix-3-2/Utypes.m3</A>
+<LI><A HREF="../aix-ps2-1-2/Utypes.m3.html#makedev">unix/src/aix-ps2-1-2/Utypes.m3</A>
+<LI><A HREF="../freebsd-1/Utypes.m3.html#makedev">unix/src/freebsd-1/Utypes.m3</A>
+<LI><A HREF="../freebsd-2/Utypes.m3.html#makedev">unix/src/freebsd-2/Utypes.m3</A>
+<LI><A HREF="../hpux-7-0/Utypes.m3.html#makedev">unix/src/hpux-7-0/Utypes.m3</A>
+<LI><A HREF="../ibm-4-3/Utypes.m3.html#makedev">unix/src/ibm-4-3/Utypes.m3</A>
+<LI><A HREF="../linux/Utypes.m3.html#makedev">unix/src/linux/Utypes.m3</A>
+<LI><A HREF="../osf-1.ALPHA_OSF/Utypes.m3.html#makedev">unix/src/osf-1.ALPHA_OSF/Utypes.m3</A>
+<LI><A HREF="../osf-1.DS3100/Utypes.m3.html#makedev">unix/src/osf-1.DS3100/Utypes.m3</A>
+<LI><A HREF="../solaris-2-x/Utypes.m3.html#makedev">unix/src/solaris-2-x/Utypes.m3</A>
+<LI><A HREF="../sunos-4-x/Utypes.m3.html#makedev">unix/src/sunos-4-x/Utypes.m3</A>
+<LI><A HREF="../sysv-4.0/Utypes.m3.html#makedev">unix/src/sysv-4.0/Utypes.m3</A>
+<LI><A HREF="../ultrix-3-1.generic/Utypes.m3.html#makedev">unix/src/ultrix-3-1.generic/Utypes.m3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x5">procedure Utypes.howmany is in:
+</A><UL>
+<LI><A HREF="../aix-3-2/Utypes.m3.html#howmany">unix/src/aix-3-2/Utypes.m3</A>
+<LI><A HREF="../aix-ps2-1-2/Utypes.m3.html#howmany">unix/src/aix-ps2-1-2/Utypes.m3</A>
+<LI><A HREF="../freebsd-1/Utypes.m3.html#howmany">unix/src/freebsd-1/Utypes.m3</A>
+<LI><A HREF="../freebsd-2/Utypes.m3.html#howmany">unix/src/freebsd-2/Utypes.m3</A>
+<LI><A HREF="../hpux-7-0/Utypes.m3.html#howmany">unix/src/hpux-7-0/Utypes.m3</A>
+<LI><A HREF="../ibm-4-3/Utypes.m3.html#howmany">unix/src/ibm-4-3/Utypes.m3</A>
+<LI><A HREF="../irix-5.2/Utypes.m3.html#howmany">unix/src/irix-5.2/Utypes.m3</A>
+<LI><A HREF="../linux/Utypes.m3.html#howmany">unix/src/linux/Utypes.m3</A>
+<LI><A HREF="../osf-1.ALPHA_OSF/Utypes.m3.html#howmany">unix/src/osf-1.ALPHA_OSF/Utypes.m3</A>
+<LI><A HREF="../osf-1.DS3100/Utypes.m3.html#howmany">unix/src/osf-1.DS3100/Utypes.m3</A>
+<LI><A HREF="../solaris-2-x/Utypes.m3.html#howmany">unix/src/solaris-2-x/Utypes.m3</A>
+<LI><A HREF="../sunos-4-x/Utypes.m3.html#howmany">unix/src/sunos-4-x/Utypes.m3</A>
+<LI><A HREF="../sysv-4.0/Utypes.m3.html#howmany">unix/src/sysv-4.0/Utypes.m3</A>
+<LI><A HREF="../ultrix-3-1.generic/Utypes.m3.html#howmany">unix/src/ultrix-3-1.generic/Utypes.m3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x6">procedure Utypes.FD_SET is in:
+</A><UL>
+<LI><A HREF="../aix-3-2/Utypes.m3.html#FD_SET">unix/src/aix-3-2/Utypes.m3</A>
+<LI><A HREF="../aix-ps2-1-2/Utypes.m3.html#FD_SET">unix/src/aix-ps2-1-2/Utypes.m3</A>
+<LI><A HREF="../freebsd-1/Utypes.m3.html#FD_SET">unix/src/freebsd-1/Utypes.m3</A>
+<LI><A HREF="../freebsd-2/Utypes.m3.html#FD_SET">unix/src/freebsd-2/Utypes.m3</A>
+<LI><A HREF="../hpux-7-0/Utypes.m3.html#FD_SET">unix/src/hpux-7-0/Utypes.m3</A>
+<LI><A HREF="../ibm-4-3/Utypes.m3.html#FD_SET">unix/src/ibm-4-3/Utypes.m3</A>
+<LI><A HREF="../irix-5.2/Utypes.m3.html#FD_SET">unix/src/irix-5.2/Utypes.m3</A>
+<LI><A HREF="../linux/Utypes.m3.html#FD_SET">unix/src/linux/Utypes.m3</A>
+<LI><A HREF="../osf-1.ALPHA_OSF/Utypes.m3.html#FD_SET">unix/src/osf-1.ALPHA_OSF/Utypes.m3</A>
+<LI><A HREF="../osf-1.DS3100/Utypes.m3.html#FD_SET">unix/src/osf-1.DS3100/Utypes.m3</A>
+<LI><A HREF="../solaris-2-x/Utypes.m3.html#FD_SET">unix/src/solaris-2-x/Utypes.m3</A>
+<LI><A HREF="../sunos-4-x/Utypes.m3.html#FD_SET">unix/src/sunos-4-x/Utypes.m3</A>
+<LI><A HREF="../sysv-4.0/Utypes.m3.html#FD_SET">unix/src/sysv-4.0/Utypes.m3</A>
+<LI><A HREF="../ultrix-3-1.generic/Utypes.m3.html#FD_SET">unix/src/ultrix-3-1.generic/Utypes.m3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x7">procedure Utypes.FD_CLEAR is in:
+</A><UL>
+<LI><A HREF="../aix-3-2/Utypes.m3.html#FD_CLEAR">unix/src/aix-3-2/Utypes.m3</A>
+<LI><A HREF="../aix-ps2-1-2/Utypes.m3.html#FD_CLEAR">unix/src/aix-ps2-1-2/Utypes.m3</A>
+<LI><A HREF="../freebsd-1/Utypes.m3.html#FD_CLEAR">unix/src/freebsd-1/Utypes.m3</A>
+<LI><A HREF="../freebsd-2/Utypes.m3.html#FD_CLEAR">unix/src/freebsd-2/Utypes.m3</A>
+<LI><A HREF="../hpux-7-0/Utypes.m3.html#FD_CLEAR">unix/src/hpux-7-0/Utypes.m3</A>
+<LI><A HREF="../ibm-4-3/Utypes.m3.html#FD_CLEAR">unix/src/ibm-4-3/Utypes.m3</A>
+<LI><A HREF="../irix-5.2/Utypes.m3.html#FD_CLEAR">unix/src/irix-5.2/Utypes.m3</A>
+<LI><A HREF="../linux/Utypes.m3.html#FD_CLEAR">unix/src/linux/Utypes.m3</A>
+<LI><A HREF="../osf-1.ALPHA_OSF/Utypes.m3.html#FD_CLEAR">unix/src/osf-1.ALPHA_OSF/Utypes.m3</A>
+<LI><A HREF="../osf-1.DS3100/Utypes.m3.html#FD_CLEAR">unix/src/osf-1.DS3100/Utypes.m3</A>
+<LI><A HREF="../solaris-2-x/Utypes.m3.html#FD_CLEAR">unix/src/solaris-2-x/Utypes.m3</A>
+<LI><A HREF="../sunos-4-x/Utypes.m3.html#FD_CLEAR">unix/src/sunos-4-x/Utypes.m3</A>
+<LI><A HREF="../sysv-4.0/Utypes.m3.html#FD_CLEAR">unix/src/sysv-4.0/Utypes.m3</A>
+<LI><A HREF="../ultrix-3-1.generic/Utypes.m3.html#FD_CLEAR">unix/src/ultrix-3-1.generic/Utypes.m3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x8">procedure Utypes.FD_ISSET is in:
+</A><UL>
+<LI><A HREF="../aix-3-2/Utypes.m3.html#FD_ISSET">unix/src/aix-3-2/Utypes.m3</A>
+<LI><A HREF="../aix-ps2-1-2/Utypes.m3.html#FD_ISSET">unix/src/aix-ps2-1-2/Utypes.m3</A>
+<LI><A HREF="../freebsd-1/Utypes.m3.html#FD_ISSET">unix/src/freebsd-1/Utypes.m3</A>
+<LI><A HREF="../freebsd-2/Utypes.m3.html#FD_ISSET">unix/src/freebsd-2/Utypes.m3</A>
+<LI><A HREF="../hpux-7-0/Utypes.m3.html#FD_ISSET">unix/src/hpux-7-0/Utypes.m3</A>
+<LI><A HREF="../ibm-4-3/Utypes.m3.html#FD_ISSET">unix/src/ibm-4-3/Utypes.m3</A>
+<LI><A HREF="../irix-5.2/Utypes.m3.html#FD_ISSET">unix/src/irix-5.2/Utypes.m3</A>
+<LI><A HREF="../linux/Utypes.m3.html#FD_ISSET">unix/src/linux/Utypes.m3</A>
+<LI><A HREF="../osf-1.ALPHA_OSF/Utypes.m3.html#FD_ISSET">unix/src/osf-1.ALPHA_OSF/Utypes.m3</A>
+<LI><A HREF="../osf-1.DS3100/Utypes.m3.html#FD_ISSET">unix/src/osf-1.DS3100/Utypes.m3</A>
+<LI><A HREF="../solaris-2-x/Utypes.m3.html#FD_ISSET">unix/src/solaris-2-x/Utypes.m3</A>
+<LI><A HREF="../sunos-4-x/Utypes.m3.html#FD_ISSET">unix/src/sunos-4-x/Utypes.m3</A>
+<LI><A HREF="../sysv-4.0/Utypes.m3.html#FD_ISSET">unix/src/sysv-4.0/Utypes.m3</A>
+<LI><A HREF="../ultrix-3-1.generic/Utypes.m3.html#FD_ISSET">unix/src/ultrix-3-1.generic/Utypes.m3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x9">procedure Utypes.FD_ZERO is in:
+</A><UL>
+<LI><A HREF="../aix-3-2/Utypes.m3.html#FD_ZERO">unix/src/aix-3-2/Utypes.m3</A>
+<LI><A HREF="../aix-ps2-1-2/Utypes.m3.html#FD_ZERO">unix/src/aix-ps2-1-2/Utypes.m3</A>
+<LI><A HREF="../freebsd-1/Utypes.m3.html#FD_ZERO">unix/src/freebsd-1/Utypes.m3</A>
+<LI><A HREF="../freebsd-2/Utypes.m3.html#FD_ZERO">unix/src/freebsd-2/Utypes.m3</A>
+<LI><A HREF="../hpux-7-0/Utypes.m3.html#FD_ZERO">unix/src/hpux-7-0/Utypes.m3</A>
+<LI><A HREF="../ibm-4-3/Utypes.m3.html#FD_ZERO">unix/src/ibm-4-3/Utypes.m3</A>
+<LI><A HREF="../irix-5.2/Utypes.m3.html#FD_ZERO">unix/src/irix-5.2/Utypes.m3</A>
+<LI><A HREF="../linux/Utypes.m3.html#FD_ZERO">unix/src/linux/Utypes.m3</A>
+<LI><A HREF="../osf-1.ALPHA_OSF/Utypes.m3.html#FD_ZERO">unix/src/osf-1.ALPHA_OSF/Utypes.m3</A>
+<LI><A HREF="../osf-1.DS3100/Utypes.m3.html#FD_ZERO">unix/src/osf-1.DS3100/Utypes.m3</A>
+<LI><A HREF="../solaris-2-x/Utypes.m3.html#FD_ZERO">unix/src/solaris-2-x/Utypes.m3</A>
+<LI><A HREF="../sunos-4-x/Utypes.m3.html#FD_ZERO">unix/src/sunos-4-x/Utypes.m3</A>
+<LI><A HREF="../sysv-4.0/Utypes.m3.html#FD_ZERO">unix/src/sysv-4.0/Utypes.m3</A>
+<LI><A HREF="../ultrix-3-1.generic/Utypes.m3.html#FD_ZERO">unix/src/ultrix-3-1.generic/Utypes.m3</A>
+</UL>
+<P>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

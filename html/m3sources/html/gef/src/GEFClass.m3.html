@@ -1,0 +1,2445 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: gef/src/GEFClass.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>gef/src/GEFClass.m3</H2></A><HR>
+<inModule>
+<PRE><A HREF="../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM>                                                                           </EM></BLOCKQUOTE><PRE>
+
+MODULE <module><implements><A HREF="GEFClass.i3.html">GEFClass</A></implements></module>;
+
+IMPORT <A HREF="../../atom/src/Atom.i3.html">Atom</A>, <A HREF="../../color/src/Color.i3.html">Color</A>, <A HREF="../../color/src/ColorName.i3.html">ColorName</A>, <A HREF="../../fmtlex/src/Fmt.i3.html">Fmt</A>, <A HREF="../../ui/src/vbt/Font.i3.html">Font</A>, <A HREF="../../formsvbt/src/FormsVBT.i3.html">FormsVBT</A>, <A HREF="GEF.i3.html">GEF</A>, <A HREF="GEFError.i3.html">GEFError</A>, <A HREF="GEFLisp.i3.html">GEFLisp</A>,
+       <A HREF="../../mgkit/src/GraphVBT.i3.html">GraphVBT</A>, <A HREF="../../mgkit/src/GraphVBTExtras.i3.html">GraphVBTExtras</A>, <A HREF="../../libm3/DS/IntRefTbl.i3.html">IntRefTbl</A>, <A HREF="../../libm3/DS/RefList.i3.html">RefList</A>, <A HREF="../../formsvbt/src/RefListUtils.i3.html">RefListUtils</A>, <A HREF="../../ui/src/vbt/PaintOp.i3.html">PaintOp</A>,
+       <A HREF="../../rw/src/Common/Rd.i3.html">Rd</A>, <A HREF="../../fmtlex/src/Scan.i3.html">Scan</A>, <A HREF="../../slisp/src/SLisp.i3.html">SLisp</A>, <A HREF="../../slisp/src/SLispClass.i3.html">SLispClass</A>, <A HREF="../../sx/src/Sx.i3.html">Sx</A>, <A HREF="../../text/src/Text.i3.html">Text</A>, <A HREF="../../rw/src/Common/TextRd.i3.html">TextRd</A>, <A HREF="../../rw/src/Common/TextWr.i3.html">TextWr</A>, <A HREF="../../libm3/DS/TextRefTbl.i3.html">TextRefTbl</A>,
+       <A HREF="../../thread/src/Common/Thread.i3.html">Thread</A>, <A HREF="../../ui/src/vbt/VBT.i3.html">VBT</A>, <A HREF="../../rw/src/Common/Wr.i3.html">Wr</A>, <A HREF="../../fmtlex/src/Lex.i3.html">Lex</A>, <A HREF="#x1">FloatMode</A>;
+
+&lt;* PRAGMA LL *&gt;
+
+&lt;* FATAL Fatal, Sx.PrintError *&gt;
+EXCEPTION Fatal;
+
+TYPE
+  Vals = REFANY;                 (* Ints, Bools, Reals, Texts, Elems, etc.
+                                    for calling set methods *)
+  Value = RECORD
+            sx  : RefList.T;        (* S_exp describing the value *)
+            vals: Vals;
+          END;
+
+  Values = REF ARRAY OF Value;   (* one value per field defined for the
+                                    object *)
+
+  Obj = OBJECT
+          name      : TEXT;
+          elem      : Elem;
+          sx        : RefList.T;
+          start, end: CARDINAL;
+          values    : Values;
+        END;
+
+CONST
+  Infinity = LAST(INTEGER);
+
+VAR                              (* CONST *)
+  RInfinity: RInt;        (* := Infinity *)
+
+REVEAL
+  GEF.<A NAME="T">T</A> = TPublic BRANDED OBJECT
+            elemToObj: IntRefTbl.T;
+            names: TextRefTbl.T;
+          OVERRIDES
+            init := InitT;
+          END;
+
+CONST
+  NamePrefix = &quot;GEF #&quot;;
+  NamePrefixLength = 5;
+  NameIDInit = 100000;
+
+VAR
+  nameID: INTEGER; (* := NameIDInit; *)
+
+PROCEDURE <A NAME="GenName"><procedure>GenName</procedure></A>(): TEXT =
+  BEGIN
+    INC(nameID);
+    RETURN NamePrefix &amp; Fmt.Int(nameID)
+  END GenName;
+
+PROCEDURE <A NAME="InitT"><procedure>InitT</procedure></A>(t: T; interp: SLisp.T): GEF.T =
+  BEGIN
+    t.interp := interp;
+    interp.defineVar(&quot;graph&quot;, t);
+    AddPOsToInterp(interp);
+    EVAL GraphVBT.T.init(t);
+    RETURN t;
+  END InitT;
+
+PROCEDURE <A NAME="AddPOsToInterp"><procedure>AddPOsToInterp</procedure></A> (interp: SLisp.T) =
+  &lt;* FATAL SLisp.Error *&gt;
+  BEGIN
+    GEFLisp.RegisterFuns(interp);
+    FOR i := 0 TO LAST(parseObjects^) DO
+      WITH po = parseObjects[i] DO
+        IF po # NIL THEN
+          GEFLisp.RegisterPO(interp, Atom.ToText(po.name), po);
+        END;
+      END;
+    END;
+  END AddPOsToInterp;
+</PRE> ******************************** Parsing ********************* 
+
+<P><PRE>TYPE
+  FieldType = {Boolean, Integer, Real, Text, Sx, Elem, ColorSpec, FontSpec, Enum};
+  Field = RECORD
+            name    : Name;
+            index   : INTEGER;
+            type    : FieldType;
+            count   : INTEGER;
+            enums   : Names;
+            entries : Names;
+            fvNames : Texts;
+          END;
+
+  Fields = REF ARRAY OF Field;
+
+REVEAL
+  <A NAME="ParseObject">ParseObject</A> = POPublic BRANDED OBJECT
+                  name  : Name;
+                  fields: Fields;
+                  values: Values;
+                OVERRIDES
+                  create  := POC;
+                  delete  := POD;
+                  setInt  := POSI;
+                  setReal := POSR;
+                  setBool := POSB;
+                  setText := POST;
+                  setElem := POSE;
+                  getId   := POGID;
+                  finish  := POF;
+                  isType  := POIT;
+                END;
+
+PROCEDURE <A NAME="POC"><procedure>POC</procedure></A> (&lt;* UNUSED *&gt; po: ParseObject;
+               &lt;* UNUSED *&gt; t : T;
+               &lt;* UNUSED *&gt; id: INTEGER      ): REFANY =
+  BEGIN
+    RAISE Fatal
+  END POC;
+
+PROCEDURE <A NAME="POD"><procedure>POD</procedure></A> (&lt;* UNUSED *&gt; po  : ParseObject;
+               &lt;* UNUSED *&gt; t   : T;
+               &lt;* UNUSED *&gt; elem: Elem         ) =
+  BEGIN
+    RAISE Fatal
+  END POD;
+
+PROCEDURE <A NAME="POSI"><procedure>POSI</procedure></A> (&lt;* UNUSED *&gt; po   : ParseObject;
+                &lt;* UNUSED *&gt; t    : T;
+                &lt;* UNUSED *&gt; elem : Elem;
+                &lt;* UNUSED *&gt; field: INTEGER;
+                &lt;* UNUSED *&gt; vals: Ints         ) RAISES {GEFError.T} =
+  BEGIN
+    RAISE Fatal
+  END POSI;
+
+PROCEDURE <A NAME="POSR"><procedure>POSR</procedure></A> (&lt;* UNUSED *&gt; po   : ParseObject;
+                &lt;* UNUSED *&gt; t    : T;
+                &lt;* UNUSED *&gt; elem : Elem;
+                &lt;* UNUSED *&gt; field: INTEGER;
+                &lt;* UNUSED *&gt; vals: Reals         ) RAISES {GEFError.T} =
+  BEGIN
+    RAISE Fatal
+  END POSR;
+
+PROCEDURE <A NAME="POSB"><procedure>POSB</procedure></A> (&lt;* UNUSED *&gt; po   : ParseObject;
+                &lt;* UNUSED *&gt; t    : T;
+                &lt;* UNUSED *&gt; elem : Elem;
+                &lt;* UNUSED *&gt; field: INTEGER;
+                &lt;* UNUSED *&gt; vals: Bools         ) RAISES {GEFError.T} =
+  BEGIN
+    RAISE Fatal
+  END POSB;
+
+PROCEDURE <A NAME="POST"><procedure>POST</procedure></A> (&lt;* UNUSED *&gt; po   : ParseObject;
+                &lt;* UNUSED *&gt; t    : T;
+                &lt;* UNUSED *&gt; elem : Elem;
+                &lt;* UNUSED *&gt; field: INTEGER;
+                &lt;* UNUSED *&gt; vals: Texts         ) RAISES {GEFError.T} =
+  BEGIN
+    RAISE Fatal
+  END POST;
+
+PROCEDURE <A NAME="POSE"><procedure>POSE</procedure></A> (&lt;* UNUSED *&gt; po   : ParseObject;
+                &lt;* UNUSED *&gt; t    : T;
+                &lt;* UNUSED *&gt; elem : Elem;
+                &lt;* UNUSED *&gt; field: INTEGER;
+                &lt;* UNUSED *&gt; vals: Elems         ) RAISES {GEFError.T} =
+  BEGIN
+    RAISE Fatal
+  END POSE;
+
+PROCEDURE <A NAME="POF"><procedure>POF</procedure></A> (&lt;* UNUSED *&gt; po  : ParseObject;
+               &lt;* UNUSED *&gt; t   : T;
+               &lt;* UNUSED *&gt; elem: Elem         ) RAISES {GEFError.T} =
+  BEGIN
+    RAISE Fatal
+  END POF;
+
+PROCEDURE <A NAME="POIT"><procedure>POIT</procedure></A> (&lt;* UNUSED *&gt; po: ParseObject; &lt;* UNUSED *&gt; elem: Elem):
+  BOOLEAN =
+  BEGIN
+    RAISE Fatal
+  END POIT;
+
+PROCEDURE <A NAME="POGID"><procedure>POGID</procedure></A> (&lt;* UNUSED *&gt; po  : ParseObject;
+                 &lt;* UNUSED *&gt; t   : T;
+                 &lt;* UNUSED *&gt; elem: Elem         ): INTEGER =
+  BEGIN
+    RAISE Fatal
+  END POGID;
+
+PROCEDURE <A NAME="POFromName"><procedure>POFromName</procedure></A>(name: Name): ParseObject RAISES {GEFError.T} =
+  BEGIN
+    FOR i := 0 TO LAST(parseObjects^) DO
+      IF parseObjects[i] # NIL AND parseObjects[i].name = name THEN
+        RETURN parseObjects[i]
+      END;
+    END;
+    RAISE GEFError.T(&quot;Expected object name, found: &quot; &amp; Atom.ToText(name));
+  END POFromName;
+
+PROCEDURE <A NAME="ValsFromSx"><procedure>ValsFromSx</procedure></A> (         t       : T;
+                      READONLY field   : Field;
+                               sx      : S_exp;
+                               defaults: BOOLEAN := FALSE): Vals
+  RAISES {GEFError.T, Thread.Alerted} =
+  VAR
+    l  : RefList.T;
+    len: INTEGER;
+  BEGIN
+    IF sx = NIL THEN
+      len := field.count;
+      IF len = Infinity THEN len := 0 END;
+      IF ((field.count # Infinity) AND NOT defaults) THEN
+        RAISE GEFError.T(&quot;No values given for field: &quot; &amp; Atom.ToText(field.name))
+      END;
+    ELSE
+      l := NarrowToList(sx, &quot;Expected a value list, found: &quot;);
+      len := RefList.Length(l);
+      (* Allow (Pos (0.2 0.3)) *)
+      IF len = 1 AND ISTYPE(l.head, RefList.T) THEN
+        l := l.head;
+        len := RefList.Length(l);
+        IF field.type = FieldType.Boolean AND len = 0 THEN
+          (* lisp represents FALSE = nil = () *)
+          l := sx;
+          len := 1;
+        ELSE
+          sx := l;
+        END;
+      END;
+      IF NOT ((field.count = Infinity) OR (field.count = len)
+                OR (field.type = FieldType.FontSpec)
+                OR ((field.type = FieldType.ColorSpec)
+                      AND (field.count * 3 = len))) THEN
+        RAISE GEFError.T(
+                &quot;Wrong number of values for field: &quot; &amp; Atom.ToText(field.name))
+      END;
+      IF field.count # Infinity THEN len := field.count; END;
+    END;
+    CASE field.type OF
+    | FieldType.Boolean =&gt;
+        WITH a = NEW(Bools, len) DO
+          FOR i := 0 TO len - 1 DO a[i] := GetBool(sx, defaults); END;
+          RETURN a;
+        END;
+    | FieldType.Integer =&gt;
+        WITH a = NEW(Ints, len) DO
+          FOR i := 0 TO len - 1 DO a[i] := GetInt(sx, defaults); END;
+          RETURN a;
+        END;
+    | FieldType.Enum =&gt;
+        WITH a = NEW(Ints, len) DO
+          FOR i := 0 TO len - 1 DO
+            a[i] := GetEnum(sx, field.enums, defaults);
+          END;
+          RETURN a;
+        END;
+    | FieldType.Real =&gt;
+        WITH a = NEW(Reals, len) DO
+          FOR i := 0 TO len - 1 DO a[i] := GetReal(sx, defaults); END;
+          RETURN a;
+        END;
+    | FieldType.Sx =&gt;
+        WITH a = NEW(Elems, len) DO
+          FOR i := 0 TO len - 1 DO a[i] := GetSx(sx, defaults); END;
+          RETURN a;
+        END;
+    | FieldType.Text =&gt;
+        WITH a = NEW(Texts, len) DO
+          FOR i := 0 TO len - 1 DO a[i] := GetText(sx, defaults); END;
+          RETURN a;
+        END;
+    | FieldType.ColorSpec =&gt;
+        WITH a = NEW(Texts, len) DO
+          FOR i := 0 TO len - 1 DO a[i] := GetColor(sx, defaults); END;
+          RETURN a;
+        END;
+    | FieldType.FontSpec =&gt;
+        WITH a = NEW(Texts, len) DO
+          FOR i := 0 TO len - 1 DO a[i] := GetFont(sx, defaults); END;
+          RETURN a;
+        END;
+    | FieldType.Elem =&gt;
+        WITH a = NEW(Elems, len) DO
+          FOR i := 0 TO len - 1 DO a[i] := GetElem(t, sx, defaults); END;
+          RETURN a;
+        END;
+    END;
+  END ValsFromSx;
+
+PROCEDURE <A NAME="SetFieldFromValue"><procedure>SetFieldFromValue</procedure></A> (         t    : T;
+                                      obj  : Obj;
+                                      po   : ParseObject;
+                             READONLY field: Field;
+                             READONLY value: Value        )
+  RAISES {GEFError.T} =
+  BEGIN
+    CASE field.type OF
+    | FieldType.Boolean =&gt;
+        VAR a: Bools := value.vals;
+        BEGIN
+          po.setBool(t, obj.elem, field.index, a);
+        END;
+    | FieldType.Integer, FieldType.Enum =&gt;
+        VAR a: Ints := value.vals;
+        BEGIN
+          po.setInt(t, obj.elem, field.index, a);
+        END;
+    | FieldType.Real =&gt;
+        VAR a: Reals := value.vals;
+        BEGIN
+          po.setReal(t, obj.elem, field.index, a);
+        END;
+    | FieldType.Text, FieldType.ColorSpec, FieldType.FontSpec =&gt;
+        VAR a: Texts := value.vals;
+        BEGIN
+          po.setText(t, obj.elem, field.index, a);
+        END;
+    | FieldType.Elem, FieldType.Sx =&gt;
+        VAR a: Elems := value.vals;
+        BEGIN
+          po.setElem(t, obj.elem, field.index, a);
+        END;
+    END;
+  END SetFieldFromValue;
+
+PROCEDURE <A NAME="ListFromValues"><procedure>ListFromValues</procedure></A> (values: Vals): RefList.T =
+  VAR res: RefList.T;
+  BEGIN
+    TYPECASE values OF
+    | NULL =&gt;
+    | Bools (v) =&gt;
+        FOR i := LAST(v^) TO 0 BY -1 DO
+          WITH a = NEW(RBool) DO a^ := v[i]; RefListUtils.Push(res, a); END;
+        END;
+    | Ints (v) =&gt;
+        FOR i := LAST(v^) TO 0 BY -1 DO
+          WITH a = NEW(RInt) DO a^ := v[i]; RefListUtils.Push(res, a); END;
+        END;
+    | Reals (v) =&gt;
+        FOR i := LAST(v^) TO 0 BY -1 DO
+          WITH a = NEW(RReal) DO a^ := v[i]; RefListUtils.Push(res, a); END;
+        END;
+    | Texts (v) =&gt;
+        FOR i := LAST(v^) TO 0 BY -1 DO RefListUtils.Push(res, v[i]); END;
+    | Elems (v) =&gt;
+        FOR i := LAST(v^) TO 0 BY -1 DO RefListUtils.Push(res, v[i]); END;
+    ELSE
+      RAISE Fatal;
+    END;
+    RETURN res;
+  END ListFromValues;
+
+PROCEDURE <A NAME="CopyValues"><procedure>CopyValues</procedure></A> (values: Values): Values =
+  VAR res: Values;
+  BEGIN
+    res := NEW(Values, NUMBER(values^));
+    FOR i := 0 TO LAST(values^) DO
+      res[i].sx := values[i].sx;
+      TYPECASE values[i].vals OF
+      | NULL =&gt;
+      | Bools (v) =&gt;
+          VAR r: Bools := NEW(Bools, NUMBER(v^));
+          BEGIN
+            r^ := v^;
+            res[i].vals := r;
+          END;
+      | Ints (v) =&gt;
+          VAR r: Ints := NEW(Ints, NUMBER(v^));
+          BEGIN
+            r^ := v^;
+            res[i].vals := r;
+          END;
+      | Reals (v) =&gt;
+          VAR r: Reals := NEW(Reals, NUMBER(v^));
+          BEGIN
+            r^ := v^;
+            res[i].vals := r;
+          END;
+      | Texts (v) =&gt;
+          VAR r: Texts := NEW(Texts, NUMBER(v^));
+          BEGIN
+            r^ := v^;
+            res[i].vals := r;
+          END;
+      | Elems (v) =&gt;
+          VAR r: Elems := NEW(Elems, NUMBER(v^));
+          BEGIN
+            r^ := v^;
+            res[i].vals := r;
+          END;
+      ELSE
+        RAISE Fatal;
+      END;
+    END;
+    RETURN res;
+  END CopyValues;
+
+PROCEDURE <A NAME="LookupFields"><procedure>LookupFields</procedure></A> (t: T; obj: Obj; po: ParseObject)
+  RAISES {GEFError.T, Thread.Alerted, SLisp.Error} =
+  VAR sx: S_exp;
+  BEGIN
+    sx := t.interp.varEval(&quot;Name&quot;);
+    IF sx # NIL THEN
+      t.interp.defineVar(&quot;Name&quot;, NIL); (* don't reuse names in environment *)
+      obj.name := GetText(sx);
+      IF sx # NIL THEN
+        RAISE GEFError.T(
+                &quot;Unexpected stuff found in name field: &quot; &amp; SLispClass.SxToText(sx));
+      END;
+    ELSE
+      obj.name := GenName();
+    END;
+
+    obj.values := CopyValues(po.values);
+    FOR i := 0 TO LAST(po.fields^) DO
+      WITH field = po.fields[i] DO
+        IF field.name # NIL THEN
+          WITH value = t.interp.varEval(Atom.ToText(field.name)) DO
+            IF value = NIL THEN
+              obj.values[i] := po.values[i];
+            ELSE
+              TYPECASE value OF
+              | RefList.T =&gt;
+                obj.values[i].sx := value;
+              ELSE
+                obj.values[i].sx := RefList.List1(value);
+              END;
+              obj.values[i].vals := ValsFromSx(t, field, obj.values[i].sx);
+            END;
+            SetFieldFromValue(t, obj, po, field, obj.values[i]);
+          END;
+        END;
+      END;
+    END
+  END LookupFields;
+
+VAR
+  uid: INTEGER;
+
+PROCEDURE <A NAME="NewId"><procedure>NewId</procedure></A> (): INTEGER =
+  BEGIN
+    INC(uid);
+    RETURN uid;
+  END NewId;
+
+PROCEDURE <A NAME="Parse"><procedure>Parse</procedure></A> (t              : T;
+                 sx             : S_exp;
+                 showAllElements: BOOLEAN     ) RAISES {Thread.Alerted} =
+  BEGIN
+    LOCK mu DO
+      nameID := NameIDInit;
+      t.elemToObj := NEW(IntRefTbl.Default).init();
+      t.names := NEW(TextRefTbl.Default).init();
+      t.showAllElements := showAllElements;
+      t.clear();
+      EVAL t.interp.init();
+      t.interp.defineVar(&quot;graph&quot;, t);
+      AddPOsToInterp(t.interp);
+    END;
+    TRY
+      TRY
+        IF NOT t = CreateElemFromPO(t, ParseObjectFromElem(t)) THEN
+          RAISE Fatal
+        END;
+      EXCEPT
+      | GEFError.T (msg) =&gt; EVAL t.interp.error(msg);
+      END;
+      EVAL t.interp.eval(sx);
+      VBT.Mark(t);
+    EXCEPT
+    | SLisp.Error =&gt; RAISE Thread.Alerted;
+    END;
+  END Parse;
+
+PROCEDURE <A NAME="IncrementalParse"><procedure>IncrementalParse</procedure></A> (t: T; sx: S_exp) RAISES {Thread.Alerted} =
+  BEGIN
+    TRY
+      EVAL t.interp.eval(sx);
+    EXCEPT
+    | SLisp.Error =&gt; RAISE Thread.Alerted;
+    END;
+  END IncrementalParse;
+
+PROCEDURE <A NAME="ParseObjectFromElem"><procedure>ParseObjectFromElem</procedure></A> (elem: Elem): ParseObject =
+  BEGIN
+    LOCK mu DO RETURN POFromElemInternal(elem) END;
+  END ParseObjectFromElem;
+
+PROCEDURE <A NAME="POFromElemInternal"><procedure>POFromElemInternal</procedure></A> (elem: Elem): ParseObject =
+  BEGIN
+    IF elem = NIL THEN RAISE Fatal END;
+    FOR i := 0 TO LAST(parseObjects^) DO
+      IF parseObjects[i] # NIL AND parseObjects[i].isType(elem) THEN
+        RETURN parseObjects[i]
+      END;
+    END;
+    RAISE Fatal;
+  END POFromElemInternal;
+</PRE> ------------------------- GEFLisp utilities ---------------------- 
+
+<P><PRE>PROCEDURE <A NAME="CreateElemFromPO"><procedure>CreateElemFromPO</procedure></A> (t: T; po: ParseObject): Elem
+  RAISES {GEFError.T, Thread.Alerted} =
+  VAR
+    obj         := NEW(Obj);
+    ra : REFANY;
+  BEGIN
+    TRY
+      obj.elem := po.create(t, NewId());
+      LookupFields(t, obj, po);
+      po.finish(t, obj.elem);
+      LOCK mu DO
+        IF t.names.get(obj.name, ra) THEN
+          RAISE
+            GEFError.T(&quot;There is already an element named: &quot; &amp; obj.name)
+        END;
+        EVAL t.names.put(obj.name, obj);
+        EVAL t.elemToObj.put(po.getId(t, obj.elem), obj);
+      END;
+      RETURN obj.elem;
+    EXCEPT
+    | SLisp.Error =&gt; RAISE Thread.Alerted;
+    END;
+  END CreateElemFromPO;
+
+PROCEDURE <A NAME="GetProp"><procedure>GetProp</procedure></A> (t: T; elem: Elem; prop: S_exp): RefList.T
+  RAISES {GEFError.T} =
+  VAR
+    elem2: Elem;
+    obj  : Obj;
+    po   : ParseObject;
+    name : Name;
+  &lt;* FATAL Thread.Alerted *&gt;
+  BEGIN
+    LOCK mu DO
+      elem2 := GetElem(t, elem);
+      obj := ObjFromElem(t, elem2);
+      po := POFromElemInternal(elem2);
+      name := GetName(prop);
+      IF name = sxName THEN
+        RETURN RefList.List1(obj.name);
+      ELSE
+        FOR i := 0 TO LAST(po.fields^) DO
+          WITH field = po.fields[i] DO
+            IF name = field.name THEN
+              RETURN ListFromValues(obj.values[i].vals);
+            END;
+          END;
+        END;
+      END;
+    END;
+    RAISE
+      GEFError.T(Fmt.F(&quot;No property of element with name: %s&quot;, Atom.ToText(name)));
+  END GetProp;
+
+PROCEDURE <A NAME="SetProp"><procedure>SetProp</procedure></A> (t: T; elem: Elem; prop: S_exp; value: RefList.T)
+  RAISES {GEFError.T, Thread.Alerted} =
+  VAR
+    elem2: Elem;
+    obj  : Obj;
+    po   : ParseObject;
+    name : Name;
+  BEGIN
+    LOCK mu DO
+      elem2 := GetElem(t, elem);
+      obj := ObjFromElem(t, elem2);
+      po := POFromElemInternal(elem2);
+      name := GetName(prop);
+
+      FOR i := 0 TO LAST(po.fields^) DO
+        WITH field = po.fields[i] DO
+          IF prop = field.name THEN
+            obj.values[i].sx := value;
+            obj.values[i].vals := ValsFromSx(t, field, value);
+            SetFieldFromValue(t, obj, po, field, obj.values[i]);
+            RETURN
+          END;
+        END;
+      END;
+    END;
+    RAISE
+      GEFError.T(Fmt.F(&quot;No property of element with name: %s&quot;, Atom.ToText(name)));
+  END SetProp;
+
+PROCEDURE <A NAME="Delete"><procedure>Delete</procedure></A> (t: T; elem: Elem) RAISES {GEFError.T, Thread.Alerted} =
+  VAR
+    val  : REFANY;
+    elem2: Elem;
+    po   : ParseObject;
+    obj  : Obj;
+  BEGIN
+    LOCK mu DO
+      elem2 := GetElem(t, elem);
+      po := POFromElemInternal(elem2);
+      obj := ObjFromElem(t, elem2);
+
+      EVAL t.elemToObj.delete(po.getId(t, elem2), val);
+      EVAL t.names.delete(obj.name, val);
+      po.delete(t, elem2);
+    END;
+  END Delete;
+</PRE> *************************** Ranges *********************** 
+
+<P><PRE>PROCEDURE <A NAME="GetRange"><procedure>GetRange</procedure></A> (t: T; elem: Elem; VAR (* OUT *) start, end: CARDINAL) =
+  BEGIN
+    LOCK mu DO
+      WITH obj = ObjFromElem(t, elem) DO
+        start := obj.start;
+        end := obj.end;
+      END;
+    END;
+  END GetRange;
+
+PROCEDURE <A NAME="AdjustRange"><procedure>AdjustRange</procedure></A> (i, start: CARDINAL; delta: INTEGER): CARDINAL =
+  BEGIN
+    IF i &gt; start THEN RETURN i - delta ELSE RETURN i END;
+  END AdjustRange;
+
+PROCEDURE <A NAME="UpdateRange"><procedure>UpdateRange</procedure></A> (t: T; elem: Elem; start, end, length: CARDINAL) =
+  VAR
+    delta                     := (end - start) - length;
+    value: REFANY;
+    key  : INTEGER;
+    iter : IntRefTbl.Iterator;
+  BEGIN
+    LOCK mu DO
+      iter := t.elemToObj.iterate();
+      WHILE iter.next(key, value) DO
+        WITH obj = NARROW(value, Obj) DO
+          obj.start := AdjustRange(obj.start, start, delta);
+          obj.end := AdjustRange(obj.end, start, delta);
+        END
+      END;
+      WITH obj = ObjFromElem(t, elem) DO obj.end := start + length; END;
+    END;
+  END UpdateRange;
+</PRE> ************************ Elem to/from FormsVBT.T ***************** 
+
+<P><PRE>PROCEDURE <A NAME="FieldFVName"><procedure>FieldFVName</procedure></A>(READONLY field: Field; i: INTEGER): TEXT =
+  BEGIN
+    IF field.count = Infinity THEN
+      RETURN field.fvNames[0];
+    ELSE
+      RETURN field.fvNames[i]
+    END;
+  END FieldFVName;
+
+PROCEDURE <A NAME="SetFieldsFromObj"><procedure>SetFieldsFromObj</procedure></A> (t: T; po: ParseObject; obj: Obj; fv: FormsVBT.T) =
+  &lt;* FATAL GEFError.T, FormsVBT.Error, FormsVBT.Unimplemented,
+           Wr.Failure, Thread.Alerted *&gt;
+  VAR
+    count: INTEGER;
+    wr   : Wr.T;
+  BEGIN
+    FOR i := 0 TO LAST(po.fields^) DO
+      WITH field = po.fields[i] DO
+        IF field.name # NIL THEN
+          count := field.count;
+          CASE field.type OF
+          | FieldType.Boolean =&gt;
+              VAR values: Bools := obj.values[i].vals;
+              BEGIN
+                &lt;* ASSERT count # Infinity *&gt;
+                FOR j := 0 TO count - 1 DO
+                  FormsVBT.PutBoolean(fv, FieldFVName(field, j), values[j]);
+                END;
+              END;
+          | FieldType.Integer =&gt;
+              VAR values: Ints := obj.values[i].vals;
+              BEGIN
+                &lt;* ASSERT count # Infinity *&gt;
+                FOR j := 0 TO count - 1 DO
+                  FormsVBT.PutInteger(fv, FieldFVName(field, j), values[j]);
+                END;
+              END;
+          | FieldType.Real =&gt;
+              VAR values: Reals := obj.values[i].vals;
+              BEGIN
+                &lt;* ASSERT count # Infinity *&gt;
+                FOR j := 0 TO count - 1 DO
+                  FormsVBT.PutText(
+                    fv, FieldFVName(field, j), Fmt.Real(values[j]));
+                END;
+              END;
+          | FieldType.Text, FieldType.ColorSpec, FieldType.FontSpec =&gt;
+              VAR values: Texts := obj.values[i].vals;
+              BEGIN
+                IF count = Infinity THEN
+                  wr := TextWr.New();
+                  FOR j := 0 TO LAST(values^) DO
+                    Wr.PutText(wr, Fmt.F(&quot;\&quot;%s\&quot; &quot;, values[i]));
+                  END;
+                  FormsVBT.PutText(
+                    fv, FieldFVName(field, 0), TextWr.ToText(wr));
+                ELSE
+                  FOR j := 0 TO count - 1 DO
+                    FormsVBT.PutText(fv, FieldFVName(field, j), values[j]);
+                  END;
+                END;
+              END;
+          | FieldType.Sx =&gt;
+              VAR values: Elems := obj.values[i].vals;
+              &lt;* FATAL Sx.PrintError *&gt;
+              BEGIN
+                IF count = Infinity THEN
+                  wr := TextWr.New();
+                  FOR j := 0 TO LAST(values^) DO
+                    Wr.PutText(wr, Fmt.F(&quot;\&quot;%s\&quot; &quot;, SLispClass.SxToText(values[j])));
+                  END;
+                  FormsVBT.PutText(
+                    fv, FieldFVName(field, 0), TextWr.ToText(wr));
+                ELSE
+                  FOR j := 0 TO count - 1 DO
+                    FormsVBT.PutText(
+                      fv, FieldFVName(field, j), SLispClass.SxToText(values[j]));
+                  END;
+                END;
+              END;
+          | FieldType.Elem =&gt;
+              VAR values: Elems := obj.values[i].vals;
+              BEGIN
+                IF count = Infinity THEN
+                  wr := TextWr.New();
+                  FOR j := 0 TO LAST(values^) DO
+                    Wr.PutText(
+                      wr, Fmt.F(&quot;\&quot;%s\&quot; &quot;, NameFromElemInternal(t, values[j])));
+                  END;
+                  FormsVBT.PutText(
+                    fv, FieldFVName(field, 0), TextWr.ToText(wr));
+                ELSE
+                  FOR j := 0 TO count - 1 DO
+                    FormsVBT.PutText(fv, FieldFVName(field, j),
+                                     NameFromElemInternal(t, values[j]));
+                  END;
+                END;
+              END;
+          | FieldType.Enum =&gt;
+              VAR values: Ints := obj.values[i].vals;
+              BEGIN
+                &lt;* ASSERT count # Infinity *&gt;
+                FOR j := 0 TO count - 1 DO
+                  FormsVBT.PutChoice(
+                    fv, FieldFVName(field, j),
+                    FieldFVName(field, j) &amp; Atom.ToText(field.enums[values[j]]));
+                END;
+              END;
+          END;
+        END;
+      END;
+    END;
+  END SetFieldsFromObj;
+
+PROCEDURE <A NAME="GetFV"><procedure>GetFV</procedure></A>(t: T; elem: Elem): FormsVBT.T =
+  VAR
+      fv: FormsVBT.T;
+      po: ParseObject;
+      obj: Obj;
+      &lt;* FATAL FormsVBT.Error, FormsVBT.Unimplemented *&gt;
+  BEGIN
+    LOCK mu DO
+      po := POFromElemInternal(elem);
+      IF po.fv = NIL THEN
+        po.fv := FVFromArgs(po);
+      END;
+      fv := NEW(FormsVBT.T).init(po.fv);
+      obj := ObjFromElem(t, elem);
+      FormsVBT.PutText(fv, &quot;ElemType&quot;, Atom.ToText(po.name));
+      FormsVBT.PutText(fv, &quot;Name&quot;, obj.name);
+      SetFieldsFromObj(t, po, obj, fv);
+    END;
+    RETURN fv;
+  END GetFV;
+
+PROCEDURE <A NAME="SetFVFromElem"><procedure>SetFVFromElem</procedure></A>(t: T; elem: Elem; fv: FormsVBT.T) =
+  VAR
+      po: ParseObject;
+      obj: Obj;
+      &lt;* FATAL FormsVBT.Error, FormsVBT.Unimplemented *&gt;
+  BEGIN
+    LOCK mu DO
+      po := POFromElemInternal(elem);
+      obj := ObjFromElem(t, elem);
+      FormsVBT.PutText(fv, &quot;ElemType&quot;, Atom.ToText(po.name));
+      FormsVBT.PutText(fv, &quot;Name&quot;, obj.name);
+      SetFieldsFromObj(t, po, obj, fv);
+    END;
+  END SetFVFromElem;
+
+PROCEDURE <A NAME="AddParseObjectsToMenu"><procedure>AddParseObjectsToMenu</procedure></A> (fv     : FormsVBT.T;
+                                 menu   : TEXT;
+                                 closure: InstallClosure) =
+  &lt;* FATAL FormsVBT.Error *&gt;
+  BEGIN
+    FOR i := 0 TO LAST(parseObjects^) DO
+      IF parseObjects[i] # NIL THEN
+        WITH nm = Atom.ToText(parseObjects[i].name) DO
+          EVAL FormsVBT.Insert(fv, menu, Fmt.F(&quot;(MButton %%s \&quot;%s\&quot;)&quot;, nm, nm));
+          FormsVBT.AttachProc(fv, nm, POProc, closure);
+        END;
+      END;
+    END;
+  END AddParseObjectsToMenu;
+
+PROCEDURE <A NAME="POProc"><procedure>POProc</procedure></A> (&lt;* UNUSED *&gt; fv  : FormsVBT.T;
+                               name: TEXT;
+                               ra  : REFANY;
+                  &lt;* UNUSED *&gt; time: VBT.TimeStamp) =
+  VAR
+    cl: InstallClosure := ra;
+    nm                 := Atom.FromText(name);
+    po: ParseObject;
+    fv2: FormsVBT.T;
+  &lt;* FATAL FormsVBT.Error, FormsVBT.Unimplemented, GEFError.T *&gt;
+  BEGIN
+    LOCK mu DO
+      po := POFromName(nm);
+      IF po.fv = NIL THEN po.fv := FVFromArgs(po); END;
+    END;
+    fv2 := NEW(FormsVBT.T).init(po.fv);
+    FormsVBT.PutText(fv2, &quot;ElemType&quot;, Atom.ToText(po.name));
+    cl.install(fv2);
+  END POProc;
+
+PROCEDURE <A NAME="UpdateBoolsFieldFromFV"><procedure>UpdateBoolsFieldFromFV</procedure></A> (         fv   : FormsVBT.T;
+                                  READONLY field: Field;
+                                           vals : Bools       ): BOOLEAN =
+  VAR
+    val    : BOOLEAN;
+    changed          := FALSE;
+    &lt;* FATAL FormsVBT.Error, FormsVBT.Unimplemented *&gt;
+  BEGIN
+    &lt;* ASSERT field.count # Infinity *&gt;
+    FOR j := 0 TO field.count - 1 DO
+      val := FormsVBT.GetBoolean(fv, FieldFVName(field, j));
+      IF val # vals[j] THEN vals[j] := val; changed := TRUE; END;
+    END;
+    RETURN changed;
+  END UpdateBoolsFieldFromFV;
+
+PROCEDURE <A NAME="SxFromBools"><procedure>SxFromBools</procedure></A> (vals, defaults: Bools): S_exp =
+  VAR
+    l: RefList.T;
+    r: RBool;
+  BEGIN
+    IF NUMBER(vals^) = NUMBER(defaults^) AND vals^ = defaults^ THEN
+      RETURN NIL
+    ELSE
+      FOR i := LAST(vals^) TO 0 BY -1 DO
+        r := NEW(RBool);
+        r^ := vals[i];
+        RefListUtils.Push(l, r);
+      END;
+      RETURN l;
+    END;
+  END SxFromBools;
+
+PROCEDURE <A NAME="UpdateIntsFieldFromFV"><procedure>UpdateIntsFieldFromFV</procedure></A> (         fv   : FormsVBT.T;
+                                  READONLY field: Field;
+                                           vals : Ints       ): BOOLEAN =
+  VAR
+    val    : INTEGER;
+    changed          := FALSE;
+    &lt;* FATAL FormsVBT.Error, FormsVBT.Unimplemented *&gt;
+  BEGIN
+    &lt;* ASSERT field.count # Infinity *&gt;
+    FOR j := 0 TO field.count - 1 DO
+      val := FormsVBT.GetInteger(fv, FieldFVName(field, j));
+      IF val # vals[j] THEN vals[j] := val; changed := TRUE; END;
+    END;
+    RETURN changed;
+  END UpdateIntsFieldFromFV;
+
+PROCEDURE <A NAME="SxFromInts"><procedure>SxFromInts</procedure></A> (vals, defaults: Ints): S_exp =
+  VAR
+    l: RefList.T;
+    r: RInt;
+  BEGIN
+    IF NUMBER(vals^) = NUMBER(defaults^) AND vals^ = defaults^ THEN
+      RETURN NIL
+    ELSE
+      FOR i := LAST(vals^) TO 0 BY -1 DO
+        r := NEW(RInt);
+        r^ := vals[i];
+        RefListUtils.Push(l, r);
+      END;
+      RETURN l;
+    END;
+  END SxFromInts;
+
+PROCEDURE <A NAME="UpdateEnumsFieldFromFV"><procedure>UpdateEnumsFieldFromFV</procedure></A> (         fv   : FormsVBT.T;
+                                  READONLY field: Field;
+                                           vals : Ints        ): BOOLEAN =
+  VAR
+    val    : INTEGER;
+    changed          := FALSE;
+    txt    : TEXT;
+  &lt;* FATAL FormsVBT.Error, FormsVBT.Unimplemented, GEFError.T *&gt;
+  BEGIN
+    &lt;* ASSERT field.count # Infinity *&gt;
+    FOR j := 0 TO field.count - 1 DO
+      txt := FormsVBT.GetChoice(fv, FVName(field.name, field.entries, j));
+      (* choiceName is a concatenation of fieldName and the enumName;
+         return the enumName *)
+      txt := Text.Sub(txt, Text.Length(Atom.ToText(field.name)), LAST(CARDINAL));
+      val := GetEnum1(Atom.FromText(txt), field.enums);
+      IF val # vals[j] THEN vals[j] := val; changed := TRUE; END;
+    END;
+    RETURN changed;
+  END UpdateEnumsFieldFromFV;
+
+PROCEDURE <A NAME="SxFromEnums"><procedure>SxFromEnums</procedure></A> (vals, defaults: Ints; enums: Names): S_exp =
+  VAR l: RefList.T;
+  BEGIN
+    IF NUMBER(vals^) = NUMBER(defaults^) AND vals^ = defaults^ THEN
+      RETURN NIL
+    ELSE
+      FOR i := LAST(vals^) TO 0 BY -1 DO RefListUtils.Push(l, enums[vals[i]]); END;
+      RETURN l;
+    END;
+  END SxFromEnums;
+
+PROCEDURE <A NAME="UpdateRealsFieldFromFV"><procedure>UpdateRealsFieldFromFV</procedure></A> (         fv   : FormsVBT.T;
+                                  READONLY field: Field;
+                                           vals : Reals       ): BOOLEAN =
+  VAR
+    val    : REAL;
+    changed       := FALSE;
+    text   : TEXT;
+  &lt;* FATAL FormsVBT.Error, FormsVBT.Unimplemented *&gt;
+  BEGIN
+    &lt;* ASSERT field.count # Infinity *&gt;
+    TRY
+      FOR j := 0 TO field.count - 1 DO
+        text := FormsVBT.GetText(fv, FieldFVName(field, j));
+        val := Scan.Real(text);
+        IF val # vals[j] THEN vals[j] := val; changed := TRUE; END;
+      END;
+    EXCEPT
+    | Lex.Error, FloatMode.Trap =&gt; ReportError(fv, &quot;Bad real value: &quot; &amp; text);
+    END;
+    RETURN changed;
+  END UpdateRealsFieldFromFV;
+
+PROCEDURE <A NAME="SxFromReals"><procedure>SxFromReals</procedure></A> (vals, defaults: Reals): S_exp =
+  VAR
+    l: RefList.T;
+    r: RReal;
+  BEGIN
+    IF NUMBER(vals^) = NUMBER(defaults^) AND vals^ = defaults^ THEN
+      RETURN NIL
+    ELSE
+      FOR i := LAST(vals^) TO 0 BY -1 DO
+        r := NEW(RReal);
+        r^ := vals[i];
+        RefListUtils.Push(l, r);
+      END;
+      RETURN l;
+    END;
+  END SxFromReals;
+
+PROCEDURE <A NAME="UpdateSxsFieldFromFV"><procedure>UpdateSxsFieldFromFV</procedure></A> (         fv   : FormsVBT.T;
+                                READONLY field: Field;
+                                         vals : Elems       ): BOOLEAN
+  RAISES {GEFError.T} =
+  VAR
+    changed                    := FALSE;
+    text, sxOld, sxNew: TEXT;
+    new               : Elems;
+    list              : RefList.T;
+    sx                : S_exp;
+  &lt;* FATAL FormsVBT.Error, FormsVBT.Unimplemented, Thread.Alerted *&gt;
+  BEGIN
+    IF field.count = Infinity THEN
+      text := FormsVBT.GetText(fv, FieldFVName(field, 0));
+      TRY
+        list := SxFromText(Fmt.F(&quot;(%s)&quot;, text));
+      EXCEPT
+        Sx.ReadError, Rd.EndOfFile =&gt;
+          RAISE GEFError.T(&quot;Bad format for Sx expressions: &quot; &amp; text);
+      END;
+      new := NEW(Elems, RefList.Length(list));
+      changed := NUMBER(new^) # NUMBER(vals^);
+      FOR j := 0 TO LAST(new^) DO
+        sx := RefListUtils.Pop(list);
+        sxNew := SLispClass.SxToText(sx);
+        sxOld := SLispClass.SxToText(vals[j]);
+        IF NOT Text.Equal(sxOld, sxNew) THEN
+          new[j] := sx;
+          changed := TRUE;
+        END;
+      END;
+      IF changed THEN vals := new END;
+    ELSE
+      FOR j := 0 TO field.count - 1 DO
+        text := FormsVBT.GetText(fv, FieldFVName(field, j));
+        sxOld := SLispClass.SxToText(vals[j]);
+        IF NOT Text.Equal(text, sxOld) THEN
+          TRY
+            vals[j] := SxFromText(text);
+          EXCEPT
+          | Sx.ReadError, Rd.EndOfFile =&gt;
+              RAISE GEFError.T(&quot;Bad value for Sx expression: &quot; &amp; text);
+          END;
+          changed := TRUE;
+        END;
+      END;
+    END;
+    RETURN changed;
+  END UpdateSxsFieldFromFV;
+
+PROCEDURE <A NAME="SxFromSxs"><procedure>SxFromSxs</procedure></A> (vals, defaults: Elems): S_exp =
+  VAR
+    l: RefList.T;
+  BEGIN
+    IF NUMBER(vals^) = NUMBER(defaults^) AND vals^ = defaults^ THEN
+      RETURN NIL
+    ELSE
+      FOR i := LAST(vals^) TO 0 BY -1 DO RefListUtils.Push(l, vals[i]); END;
+      RETURN l;
+    END;
+  END SxFromSxs;
+
+PROCEDURE <A NAME="UpdateTextsFieldFromFV"><procedure>UpdateTextsFieldFromFV</procedure></A> (                 fv   : FormsVBT.T;
+                                  READONLY         field: Field;
+                                  VAR (* in/out *) vals : Texts       ):
+  BOOLEAN RAISES {GEFError.T} =
+  VAR
+    val    : TEXT;
+    changed         := FALSE;
+    new    : Texts;
+    list   : RefList.T;
+    sx     : S_exp;
+  &lt;* FATAL FormsVBT.Error, FormsVBT.Unimplemented, Rd.EndOfFile, Thread.Alerted *&gt;
+  BEGIN
+    IF field.count = Infinity THEN
+      val := FormsVBT.GetText(fv, FieldFVName(field, 0));
+      TRY
+        list := SxFromText(Fmt.F(&quot;(%s)&quot;, val));
+      EXCEPT
+        Sx.ReadError =&gt;
+          RAISE GEFError.T(&quot;Bad format for texts expression: &quot; &amp; val);
+      END;
+      new := NEW(Texts, RefList.Length(list));
+      changed := NUMBER(new^) # NUMBER(vals^);
+      sx := list;
+      FOR j := 0 TO LAST(new^) DO
+        new[j] := GetText(sx);
+        changed := changed OR NOT Text.Equal(new[j], vals[j]);
+      END;
+      IF changed THEN vals := new END;
+    ELSE
+      FOR j := 0 TO field.count - 1 DO
+        val := FormsVBT.GetText(fv, FieldFVName(field, j));
+        IF val # vals[j] THEN vals[j] := val; changed := TRUE; END;
+      END;
+    END;
+    RETURN changed;
+  END UpdateTextsFieldFromFV;
+
+PROCEDURE <A NAME="SxFromTexts"><procedure>SxFromTexts</procedure></A> (vals, defaults: Texts): S_exp =
+  VAR l: RefList.T;
+  BEGIN
+    IF NUMBER(vals^) = NUMBER(defaults^) AND vals^ = defaults^ THEN
+      RETURN NIL
+    ELSE
+      FOR i := LAST(vals^) TO 0 BY -1 DO RefListUtils.Push(l, vals[i]); END;
+      RETURN l;
+    END;
+  END SxFromTexts;
+
+PROCEDURE <A NAME="UpdateElemsFieldFromFV"><procedure>UpdateElemsFieldFromFV</procedure></A> (                 t    : T;
+                                                   fv   : FormsVBT.T;
+                                  READONLY         field: Field;
+                                  VAR (* in/out *) vals : Elems       ):
+  BOOLEAN RAISES {GEFError.T} =
+  VAR
+    val    : Elem;
+    changed         := FALSE;
+    new    : Elems;
+    list   : RefList.T;
+    sx     : S_exp;
+    text   : TEXT;
+  &lt;* FATAL FormsVBT.Error, FormsVBT.Unimplemented, Rd.EndOfFile, Thread.Alerted *&gt;
+  BEGIN
+    IF field.count = Infinity THEN
+      text := FormsVBT.GetText(fv, FieldFVName(field, 0));
+      TRY
+        list := SxFromText(Fmt.F(&quot;(%s)&quot;, text));
+      EXCEPT
+        Sx.ReadError =&gt;
+          RAISE GEFError.T(&quot;Bad format for elements expression: &quot; &amp; text);
+      END;
+      new := NEW(Elems, RefList.Length(list));
+      changed := NUMBER(new^) # NUMBER(vals^);
+      sx := list;
+      FOR j := 0 TO LAST(new^) DO
+        new[j] := ElemFromNameInternal(t, GetText(sx), TRUE);
+        changed := changed OR new[j] # vals[j];
+      END;
+      IF changed THEN vals := new END;
+    ELSE
+      FOR j := 0 TO field.count - 1 DO
+        val := ElemFromNameInternal(
+                 t, FormsVBT.GetText(fv, FieldFVName(field, j)), TRUE);
+        IF val # vals[j] THEN vals[j] := val; changed := TRUE; END;
+      END;
+    END;
+    RETURN changed;
+  END UpdateElemsFieldFromFV;
+
+PROCEDURE <A NAME="SxFromElems"><procedure>SxFromElems</procedure></A> (t: T; vals, defaults: Elems; forceFullSx: BOOLEAN):
+  S_exp =
+  VAR
+    l  : RefList.T;
+    obj: Obj;
+    name: TEXT;
+  BEGIN
+    IF NUMBER(vals^) = NUMBER(defaults^) AND vals^ = defaults^ THEN
+      RETURN NIL
+    ELSE
+      FOR i := LAST(vals^) TO 0 BY -1 DO
+        obj := ObjFromElem(t, vals[i]);
+        name := obj.name;
+        IF forceFullSx
+             OR (Text.Equal(
+                   NamePrefix, Text.Sub(name, 0, NamePrefixLength))) THEN
+          RefListUtils.Push(l, obj.sx)
+        ELSE
+          RefListUtils.Push(l, name);
+        END;
+      END;
+      RETURN l;
+    END;
+  END SxFromElems;
+
+PROCEDURE <A NAME="SetObjValuesFromFields"><procedure>SetObjValuesFromFields</procedure></A> (t: T; po: ParseObject; obj: Obj; fv: FormsVBT.T)
+  RAISES {GEFError.T} =
+  VAR
+    elems: Elems;
+    texts: Texts;
+  BEGIN
+    FOR i := 0 TO LAST(po.fields^) DO
+      WITH field = po.fields[i],
+           value = obj.values[i],
+           defaults = po.values[i].vals DO
+        IF field.name # NIL THEN
+          TRY
+            CASE field.type OF
+            | FieldType.Boolean =&gt;
+                IF UpdateBoolsFieldFromFV(fv, field, value.vals) THEN
+                  value.sx := SxFromBools(value.vals, defaults);
+                END;
+            | FieldType.Integer =&gt;
+                IF UpdateIntsFieldFromFV(fv, field, value.vals) THEN
+                  value.sx := SxFromInts(value.vals, defaults);
+                END;
+            | FieldType.Real =&gt;
+                IF UpdateRealsFieldFromFV(fv, field, value.vals) THEN
+                  value.sx := SxFromReals(value.vals, defaults);
+                END;
+            | FieldType.Text =&gt;
+                texts := value.vals;
+                IF UpdateTextsFieldFromFV(fv, field, texts) THEN
+                  value.vals := texts;
+                  value.sx := SxFromTexts(texts, defaults);
+                END;
+            | FieldType.Sx =&gt;
+                elems := value.vals;
+                IF UpdateSxsFieldFromFV(fv, field, elems) THEN
+                  value.vals := elems;
+                  value.sx := SxFromSxs(value.vals, defaults);
+                END;
+            | FieldType.Elem =&gt;
+                elems := value.vals;
+                IF UpdateElemsFieldFromFV(t, fv, field, elems) THEN
+                  value.vals := elems;
+                  value.sx := SxFromElems(t, elems, defaults, obj.elem = t);
+                END;
+            | FieldType.ColorSpec, FieldType.FontSpec =&gt;
+                &lt;* ASSERT field.count # Infinity *&gt;
+                texts := value.vals;
+                IF UpdateTextsFieldFromFV(fv, field, texts) THEN
+                  value.vals := texts;
+                  value.sx := SxFromTexts(texts, defaults);
+                END;
+            | FieldType.Enum =&gt;
+                IF UpdateEnumsFieldFromFV(fv, field, value.vals) THEN
+                  value.sx := SxFromEnums(value.vals, defaults, field.enums);
+                END;
+            END;                 (* CASE *)
+          EXCEPT
+          | GEFError.T (msg) =&gt; ReportError(fv, msg);
+          END;
+        END;                     (* IF *)
+      END;                       (* WITH *)
+    END;                         (* FOR fields *)
+  END SetObjValuesFromFields;
+
+PROCEDURE <A NAME="SetObjSxFromValues"><procedure>SetObjSxFromValues</procedure></A> (po: ParseObject; obj: Obj) =
+  VAR
+    list: RefList.T;
+    name: TEXT;
+  BEGIN
+    FOR i := LAST(obj.values^) TO 0 BY -1 DO
+      WITH name = po.fields[i].name,
+           sx   = obj.values[i].sx   DO
+        IF name # NIL AND sx # NIL THEN
+          RefListUtils.Push(list, RefList.Cons(name, sx))
+        END;
+      END;
+    END;
+    name := obj.name;
+    IF NOT Text.Equal(NamePrefix, Text.Sub(name, 0, NamePrefixLength)) THEN
+      RefListUtils.Push(list, RefList.List2(sxName, name));
+    END;
+    RefListUtils.Push(list, po.name);
+    obj.sx := list;
+  END SetObjSxFromValues;
+
+PROCEDURE <A NAME="SetElemFromObj"><procedure>SetElemFromObj</procedure></A> (t: T; po: ParseObject; obj: Obj) RAISES {GEFError.T} =
+  BEGIN
+    FOR i := 0 TO LAST(po.fields^) DO
+      WITH field = po.fields[i] DO
+        IF field.name # NIL THEN
+          SetFieldFromValue(t, obj, po, field, obj.values[i]);
+        END;
+      END;
+    END;
+  END SetElemFromObj;
+
+PROCEDURE <A NAME="SetElemFromFV"><procedure>SetElemFromFV</procedure></A> (t: T; elem: Elem; fv: FormsVBT.T)
+  RAISES {GEFError.T} =
+  VAR
+    po : ParseObject;
+    obj: Obj;
+  &lt;* FATAL FormsVBT.Error, FormsVBT.Unimplemented *&gt;
+  BEGIN
+    LOCK mu DO
+      po := POFromElemInternal(elem);
+      WITH formTypeName = Atom.FromText(
+                            FormsVBT.GetText(fv, &quot;ElemType&quot;)) DO
+        IF po.name # formTypeName THEN
+          RAISE GEFError.T(Fmt.F(&quot;Element named is a %s and form is for a %s&quot;,
+                                Atom.ToText(po.name), Atom.ToText(formTypeName)));
+        END;
+      END;
+      obj := ObjFromElem(t, elem);
+      SetObjValuesFromFields(t, po, obj, fv);
+      SetObjSxFromValues(po, obj);
+      SetElemFromObj(t, po, obj);
+    END;
+  END SetElemFromFV;
+
+PROCEDURE <A NAME="CreateElemFromFV"><procedure>CreateElemFromFV</procedure></A> (t: T; fv: FormsVBT.T): REFANY
+  RAISES {GEFError.T, Thread.Alerted} =
+  &lt;* FATAL FormsVBT.Error, FormsVBT.Unimplemented *&gt;
+  VAR
+    po : ParseObject;
+    obj              := NEW(Obj);
+    nm               := FormsVBT.GetText(fv, &quot;Name&quot;);
+    ra : REFANY;
+  BEGIN
+    IF Text.Length(nm) = 0
+         OR Text.Equal(NamePrefix, Text.Sub(nm, 0, NamePrefixLength)) THEN
+      RAISE GEFError.T(
+              &quot;Must give a unique non-\&quot;GEF #\&quot; name to a new element&quot;);
+    END;
+    LOCK mu DO
+      po :=
+        POFromName(Atom.FromText(FormsVBT.GetText(fv, &quot;ElemType&quot;)));
+    END;
+    obj.elem := po.create(t, NewId());
+    obj.values := CopyValues(po.values);
+    SetObjValuesFromFields(t, po, obj, fv);
+    SetObjSxFromValues(po, obj);
+    SetElemFromObj(t, po, obj);
+    po.finish(t, obj.elem);
+    IF t.names.get(obj.name, ra) THEN
+      RAISE GEFError.T(&quot;There is already an element named: &quot; &amp; obj.name)
+    END;
+    EVAL t.names.put(obj.name, obj);
+    EVAL t.elemToObj.put(po.getId(t, obj.elem), obj);
+    RETURN obj.elem
+  END CreateElemFromFV;
+
+PROCEDURE <A NAME="SxFromElem"><procedure>SxFromElem</procedure></A>(t: T; elem: Elem): S_exp =
+  BEGIN
+    LOCK mu DO
+      RETURN ObjFromElem(t, elem).sx
+    END;
+  END SxFromElem;
+
+PROCEDURE <A NAME="GetElemField"><procedure>GetElemField</procedure></A> (t: T; elem: Elem; field: TEXT): REFANY RAISES{GEFError.T} =
+  VAR
+    name              := Atom.FromText(field);
+    obj               := ObjFromElem(t, elem);
+    po  : ParseObject;
+  BEGIN
+    LOCK mu DO po := POFromElemInternal(elem); END;
+    FOR i := 0 TO LAST(po.fields^) DO
+      IF name = po.fields[i].name THEN RETURN obj.values[i].vals END;
+    END;
+    RAISE GEFError.T(
+            Fmt.F(&quot;No field named %s for %s element&quot;, field, Atom.ToText(po.name)));
+  END GetElemField;
+
+PROCEDURE <A NAME="UpdateElemField"><procedure>UpdateElemField</procedure></A> (t: T; elem: Elem; fname: TEXT; vals: REFANY)
+  RAISES {GEFError.T} =
+  VAR
+    name              := Atom.FromText(fname);
+    obj               := ObjFromElem(t, elem);
+    po  : ParseObject;
+    sx  : S_exp;
+  BEGIN
+    LOCK mu DO po := POFromElemInternal(elem); END;
+    FOR i := 0 TO LAST(po.fields^) DO
+      WITH field    = po.fields[i],
+           defaults = po.values[i].vals DO
+        IF name = field.name THEN
+          TYPECASE vals OF
+          | Bools =&gt;
+              IF field.type # FieldType.Boolean THEN
+                RAISE GEFError.T(
+                        Fmt.F(&quot;Wrong type of values for field %s&quot;, fname));
+              END;
+              sx := SxFromBools(vals, defaults);
+          | Ints =&gt;
+              IF field.type # FieldType.Integer
+                   AND field.type # FieldType.Enum THEN
+                RAISE GEFError.T(
+                        Fmt.F(&quot;Wrong type of values for field %s&quot;, fname));
+              END;
+              sx := SxFromInts(vals, defaults);
+          | Reals =&gt;
+              IF field.type # FieldType.Real THEN
+                RAISE GEFError.T(
+                        Fmt.F(&quot;Wrong type of values for field %s&quot;, fname));
+              END;
+              sx := SxFromReals(vals, defaults);
+          | Texts =&gt;
+              IF field.type # FieldType.Text
+                   AND field.type # FieldType.ColorSpec
+                   AND field.type # FieldType.FontSpec THEN
+                RAISE GEFError.T(
+                        Fmt.F(&quot;Wrong type of values for field %s&quot;, fname));
+              END;
+              sx := SxFromTexts(vals, defaults);
+          | Elems =&gt;
+              IF field.type # FieldType.Elem OR field.type # FieldType.Sx THEN
+                RAISE GEFError.T(
+                        Fmt.F(&quot;Wrong type of values for field %s&quot;, fname));
+              END;
+              sx := SxFromElems(t, vals, defaults, t = elem);
+          ELSE
+            RAISE Fatal;
+          END;
+          obj.values[i].vals := vals;
+          obj.values[i].sx := sx;
+          RETURN;
+        END;                     (* if *)
+      END;                       (* with *)
+    END;
+    RAISE
+      GEFError.T(
+        Fmt.F(&quot;No field named %s for %s element&quot;, fname, Atom.ToText(po.name)));
+  END UpdateElemField;
+
+PROCEDURE <A NAME="SetElemField"><procedure>SetElemField</procedure></A> (t: T; elem: Elem; fname: TEXT; vals: REFANY)
+  RAISES {GEFError.T} =
+  VAR
+    obj              := ObjFromElem(t, elem);
+    po : ParseObject;
+  BEGIN
+    LOCK mu DO po := POFromElemInternal(elem); END;
+    UpdateElemField(t, elem, fname, vals);
+    SetElemFromObj(t, po, obj);
+  END SetElemField;
+</PRE> *************************** Parsing Utilities ****************** 
+
+<P><PRE>PROCEDURE <A NAME="NextSx"><procedure>NextSx</procedure></A> (VAR sx: S_exp): S_exp RAISES {GEFError.T} =
+  VAR
+    l     := NarrowToList(sx, &quot;Expected list, found: &quot;);
+    entry := RefListUtils.Pop(l);
+  BEGIN
+    sx := l;
+    RETURN entry;
+  END NextSx;
+
+PROCEDURE <A NAME="ElemFromName"><procedure>ElemFromName</procedure></A> (t: T; name: Text.T): Elem RAISES {GEFError.T} =
+  BEGIN
+    LOCK mu DO RETURN ElemFromNameInternal(t, name); END;
+  END ElemFromName;
+
+PROCEDURE <A NAME="ElemFromNameInternal"><procedure>ElemFromNameInternal</procedure></A> (t: T; name: Text.T; allowNil := FALSE):
+  Elem RAISES {GEFError.T} =
+  VAR val: REFANY;
+  BEGIN
+    IF t.names.get(name, val) THEN
+      RETURN NARROW(val, Obj).elem
+    ELSE
+      IF allowNil AND Text.Length(name) = 0 THEN
+        RETURN NIL
+      ELSE
+        RAISE GEFError.T(&quot;Could not find an element named: &quot; &amp; name)
+      END;
+    END;
+  END ElemFromNameInternal;
+
+PROCEDURE <A NAME="AllElements"><procedure>AllElements</procedure></A> (t: T): ElementList =
+  TYPE Counts = REF ARRAY OF RECORD cnt: INTEGER := 0 END;
+  VAR
+    counts                     := NEW(Counts, NUMBER(parseObjects^));
+    types : INTEGER            := 0;
+    res   : ElementList;
+    key   : INTEGER;
+    value : REFANY;
+    iter  : IntRefTbl.Iterator;
+
+  PROCEDURE E1 (obj: Obj) =
+    BEGIN
+      FOR i := 0 TO types - 1 DO
+        IF parseObjects[i].isType(obj.elem) THEN
+          INC(counts[i].cnt);
+        END;
+      END;
+      RAISE Fatal;
+    END E1;
+
+  PROCEDURE E2 (obj: Obj) =
+    VAR elem := obj.elem;
+    BEGIN
+      FOR i := 0 TO types - 1 DO
+        IF parseObjects[i].isType(elem) THEN
+          res[i].names[counts[i].cnt] := obj.name;
+          INC(counts[i].cnt);
+        END;
+      END;
+    END E2;
+
+  BEGIN
+    (* Get the exact number of ParseObjects, initialize res *)
+    types := NUMBER(parseObjects^);
+    FOR i := 0 TO LAST(parseObjects^) DO
+      IF parseObjects^[i] = NIL THEN types := i; EXIT; END;
+    END;
+    res := NEW(ElementList, types);
+    FOR i := 0 TO types - 1 DO
+      res[i].type := Atom.ToText(parseObjects[i].name)
+    END;
+    (* get counts of each type, and initialize each type's names *)
+    iter := t.elemToObj.iterate();
+    WHILE iter.next(key, value) DO E1(value) END;
+    FOR i := 0 TO types - 1 DO
+      res[i].names := NEW(REF ARRAY OF TEXT, counts[i].cnt);
+      counts[i].cnt := 0;
+    END;
+    (* Fill in the names of each element *)
+    iter := t.elemToObj.iterate();
+    WHILE iter.next(key, value) DO E2(value); END;
+    RETURN res
+  END AllElements;
+
+VAR
+  NullObj: Obj; (* := NEW(Obj, name := &quot;&quot;); *)
+
+PROCEDURE <A NAME="ObjFromElem"><procedure>ObjFromElem</procedure></A> (t: T; elem: Elem): Obj =
+  VAR po: ParseObject; val: REFANY;
+  BEGIN
+    IF elem = NIL THEN
+      RETURN NullObj
+    ELSE
+      po := POFromElemInternal(elem);
+      IF NOT t.elemToObj.get(po.getId(t, elem), val) THEN RAISE Fatal END;
+      RETURN val
+    END;
+  END ObjFromElem;
+
+PROCEDURE <A NAME="NameFromElem"><procedure>NameFromElem</procedure></A> (t: T; elem: Elem): TEXT =
+  BEGIN
+    LOCK mu DO RETURN NameFromElemInternal(t, elem) END;
+  END NameFromElem;
+
+PROCEDURE <A NAME="NameFromElemInternal"><procedure>NameFromElemInternal</procedure></A> (t: T; elem: Elem): TEXT =
+  BEGIN
+    RETURN ObjFromElem(t, elem).name
+  END NameFromElemInternal;
+
+VAR
+  Bg: Atom.T; (* := Atom.FromText(&quot;Bg&quot;); *)
+  Fg: Atom.T; (* := Atom.FromText(&quot;Fg&quot;); *)
+
+PROCEDURE <A NAME="NarrowToList"><procedure>NarrowToList</procedure></A> (sx: S_exp; msg: TEXT): RefList.T RAISES {GEFError.T} =
+  &lt;* FATAL Thread.Alerted *&gt;
+  BEGIN
+    TYPECASE sx OF
+    | NULL =&gt; RAISE GEFError.T(msg &amp; &quot;()&quot;);
+    | RefList.T (l) =&gt; RETURN l
+    ELSE
+      RAISE GEFError.T(msg &amp; SLispClass.SxToText(sx));
+    END;
+  END NarrowToList;
+
+PROCEDURE <A NAME="NarrowToInt"><procedure>NarrowToInt</procedure></A> (sx: S_exp; msg: TEXT): RInt RAISES {GEFError.T} =
+  &lt;* FATAL Thread.Alerted *&gt;
+  BEGIN
+    TYPECASE sx OF
+    | NULL =&gt; RAISE GEFError.T(msg &amp; &quot;()&quot;);
+    | RInt (r) =&gt; RETURN r
+    ELSE
+      RAISE GEFError.T(msg &amp; SLispClass.SxToText(sx));
+    END;
+  END NarrowToInt;
+
+PROCEDURE <A NAME="NextName"><procedure>NextName</procedure></A> (VAR (* IN/OUT *) sx: S_exp): Name
+  RAISES {GEFError.T} =
+  VAR
+    l     := NarrowToList(sx, &quot;Expected list, found: &quot;);
+    entry := RefListUtils.Pop(l);
+  BEGIN
+    sx := l;
+    RETURN GetName(entry);
+  END NextName;
+
+PROCEDURE <A NAME="NextInteger"><procedure>NextInteger</procedure></A> (VAR (* IN/OUT *) sx: S_exp): RInt
+  RAISES {GEFError.T} =
+  &lt;* FATAL Thread.Alerted *&gt;
+  VAR
+    l  := NarrowToList(sx, &quot;Expected list, found: &quot;);
+    ra := RefListUtils.Pop(l);
+  BEGIN
+    sx := l;
+    TYPECASE ra OF
+    | NULL =&gt; RAISE GEFError.T(&quot;Expected an integer, found: ()&quot;);
+    | RInt (ri) =&gt; RETURN ri
+    | Atom.T (sym) =&gt;
+        IF Text.Equal(Atom.ToText(sym), &quot;Infinity&quot;) THEN
+          RETURN RInfinity
+        ELSE
+          RAISE GEFError.T(&quot;Expected an integer, found: &quot; &amp; Atom.ToText(sym))
+        END;
+    ELSE
+      RAISE GEFError.T(&quot;Expected an integer, found: &quot; &amp; SLispClass.SxToText(ra))
+    END;
+  END NextInteger;
+
+PROCEDURE <A NAME="GetReal"><procedure>GetReal</procedure></A> (VAR v: S_exp; defaults: BOOLEAN := FALSE): REAL
+  RAISES {GEFError.T} =
+  &lt;* FATAL Thread.Alerted *&gt;
+  BEGIN
+    TYPECASE v OF
+    | NULL =&gt;
+        IF defaults THEN
+          RETURN 0.0
+        ELSE
+          RAISE GEFError.T(&quot;Expected a real, found: ()&quot;);
+        END;
+    | RefList.T (l) =&gt;
+        WITH r = RefListUtils.Pop(l) DO
+          v := l;
+          TYPECASE r OF
+          | NULL =&gt; RAISE GEFError.T(&quot;Expected a real, found: ()&quot;);
+          | RReal (rr) =&gt; RETURN rr^
+          | RInt (ri) =&gt; RETURN FLOAT(ri^)
+          ELSE
+            RAISE GEFError.T(&quot;Expected real, found: &quot; &amp; SLispClass.SxToText(r));
+          END;
+        END;
+    | RReal (r) =&gt; RETURN r^;
+    | RInt (ri) =&gt; RETURN FLOAT(ri^);
+    ELSE
+      RAISE GEFError.T(&quot;Expected a real, found: &quot; &amp; SLispClass.SxToText(v));
+    END;
+  END GetReal;
+
+PROCEDURE <A NAME="GetSx"><procedure>GetSx</procedure></A> (VAR v: S_exp; defaults: BOOLEAN := FALSE): S_exp
+  RAISES {GEFError.T} =
+  BEGIN
+    TYPECASE v OF
+    | NULL =&gt;
+        IF defaults THEN
+          RETURN NIL
+        ELSE
+          RAISE GEFError.T(&quot;Expected a list, found: ()&quot;);
+        END;
+    ELSE
+      RETURN NextSx(v);
+    END;
+  END GetSx;
+
+PROCEDURE <A NAME="GetInt"><procedure>GetInt</procedure></A> (VAR v: S_exp; defaults: BOOLEAN := FALSE): INTEGER
+  RAISES {GEFError.T} =
+  &lt;* FATAL Thread.Alerted *&gt;
+  BEGIN
+    TYPECASE v OF
+    | NULL =&gt;
+        IF defaults THEN
+          RETURN 0
+        ELSE
+          RAISE GEFError.T(&quot;Expected an integer, found: ()&quot;);
+        END;
+    | RefList.T (l) =&gt;
+        WITH r = NarrowToInt(RefListUtils.Pop(l), &quot;Expected an integer, found: &quot;)^ DO
+          v := l;
+          RETURN r
+        END;
+    | RInt (r) =&gt; RETURN r^
+    ELSE
+      RAISE GEFError.T(&quot;Expected an integer, found: &quot; &amp; SLispClass.SxToText(v));
+    END;
+  END GetInt;
+
+PROCEDURE <A NAME="GetBool"><procedure>GetBool</procedure></A> (VAR v: S_exp; defaults: BOOLEAN := FALSE): BOOLEAN
+  RAISES {GEFError.T} =
+  &lt;* FATAL Thread.Alerted *&gt;
+  VAR tmp: S_exp;
+  BEGIN
+    TYPECASE v OF
+    | NULL =&gt;
+        IF defaults THEN
+          RETURN FALSE
+        ELSE
+          RAISE GEFError.T(&quot;Expected a boolean, found: ()&quot;);
+        END;
+    | RefList.T (l) =&gt;
+        tmp := RefListUtils.Pop(l);
+        v := l;
+        TYPECASE tmp OF
+        | NULL =&gt; RETURN FALSE
+        | RBool (r) =&gt; RETURN r^
+        | Atom.T (atm) =&gt;
+            IF atm = Sx.False THEN
+              RETURN FALSE
+            ELSE
+              RETURN TRUE
+            END;
+        ELSE
+          RAISE GEFError.T(&quot;Expected a boolean, found: &quot; &amp; SLispClass.SxToText(tmp));
+        END;
+    | RBool (r) =&gt; RETURN r^
+    ELSE
+      RAISE GEFError.T(&quot;Expected a boolean, found: &quot; &amp; SLispClass.SxToText(v));
+    END;
+  END GetBool;
+
+PROCEDURE <A NAME="GetText"><procedure>GetText</procedure></A> (VAR v: S_exp; defaults: BOOLEAN := FALSE): TEXT
+  RAISES {GEFError.T} =
+  &lt;* FATAL Thread.Alerted *&gt;
+  BEGIN
+    TYPECASE v OF
+    | NULL =&gt;
+        IF defaults THEN
+          RETURN &quot;&quot;
+        ELSE
+          RAISE GEFError.T(&quot;Expected a text, found: ()&quot;);
+        END;
+    | RefList.T (l) =&gt;
+        v := RefListUtils.Pop(l);
+        WITH r = GetText(v) DO
+          v := l;
+          RETURN r
+        END;
+    | TEXT =&gt; RETURN v
+    | Atom.T (sym) =&gt; RETURN Atom.ToText(sym)
+    | RInt (i) =&gt; RETURN Fmt.Int(i^);
+    | RReal (r) =&gt; RETURN Fmt.Real(r^);
+    ELSE
+      RAISE GEFError.T(&quot;Expected a text, found: &quot; &amp; SLispClass.SxToText(v));
+    END;
+  END GetText;
+
+PROCEDURE <A NAME="GetName"><procedure>GetName</procedure></A> (VAR v: S_exp): Name RAISES {GEFError.T} =
+  &lt;* FATAL Thread.Alerted *&gt;
+  BEGIN
+    TYPECASE v OF
+    | NULL =&gt; RAISE GEFError.T(&quot;Expected a name, found: ()&quot;);
+    | Atom.T (sym) =&gt; RETURN sym
+    | TEXT (t) =&gt; RETURN Atom.FromText(t);
+    | RInt (i) =&gt; RETURN Atom.FromText(Fmt.Int(i^));
+    ELSE
+      RAISE GEFError.T(&quot;Expected a name, found: &quot; &amp; SLispClass.SxToText(v));
+    END;
+  END GetName;
+
+VAR
+  opToColor: IntRefTbl.T; (* := IntRefTbl.New(); *)
+  colorToOp: TextRefTbl.T; (* := TextRefTbl.New(); *)
+
+CONST
+  NoOp = PaintOp.T{-123456};
+  NoRGB = Color.T{-1.0, -2.0, -3.0};
+
+TYPE
+  ColorEntry = REF RECORD
+    op: PaintOp.T := NoOp;
+    rgb: Color.T := NoRGB;
+  END;
+
+PROCEDURE <A NAME="ColorFromPaintOp"><procedure>ColorFromPaintOp</procedure></A> (op: PaintOp.T): TEXT RAISES {GEFError.T} =
+  VAR value: REFANY;
+  BEGIN
+    CASE op.op OF
+    | PaintOp.Bg.op =&gt; RETURN &quot;Bg&quot;
+    | PaintOp.Fg.op =&gt; RETURN &quot;Fg&quot;
+    ELSE
+      IF opToColor.get(op.op, value) THEN
+        RETURN value
+      ELSE
+        RAISE
+          GEFError.T(&quot;paint op given is not one gotten from a color text&quot;);
+      END;
+    END;
+  END ColorFromPaintOp;
+
+PROCEDURE <A NAME="ColorFromRGB"><procedure>ColorFromRGB</procedure></A> (rgb: Color.T): TEXT RAISES {GEFError.T} =
+  BEGIN
+    RETURN Fmt.F(&quot;%s %s %s&quot;, Fmt.Real(rgb.r), Fmt.Real(rgb.g),
+                 Fmt.Real(rgb.b));
+  END ColorFromRGB;
+
+PROCEDURE <A NAME="OKComponent"><procedure>OKComponent</procedure></A> (r: REAL; color: TEXT) RAISES {GEFError.T} =
+  BEGIN
+    IF r &lt; 0.0 OR r &gt; 1.0 THEN
+      RAISE
+        GEFError.T(
+          &quot;Bad color specification (need 0.0 &lt;= rgb &lt;= 1.0): &quot; &amp; color);
+    END;
+  END OKComponent;
+
+PROCEDURE <A NAME="PaintOpFromColor"><procedure>PaintOpFromColor</procedure></A> (color: TEXT): PaintOp.T
+  RAISES {GEFError.T, Thread.Alerted} =
+  VAR
+    entry: ColorEntry;
+    sx   : S_exp;
+    value: REFANY;
+  BEGIN
+    IF colorToOp.get(color, value) THEN
+      entry := value;
+      IF entry.op = NoOp THEN
+        OKComponent(entry.rgb.r, color);
+        OKComponent(entry.rgb.g, color);
+        OKComponent(entry.rgb.b, color);
+        entry.op := PaintOp.FromRGB(entry.rgb.r, entry.rgb.g, entry.rgb.b,
+                                    mode := PaintOp.Mode.Accurate);
+        EVAL opToColor.put(entry.op.op, color);
+      END;
+      RETURN entry.op
+    ELSE
+      TRY
+        sx := SxFromText(Fmt.F(&quot;(%s)&quot;, color));
+        color := GetColor(sx);
+        RETURN PaintOpFromColor(color); (* should work *)
+      EXCEPT
+      | Sx.ReadError, Rd.EndOfFile =&gt;
+          RAISE GEFError.T(&quot;Bad color name: &quot; &amp; color);
+      END;
+    END
+  END PaintOpFromColor;
+
+PROCEDURE <A NAME="RGBFromColor"><procedure>RGBFromColor</procedure></A> (color: TEXT): Color.T RAISES {GEFError.T, Thread.Alerted} =
+  VAR
+    entry: ColorEntry;
+    sx   : S_exp;
+    value: REFANY;
+  BEGIN
+    IF colorToOp.get(color, value) THEN
+      entry := value;
+      RETURN entry.rgb
+    ELSE
+      TRY
+        sx := SxFromText(color);
+        color := GetColor(sx);
+        RETURN RGBFromColor(color); (* should work *)
+      EXCEPT
+      | Sx.ReadError, Rd.EndOfFile =&gt;
+          RAISE GEFError.T(&quot;Bad color name: &quot; &amp; color);
+      END;
+    END
+  END RGBFromColor;
+</PRE> v is list element is one of text, name, list of reals/ints 
+<PRE>PROCEDURE <A NAME="GetColor"><procedure>GetColor</procedure></A> (VAR v: S_exp; default := FALSE): TEXT
+  RAISES {GEFError.T} =
+  &lt;* FATAL Thread.Alerted *&gt;
+  VAR
+    l    : RefList.T;
+    entry: S_exp;
+    res  : TEXT;
+    rgb  : Color.T;
+    op            := NoOp;
+  BEGIN
+    IF v = NIL AND default THEN RETURN &quot;Fg&quot; END;
+    l := NarrowToList(v, &quot;Expected list, found: &quot;);
+    entry := RefListUtils.Pop(l);
+    v := l;
+    TRY
+      TYPECASE entry OF
+      | NULL =&gt;
+          IF default THEN
+            RETURN &quot;Fg&quot;
+          ELSE
+            RAISE GEFError.T(&quot;Expected a color specification, found: ()&quot;);
+          END;
+      | TEXT (t) =&gt;
+          res := t;
+          IF Text.Equal(t, &quot;Bg&quot;) THEN
+            rgb := Color.T{1.0, 1.0, 1.0};
+            op := PaintOp.Bg;
+          ELSIF Text.Equal(t, &quot;Fg&quot;) THEN
+            rgb := Color.T{0.0, 0.0, 0.0};
+            op := PaintOp.Fg;
+          ELSE
+            rgb := ColorName.ToRGB(res);
+          END;
+      | Atom.T (sym) =&gt;
+          res := Atom.ToText(sym);
+          IF sym = Bg THEN
+            rgb := Color.T{1.0, 1.0, 1.0};
+            op := PaintOp.Bg;
+          ELSIF sym = Fg THEN
+            rgb := Color.T{0.0, 0.0, 0.0};
+            op := PaintOp.Fg;
+          ELSE
+            rgb := ColorName.ToRGB(res);
+          END;
+      | RefList.T (l) =&gt;
+          IF RefList.Length(l) = 3 THEN
+            rgb := Color.T{GetReal(entry), GetReal(entry), GetReal(entry)};
+            res := ColorFromRGB(rgb);
+          ELSE
+            RAISE GEFError.T(&quot;Expected a color specification, found: &quot;
+                               &amp; SLispClass.SxToText(l));
+          END;
+      | RReal, RInt =&gt;
+          VAR r: REAL;
+          BEGIN
+            IF RefList.Length(l) = 2 THEN
+              TYPECASE entry OF
+              | RReal (rr) =&gt; r := rr^;
+              | RInt (ri) =&gt; r := FLOAT(ri^);
+              ELSE
+                RAISE Fatal
+              END;
+              entry := l;
+              rgb := Color.T{r, GetReal(entry), GetReal(entry)};
+              res := ColorFromRGB(rgb);
+              v := NIL;
+            ELSE
+              RAISE GEFError.T(
+                      Fmt.F(&quot;Expected a color specification, found: %s %s&quot;,
+                            Fmt.Real(r), SLispClass.SxToText(l)));
+            END;
+          END;
+      ELSE
+        RAISE GEFError.T(
+                &quot;Expected a color specification, found: &quot; &amp; SLispClass.SxToText(v));
+      END;
+      EVAL colorToOp.put(res, NEW(ColorEntry, rgb := rgb, op := op));
+      RETURN res;
+    EXCEPT
+      ColorName.NotFound =&gt; RAISE GEFError.T(&quot;Bad color name: &quot; &amp; res)
+    END;
+  END GetColor;
+
+VAR
+  sxFoundry: Atom.T; (* := Atom.FromText(&quot;Foundry&quot;); *)
+  sxFamily: Atom.T; (*  := Atom.FromText(&quot;Family&quot;); *)
+  sxWeight: Atom.T; (*  := Atom.FromText(&quot;Weight&quot;); *)
+  sxSlant: Atom.T; (*  := Atom.FromText(&quot;Slant&quot;); *)
+  sxSize: Atom.T; (* := Atom.FromText(&quot;Size&quot;); *)
+</PRE> v is list element is one of text, name, list of reals/ints 
+<PRE>PROCEDURE <A NAME="GetFont"><procedure>GetFont</procedure></A> (VAR v: S_exp; default := FALSE): TEXT
+  RAISES {GEFError.T} =
+  &lt;* FATAL Thread.Alerted *&gt;
+  VAR
+    l    : RefList.T;
+    entry: S_exp;
+  BEGIN
+    IF v = NIL AND default THEN RETURN Builtin END;
+    l := NarrowToList(v, &quot;Expected list, found: &quot;);
+    entry := RefListUtils.Pop(l);
+    v := l;
+      TYPECASE entry OF
+      | NULL =&gt;
+          IF default THEN
+            RETURN Builtin
+          ELSE
+            RAISE GEFError.T(&quot;Expected a font specification, found: ()&quot;);
+          END;
+      | TEXT (t) =&gt;
+          RETURN t;
+      | Atom.T (sym) =&gt;
+          RETURN Atom.ToText(sym);
+      | RefList.T =&gt;
+          VAR foundry := &quot;*&quot;;
+              family := &quot;Helvetica&quot;;
+              weight := &quot;Medium&quot;;
+              slant := &quot;R&quot;;
+              size := 0.0353;
+              sx, sx2: S_exp;
+              name: Name;
+          BEGIN
+            RefListUtils.Push(l, entry); (* reassemble the list for convenience...*)
+            WHILE l # NIL DO
+              sx := RefListUtils.Pop(l);
+              TYPECASE sx OF
+              RefList.T(prop) =&gt;
+                IF RefList.Length(prop) # 2 THEN
+                  RAISE GEFError.T(&quot;Expected property list for font, found: &quot;
+                    &amp; SLispClass.SxToText(sx));
+                END;
+                sx2 := RefListUtils.Pop(prop);
+                sx := prop;
+                name := GetName(sx2);
+                IF name = sxFoundry THEN
+                  foundry := GetText(sx);
+                ELSIF name = sxFamily THEN
+                  family := GetText(sx);
+                ELSIF name = sxWeight THEN
+                  weight := GetText(sx);
+                ELSIF name = sxSlant THEN
+                  slant := GetText(sx);
+                ELSIF name = sxSize THEN
+                  size := GetReal(sx);
+                ELSE
+                  RAISE GEFError.T(&quot;Unexpected font property: &quot;
+                    &amp; SLispClass.SxToText(name));
+                END;
+              ELSE
+                 RAISE GEFError.T(&quot;Expected property list for font, found: &quot;
+                    &amp; SLispClass.SxToText(sx));
+              END;
+            END;
+            RETURN Fmt.F(&quot;-%s-%s-%s-%s-*-*-*-%s-*-*-*-*-*-*&quot;, foundry, family,
+              weight, slant, Fmt.Real(size));
+          END;
+      ELSE
+        RAISE GEFError.T(
+                &quot;Expected a font specification, found: &quot; &amp; SLispClass.SxToText(v));
+      END;
+  END GetFont;
+
+PROCEDURE <A NAME="GetEnum1"><procedure>GetEnum1</procedure></A> (name: Name; enums: Names): INTEGER RAISES {GEFError.T} =
+  BEGIN
+    FOR i := 0 TO LAST(enums^) DO
+      IF name = enums[i] THEN RETURN i END;
+    END;
+    RAISE
+      GEFError.T(&quot;Expected the name of an enumerated, found: &quot; &amp; Atom.ToText(name));
+  END GetEnum1;
+
+PROCEDURE <A NAME="GetEnum"><procedure>GetEnum</procedure></A> (VAR sx: S_exp; enums: Names; default := FALSE): INTEGER
+  RAISES {GEFError.T} =
+  &lt;* FATAL Thread.Alerted *&gt;
+  VAR
+    l    : RefList.T;
+    entry: S_exp;
+  BEGIN
+    IF sx = NIL AND default THEN RETURN 0 END;
+    l := NarrowToList(sx, &quot;Expected list, found: &quot;);
+    entry := RefListUtils.Pop(l);
+    sx := l;
+    TYPECASE entry OF
+    | NULL =&gt;
+        IF default THEN
+          RETURN 0
+        ELSE
+          RAISE GEFError.T(&quot;Expected the name of an enumerated, found: ()&quot;);
+        END;
+    | Atom.T (sym) =&gt; RETURN GetEnum1(sym, enums);
+    | Text.T (t) =&gt; RETURN GetEnum1(Atom.FromText(t), enums);
+    ELSE
+      RAISE GEFError.T(&quot;Expected the name of an enumerated, found: &quot;
+                        &amp; SLispClass.SxToText(entry));
+    END;
+  END GetEnum;
+
+PROCEDURE <A NAME="GetElem"><procedure>GetElem</procedure></A> (t: T; VAR sx: S_exp; default := FALSE): Elem
+  RAISES {GEFError.T, Thread.Alerted} =
+  VAR
+    entry: S_exp;
+  BEGIN
+    TYPECASE sx OF
+    | NULL =&gt;
+        IF default THEN
+          RETURN NIL
+        ELSE
+          RAISE GEFError.T(&quot;Expected an element, found: ()&quot;);
+        END;
+    | RefList.T (l) =&gt;
+        entry := RefListUtils.Pop(l);
+        sx := l;
+        RETURN entry;
+</PRE><BLOCKQUOTE><EM> SCG July 9        RETURN GetElem(t, entry); </EM></BLOCKQUOTE><PRE>
+    | RInt (i) =&gt; RETURN ElemFromNameInternal(t, Fmt.Int(i^));
+    | Atom.T (sym) =&gt; RETURN ElemFromNameInternal(t, Atom.ToText(sym));
+    | TEXT (txt) =&gt; RETURN ElemFromNameInternal(t, txt);
+    ELSE
+      RETURN CheckElem(sx);
+    END;
+  END GetElem;
+
+PROCEDURE <A NAME="CheckElem"><procedure>CheckElem</procedure></A> (elem: Elem): Elem RAISES {GEFError.T, Thread.Alerted} =
+  BEGIN
+    IF elem = NIL THEN RAISE GEFError.T(&quot;Expected an element, found: ()&quot;) END;
+
+    FOR i := 0 TO LAST(parseObjects^) DO
+      IF parseObjects[i] # NIL AND parseObjects[i].isType(elem) THEN
+        RETURN elem
+      END;
+    END;
+    RAISE GEFError.T(&quot;Expected an element, found: &quot; &amp; SLispClass.SxToText(elem));
+  END CheckElem;
+
+VAR
+  fontToName: IntRefTbl.T; (* := IntRefTbl.New(); *)
+  nameToFont: TextRefTbl.T; (* := TextRefTbl.New(); *)
+
+CONST
+  Builtin = &quot;BuiltIn&quot;;
+
+PROCEDURE <A NAME="NameFromFont"><procedure>NameFromFont</procedure></A> (font: Font.T): TEXT =
+  VAR val: REFANY;
+  BEGIN
+    IF fontToName.get(font.fnt, val) THEN
+      RETURN val
+    ELSE
+      RETURN Builtin
+    END;
+  END NameFromFont;
+
+PROCEDURE <A NAME="FontFromName"><procedure>FontFromName</procedure></A> (name: TEXT): Font.T =
+  VAR
+    val: REFANY;
+    rf : REF Font.T;
+    wf : GraphVBT.WorldFont;
+  BEGIN
+    IF nameToFont.get(name, val) THEN
+      RETURN NARROW(val, REF Font.T)^
+    ELSE
+      wf := GraphVBTExtras.WorldFontFromText(name);
+      rf := NEW(REF Font.T);
+      rf^ := GraphVBTExtras.FontFromWorldFont(wf);
+      EVAL fontToName.put(rf^.fnt, name);
+      EVAL nameToFont.put(name, rf);
+      RETURN rf^
+    END;
+  END FontFromName;
+</PRE> ********************** Registration ********************* 
+
+<P><PRE>PROCEDURE <A NAME="EnumsFromList"><procedure>EnumsFromList</procedure></A> (list: RefList.T): Names RAISES {GEFError.T} =
+  VAR
+    enums        := NEW(Names, RefList.Length(list));
+    l    : S_exp := list;
+  BEGIN
+    FOR i := 0 TO LAST(enums^) DO
+      enums[i] := NextName(l);
+    END;
+    RETURN enums;
+  END EnumsFromList;
+
+VAR
+  sxBoolean: Atom.T; (* := Atom.FromText(&quot;Boolean&quot;); *)
+  sxInteger: Atom.T; (* := Atom.FromText(&quot;Integer&quot;); *)
+  sxReal: Atom.T; (* := Atom.FromText(&quot;Real&quot;); *)
+  sxText: Atom.T; (* := Atom.FromText(&quot;Text&quot;); *)
+  sxName: Atom.T; (* := Atom.FromText(&quot;Name&quot;); *)
+  sxElem: Atom.T; (* := Atom.FromText(&quot;Elem&quot;); *)
+  sxColorSpec: Atom.T; (* := Atom.FromText(&quot;ColorSpec&quot;); *)
+  sxFontSpec: Atom.T; (* := Atom.FromText(&quot;FontSpec&quot;); *)
+  sxSx: Atom.T; (* := Atom.FromText(&quot;Sx&quot;); *)
+
+PROCEDURE <A NAME="NextFieldType"><procedure>NextFieldType</procedure></A> (VAR (* IN/OUT *) sx   : S_exp;
+                         VAR (* OUT *)    enums: Names ): FieldType
+  RAISES {GEFError.T} =
+  VAR
+    l  := NarrowToList(sx, &quot;Expected list, found: &quot;);
+    ra := RefListUtils.Pop(l);
+  BEGIN
+    sx := l;
+    TYPECASE ra OF
+    | NULL =&gt; RAISE Fatal;
+    | Atom.T (sym) =&gt;
+        IF sym = sxBoolean THEN
+          RETURN FieldType.Boolean
+        ELSIF sym = sxInteger THEN
+          RETURN FieldType.Integer
+        ELSIF sym = sxReal THEN
+          RETURN FieldType.Real
+        ELSIF sym = sxText THEN
+          RETURN FieldType.Text
+        ELSIF sym = sxElem THEN
+          RETURN FieldType.Elem
+        ELSIF sym = sxColorSpec THEN
+          RETURN FieldType.ColorSpec
+        ELSIF sym = sxFontSpec THEN
+          RETURN FieldType.FontSpec
+        ELSIF sym = sxSx THEN
+          RETURN FieldType.Sx
+        ELSE
+          RAISE Fatal
+        END;
+    | RefList.T (list) =&gt; enums := EnumsFromList(list); RETURN FieldType.Enum;
+    ELSE
+      RAISE Fatal;
+    END;
+  END NextFieldType;
+
+PROCEDURE <A NAME="VerifyEntries"><procedure>VerifyEntries</procedure></A> (READONLY field: Field; entries: S_exp): Names
+  RAISES {GEFError.T} =
+  VAR
+    res : Names;
+    list: RefList.T;
+  BEGIN
+    IF entries # NIL THEN
+      list := NarrowToList(entries, &quot;Entry names list expected, found:&quot;);
+      IF field.count # RefList.Length(list) THEN
+        RAISE GEFError.T(&quot;Wrong number of entries names for field: &quot;
+                          &amp; Atom.ToText(field.name))
+      END;
+      res := NEW(Names, RefList.Length(list));
+      FOR i := 0 TO LAST(res^) DO res[i] := NextName(entries) END;
+    END;
+    RETURN res;
+  END VerifyEntries;
+</PRE> entries and defaults need to be verified 
+<PRE>PROCEDURE <A NAME="AddField"><procedure>AddField</procedure></A> (po      : ParseObject;
+                    index   : INTEGER;
+                    name    : Name;
+                    type    : FieldType;
+                    enums   : Names;
+                    cnt     : INTEGER;
+                    entries : S_exp;
+                    defaults: S_exp        ) RAISES {GEFError.T, Thread.Alerted} =
+  VAR empty := -1;
+  BEGIN
+    FOR i := 0 TO LAST(po.fields^) DO
+      IF po.fields[i].name = NIL THEN empty := i; EXIT END;
+    END;
+    IF empty = -1 THEN
+      empty := NUMBER(po.fields^);
+      WITH new = NEW(Fields, empty + empty) DO
+        SUBARRAY(new^, 0, empty) := po.fields^;
+        po.fields := new;
+      END;
+      WITH new = NEW(Values, empty + empty) DO
+        SUBARRAY(new^, 0, empty) := po.values^;
+        po.values := new;
+      END;
+    END;
+    CASE type OF
+    | FieldType.Boolean, FieldType.Integer, FieldType.Real,
+        FieldType.Enum =&gt;
+        IF cnt = Infinity THEN
+          RAISE Fatal;           (* cannot handle (yet?) infinite number of
+                                    these *)
+        END;
+    ELSE
+    END;
+
+    WITH f = po.fields[empty] DO
+      f.name := name;
+      f.index := index;
+      f.type := type;
+      f.enums := enums;
+      f.count := cnt;
+      f.entries := VerifyEntries(f, entries);
+      po.values[empty].sx := NIL;
+      po.values[empty].vals := ValsFromSx(NIL, f, defaults, TRUE);
+    END;
+  END AddField;
+
+VAR
+  parseObjects: REF ARRAY OF ParseObject; (* := NEW(REF ARRAY OF ParseObject, 5); *)
+  sxField: Atom.T; (* := Atom.FromText(&quot;Field&quot;); *)
+
+PROCEDURE <A NAME="RegisterParseObject"><procedure>RegisterParseObject</procedure></A> (po: ParseObject) =
+  VAR
+    list := NarrowToList(SxFromText(po.args), &quot;Expected list, found: &quot;);
+    entry: S_exp;
+    enums: Names;
+    name : Name;
+  &lt;* FATAL Rd.EndOfFile, Sx.ReadError, Thread.Alerted, GEFError.T *&gt;
+  BEGIN
+    Startup();
+    po.fields := NEW(Fields, 4);
+    po.values := NEW(Values, 4);
+    WHILE list # NIL DO
+      entry := RefListUtils.Pop(list);
+      name := NextName(entry);
+      IF name = sxName THEN
+        IF po.name # NIL THEN RAISE Fatal END;
+        po.name := NextName(entry);
+      ELSIF name = sxField THEN
+        AddField(po, NextInteger(entry)^, NextName(entry),
+                 NextFieldType(entry, enums), enums, NextInteger(entry)^,
+                 NextSx(entry), NextSx(entry));
+      ELSE
+        RAISE Fatal;
+      END;
+      IF entry # NIL THEN RAISE Fatal END;
+    END;
+    IF po.name = NIL THEN RAISE Fatal END;
+    LOCK mu DO
+      FOR i := 0 TO LAST(parseObjects^) DO
+        IF parseObjects[i] = NIL THEN parseObjects[i] := po; RETURN END;
+      END;
+      WITH new = NEW(REF ARRAY OF ParseObject, 2 * NUMBER(parseObjects^)) DO
+        SUBARRAY(new^, 0, NUMBER(parseObjects^)) := parseObjects^;
+        new[NUMBER(parseObjects^)] := po;
+        parseObjects := new;
+      END;
+    END
+  END RegisterParseObject;
+</PRE> *************************** Generating FV ************************ 
+
+<P><PRE>PROCEDURE <A NAME="FVName"><procedure>FVName</procedure></A> (name: Name; names: Names; i: INTEGER): TEXT =
+  BEGIN
+    IF names = NIL THEN
+      RETURN Atom.ToText(name)
+    ELSE
+      RETURN Atom.ToText(name) &amp; Atom.ToText(names[i])
+    END;
+  END FVName;
+
+CONST TF = ARRAY BOOLEAN OF TEXT{&quot;TRUE&quot;, &quot;FALSE&quot;};
+
+PROCEDURE <A NAME="PutField"><procedure>PutField</procedure></A> (wr           : Wr.T;
+                    type         : FieldType;
+                    label, fvName: TEXT;
+                    vals         : Vals;
+                    ival         : INTEGER;
+                    enums        : Names      ) =
+  &lt;* FATAL Wr.Failure, Thread.Alerted *&gt;
+  BEGIN
+    IF label = NIL THEN label := &quot;&quot; END;
+    IF fvName = NIL THEN fvName := &quot;&quot; END;
+    CASE type OF
+    | FieldType.Boolean =&gt;
+        Wr.PutText(wr, Fmt.F(&quot;(Boolean %%s =#%s \&quot;%s\&quot;)&quot;, fvName,
+                             TF[NARROW(vals, Bools)[ival]], label));
+    | FieldType.Integer =&gt;
+        Wr.PutText(
+          wr, Fmt.F(&quot;(Shape (Width + 0) \&quot;%s: \&quot;) (Numeric %%s =%s)&quot;,
+                    label, fvName, Fmt.Int(NARROW(vals, Ints)[ival])));
+    | FieldType.Real =&gt;
+        Wr.PutText(
+          wr, Fmt.F(&quot;(Shape (Width + 0) \&quot;%s: \&quot;) (TextArea %%s =\&quot;%s\&quot;)&quot;,
+                    label, fvName, Fmt.Real(NARROW(vals, Reals)[ival])));
+    | FieldType.Text, FieldType.ColorSpec, FieldType.FontSpec =&gt;
+        Wr.PutText(
+          wr, Fmt.F(&quot;(Shape (Width + 0) \&quot;%s: \&quot;) (TextArea %%s =\&quot;%s\&quot;)&quot;,
+                    label, fvName, NARROW(vals, Texts)[ival]));
+    | FieldType.Elem, FieldType.Sx =&gt;
+        Wr.PutText(
+          wr, Fmt.F(&quot;(Shape (Width + 0) \&quot;%s: \&quot;) (TextArea %%s )&quot;, label,
+                    fvName));
+    | FieldType.Enum =&gt;
+        Wr.PutText(wr, Fmt.F(&quot;(Radio %%s (HBox &quot;, fvName));
+        FOR i := 0 TO LAST(enums^) DO
+          Wr.PutText(wr, Fmt.F(&quot;(Choice %%s%s \&quot;%s\&quot;)&quot;, fvName,
+                               Atom.ToText(enums[i]), Atom.ToText(enums[i])));
+        END;
+        Wr.PutText(wr, &quot; Fill) ) &quot;);
+    END;
+  END PutField;
+
+PROCEDURE <A NAME="FvField"><procedure>FvField</procedure></A> (wr: Wr.T; VAR (* in/out *) field: Field; vals: Vals) =
+  VAR
+    fvName, label: TEXT;
+    count        : INTEGER;
+    &lt;* FATAL Wr.Failure, Thread.Alerted *&gt;
+  BEGIN
+    IF field.name # NIL THEN
+      Wr.PutText(
+        wr, Fmt.F(&quot;(HBox (Shape (Width + 0) \&quot;%s: \&quot;)&quot;, Atom.ToText(field.name)));
+      IF field.count = Infinity THEN
+        count := 1;
+      ELSE
+        count := field.count;
+      END;
+      field.fvNames := NEW(Texts, count);
+      FOR i := 0 TO count - 1 DO
+        IF field.entries # NIL THEN
+          label := Atom.ToText(field.entries[i])
+        ELSE
+          label := NIL;
+        END;
+        fvName := FVName(field.name, field.entries, i);
+        field.fvNames[i] := fvName;
+        PutField(wr, field.type, label, fvName, vals, i, field.enums);
+      END;
+      Wr.PutText(wr, &quot; Fill )&quot;);
+    END;
+  END FvField;
+
+CONST
+  FvHead = &quot;(VBox (HBox (Shape (Width + 0) (Text %ElemType \&quot;\&quot;)) (Glue 2) (TextArea %Name) Fill )&quot;;
+  FvTail = &quot; Fill )&quot;;
+
+PROCEDURE <A NAME="FVFromArgs"><procedure>FVFromArgs</procedure></A> (po: ParseObject): TEXT =
+  VAR wr := TextWr.New();        &lt;* FATAL Wr.Failure, Thread.Alerted *&gt;
+  BEGIN
+    Wr.PutText(wr, FvHead);
+    FOR i := 0 TO LAST(po.fields^) DO
+      FvField(wr, po.fields[i], po.values[i].vals);
+    END;
+    Wr.PutText(wr, FvTail);
+    RETURN TextWr.ToText(wr);
+  END FVFromArgs;
+
+PROCEDURE <A NAME="ReportError"><procedure>ReportError</procedure></A> (fv: FormsVBT.T; msg: TEXT) =
+  VAR v: VBT.T;
+  &lt;* FATAL FormsVBT.Unimplemented *&gt;
+  BEGIN
+    TRY
+      FormsVBT.PutText(fv, &quot;stderr&quot;, msg);
+      FormsVBT.PopUp(fv, &quot;errorPopup&quot;);
+    EXCEPT
+    | FormsVBT.Error =&gt;
+        (* search up parent tree for a parent fv.  This is need for
+           reporting error on generated forms ... *)
+        v := VBT.Parent(fv);
+        LOOP
+          TYPECASE v OF
+          | FormsVBT.T (fv2) =&gt; ReportError(fv2, msg); RETURN;
+          ELSE
+            v := VBT.Parent(v);
+          END;
+        END;
+    END;
+  END ReportError;
+
+PROCEDURE <A NAME="BuiltinFont"><procedure>BuiltinFont</procedure></A> () =
+  VAR rf := NEW(REF Font.T);
+  &lt;* FATAL Wr.Failure, Thread.Alerted *&gt;
+  BEGIN
+    rf^ := GraphVBTExtras.FontFromWorldFont(GraphVBT.DefaultFont);
+    EVAL fontToName.put(rf^.fnt, Builtin);
+    EVAL nameToFont.put(Builtin, rf);
+  END BuiltinFont;
+
+PROCEDURE <A NAME="SxFromText"><procedure>SxFromText</procedure></A>(t: TEXT): Sx.T RAISES {Sx.ReadError} =
+  &lt;* FATAL Wr.Failure, Rd.EndOfFile, Thread.Alerted *&gt;
+  BEGIN
+    RETURN Sx.Read(TextRd.New(t));
+  END SxFromText;
+</PRE> Intended to cure initialization order problems. 
+<PRE>PROCEDURE <A NAME="Startup"><procedure>Startup</procedure></A> () =
+  BEGIN
+    IF RInfinity = NIL THEN
+      RInfinity := NEW(RInt);
+      uid := 1;
+      nameID := NameIDInit;
+      NullObj := NEW(Obj);
+      Bg := Atom.FromText(&quot;Bg&quot;);
+      Fg := Atom.FromText(&quot;Fg&quot;);
+
+      opToColor := NEW(IntRefTbl.Default).init();
+      colorToOp := NEW(TextRefTbl.Default).init();
+      fontToName := NEW(IntRefTbl.Default).init();
+      nameToFont := NEW(TextRefTbl.Default).init();
+
+      sxFoundry := Atom.FromText(&quot;Foundry&quot;);
+      sxFamily := Atom.FromText(&quot;Family&quot;);
+      sxWeight := Atom.FromText(&quot;Weight&quot;);
+      sxSlant := Atom.FromText(&quot;Slant&quot;);
+      sxSize := Atom.FromText(&quot;Size&quot;);
+
+      sxBoolean := Atom.FromText(&quot;Boolean&quot;);
+      sxInteger := Atom.FromText(&quot;Integer&quot;);
+      sxReal := Atom.FromText(&quot;Real&quot;);
+      sxText := Atom.FromText(&quot;Text&quot;);
+      sxName := Atom.FromText(&quot;Name&quot;);
+      sxElem := Atom.FromText(&quot;Elem&quot;);
+      sxSx := Atom.FromText(&quot;Sx&quot;);
+
+      sxColorSpec := Atom.FromText(&quot;ColorSpec&quot;);
+      sxFontSpec := Atom.FromText(&quot;FontSpec&quot;);
+
+      parseObjects := NEW(REF ARRAY OF ParseObject, 5);
+      sxField := Atom.FromText(&quot;Field&quot;);
+
+      RInfinity^ := Infinity;
+      mu := NEW(MUTEX);
+      BuiltinFont();
+    END;
+  END Startup;
+
+BEGIN
+  Startup();
+END GEFClass.
+</PRE>
+</inModule>
+<HR>
+<A NAME="x1">interface FloatMode is in:
+</A><UL>
+<LI><A HREF="../../float/src/DS3100/FloatMode.i3.html#0TOP0">float/src/DS3100/FloatMode.i3</A>
+<LI><A HREF="../../float/src/IEEE-default/FloatMode.i3.html#0TOP0">float/src/IEEE-default/FloatMode.i3</A>
+<LI><A HREF="../../float/src/IRIX5/FloatMode.i3.html#0TOP0">float/src/IRIX5/FloatMode.i3</A>
+<LI><A HREF="../../float/src/SOLsun/FloatMode.i3.html#0TOP0">float/src/SOLsun/FloatMode.i3</A>
+<LI><A HREF="../../float/src/SPARC/FloatMode.i3.html#0TOP0">float/src/SPARC/FloatMode.i3</A>
+<LI><A HREF="../../float/src/SUN386/FloatMode.i3.html#0TOP0">float/src/SUN386/FloatMode.i3</A>
+<LI><A HREF="../../float/src/VAX/FloatMode.i3.html#0TOP0">float/src/VAX/FloatMode.i3</A>
+</UL>
+<P>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

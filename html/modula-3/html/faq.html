@@ -1,0 +1,317 @@
+<HTML>
+<HEAD>
+<TITLE>Modula-3 Frequently Asked Questions</TITLE>
+</HEAD>
+<BODY BGCOLOR="#ffffff" VLINK="#006633">
+
+<A NAME="TOP">
+<H2>Modula-3 Frequently Asked Questions</H2>
+</A>
+
+<UL>
+<LI><A HREF="#a1">The language</A>
+  <UL>
+  <LI><A HREF="#a1.1">What is Modula-3?</A>
+  <LI><A HREF="#a1.2">Is Modula-3 a superset of Modula-2?</A>
+  </UL>
+<LI><A HREF="#a2">The documentation</A>
+  <UL>
+  <LI><A HREF="#a2.1">Where can I get a description of Modula-3? </A>
+  <LI><A HREF="#a2.2">Where can I get other information on Modula-3?</A>
+  </UL>
+<LI><A HREF="#a3">The implementations</A>
+  <UL>
+  <LI><A HREF="#a3.1">Where can I get an implementation?</A>
+  <LI><A HREF="srcm3.html">What is SRC Modula-3?</A>
+  <LI><A HREF="m3pc.html">What is m3pc?</A>
+  <LI><A HREF="ex32.html">What is M3forDOS?</A>
+  <LI><A HREF="gnu-m3.html">What is GNU Modula-3?</A>
+  </UL>
+<LI><A HREF="#a4">Some specific questions</A>
+  <UL>
+  <LI><A HREF="#a4.1">Why is "Hello World" so large?</A>
+  <LI><A HREF="#a4.2">Why objects and interfaces?</A>
+  <LI><A HREF="#a4.3">What is the story with Trestle and OpenWindows?</A>
+  <LI><A HREF="#a4.4">When is the next release of SRC Modula-3?</A>
+  </UL>
+<LI><A HREF="#a5">FTP</A>
+  <UL>
+  <LI><A HREF="#a5.1">What if I don't have ftp access?</A>
+  </UL>
+<LI><A HREF="#a6">Contributing</A>
+  <UL>
+  <LI><A HREF="#a6.1">Can I contribute Modula-3 software?</A>
+  </UL>
+</UL>
+
+<A NAME="a1"><HR><H2>The language</H2></A>
+<P>
+
+<A NAME="a1.1"><H3>What is Modula-3?</H3></A>
+<P>
+
+Modula-3 is a systems programming language that descends from Mesa,
+Modula-2, Cedar, and Modula-2+.  It also resembles its cousins
+Object Pascal, Oberon, and Euclid.
+<P>
+
+The goal of Modula-3 is to be as simple and safe as it can be while
+meeting the needs of modern systems programmers.  Instead of
+exploring new features, we studied the features of the Modula
+family of languages that have proven themselves in practice and
+tried to simplify them into a harmonious language.  We found that
+most of the successful features were aimed at one of two main
+goals: greater robustness, and a simpler, more systematic type
+system.
+<P>
+
+Modula-3 retains one of Modula-2's most successful features, the
+provision for explicit interfaces between modules.  It adds objects
+and classes, exception handling, garbage collection, lightweight
+processes (or threads), and the isolation of unsafe features.
+<P>
+
+<A NAME="a1.2"><H3>Is Modula-3 a superset of Modula-2?</H3></A>
+<P>
+
+No; valid Modula-2 programs are not valid Modula-3 programs.  However,
+there is a tool to help convert Modula-2 programs to Modula-3.
+<P>
+
+<A NAME="a2"><HR><H2>The documentation</H2></A>
+<P>
+
+<A NAME="a2.1"><H3>Where can I get a description of Modula-3?</H3></A>
+
+The definition of Modula-3 is contained in:
+<A HREF="bib.html#SPwM3">"System Programming with Modula-3"</A>
+also known as <i>SPwM3</i>.
+<P>
+
+Chapters 2 and 3 have been reprinted in
+<A HREF="bib.html#sigplan">Sigplan Notices</A>,
+Volume 27, Number 8, August 1992, pp 15-42.
+<P>
+
+Sam Harbison has written a more tutorial book titled
+<A HREF="bib.html#m3-Har92">Modula3</A>.
+
+The errata sheet is available via anonymous ftp from
+<tt>gatekeeper.dec.com</tt>
+and its <A HREF="ftp.html">mirrors</A>
+in <tt>pub/DEC/Modula-3/errata</tt>.
+<P>
+
+<A NAME="a2.2"><H3>Where can I get other information on Modula-3?</H3></A>
+<P>
+
+There is a Usenet newsgroup,
+<A HREF="contacts.html"><b>comp.lang.modula3</b></A>.
+<P>
+
+A more extensive <A HREF="bib.html">Modula-3 bibliography</A>
+is available here.
+<P>
+
+<A NAME="a3"><HR><H2>The implementations</H2></A>
+<P>
+
+<A NAME="a3.1"><H3>Where can I get an implementation?</H3></A>
+<P>
+
+Three implementations are available,
+<A HREF="srcm3.html">SRC Modula-3</A> and two
+PC versions,
+<A HREF="m3pc.html">m3pc</A>
+and
+<A HREF="ex32.html">M3forDOS</A>.
+<P>
+
+Apparently work on
+<A HREF="gnu-m3.html">GNU Modula-3</A>
+has stopped.
+<P>
+
+As far as we know, implementations are not available for VMS or Macintosh.
+<P>
+
+<A NAME="a3.2"><H3>What is SRC Modula-3?</H3></A>
+<P>
+
+<A HREF="srcm3.html">SRC Modula-3</A> was built by the
+<A HREF="../../home.html">DEC Systems Reseach Center</A>
+and is available via anonymous ftp from <tt>gatekeeper.dec.com</tt>
+and its <A HREF="ftp.html">mirrors</A> in
+<A HREF="ftp://gatekeeper.dec.com/pub/DEC/Modula-3">
+<tt>pub/DEC/Modula-3/release-X.Y</tt></A>.
+<P>
+
+<A NAME="a3.3"><H3>What is m3pc?</H3></A>
+<P>
+
+<A HREF="m3pc.html">m3pc</A> is a port of SRC Modula-3 version 2.11
+to a PC running MSDOS.
+
+<A NAME="a3.4"><H3>What is M3forDOS?</H3></A>
+<P>
+
+<A HREF="ex32.html">M3forDOS</A> is a port of SRC Modula-3
+version 3.1 to a PC running MSDOS. 
+<A HREF="ex32.html">ex32</A> is the name of the DOS extender
+used by that system.
+
+<A NAME="a3.5"><H3>What is GNU Modula-3?</H3></A>
+<P>
+
+<A HREF="gnu-m3.html">GNU Modula-3</A> was an independent
+implementation that was to be fully integrated with gcc.
+<P>
+
+<A NAME="a4"><HR><H2>Some specific questions</H2></A>
+<P>
+
+<A NAME="a4.1"><H3>Why is "Hello World" so large?</H3></A>
+<P>
+
+Modula-3 programs are larger than C programs for the following reasons:
+<OL>
+<LI> The fixed runtime is substantially larger.  It contains a
+garbage collector, a thread runtime, and exception support.
+Note that "Hello World" is virtually all runtime.  For
+larger programs the runtime is not an issue.
+
+<LI> The generated code includes runtime checks for out-of-bound
+array references and NIL pointer.  Many of these checks could
+be removed by a better compiler.  The current compiler is
+only a research prototype.
+
+<LI> The compiler generates C code as its intermediate language
+consequently the final machine code suffers.  For example,
+the compiler is constantly storing single-precision floating
+point values into memory to get around C's predisposition
+for double precision.
+</OL>
+
+<A NAME="a4.2"><H3>Why objects and interfaces?</H3></A>
+<P>
+
+Allan Heydon on <tt>comp.lang.modula3</tt>,  May 4th 1993:
+<P>
+<BLOCKQUOTE>
+Modula-3 provides two separate mechanisms for data-hiding: one for 
+hiding details about how interfaces are implemented, and the other 
+for hiding details about how objects are implemented.
+<P>
+
+The first data-hiding mechanism is realized by the distinction between 
+interfaces and modules. Clients can only import interfaces, so the 
+names declared in the modules implementing those interfaces are hidden 
+from clients. Note that this mechanism has only two levels; a name 
+is either declared in an interface, or it isn't. If a name is only 
+declared in a module, it can't be used by a client. 
+<P>
+
+The second data-hiding mechanism is realized by opaque types and 
+revelations. A Modula-3 interface may declare an object type to be 
+opaque, in which case only a subset of the fields and methods of 
+that object are revealed to clients importing the interface. Furthermore, 
+the Modula-3 revelation mechanism allows a designer to reveal successively 
+more fields and methods of an object in a series of interfaces. The 
+fields and methods visible to a client then depends on which interfaces 
+the client imports. 
+<P>
+
+The latter mechanism is quite flexible. As opposed to the interface/module 
+data-hiding mechanism, opaque types allow you to define an arbitrary 
+number of levels at which more and more information about the implementation 
+of your object is revealed. 
+<P>
+
+See Sections 2.2.10, 2.4.6, and 2.4.7 of "Systems Programming with 
+Modula-3" for more information about opaque types and about partial 
+and complete revelations. 
+</BLOCKQUOTE>
+<P>
+
+<A NAME="a4.3"><H3>What is the story with Trestle and OpenWindows?</H3></A>
+<P>
+
+Mark Manasse says: 
+<P>
+<BLOCKQUOTE>
+I think that the OpenWindows release should be enough (no need to 
+get the MIT X release], although there are a few things in Trestle
+that trigger devastating bugs in OpenWindows. But the only library
+we depend on is Xlib, R4 or later.
+<P>
+
+The main thing I know that crashes OW 2.0 is the code where we call 
+GrabKey specifying AnyKey.  You can either loop over all of the 
+keys, or you can just comment out the call; programs won't run exactly 
+the same, but you probably won't notice the difference.
+</BLOCKQUOTE>
+<P>
+
+<A NAME="a4.4"><H3>When is the next release of SRC Modula-3?</H3></A>
+<P>
+
+The next release will be called 3.5.4 (or 3.6).  At this time there is no
+scheduled release date.
+<P>
+
+<A NAME="a5"><HR><H2>FTP</H2></A>
+<P>
+
+<A NAME="a5.1"><H3>What if I don't have ftp access?</H3></A>
+
+Unfortunately, we cannot deliver Modula-3 other than by 
+anonymous ftp.  
+<P>
+
+Fortunately, Prime Time Freeware (PTF) includes Modula-3.  PTF is
+a set of two ISO-9660 CDroms filled with 3GB of freeware, issued
+semi-annually.  The latest issue, Volume 1, Number 2, July 1992,
+contains SRC Modula-3 2.07.  PTF is distributed via bookstores and
+mail.  You can reach PTF using:
+<PRE>
+    Email:  ptf@cfcl.com
+    Fax:    [1] (408) 738 2050
+    Voice:  [1] (408) 738 4832
+    Mail:   Prime Time Freeware
+    415-112 N. Mary Ave., Suite 50
+    Sunnyvale, CA 94086
+    USA
+</PRE>
+
+<A NAME="a6"><HR><H2>Contributing</H2></A>
+<P>
+
+<A NAME="a6.1"><H3>Can I contribute Modula-3 software?</H3></A>
+<P>
+
+Certainly.  Send us what you are willing to share, be it programs,
+libraries or other things.  We'll put them in the distribution.
+<P>
+
+Right now, the <tt>pub/DEC/Modula-3/contrib</tt> directory contains:
+<PRE>
+    m3rpc     an rpc system from Xerox Parc
+    M2toM3    a translator from Modula-2 to Modula-3
+    m3pc      an implementation of Modula-3 (v2.11) for PCs
+    M3forDOS  an implementation of Modula-3 (v3.1) for PCs.
+</PRE>
+
+<HR>
+<A HREF="home.html">[Modula-3 home page]</A>
+<P>
+<A HREF="mailto:m3-request@src.dec.com">
+<ADDRESS>m3-request@src.dec.com</ADDRESS></A>
+<PRE>
+Last modified on Thu Jan  4 11:08:07 PST 1996 by heydon
+     modified on Thu Jun 15 15:32:23 PDT 1995 by kalsow
+</PRE>
+
+Copyright (C) 1992, 1996, Digital Equipment Corporation. All rights reserved.<BR>
+See the <A HREF="http://www.research.digital.com/SRC/m3sources/html/COPYRIGHT.html">COPYRIGHT</A> for a full description.
+</BODY>
+</HTML>

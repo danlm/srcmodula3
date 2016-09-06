@@ -1,0 +1,482 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: runtime/src/POSIX/RTThread.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>runtime/src/POSIX/RTThread.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM>                                                            </EM></BLOCKQUOTE><PRE>
+
+INTERFACE <interface><A HREF="#x1">RTThread</A></interface>;
+
+IMPORT <A HREF="#x2">Usignal</A>, <A HREF="#x3">RTMachine</A>;
+</PRE>--------------------------------------------------------- machine state ---
+
+<P><PRE>TYPE
+  State = RTMachine.State;
+  (* The machine state is saved in a State.  This type is really opaque
+     to the client, i.e. it does not need to be an array. *)
+
+CONST
+  Save = RTMachine.SaveState;
+  (* Captures the currently running thread's state *)
+
+&lt;*EXTERNAL &quot;RTThread__Transfer&quot;*&gt;
+PROCEDURE Transfer (VAR from, to: State);
+  (* Records the current machine state in &quot;from&quot; and sets
+     the machine state to that contained in &quot;to&quot;. *)
+
+PROCEDURE <A HREF="#x4">SP</A> (READONLY s: State): ADDRESS;
+  (* Returns the stack pointer associated with s *)
+</PRE>--------------------------------------------------------- thread stacks ---
+
+<P><PRE>CONST (* additional padding words to copy when creating a new thread *)
+  FramePadBottom = RTMachine.FramePadBottom;
+  FramePadTop    = RTMachine.FramePadTop;
+
+TYPE
+  StackSpace = UNTRACED REF ARRAY OF INTEGER;
+  Stack = RECORD
+    words : StackSpace;
+    first : ADDRESS;
+    last  : ADDRESS;
+  END;
+  (* The range of usable addresses in &quot;bytes^&quot; is &quot;[first .. last)&quot;. *)
+
+CONST
+  PointerAlignment = RTMachine.PointerAlignment;
+  (* The C compiler allocates all pointers on &quot;PointerAlignment&quot;-byte
+     boundaries.  The garbage collector scans thread stacks, but only
+     looks at these possible pointer locations.  Setting this value
+     smaller than is needed will only make your system run slower.
+     Setting it too large will cause the collector to collect storage
+     that is not free. *)
+
+  StackFrameAlignment = RTMachine.StackFrameAlignment;
+  (* Stack frames must be aligned to this constraint (in ADRSIZE units).
+     It's not a big deal if this value is too large, but it may break
+     the thread mechanism to make it too small. *)
+
+PROCEDURE <A HREF="RTThreadStk.m3.html#GetStack">GetStack</A> (size: INTEGER;  VAR(*OUT*) s: Stack);
+</PRE><BLOCKQUOTE><EM> Acquire a thread stack with at least <CODE>size</CODE> usable <CODE>INTEGER</CODE>s of storage,
+   from the current pool.  If necessary, allocate a new stack. </EM></BLOCKQUOTE><PRE>
+
+PROCEDURE <A HREF="RTThreadStk.m3.html#FreeStack">FreeStack</A> (VAR(*IN/OUT*) s: Stack);
+</PRE><BLOCKQUOTE><EM> Return <CODE>s</CODE> to the free pool of stacks. </EM></BLOCKQUOTE><PRE>
+
+PROCEDURE <A HREF="#x5">NewStack</A> (size: INTEGER;  VAR(*OUT*) s: Stack);
+</PRE><BLOCKQUOTE><EM> Allocate a new thread stack with at least <CODE>size</CODE> usable <CODE>INTEGER</CODE>s
+   of storage,  if possible unmap its guard page, and return it in <CODE>s</CODE>. </EM></BLOCKQUOTE><PRE>
+
+PROCEDURE <A HREF="#x6">DisposeStack</A> (VAR(*IN/OUT*) s: Stack);
+</PRE><BLOCKQUOTE><EM> Dispose of <CODE>s</CODE> and remap its guard page. </EM></BLOCKQUOTE><PRE>
+
+PROCEDURE <A HREF="#x7">FlushStackCache</A> ();
+</PRE><BLOCKQUOTE><EM> Ensure that the in-memory contents of the stack are up-to-date.
+   On some machines, the stack is cached; for example, on SPARC, the stack
+   is partially cached in the registers. </EM></BLOCKQUOTE><PRE>
+</PRE>-------------------------------------------------- modifying the models ---
+
+<P> When a new thread is forked, the contents of its stack and its state
+   are built from models.  The only difference with the model is the location
+   of the stack.  The two procedures below are used to modify the values of 
+   the model to point to the correct state.  offset is the difference 
+   between the actual stack location and the model stack location 
+
+<P><PRE>PROCEDURE <A HREF="#x8">UpdateStateForNewSP</A> (VAR s: State;  offset: INTEGER);
+</PRE><BLOCKQUOTE><EM> Update the state </EM></BLOCKQUOTE><PRE>
+
+PROCEDURE <A HREF="#x9">UpdateFrameForNewSP</A> (a: ADDRESS;  offset: INTEGER);
+</PRE><BLOCKQUOTE><EM> Update the stack frame.  <CODE>a</CODE> is the correct value for the <CODE>SP</CODE>
+     on the stack that contains that frame. </EM></BLOCKQUOTE><PRE>
+</PRE>------------------------------------ manipulating the SIGVTALRM handler ---
+
+<P><PRE>PROCEDURE <A HREF="#x10">setup_sigvtalrm</A> (handler: Usignal.SignalHandler);
+PROCEDURE <A HREF="#x11">allow_sigvtalrm</A> ();
+PROCEDURE <A HREF="#x12">disallow_sigvtalrm</A> ();
+</PRE>---------------------------------------------------- exception delivery ---
+
+<P><PRE>&lt;*EXTERNAL &quot;RTThread__handlerStack&quot; *&gt;
+VAR handlerStack: ADDRESS;
+</PRE><BLOCKQUOTE><EM> linked list of exception frames. </EM></BLOCKQUOTE><PRE>
+
+END RTThread.
+</PRE>
+</inInterface>
+<HR>
+<A NAME="x1">RTThread's implementation  is in:
+</A><UL>
+<LI><A HREF="../AIX386/RTThread.m3.html#0TOP0">runtime/src/AIX386/RTThread.m3</A>
+<LI><A HREF="../ALPHA_OSF/RTThread.m3.html#0TOP0">runtime/src/ALPHA_OSF/RTThread.m3</A>
+<LI><A HREF="../AP3000/RTThread.m3.html#0TOP0">runtime/src/AP3000/RTThread.m3</A>
+<LI><A HREF="../ARM/RTThread.m3.html#0TOP0">runtime/src/ARM/RTThread.m3</A>
+<LI><A HREF="../DS3100/RTThread.m3.html#0TOP0">runtime/src/DS3100/RTThread.m3</A>
+<LI><A HREF="../FreeBSD/RTThread.m3.html#0TOP0">runtime/src/FreeBSD/RTThread.m3</A>
+<LI><A HREF="../FreeBSD2/RTThread.m3.html#0TOP0">runtime/src/FreeBSD2/RTThread.m3</A>
+<LI><A HREF="../HP300/RTThread.m3.html#0TOP0">runtime/src/HP300/RTThread.m3</A>
+<LI><A HREF="../HPPA/RTThread.m3.html#0TOP0">runtime/src/HPPA/RTThread.m3</A>
+<LI><A HREF="../IBMR2/RTThread.m3.html#0TOP0">runtime/src/IBMR2/RTThread.m3</A>
+<LI><A HREF="../IBMRT/RTThread.m3.html#0TOP0">runtime/src/IBMRT/RTThread.m3</A>
+<LI><A HREF="../IRIX5/RTThread.m3.html#0TOP0">runtime/src/IRIX5/RTThread.m3</A>
+<LI><A HREF="../LINUX/RTThread.m3.html#0TOP0">runtime/src/LINUX/RTThread.m3</A>
+<LI><A HREF="../LINUXELF/RTThread.m3.html#0TOP0">runtime/src/LINUXELF/RTThread.m3</A>
+<LI><A HREF="../NEXT/RTThread.m3.html#0TOP0">runtime/src/NEXT/RTThread.m3</A>
+<LI><A HREF="../OKI/RTThread.m3.html#0TOP0">runtime/src/OKI/RTThread.m3</A>
+<LI><A HREF="RTThreadStk.m3.html#0TOP0">runtime/src/POSIX/RTThreadStk.m3</A>
+<LI><A HREF="../SEQUENT/RTThread.m3.html#0TOP0">runtime/src/SEQUENT/RTThread.m3</A>
+<LI><A HREF="../SOLgnu/RTThread.m3.html#0TOP0">runtime/src/SOLgnu/RTThread.m3</A>
+<LI><A HREF="../SOLsun/RTThread.m3.html#0TOP0">runtime/src/SOLsun/RTThread.m3</A>
+<LI><A HREF="../SPARC/RTThread.m3.html#0TOP0">runtime/src/SPARC/RTThread.m3</A>
+<LI><A HREF="../SUN3/RTThread.m3.html#0TOP0">runtime/src/SUN3/RTThread.m3</A>
+<LI><A HREF="../SUN386/RTThread.m3.html#0TOP0">runtime/src/SUN386/RTThread.m3</A>
+<LI><A HREF="../UMAX/RTThread.m3.html#0TOP0">runtime/src/UMAX/RTThread.m3</A>
+<LI><A HREF="../VAX/RTThread.m3.html#0TOP0">runtime/src/VAX/RTThread.m3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x2">interface Usignal is in:
+</A><UL>
+<LI><A HREF="../../../unix/src/aix-3-2/Usignal.i3.html#0TOP0">unix/src/aix-3-2/Usignal.i3</A>
+<LI><A HREF="../../../unix/src/aix-ps2-1-2/Usignal.i3.html#0TOP0">unix/src/aix-ps2-1-2/Usignal.i3</A>
+<LI><A HREF="../../../unix/src/freebsd-1/Usignal.i3.html#0TOP0">unix/src/freebsd-1/Usignal.i3</A>
+<LI><A HREF="../../../unix/src/freebsd-2/Usignal.i3.html#0TOP0">unix/src/freebsd-2/Usignal.i3</A>
+<LI><A HREF="../../../unix/src/hpux-7-0/Usignal.i3.html#0TOP0">unix/src/hpux-7-0/Usignal.i3</A>
+<LI><A HREF="../../../unix/src/ibm-4-3/Usignal.i3.html#0TOP0">unix/src/ibm-4-3/Usignal.i3</A>
+<LI><A HREF="../../../unix/src/irix-5.2/Usignal.i3.html#0TOP0">unix/src/irix-5.2/Usignal.i3</A>
+<LI><A HREF="../../../unix/src/linux/Usignal.i3.html#0TOP0">unix/src/linux/Usignal.i3</A>
+<LI><A HREF="../../../unix/src/osf-1.ALPHA_OSF/Usignal.i3.html#0TOP0">unix/src/osf-1.ALPHA_OSF/Usignal.i3</A>
+<LI><A HREF="../../../unix/src/osf-1.DS3100/Usignal.i3.html#0TOP0">unix/src/osf-1.DS3100/Usignal.i3</A>
+<LI><A HREF="../../../unix/src/solaris-2-x/Usignal.i3.html#0TOP0">unix/src/solaris-2-x/Usignal.i3</A>
+<LI><A HREF="../../../unix/src/sunos-4-x/Usignal.i3.html#0TOP0">unix/src/sunos-4-x/Usignal.i3</A>
+<LI><A HREF="../../../unix/src/sysv-4.0/Usignal.i3.html#0TOP0">unix/src/sysv-4.0/Usignal.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.AP3000/Usignal.i3.html#0TOP0">unix/src/ultrix-3-1.AP3000/Usignal.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.ARM/Usignal.i3.html#0TOP0">unix/src/ultrix-3-1.ARM/Usignal.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.DS3100/Usignal.i3.html#0TOP0">unix/src/ultrix-3-1.DS3100/Usignal.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.NEXT/Usignal.i3.html#0TOP0">unix/src/ultrix-3-1.NEXT/Usignal.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.SEQUENT/Usignal.i3.html#0TOP0">unix/src/ultrix-3-1.SEQUENT/Usignal.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.SUN3/Usignal.i3.html#0TOP0">unix/src/ultrix-3-1.SUN3/Usignal.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.SUN386/Usignal.i3.html#0TOP0">unix/src/ultrix-3-1.SUN386/Usignal.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.UMAX/Usignal.i3.html#0TOP0">unix/src/ultrix-3-1.UMAX/Usignal.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.VAX/Usignal.i3.html#0TOP0">unix/src/ultrix-3-1.VAX/Usignal.i3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x3">interface RTMachine is in:
+</A><UL>
+<LI><A HREF="../AIX386/RTMachine.i3.html#0TOP0">runtime/src/AIX386/RTMachine.i3</A>
+<LI><A HREF="../ALPHA_OSF/RTMachine.i3.html#0TOP0">runtime/src/ALPHA_OSF/RTMachine.i3</A>
+<LI><A HREF="../AP3000/RTMachine.i3.html#0TOP0">runtime/src/AP3000/RTMachine.i3</A>
+<LI><A HREF="../ARM/RTMachine.i3.html#0TOP0">runtime/src/ARM/RTMachine.i3</A>
+<LI><A HREF="../DS3100/RTMachine.i3.html#0TOP0">runtime/src/DS3100/RTMachine.i3</A>
+<LI><A HREF="../FreeBSD/RTMachine.i3.html#0TOP0">runtime/src/FreeBSD/RTMachine.i3</A>
+<LI><A HREF="../FreeBSD2/RTMachine.i3.html#0TOP0">runtime/src/FreeBSD2/RTMachine.i3</A>
+<LI><A HREF="../HP300/RTMachine.i3.html#0TOP0">runtime/src/HP300/RTMachine.i3</A>
+<LI><A HREF="../HPPA/RTMachine.i3.html#0TOP0">runtime/src/HPPA/RTMachine.i3</A>
+<LI><A HREF="../IBMR2/RTMachine.i3.html#0TOP0">runtime/src/IBMR2/RTMachine.i3</A>
+<LI><A HREF="../IBMRT/RTMachine.i3.html#0TOP0">runtime/src/IBMRT/RTMachine.i3</A>
+<LI><A HREF="../IRIX5/RTMachine.i3.html#0TOP0">runtime/src/IRIX5/RTMachine.i3</A>
+<LI><A HREF="../LINUX/RTMachine.i3.html#0TOP0">runtime/src/LINUX/RTMachine.i3</A>
+<LI><A HREF="../LINUXELF/RTMachine.i3.html#0TOP0">runtime/src/LINUXELF/RTMachine.i3</A>
+<LI><A HREF="../NEXT/RTMachine.i3.html#0TOP0">runtime/src/NEXT/RTMachine.i3</A>
+<LI><A HREF="../NT386/RTMachine.i3.html#0TOP0">runtime/src/NT386/RTMachine.i3</A>
+<LI><A HREF="../OKI/RTMachine.i3.html#0TOP0">runtime/src/OKI/RTMachine.i3</A>
+<LI><A HREF="../SEQUENT/RTMachine.i3.html#0TOP0">runtime/src/SEQUENT/RTMachine.i3</A>
+<LI><A HREF="../SOLgnu/RTMachine.i3.html#0TOP0">runtime/src/SOLgnu/RTMachine.i3</A>
+<LI><A HREF="../SOLsun/RTMachine.i3.html#0TOP0">runtime/src/SOLsun/RTMachine.i3</A>
+<LI><A HREF="../SPARC/RTMachine.i3.html#0TOP0">runtime/src/SPARC/RTMachine.i3</A>
+<LI><A HREF="../SUN3/RTMachine.i3.html#0TOP0">runtime/src/SUN3/RTMachine.i3</A>
+<LI><A HREF="../SUN386/RTMachine.i3.html#0TOP0">runtime/src/SUN386/RTMachine.i3</A>
+<LI><A HREF="../UMAX/RTMachine.i3.html#0TOP0">runtime/src/UMAX/RTMachine.i3</A>
+<LI><A HREF="../VAX/RTMachine.i3.html#0TOP0">runtime/src/VAX/RTMachine.i3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x4">procedure RTThread.SP is in:
+</A><UL>
+<LI><A HREF="../AIX386/RTThread.m3.html#SP">runtime/src/AIX386/RTThread.m3</A>
+<LI><A HREF="../ALPHA_OSF/RTThread.m3.html#SP">runtime/src/ALPHA_OSF/RTThread.m3</A>
+<LI><A HREF="../AP3000/RTThread.m3.html#SP">runtime/src/AP3000/RTThread.m3</A>
+<LI><A HREF="../ARM/RTThread.m3.html#SP">runtime/src/ARM/RTThread.m3</A>
+<LI><A HREF="../DS3100/RTThread.m3.html#SP">runtime/src/DS3100/RTThread.m3</A>
+<LI><A HREF="../FreeBSD/RTThread.m3.html#SP">runtime/src/FreeBSD/RTThread.m3</A>
+<LI><A HREF="../FreeBSD2/RTThread.m3.html#SP">runtime/src/FreeBSD2/RTThread.m3</A>
+<LI><A HREF="../HP300/RTThread.m3.html#SP">runtime/src/HP300/RTThread.m3</A>
+<LI><A HREF="../HPPA/RTThread.m3.html#SP">runtime/src/HPPA/RTThread.m3</A>
+<LI><A HREF="../IBMR2/RTThread.m3.html#SP">runtime/src/IBMR2/RTThread.m3</A>
+<LI><A HREF="../IBMRT/RTThread.m3.html#SP">runtime/src/IBMRT/RTThread.m3</A>
+<LI><A HREF="../IRIX5/RTThread.m3.html#SP">runtime/src/IRIX5/RTThread.m3</A>
+<LI><A HREF="../LINUX/RTThread.m3.html#SP">runtime/src/LINUX/RTThread.m3</A>
+<LI><A HREF="../LINUXELF/RTThread.m3.html#SP">runtime/src/LINUXELF/RTThread.m3</A>
+<LI><A HREF="../NEXT/RTThread.m3.html#SP">runtime/src/NEXT/RTThread.m3</A>
+<LI><A HREF="../OKI/RTThread.m3.html#SP">runtime/src/OKI/RTThread.m3</A>
+<LI><A HREF="../SEQUENT/RTThread.m3.html#SP">runtime/src/SEQUENT/RTThread.m3</A>
+<LI><A HREF="../SOLgnu/RTThread.m3.html#SP">runtime/src/SOLgnu/RTThread.m3</A>
+<LI><A HREF="../SOLsun/RTThread.m3.html#SP">runtime/src/SOLsun/RTThread.m3</A>
+<LI><A HREF="../SPARC/RTThread.m3.html#SP">runtime/src/SPARC/RTThread.m3</A>
+<LI><A HREF="../SUN3/RTThread.m3.html#SP">runtime/src/SUN3/RTThread.m3</A>
+<LI><A HREF="../SUN386/RTThread.m3.html#SP">runtime/src/SUN386/RTThread.m3</A>
+<LI><A HREF="../UMAX/RTThread.m3.html#SP">runtime/src/UMAX/RTThread.m3</A>
+<LI><A HREF="../VAX/RTThread.m3.html#SP">runtime/src/VAX/RTThread.m3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x5">procedure RTThread.NewStack is in:
+</A><UL>
+<LI><A HREF="../AIX386/RTThread.m3.html#NewStack">runtime/src/AIX386/RTThread.m3</A>
+<LI><A HREF="../ALPHA_OSF/RTThread.m3.html#NewStack">runtime/src/ALPHA_OSF/RTThread.m3</A>
+<LI><A HREF="../AP3000/RTThread.m3.html#NewStack">runtime/src/AP3000/RTThread.m3</A>
+<LI><A HREF="../ARM/RTThread.m3.html#NewStack">runtime/src/ARM/RTThread.m3</A>
+<LI><A HREF="../DS3100/RTThread.m3.html#NewStack">runtime/src/DS3100/RTThread.m3</A>
+<LI><A HREF="../FreeBSD/RTThread.m3.html#NewStack">runtime/src/FreeBSD/RTThread.m3</A>
+<LI><A HREF="../FreeBSD2/RTThread.m3.html#NewStack">runtime/src/FreeBSD2/RTThread.m3</A>
+<LI><A HREF="../HP300/RTThread.m3.html#NewStack">runtime/src/HP300/RTThread.m3</A>
+<LI><A HREF="../HPPA/RTThread.m3.html#NewStack">runtime/src/HPPA/RTThread.m3</A>
+<LI><A HREF="../IBMR2/RTThread.m3.html#NewStack">runtime/src/IBMR2/RTThread.m3</A>
+<LI><A HREF="../IBMRT/RTThread.m3.html#NewStack">runtime/src/IBMRT/RTThread.m3</A>
+<LI><A HREF="../IRIX5/RTThread.m3.html#NewStack">runtime/src/IRIX5/RTThread.m3</A>
+<LI><A HREF="../LINUX/RTThread.m3.html#NewStack">runtime/src/LINUX/RTThread.m3</A>
+<LI><A HREF="../LINUXELF/RTThread.m3.html#NewStack">runtime/src/LINUXELF/RTThread.m3</A>
+<LI><A HREF="../NEXT/RTThread.m3.html#NewStack">runtime/src/NEXT/RTThread.m3</A>
+<LI><A HREF="../OKI/RTThread.m3.html#NewStack">runtime/src/OKI/RTThread.m3</A>
+<LI><A HREF="../SEQUENT/RTThread.m3.html#NewStack">runtime/src/SEQUENT/RTThread.m3</A>
+<LI><A HREF="../SOLgnu/RTThread.m3.html#NewStack">runtime/src/SOLgnu/RTThread.m3</A>
+<LI><A HREF="../SOLsun/RTThread.m3.html#NewStack">runtime/src/SOLsun/RTThread.m3</A>
+<LI><A HREF="../SPARC/RTThread.m3.html#NewStack">runtime/src/SPARC/RTThread.m3</A>
+<LI><A HREF="../SUN3/RTThread.m3.html#NewStack">runtime/src/SUN3/RTThread.m3</A>
+<LI><A HREF="../SUN386/RTThread.m3.html#NewStack">runtime/src/SUN386/RTThread.m3</A>
+<LI><A HREF="../UMAX/RTThread.m3.html#NewStack">runtime/src/UMAX/RTThread.m3</A>
+<LI><A HREF="../VAX/RTThread.m3.html#NewStack">runtime/src/VAX/RTThread.m3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x6">procedure RTThread.DisposeStack is in:
+</A><UL>
+<LI><A HREF="../AIX386/RTThread.m3.html#DisposeStack">runtime/src/AIX386/RTThread.m3</A>
+<LI><A HREF="../ALPHA_OSF/RTThread.m3.html#DisposeStack">runtime/src/ALPHA_OSF/RTThread.m3</A>
+<LI><A HREF="../AP3000/RTThread.m3.html#DisposeStack">runtime/src/AP3000/RTThread.m3</A>
+<LI><A HREF="../ARM/RTThread.m3.html#DisposeStack">runtime/src/ARM/RTThread.m3</A>
+<LI><A HREF="../DS3100/RTThread.m3.html#DisposeStack">runtime/src/DS3100/RTThread.m3</A>
+<LI><A HREF="../FreeBSD/RTThread.m3.html#DisposeStack">runtime/src/FreeBSD/RTThread.m3</A>
+<LI><A HREF="../FreeBSD2/RTThread.m3.html#DisposeStack">runtime/src/FreeBSD2/RTThread.m3</A>
+<LI><A HREF="../HP300/RTThread.m3.html#DisposeStack">runtime/src/HP300/RTThread.m3</A>
+<LI><A HREF="../HPPA/RTThread.m3.html#DisposeStack">runtime/src/HPPA/RTThread.m3</A>
+<LI><A HREF="../IBMR2/RTThread.m3.html#DisposeStack">runtime/src/IBMR2/RTThread.m3</A>
+<LI><A HREF="../IBMRT/RTThread.m3.html#DisposeStack">runtime/src/IBMRT/RTThread.m3</A>
+<LI><A HREF="../IRIX5/RTThread.m3.html#DisposeStack">runtime/src/IRIX5/RTThread.m3</A>
+<LI><A HREF="../LINUX/RTThread.m3.html#DisposeStack">runtime/src/LINUX/RTThread.m3</A>
+<LI><A HREF="../LINUXELF/RTThread.m3.html#DisposeStack">runtime/src/LINUXELF/RTThread.m3</A>
+<LI><A HREF="../NEXT/RTThread.m3.html#DisposeStack">runtime/src/NEXT/RTThread.m3</A>
+<LI><A HREF="../OKI/RTThread.m3.html#DisposeStack">runtime/src/OKI/RTThread.m3</A>
+<LI><A HREF="../SEQUENT/RTThread.m3.html#DisposeStack">runtime/src/SEQUENT/RTThread.m3</A>
+<LI><A HREF="../SOLgnu/RTThread.m3.html#DisposeStack">runtime/src/SOLgnu/RTThread.m3</A>
+<LI><A HREF="../SOLsun/RTThread.m3.html#DisposeStack">runtime/src/SOLsun/RTThread.m3</A>
+<LI><A HREF="../SPARC/RTThread.m3.html#DisposeStack">runtime/src/SPARC/RTThread.m3</A>
+<LI><A HREF="../SUN3/RTThread.m3.html#DisposeStack">runtime/src/SUN3/RTThread.m3</A>
+<LI><A HREF="../SUN386/RTThread.m3.html#DisposeStack">runtime/src/SUN386/RTThread.m3</A>
+<LI><A HREF="../UMAX/RTThread.m3.html#DisposeStack">runtime/src/UMAX/RTThread.m3</A>
+<LI><A HREF="../VAX/RTThread.m3.html#DisposeStack">runtime/src/VAX/RTThread.m3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x7">procedure RTThread.FlushStackCache is in:
+</A><UL>
+<LI><A HREF="../AIX386/RTThread.m3.html#FlushStackCache">runtime/src/AIX386/RTThread.m3</A>
+<LI><A HREF="../ALPHA_OSF/RTThread.m3.html#FlushStackCache">runtime/src/ALPHA_OSF/RTThread.m3</A>
+<LI><A HREF="../AP3000/RTThread.m3.html#FlushStackCache">runtime/src/AP3000/RTThread.m3</A>
+<LI><A HREF="../ARM/RTThread.m3.html#FlushStackCache">runtime/src/ARM/RTThread.m3</A>
+<LI><A HREF="../DS3100/RTThread.m3.html#FlushStackCache">runtime/src/DS3100/RTThread.m3</A>
+<LI><A HREF="../FreeBSD/RTThread.m3.html#FlushStackCache">runtime/src/FreeBSD/RTThread.m3</A>
+<LI><A HREF="../FreeBSD2/RTThread.m3.html#FlushStackCache">runtime/src/FreeBSD2/RTThread.m3</A>
+<LI><A HREF="../HP300/RTThread.m3.html#FlushStackCache">runtime/src/HP300/RTThread.m3</A>
+<LI><A HREF="../HPPA/RTThread.m3.html#FlushStackCache">runtime/src/HPPA/RTThread.m3</A>
+<LI><A HREF="../IBMR2/RTThread.m3.html#FlushStackCache">runtime/src/IBMR2/RTThread.m3</A>
+<LI><A HREF="../IBMRT/RTThread.m3.html#FlushStackCache">runtime/src/IBMRT/RTThread.m3</A>
+<LI><A HREF="../IRIX5/RTThread.m3.html#FlushStackCache">runtime/src/IRIX5/RTThread.m3</A>
+<LI><A HREF="../LINUX/RTThread.m3.html#FlushStackCache">runtime/src/LINUX/RTThread.m3</A>
+<LI><A HREF="../LINUXELF/RTThread.m3.html#FlushStackCache">runtime/src/LINUXELF/RTThread.m3</A>
+<LI><A HREF="../NEXT/RTThread.m3.html#FlushStackCache">runtime/src/NEXT/RTThread.m3</A>
+<LI><A HREF="../OKI/RTThread.m3.html#FlushStackCache">runtime/src/OKI/RTThread.m3</A>
+<LI><A HREF="../SEQUENT/RTThread.m3.html#FlushStackCache">runtime/src/SEQUENT/RTThread.m3</A>
+<LI><A HREF="../SOLgnu/RTThread.m3.html#FlushStackCache">runtime/src/SOLgnu/RTThread.m3</A>
+<LI><A HREF="../SOLsun/RTThread.m3.html#FlushStackCache">runtime/src/SOLsun/RTThread.m3</A>
+<LI><A HREF="../SPARC/RTThread.m3.html#FlushStackCache">runtime/src/SPARC/RTThread.m3</A>
+<LI><A HREF="../SUN3/RTThread.m3.html#FlushStackCache">runtime/src/SUN3/RTThread.m3</A>
+<LI><A HREF="../SUN386/RTThread.m3.html#FlushStackCache">runtime/src/SUN386/RTThread.m3</A>
+<LI><A HREF="../UMAX/RTThread.m3.html#FlushStackCache">runtime/src/UMAX/RTThread.m3</A>
+<LI><A HREF="../VAX/RTThread.m3.html#FlushStackCache">runtime/src/VAX/RTThread.m3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x8">procedure RTThread.UpdateStateForNewSP is in:
+</A><UL>
+<LI><A HREF="../AIX386/RTThread.m3.html#UpdateStateForNewSP">runtime/src/AIX386/RTThread.m3</A>
+<LI><A HREF="../ALPHA_OSF/RTThread.m3.html#UpdateStateForNewSP">runtime/src/ALPHA_OSF/RTThread.m3</A>
+<LI><A HREF="../AP3000/RTThread.m3.html#UpdateStateForNewSP">runtime/src/AP3000/RTThread.m3</A>
+<LI><A HREF="../ARM/RTThread.m3.html#UpdateStateForNewSP">runtime/src/ARM/RTThread.m3</A>
+<LI><A HREF="../DS3100/RTThread.m3.html#UpdateStateForNewSP">runtime/src/DS3100/RTThread.m3</A>
+<LI><A HREF="../FreeBSD/RTThread.m3.html#UpdateStateForNewSP">runtime/src/FreeBSD/RTThread.m3</A>
+<LI><A HREF="../FreeBSD2/RTThread.m3.html#UpdateStateForNewSP">runtime/src/FreeBSD2/RTThread.m3</A>
+<LI><A HREF="../HP300/RTThread.m3.html#UpdateStateForNewSP">runtime/src/HP300/RTThread.m3</A>
+<LI><A HREF="../HPPA/RTThread.m3.html#UpdateStateForNewSP">runtime/src/HPPA/RTThread.m3</A>
+<LI><A HREF="../IBMR2/RTThread.m3.html#UpdateStateForNewSP">runtime/src/IBMR2/RTThread.m3</A>
+<LI><A HREF="../IBMRT/RTThread.m3.html#UpdateStateForNewSP">runtime/src/IBMRT/RTThread.m3</A>
+<LI><A HREF="../IRIX5/RTThread.m3.html#UpdateStateForNewSP">runtime/src/IRIX5/RTThread.m3</A>
+<LI><A HREF="../LINUX/RTThread.m3.html#UpdateStateForNewSP">runtime/src/LINUX/RTThread.m3</A>
+<LI><A HREF="../LINUXELF/RTThread.m3.html#UpdateStateForNewSP">runtime/src/LINUXELF/RTThread.m3</A>
+<LI><A HREF="../NEXT/RTThread.m3.html#UpdateStateForNewSP">runtime/src/NEXT/RTThread.m3</A>
+<LI><A HREF="../OKI/RTThread.m3.html#UpdateStateForNewSP">runtime/src/OKI/RTThread.m3</A>
+<LI><A HREF="../SEQUENT/RTThread.m3.html#UpdateStateForNewSP">runtime/src/SEQUENT/RTThread.m3</A>
+<LI><A HREF="../SOLgnu/RTThread.m3.html#UpdateStateForNewSP">runtime/src/SOLgnu/RTThread.m3</A>
+<LI><A HREF="../SOLsun/RTThread.m3.html#UpdateStateForNewSP">runtime/src/SOLsun/RTThread.m3</A>
+<LI><A HREF="../SPARC/RTThread.m3.html#UpdateStateForNewSP">runtime/src/SPARC/RTThread.m3</A>
+<LI><A HREF="../SUN3/RTThread.m3.html#UpdateStateForNewSP">runtime/src/SUN3/RTThread.m3</A>
+<LI><A HREF="../SUN386/RTThread.m3.html#UpdateStateForNewSP">runtime/src/SUN386/RTThread.m3</A>
+<LI><A HREF="../UMAX/RTThread.m3.html#UpdateStateForNewSP">runtime/src/UMAX/RTThread.m3</A>
+<LI><A HREF="../VAX/RTThread.m3.html#UpdateStateForNewSP">runtime/src/VAX/RTThread.m3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x9">procedure RTThread.UpdateFrameForNewSP is in:
+</A><UL>
+<LI><A HREF="../AIX386/RTThread.m3.html#UpdateFrameForNewSP">runtime/src/AIX386/RTThread.m3</A>
+<LI><A HREF="../ALPHA_OSF/RTThread.m3.html#UpdateFrameForNewSP">runtime/src/ALPHA_OSF/RTThread.m3</A>
+<LI><A HREF="../AP3000/RTThread.m3.html#UpdateFrameForNewSP">runtime/src/AP3000/RTThread.m3</A>
+<LI><A HREF="../ARM/RTThread.m3.html#UpdateFrameForNewSP">runtime/src/ARM/RTThread.m3</A>
+<LI><A HREF="../DS3100/RTThread.m3.html#UpdateFrameForNewSP">runtime/src/DS3100/RTThread.m3</A>
+<LI><A HREF="../FreeBSD/RTThread.m3.html#UpdateFrameForNewSP">runtime/src/FreeBSD/RTThread.m3</A>
+<LI><A HREF="../FreeBSD2/RTThread.m3.html#UpdateFrameForNewSP">runtime/src/FreeBSD2/RTThread.m3</A>
+<LI><A HREF="../HP300/RTThread.m3.html#UpdateFrameForNewSP">runtime/src/HP300/RTThread.m3</A>
+<LI><A HREF="../HPPA/RTThread.m3.html#UpdateFrameForNewSP">runtime/src/HPPA/RTThread.m3</A>
+<LI><A HREF="../IBMR2/RTThread.m3.html#UpdateFrameForNewSP">runtime/src/IBMR2/RTThread.m3</A>
+<LI><A HREF="../IBMRT/RTThread.m3.html#UpdateFrameForNewSP">runtime/src/IBMRT/RTThread.m3</A>
+<LI><A HREF="../IRIX5/RTThread.m3.html#UpdateFrameForNewSP">runtime/src/IRIX5/RTThread.m3</A>
+<LI><A HREF="../LINUX/RTThread.m3.html#UpdateFrameForNewSP">runtime/src/LINUX/RTThread.m3</A>
+<LI><A HREF="../LINUXELF/RTThread.m3.html#UpdateFrameForNewSP">runtime/src/LINUXELF/RTThread.m3</A>
+<LI><A HREF="../NEXT/RTThread.m3.html#UpdateFrameForNewSP">runtime/src/NEXT/RTThread.m3</A>
+<LI><A HREF="../OKI/RTThread.m3.html#UpdateFrameForNewSP">runtime/src/OKI/RTThread.m3</A>
+<LI><A HREF="../SEQUENT/RTThread.m3.html#UpdateFrameForNewSP">runtime/src/SEQUENT/RTThread.m3</A>
+<LI><A HREF="../SOLgnu/RTThread.m3.html#UpdateFrameForNewSP">runtime/src/SOLgnu/RTThread.m3</A>
+<LI><A HREF="../SOLsun/RTThread.m3.html#UpdateFrameForNewSP">runtime/src/SOLsun/RTThread.m3</A>
+<LI><A HREF="../SPARC/RTThread.m3.html#UpdateFrameForNewSP">runtime/src/SPARC/RTThread.m3</A>
+<LI><A HREF="../SUN3/RTThread.m3.html#UpdateFrameForNewSP">runtime/src/SUN3/RTThread.m3</A>
+<LI><A HREF="../SUN386/RTThread.m3.html#UpdateFrameForNewSP">runtime/src/SUN386/RTThread.m3</A>
+<LI><A HREF="../UMAX/RTThread.m3.html#UpdateFrameForNewSP">runtime/src/UMAX/RTThread.m3</A>
+<LI><A HREF="../VAX/RTThread.m3.html#UpdateFrameForNewSP">runtime/src/VAX/RTThread.m3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x10">procedure RTThread.setup_sigvtalrm is in:
+</A><UL>
+<LI><A HREF="../AIX386/RTThread.m3.html#setup_sigvtalrm">runtime/src/AIX386/RTThread.m3</A>
+<LI><A HREF="../ALPHA_OSF/RTThread.m3.html#setup_sigvtalrm">runtime/src/ALPHA_OSF/RTThread.m3</A>
+<LI><A HREF="../AP3000/RTThread.m3.html#setup_sigvtalrm">runtime/src/AP3000/RTThread.m3</A>
+<LI><A HREF="../ARM/RTThread.m3.html#setup_sigvtalrm">runtime/src/ARM/RTThread.m3</A>
+<LI><A HREF="../DS3100/RTThread.m3.html#setup_sigvtalrm">runtime/src/DS3100/RTThread.m3</A>
+<LI><A HREF="../FreeBSD/RTThread.m3.html#setup_sigvtalrm">runtime/src/FreeBSD/RTThread.m3</A>
+<LI><A HREF="../FreeBSD2/RTThread.m3.html#setup_sigvtalrm">runtime/src/FreeBSD2/RTThread.m3</A>
+<LI><A HREF="../HP300/RTThread.m3.html#setup_sigvtalrm">runtime/src/HP300/RTThread.m3</A>
+<LI><A HREF="../HPPA/RTThread.m3.html#setup_sigvtalrm">runtime/src/HPPA/RTThread.m3</A>
+<LI><A HREF="../IBMR2/RTThread.m3.html#setup_sigvtalrm">runtime/src/IBMR2/RTThread.m3</A>
+<LI><A HREF="../IBMRT/RTThread.m3.html#setup_sigvtalrm">runtime/src/IBMRT/RTThread.m3</A>
+<LI><A HREF="../IRIX5/RTThread.m3.html#setup_sigvtalrm">runtime/src/IRIX5/RTThread.m3</A>
+<LI><A HREF="../LINUX/RTThread.m3.html#setup_sigvtalrm">runtime/src/LINUX/RTThread.m3</A>
+<LI><A HREF="../LINUXELF/RTThread.m3.html#setup_sigvtalrm">runtime/src/LINUXELF/RTThread.m3</A>
+<LI><A HREF="../NEXT/RTThread.m3.html#setup_sigvtalrm">runtime/src/NEXT/RTThread.m3</A>
+<LI><A HREF="../OKI/RTThread.m3.html#setup_sigvtalrm">runtime/src/OKI/RTThread.m3</A>
+<LI><A HREF="../SEQUENT/RTThread.m3.html#setup_sigvtalrm">runtime/src/SEQUENT/RTThread.m3</A>
+<LI><A HREF="../SOLgnu/RTThread.m3.html#setup_sigvtalrm">runtime/src/SOLgnu/RTThread.m3</A>
+<LI><A HREF="../SOLsun/RTThread.m3.html#setup_sigvtalrm">runtime/src/SOLsun/RTThread.m3</A>
+<LI><A HREF="../SPARC/RTThread.m3.html#setup_sigvtalrm">runtime/src/SPARC/RTThread.m3</A>
+<LI><A HREF="../SUN3/RTThread.m3.html#setup_sigvtalrm">runtime/src/SUN3/RTThread.m3</A>
+<LI><A HREF="../SUN386/RTThread.m3.html#setup_sigvtalrm">runtime/src/SUN386/RTThread.m3</A>
+<LI><A HREF="../UMAX/RTThread.m3.html#setup_sigvtalrm">runtime/src/UMAX/RTThread.m3</A>
+<LI><A HREF="../VAX/RTThread.m3.html#setup_sigvtalrm">runtime/src/VAX/RTThread.m3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x11">procedure RTThread.allow_sigvtalrm is in:
+</A><UL>
+<LI><A HREF="../AIX386/RTThread.m3.html#allow_sigvtalrm">runtime/src/AIX386/RTThread.m3</A>
+<LI><A HREF="../ALPHA_OSF/RTThread.m3.html#allow_sigvtalrm">runtime/src/ALPHA_OSF/RTThread.m3</A>
+<LI><A HREF="../AP3000/RTThread.m3.html#allow_sigvtalrm">runtime/src/AP3000/RTThread.m3</A>
+<LI><A HREF="../ARM/RTThread.m3.html#allow_sigvtalrm">runtime/src/ARM/RTThread.m3</A>
+<LI><A HREF="../DS3100/RTThread.m3.html#allow_sigvtalrm">runtime/src/DS3100/RTThread.m3</A>
+<LI><A HREF="../FreeBSD/RTThread.m3.html#allow_sigvtalrm">runtime/src/FreeBSD/RTThread.m3</A>
+<LI><A HREF="../FreeBSD2/RTThread.m3.html#allow_sigvtalrm">runtime/src/FreeBSD2/RTThread.m3</A>
+<LI><A HREF="../HP300/RTThread.m3.html#allow_sigvtalrm">runtime/src/HP300/RTThread.m3</A>
+<LI><A HREF="../HPPA/RTThread.m3.html#allow_sigvtalrm">runtime/src/HPPA/RTThread.m3</A>
+<LI><A HREF="../IBMR2/RTThread.m3.html#allow_sigvtalrm">runtime/src/IBMR2/RTThread.m3</A>
+<LI><A HREF="../IBMRT/RTThread.m3.html#allow_sigvtalrm">runtime/src/IBMRT/RTThread.m3</A>
+<LI><A HREF="../IRIX5/RTThread.m3.html#allow_sigvtalrm">runtime/src/IRIX5/RTThread.m3</A>
+<LI><A HREF="../LINUX/RTThread.m3.html#allow_sigvtalrm">runtime/src/LINUX/RTThread.m3</A>
+<LI><A HREF="../LINUXELF/RTThread.m3.html#allow_sigvtalrm">runtime/src/LINUXELF/RTThread.m3</A>
+<LI><A HREF="../NEXT/RTThread.m3.html#allow_sigvtalrm">runtime/src/NEXT/RTThread.m3</A>
+<LI><A HREF="../OKI/RTThread.m3.html#allow_sigvtalrm">runtime/src/OKI/RTThread.m3</A>
+<LI><A HREF="../SEQUENT/RTThread.m3.html#allow_sigvtalrm">runtime/src/SEQUENT/RTThread.m3</A>
+<LI><A HREF="../SOLgnu/RTThread.m3.html#allow_sigvtalrm">runtime/src/SOLgnu/RTThread.m3</A>
+<LI><A HREF="../SOLsun/RTThread.m3.html#allow_sigvtalrm">runtime/src/SOLsun/RTThread.m3</A>
+<LI><A HREF="../SPARC/RTThread.m3.html#allow_sigvtalrm">runtime/src/SPARC/RTThread.m3</A>
+<LI><A HREF="../SUN3/RTThread.m3.html#allow_sigvtalrm">runtime/src/SUN3/RTThread.m3</A>
+<LI><A HREF="../SUN386/RTThread.m3.html#allow_sigvtalrm">runtime/src/SUN386/RTThread.m3</A>
+<LI><A HREF="../UMAX/RTThread.m3.html#allow_sigvtalrm">runtime/src/UMAX/RTThread.m3</A>
+<LI><A HREF="../VAX/RTThread.m3.html#allow_sigvtalrm">runtime/src/VAX/RTThread.m3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x12">procedure RTThread.disallow_sigvtalrm is in:
+</A><UL>
+<LI><A HREF="../AIX386/RTThread.m3.html#disallow_sigvtalrm">runtime/src/AIX386/RTThread.m3</A>
+<LI><A HREF="../ALPHA_OSF/RTThread.m3.html#disallow_sigvtalrm">runtime/src/ALPHA_OSF/RTThread.m3</A>
+<LI><A HREF="../AP3000/RTThread.m3.html#disallow_sigvtalrm">runtime/src/AP3000/RTThread.m3</A>
+<LI><A HREF="../ARM/RTThread.m3.html#disallow_sigvtalrm">runtime/src/ARM/RTThread.m3</A>
+<LI><A HREF="../DS3100/RTThread.m3.html#disallow_sigvtalrm">runtime/src/DS3100/RTThread.m3</A>
+<LI><A HREF="../FreeBSD/RTThread.m3.html#disallow_sigvtalrm">runtime/src/FreeBSD/RTThread.m3</A>
+<LI><A HREF="../FreeBSD2/RTThread.m3.html#disallow_sigvtalrm">runtime/src/FreeBSD2/RTThread.m3</A>
+<LI><A HREF="../HP300/RTThread.m3.html#disallow_sigvtalrm">runtime/src/HP300/RTThread.m3</A>
+<LI><A HREF="../HPPA/RTThread.m3.html#disallow_sigvtalrm">runtime/src/HPPA/RTThread.m3</A>
+<LI><A HREF="../IBMR2/RTThread.m3.html#disallow_sigvtalrm">runtime/src/IBMR2/RTThread.m3</A>
+<LI><A HREF="../IBMRT/RTThread.m3.html#disallow_sigvtalrm">runtime/src/IBMRT/RTThread.m3</A>
+<LI><A HREF="../IRIX5/RTThread.m3.html#disallow_sigvtalrm">runtime/src/IRIX5/RTThread.m3</A>
+<LI><A HREF="../LINUX/RTThread.m3.html#disallow_sigvtalrm">runtime/src/LINUX/RTThread.m3</A>
+<LI><A HREF="../LINUXELF/RTThread.m3.html#disallow_sigvtalrm">runtime/src/LINUXELF/RTThread.m3</A>
+<LI><A HREF="../NEXT/RTThread.m3.html#disallow_sigvtalrm">runtime/src/NEXT/RTThread.m3</A>
+<LI><A HREF="../OKI/RTThread.m3.html#disallow_sigvtalrm">runtime/src/OKI/RTThread.m3</A>
+<LI><A HREF="../SEQUENT/RTThread.m3.html#disallow_sigvtalrm">runtime/src/SEQUENT/RTThread.m3</A>
+<LI><A HREF="../SOLgnu/RTThread.m3.html#disallow_sigvtalrm">runtime/src/SOLgnu/RTThread.m3</A>
+<LI><A HREF="../SOLsun/RTThread.m3.html#disallow_sigvtalrm">runtime/src/SOLsun/RTThread.m3</A>
+<LI><A HREF="../SPARC/RTThread.m3.html#disallow_sigvtalrm">runtime/src/SPARC/RTThread.m3</A>
+<LI><A HREF="../SUN3/RTThread.m3.html#disallow_sigvtalrm">runtime/src/SUN3/RTThread.m3</A>
+<LI><A HREF="../SUN386/RTThread.m3.html#disallow_sigvtalrm">runtime/src/SUN386/RTThread.m3</A>
+<LI><A HREF="../UMAX/RTThread.m3.html#disallow_sigvtalrm">runtime/src/UMAX/RTThread.m3</A>
+<LI><A HREF="../VAX/RTThread.m3.html#disallow_sigvtalrm">runtime/src/VAX/RTThread.m3</A>
+</UL>
+<P>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

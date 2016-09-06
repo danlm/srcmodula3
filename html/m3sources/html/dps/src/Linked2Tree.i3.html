@@ -1,0 +1,156 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: dps/src/Linked2Tree.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>dps/src/Linked2Tree.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+
+INTERFACE <interface><A HREF="#x1">Linked2Tree</A></interface>;
+
+TYPE E = MUTEX OBJECT
+  parent: E := NIL; (* Really always a T. *)
+  nextSibling, previousSibling: E := NIL;
+ METHODS
+  Remove () := Remove;
+  Next (): E := Next;
+  Previous (): E := Previous;
+  MoveToFirst (): E := MoveToFirst;
+  MoveToLast (): E := MoveToLast;
+  END;
+
+TYPE T = E OBJECT
+  firstChild, lastChild: E := NIL;
+ METHODS
+  Prepend (e: E) := Prepend;
+  Append (e: E) := Append;
+  InsertBefore (e, before: E) := InsertBefore;
+  InsertAfter (e, after: E) := InsertAfter;
+  First (): E := First;
+  Last (): E := Last;
+  MakeChildLast (e: E): E := MakeChildLast;
+  MakeChildFirst (e: E): E := MakeChildFirst;
+  RemoveChild (e: E) := RemoveChild;
+  END;
+
+PROCEDURE <A HREF="#x2">Prepend</A> (t: T; e: E);
+PROCEDURE <A HREF="#x3">Append</A> (t: T; e: E);
+PROCEDURE <A HREF="Linked2Tree.m3.html#InsertBefore">InsertBefore</A> (t: T; e, before: E);
+PROCEDURE <A HREF="Linked2Tree.m3.html#InsertAfter">InsertAfter</A> (t: T; e, after: E);
+PROCEDURE <A HREF="#x4">Remove</A> (e: E);
+
+PROCEDURE <A HREF="#x5">First</A> (t: T): E;
+PROCEDURE <A HREF="#x6">Last</A> (t: T): E;
+
+PROCEDURE <A HREF="#x7">Next</A> (e: E): E;
+PROCEDURE <A HREF="#x8">Previous</A> (e: E): E;
+
+PROCEDURE <A HREF="#x9">MoveToFirst</A> (e: E): E;
+PROCEDURE <A HREF="#x10">MoveToLast</A> (e: E): E;
+
+PROCEDURE <A HREF="Linked2Tree.m3.html#MakeChildLast">MakeChildLast</A> (t: T; e: E): E;
+PROCEDURE <A HREF="Linked2Tree.m3.html#MakeChildFirst">MakeChildFirst</A> (t: T; e: E): E;
+PROCEDURE <A HREF="Linked2Tree.m3.html#RemoveChild">RemoveChild</A> (t: T; e: E);
+
+  END Linked2Tree.
+</PRE>
+</inInterface>
+<HR>
+<A NAME="x1">Linked2Tree's implementation  is in:
+</A><UL>
+<LI><A HREF="Linked2List.m3.html#0TOP0">dps/src/Linked2List.m3</A>
+<LI><A HREF="Linked2Tree.m3.html#0TOP0">dps/src/Linked2Tree.m3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x2">procedure Linked2Tree.Prepend is in:
+</A><UL>
+<LI><A HREF="Linked2List.m3.html#Prepend">dps/src/Linked2List.m3</A>
+<LI><A HREF="Linked2Tree.m3.html#Prepend">dps/src/Linked2Tree.m3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x3">procedure Linked2Tree.Append is in:
+</A><UL>
+<LI><A HREF="Linked2List.m3.html#Append">dps/src/Linked2List.m3</A>
+<LI><A HREF="Linked2Tree.m3.html#Append">dps/src/Linked2Tree.m3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x4">procedure Linked2Tree.Remove is in:
+</A><UL>
+<LI><A HREF="Linked2List.m3.html#Remove">dps/src/Linked2List.m3</A>
+<LI><A HREF="Linked2Tree.m3.html#Remove">dps/src/Linked2Tree.m3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x5">procedure Linked2Tree.First is in:
+</A><UL>
+<LI><A HREF="Linked2List.m3.html#First">dps/src/Linked2List.m3</A>
+<LI><A HREF="Linked2Tree.m3.html#First">dps/src/Linked2Tree.m3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x6">procedure Linked2Tree.Last is in:
+</A><UL>
+<LI><A HREF="Linked2List.m3.html#Last">dps/src/Linked2List.m3</A>
+<LI><A HREF="Linked2Tree.m3.html#Last">dps/src/Linked2Tree.m3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x7">procedure Linked2Tree.Next is in:
+</A><UL>
+<LI><A HREF="Linked2List.m3.html#Next">dps/src/Linked2List.m3</A>
+<LI><A HREF="Linked2Tree.m3.html#Next">dps/src/Linked2Tree.m3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x8">procedure Linked2Tree.Previous is in:
+</A><UL>
+<LI><A HREF="Linked2List.m3.html#Previous">dps/src/Linked2List.m3</A>
+<LI><A HREF="Linked2Tree.m3.html#Previous">dps/src/Linked2Tree.m3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x9">procedure Linked2Tree.MoveToFirst is in:
+</A><UL>
+<LI><A HREF="Linked2List.m3.html#MoveToFirst">dps/src/Linked2List.m3</A>
+<LI><A HREF="Linked2Tree.m3.html#MoveToFirst">dps/src/Linked2Tree.m3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x10">procedure Linked2Tree.MoveToLast is in:
+</A><UL>
+<LI><A HREF="Linked2List.m3.html#MoveToLast">dps/src/Linked2List.m3</A>
+<LI><A HREF="Linked2Tree.m3.html#MoveToLast">dps/src/Linked2Tree.m3</A>
+</UL>
+<P>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

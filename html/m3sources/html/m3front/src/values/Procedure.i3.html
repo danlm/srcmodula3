@@ -1,0 +1,90 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: m3front/src/values/Procedure.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>m3front/src/values/Procedure.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE> File: Procedure.i3                                          
+ Last Modified On Tue Dec 20 14:55:57 PST 1994 By kalsow     
+      Modified On Tue Oct  9 23:46:24 1990 By muller         
+
+<P><PRE>INTERFACE <interface><A HREF="Procedure.m3.html">Procedure</A></interface>;
+
+IMPORT <A HREF="../misc/CG.i3.html">CG</A>, <A HREF="Value.i3.html">Value</A>, <A HREF="../types/Type.i3.html">Type</A>, <A HREF="../exprs/CallExpr.i3.html">CallExpr</A>, <A HREF="Decl.i3.html">Decl</A>;
+
+TYPE <A HREF="Procedure.m3.html#T">T</A> &lt;: Value.T;
+
+PROCEDURE <A HREF="Procedure.m3.html#ParseDecl">ParseDecl</A> (READONLY att: Decl.Attributes;
+                     headerOnly: BOOLEAN := FALSE);
+
+PROCEDURE <A HREF="Procedure.m3.html#Signature">Signature</A>   (t: T): Type.T;
+PROCEDURE <A HREF="Procedure.m3.html#HasBody">HasBody</A>     (t: T): BOOLEAN;
+PROCEDURE <A HREF="Procedure.m3.html#IsNested">IsNested</A>    (t: T): BOOLEAN;
+PROCEDURE <A HREF="Procedure.m3.html#StaticLevel">StaticLevel</A> (t: T): INTEGER;
+
+PROCEDURE <A HREF="Procedure.m3.html#Define">Define</A> (name      : TEXT;
+                  methods   : CallExpr.MethodList;
+                  reserved  : BOOLEAN;
+                  signature : Type.T := NIL
+                  );
+
+PROCEDURE <A HREF="Procedure.m3.html#CheckBody">CheckBody</A> (t: T;  VAR cs: Value.CheckState);
+
+PROCEDURE <A HREF="Procedure.m3.html#IsEqual">IsEqual</A>    (a, b: Value.T): BOOLEAN;
+PROCEDURE <A HREF="Procedure.m3.html#NoteExport">NoteExport</A> (impl, intf: Value.T);
+
+PROCEDURE <A HREF="Procedure.m3.html#CGName">CGName</A> (t: T;  VAR proc: CG.Proc;
+                         VAR unit: CG.Var;  VAR offset: INTEGER);
+</PRE><BLOCKQUOTE><EM> return the back-end address of the procedure.  If known, 'proc'
+   is returned.  Otherwise, 'proc' is NIL and 'unit' and 'offset'
+   are set. </EM></BLOCKQUOTE><PRE>
+
+PROCEDURE <A HREF="Procedure.m3.html#LoadStaticLink">LoadStaticLink</A> (t: T);
+</PRE><BLOCKQUOTE><EM> generate code to load the static link needed to call t </EM></BLOCKQUOTE><PRE>
+
+PROCEDURE <A HREF="Procedure.m3.html#CaptureResult">CaptureResult</A> (result: CG.Type): CG.Val;
+</PRE><BLOCKQUOTE><EM> generate code to capture a procedure's return result of type <CODE>result</CODE>
+   in a temporary.  Return the temporary.  If the procedure doesn't
+   have a result, return NIL </EM></BLOCKQUOTE><PRE>
+
+PROCEDURE <A HREF="Procedure.m3.html#StartCall">StartCall</A> (t: T);
+PROCEDURE <A HREF="Procedure.m3.html#EmitCall">EmitCall</A> (t: T): CG.Val;
+</PRE><BLOCKQUOTE><EM> generate code to start and finish a procedure call.  <CODE>EmitCall</CODE>
+   returns the temporary that holds <CODE>t</CODE>s return result;  <CODE>NIL</CODE> if
+   <CODE>t</CODE> doesn't have a result. </EM></BLOCKQUOTE><PRE>
+
+PROCEDURE <A HREF="Procedure.m3.html#Reset">Reset</A> ();
+
+END Procedure.
+</PRE>
+</inInterface>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

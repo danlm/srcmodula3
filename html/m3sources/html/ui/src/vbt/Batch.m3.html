@@ -1,0 +1,95 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: ui/src/vbt/Batch.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>ui/src/vbt/Batch.m3</H2></A><HR>
+<inModule>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM>                                                                           </EM></BLOCKQUOTE><PRE>
+</PRE> by Steve Glassman, Mark Manasse and Greg Nelson           
+<PRE>&lt;*PRAGMA LL*&gt;
+
+UNSAFE MODULE <module><implements><A HREF="Batch.i3.html">Batch</A></implements></module>;
+
+IMPORT <A HREF="VBTTuning.i3.html">VBTTuning</A>, <A HREF="BatchRep.i3.html">BatchRep</A>, <A HREF="../picture/PictureRep.i3.html">PictureRep</A>, <A HREF="../../../geometry/src/Rect.i3.html">Rect</A>, <A HREF="BatchUtil.i3.html">BatchUtil</A>;
+
+VAR
+  freemu := NEW(MUTEX);
+  free: T;
+  batchSize := VBTTuning.BatchSize;
+
+PROCEDURE <A NAME="New"><procedure>New</procedure></A>(len: INTEGER := -1): T =
+  VAR res: T;
+  BEGIN
+    IF len = -1 THEN len := batchSize END;
+    IF len &gt; batchSize THEN
+      res := NEW(T);
+      res.b := NEW(BatchRep.Array, (3 * len) DIV 2)
+    ELSE
+      LOCK freemu DO
+        res := free;
+        IF res # NIL THEN free := free.link END
+      END;
+      IF res = NIL THEN
+        res := NEW(T);
+        res.b := NEW(BatchRep.Array, batchSize)
+      END
+    END;
+    res.link := NIL;
+    res.clipped := BatchUtil.ClipState.Tight;
+    res.next := ADR(res.b[0]);
+    res.scrollSource := Rect.Empty;
+    res.clip := Rect.Empty;
+    res.containsPicture := FALSE;
+    RETURN res
+  END New;
+
+PROCEDURE <A NAME="Free"><procedure>Free</procedure></A> (VAR ba: T) =
+  BEGIN
+    IF ba.containsPicture THEN PictureRep.DecrementBatch(ba); END;
+    LOCK freemu DO
+      (* put ba on free list if it is standard size *)
+      IF NUMBER(ba.b^) = batchSize THEN
+        ba.link := free;
+        free := ba
+      ELSE
+        DISPOSE(ba.b);
+        DISPOSE(ba)
+      END
+    END;
+    ba := NIL
+  END Free;
+
+BEGIN
+END Batch.
+</PRE>
+</inModule>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

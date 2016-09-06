@@ -1,0 +1,79 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: runtime/src/ex_stack/RTExRep.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>runtime/src/ex_stack/RTExRep.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM>                                                             </EM></BLOCKQUOTE><PRE>
+
+UNSAFE INTERFACE <interface><A HREF="#x1">RTExRep</A></interface>;
+</PRE> This interface defines the low-level data structures
+   used by the exception runtime's stack walker.
+
+
+<P>----------------------------------------- compiler generated descriptors --
+
+<P><PRE>TYPE
+  ScopeKind = { Except, ExceptElse,
+                Finally, FinallyProc,
+                Raises, RaisesNone,
+                Lock };
+
+TYPE
+  Scope = UNTRACED REF RECORD
+    kind        : CHAR;    (* ScopeKind *)
+    outermost   : CHAR;    (* BOOLEAN =&gt; last scope that covers [start..stop]*)
+    end_of_list : CHAR;    (* BOOLEAN =&gt; last scope in module list *)
+    pad         : CHAR;
+    start       : ADDRESS; (* first PC of the handled scope *)
+    stop        : ADDRESS; (* last PC of the handled scope *)
+    excepts     : ADDRESS; (* NIL-terminated list of handled exceptions *)
+    offset      : INTEGER; (* frame offset of ExceptionInfo *)
+  END;
+
+TYPE
+  ExceptionInfo = RECORD
+    exception : ADDRESS;
+    arg       : ADDRESS;
+  END;
+
+END RTExRep.
+</PRE>
+</inInterface>
+<HR>
+<A NAME="x1">RTExRep's implementation  is in:
+</A><UL>
+<LI><A HREF="../ex_frame/RTException.m3.html#0TOP0">runtime/src/ex_frame/RTException.m3</A>
+<LI><A HREF="RTException.m3.html#0TOP0">runtime/src/ex_stack/RTException.m3</A>
+</UL>
+<P>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

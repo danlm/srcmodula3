@@ -1,0 +1,101 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: netobjrt/src/ListPkl.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>netobjrt/src/ListPkl.m3</H2></A><HR>
+<inModule>
+<PRE><A HREF="../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM> ListPkl.m3 </EM></BLOCKQUOTE><PRE>
+</PRE> Iterative List Pickle.Special to prevent small stacks from 
+   overflowing on RefList.Ts of length &gt;~ 25. 
+
+<P><PRE>UNSAFE MODULE <module><implements><A HREF="ListPkl.i3.html">ListPkl</A></implements></module>;
+
+IMPORT <A HREF="../../libm3/DS/RefList.i3.html">RefList</A>, <A HREF="../../thread/src/Common/Thread.i3.html">Thread</A>, <A HREF="../../rw/src/Common/Rd.i3.html">Rd</A>, <A HREF="../../rw/src/Common/Wr.i3.html">Wr</A>, <A HREF="../../pickle/src/Pickle.i3.html">Pickle</A>;
+
+PROCEDURE <A NAME="ListPklWrite"><procedure>ListPklWrite</procedure></A> (
+    sp: Pickle.Special;
+    r: REFANY; writer: Pickle.Writer)
+    RAISES { Pickle.Error, Wr.Failure, Thread.Alerted } =
+  VAR l: RefList.T := r; len := RefList.Length (l);
+      isSubtype := TYPECODE(r) # TYPECODE(RefList.T);
+  BEGIN
+    Wr.PutChar (writer.wr, LOOPHOLE(isSubtype, CHAR));
+    IF isSubtype THEN
+      (* we don't know how to marshal subtypes of RefList.T *)
+      Pickle.Special.write(sp, r, writer);
+    ELSE
+      writer.writeInt(len);
+      FOR i := 1 TO len DO
+        writer.write (l.head);
+        l := l.tail;
+      END;
+      &lt;* ASSERT l = NIL *&gt;
+    END;
+  END ListPklWrite;
+
+PROCEDURE <A NAME="ListPklRead"><procedure>ListPklRead</procedure></A> (
+    sp: Pickle.Special;
+    reader: Pickle.Reader;
+    id: Pickle.RefID) : REFANY
+    RAISES { Pickle.Error, Rd.EndOfFile, Rd.Failure, Thread.Alerted } =
+  VAR
+    len: CARDINAL;
+    res, tail: RefList.T;
+    isSubtype := LOOPHOLE(Rd.GetChar(reader.rd), BOOLEAN);
+  BEGIN
+    IF isSubtype THEN
+      (* the sender encountered a subtype of RefList.T *)
+      res := Pickle.Special.read(sp, reader, id);
+    ELSE
+      len := reader.readInt();
+      IF len &lt; 0 THEN RAISE Pickle.Error(&quot;Pickle.Error: negative int&quot;); END;
+      res := NEW (RefList.T);
+      tail := res;
+      FOR i := 1 TO len - 1 DO
+        tail.head := reader.read ();
+        tail.tail := NEW (RefList.T);
+        tail := tail.tail;
+      END;
+      tail.head := reader.read ();
+      tail.tail := NIL;
+    END;
+    RETURN res;
+  END ListPklRead;
+
+BEGIN
+  Pickle.RegisterSpecial (NEW (Pickle.Special, sc := TYPECODE (RefList.T),
+    write := ListPklWrite,
+    read  := ListPklRead));
+END ListPkl.
+</PRE>
+</inModule>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

@@ -1,0 +1,133 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: pkgobj/derived/PackageObj_T_v1.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>pkgobj/derived/PackageObj_T_v1.i3</H2></A><HR>
+<inInterface>
+<PRE>INTERFACE <interface><A HREF="PackageObj_T_v1.m3.html">PackageObj_T_v1</A></interface>;
+
+IMPORT <A HREF="../src/Common/NetPath.i3.html">NetPath</A>, <A HREF="../../thread/src/Common/Thread.i3.html">Thread</A>, <A HREF="../../netobjrt/src/NetObj.i3.html">NetObj</A>, <A HREF="../../netobjrt/src/StubLib.i3.html">StubLib</A>, <A HREF="../../rw/src/Common/Rd.i3.html">Rd</A>, <A HREF="../../libm3/derived/TextList.i3.html">TextList</A>, <A HREF="../../rw/src/Common/Wr.i3.html">Wr</A>, <A HREF="../src/Common/PackageObj.i3.html">PackageObj</A>,
+       <A HREF="../src/Common/PkgErr.i3.html">PkgErr</A>;
+TYPE Surrogate_PackageObj_T = PackageObj.T OBJECT
+      OVERRIDES
+        version := Surrogate_version;
+        newSource := Surrogate_newSource;
+        newShip := Surrogate_newShip;
+        vcommit := Surrogate_vcommit;
+        removeBackup := Surrogate_removeBackup;
+        checkDir := Surrogate_checkDir;
+        status := Surrogate_status;
+      END;
+
+PROCEDURE <A HREF="PackageObj_T_v1.m3.html#Surrogate_version">Surrogate_version</A>(self: PackageObj.T; package: NetPath.PN)
+    : PackageObj.Version RAISES {NetObj.Error, PkgErr.E, Thread.Alerted};
+
+PROCEDURE <A HREF="PackageObj_T_v1.m3.html#Surrogate_newSource">Surrogate_newSource</A>(
+    self: PackageObj.T;
+    auth: TEXT;
+    package: NetPath.PN;
+    VAR OUTversion: PackageObj.Version): PackageObj.Source
+     RAISES {NetObj.Error, PkgErr.E, Thread.Alerted};
+
+PROCEDURE <A HREF="PackageObj_T_v1.m3.html#Surrogate_newShip">Surrogate_newShip</A>(
+    self: PackageObj.T;
+    auth: TEXT;
+    package: NetPath.PN;
+    options: PackageObj.ShipOptions): PackageObj.Ship RAISES {NetObj.Error,
+    PkgErr.E, Thread.Alerted};
+
+PROCEDURE <A HREF="PackageObj_T_v1.m3.html#Surrogate_vcommit">Surrogate_vcommit</A>(
+    self: PackageObj.T;
+    auth: TEXT;
+    package: NetPath.PN;
+    version: PackageObj.Version;
+    prevVersion: PackageObj.Version): BOOLEAN RAISES {NetObj.Error,
+    PkgErr.E, Thread.Alerted};
+
+PROCEDURE <A HREF="PackageObj_T_v1.m3.html#Surrogate_removeBackup">Surrogate_removeBackup</A>(
+    self: PackageObj.T;
+    auth: TEXT;
+    package: NetPath.PN) RAISES {NetObj.Error, PkgErr.E, Thread.Alerted};
+
+PROCEDURE <A HREF="PackageObj_T_v1.m3.html#Surrogate_checkDir">Surrogate_checkDir</A>(
+    self: PackageObj.T;
+    dir: TextList.T;
+    child: TEXT) RAISES {NetObj.Error, PkgErr.E, Thread.Alerted};
+
+PROCEDURE <A HREF="PackageObj_T_v1.m3.html#Surrogate_status">Surrogate_status</A>(self: PackageObj.T): TEXT RAISES {NetObj.Error,
+    Thread.Alerted};
+
+PROCEDURE <A HREF="PackageObj_T_v1.m3.html#Stub_version">Stub_version</A>(
+    self: PackageObj.T;
+    c: StubLib.Conn;
+    rep: StubLib.DataRep) RAISES {NetObj.Error, Rd.Failure, Wr.Failure,
+    Thread.Alerted, PkgErr.E};
+
+PROCEDURE <A HREF="PackageObj_T_v1.m3.html#Stub_newSource">Stub_newSource</A>(
+    self: PackageObj.T;
+    c: StubLib.Conn;
+    rep: StubLib.DataRep) RAISES {NetObj.Error, Rd.Failure, Wr.Failure,
+    Thread.Alerted, PkgErr.E};
+
+PROCEDURE <A HREF="PackageObj_T_v1.m3.html#Stub_newShip">Stub_newShip</A>(
+    self: PackageObj.T;
+    c: StubLib.Conn;
+    rep: StubLib.DataRep) RAISES {NetObj.Error, Rd.Failure, Wr.Failure,
+    Thread.Alerted, PkgErr.E};
+
+PROCEDURE <A HREF="PackageObj_T_v1.m3.html#Stub_vcommit">Stub_vcommit</A>(
+    self: PackageObj.T;
+    c: StubLib.Conn;
+    rep: StubLib.DataRep) RAISES {NetObj.Error, Rd.Failure, Wr.Failure,
+    Thread.Alerted, PkgErr.E};
+
+PROCEDURE <A HREF="PackageObj_T_v1.m3.html#Stub_removeBackup">Stub_removeBackup</A>(
+    self: PackageObj.T;
+    c: StubLib.Conn;
+    rep: StubLib.DataRep) RAISES {NetObj.Error, Rd.Failure, Wr.Failure,
+    Thread.Alerted, PkgErr.E};
+
+PROCEDURE <A HREF="PackageObj_T_v1.m3.html#Stub_checkDir">Stub_checkDir</A>(
+    self: PackageObj.T;
+    c: StubLib.Conn;
+    rep: StubLib.DataRep) RAISES {NetObj.Error, Rd.Failure, Wr.Failure,
+    Thread.Alerted, PkgErr.E};
+
+PROCEDURE <A HREF="PackageObj_T_v1.m3.html#Stub_status">Stub_status</A>(
+    self: PackageObj.T;
+    c: StubLib.Conn;
+    rep: StubLib.DataRep) RAISES {NetObj.Error, Rd.Failure, Wr.Failure,
+    Thread.Alerted};
+
+END PackageObj_T_v1.
+</PRE>
+</inInterface>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

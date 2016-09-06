@@ -1,0 +1,183 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: m3front/src/exprs/CopyExpr.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>m3front/src/exprs/CopyExpr.m3</H2></A><HR>
+<inModule>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE> File: CopyExpr.m3                                           
+ Last Modified On Fri Feb 24 16:42:26 PST 1995 By kalsow     
+      Modified On Sun Dec 23 08:07:22 1990 By muller         
+
+<P><PRE>MODULE <module><implements><A HREF="CopyExpr.i3.html">CopyExpr</A></implements></module>;
+
+IMPORT <A HREF="../misc/M3.i3.html">M3</A>, <A HREF="../misc/CG.i3.html">CG</A>, <A HREF="Expr.i3.html">Expr</A>, <A HREF="ExprRep.i3.html">ExprRep</A>, <A HREF="../types/Type.i3.html">Type</A>, <A HREF="../../../m3middle/src/Target.i3.html">Target</A>, <A HREF="../../../m3middle/src/TInt.i3.html">TInt</A>;
+IMPORT <A HREF="../stmts/AssignStmt.i3.html">AssignStmt</A>, <A HREF="../types/OpenArrayType.i3.html">OpenArrayType</A>;
+
+TYPE
+  P = Expr.T BRANDED &quot;CopyExpr&quot; OBJECT
+        expr   : Expr.T;
+	tipe   : Type.T;
+        tmp    : CG.Var;
+      OVERRIDES
+        typeOf       := ExprRep.NoType;
+        check        := Check;
+        need_addr    := NeedsAddress;
+        prep         := Prep;
+        compile      := Compile;
+        prepLV       := Prep;
+        compileLV    := CompileLV;
+        prepBR       := ExprRep.PrepNoBranch;
+        compileBR    := ExprRep.NoBranch;
+        evaluate     := Fold;
+        isEqual      := EqCheck;
+        getBounds    := Bounder;
+        isWritable   := ExprRep.IsNever;
+        isDesignator := ExprRep.IsAlways;
+	isZeroes     := ExprRep.IsNever;
+	genFPLiteral := ExprRep.NoFPLiteral;
+	prepLiteral  := ExprRep.NoPrepLiteral;
+	genLiteral   := ExprRep.NoLiteral;
+        note_write   := NoteWrites;
+      END;
+
+PROCEDURE <A NAME="New"><procedure>New</procedure></A> (a: Expr.T; t: Type.T): Expr.T =
+  VAR p: P;
+  BEGIN
+    p := NEW (P);
+    ExprRep.Init (p);
+    p.expr   := a;
+    p.tipe   := t;
+    p.type   := t;
+    p.tmp    := NIL;
+    RETURN p;
+  END New;
+
+PROCEDURE <A NAME="Check"><procedure>Check</procedure></A> (p: P;  VAR cs: Expr.CheckState) =
+  BEGIN
+    Expr.TypeCheck (p.expr, cs);
+    p.tipe := Type.Check (p.tipe);
+  END Check;
+
+PROCEDURE <A NAME="EqCheck"><procedure>EqCheck</procedure></A> (a: P;  e: Expr.T;  x: M3.EqAssumption): BOOLEAN =
+  BEGIN
+    TYPECASE e OF
+    | NULL =&gt; RETURN FALSE;
+    | P(b) =&gt; RETURN Type.IsEqual (a.tipe, b.tipe, x)
+                 AND Expr.IsEqual (a.expr, b.expr, x);
+    ELSE      RETURN FALSE;
+    END;
+  END EqCheck;
+
+PROCEDURE <A NAME="NeedsAddress"><procedure>NeedsAddress</procedure></A> (&lt;*UNUSED*&gt; p: P) =
+  BEGIN
+    (* yep, that's the whole reason for a Copy! *)
+  END NeedsAddress;
+
+PROCEDURE <A NAME="Prep"><procedure>Prep</procedure></A> (p: P) =
+  VAR
+    e  := p.expr;
+    t  := p.tipe;
+    sz, align: INTEGER;
+    t_info: Type.Info;
+  BEGIN
+    t := Type.CheckInfo (t, t_info);
+    sz := t_info.size;
+    align := t_info.alignment;
+    Type.Compile (t);
+    IF (t_info.class = Type.Class.OpenArray) THEN
+      sz := Target.Address.pack
+             + OpenArrayType.OpenDepth(t) * Target.Integer.pack;
+    END;
+    Expr.Prep (e);
+    p.tmp := CG.Declare_temp (sz, align, t_info.cg_type, in_memory := TRUE);
+    CG.Load_addr_of (p.tmp, 0, align);
+    AssignStmt.Emit (t, e);
+  END Prep;
+
+PROCEDURE <A NAME="Compile"><procedure>Compile</procedure></A> (p: P) =
+  VAR
+    t  := p.tipe;
+    t_info: Type.Info;
+    align: INTEGER;
+  BEGIN
+    t := Type.CheckInfo (t, t_info);
+    align := t_info.alignment;
+
+    IF Type.IsStructured (t) THEN
+      CG.Load_addr_of_temp (p.tmp, 0, align);
+    ELSE
+      CG.Load (p.tmp, 0, t_info.size, align, t_info.cg_type);
+      CG.Free_temp (p.tmp);
+    END;
+    p.tmp := NIL;
+  END Compile;
+
+PROCEDURE <A NAME="CompileLV"><procedure>CompileLV</procedure></A> (p: P) =
+  VAR
+    t  := p.tipe;
+    t_info: Type.Info;
+  BEGIN
+    EVAL Type.CheckInfo (t, t_info);
+    CG.Load_addr_of_temp (p.tmp, 0, t_info.alignment);
+    p.tmp := NIL;
+  END CompileLV;
+
+PROCEDURE <A NAME="Fold"><procedure>Fold</procedure></A> (p: P): Expr.T =
+  BEGIN
+    RETURN Expr.ConstValue (p.expr);
+    (********* WKK 11/21/91 ??? **********************
+    e := Expr.ConstValue (p.expr);
+    IF (e = NIL) THEN RETURN NIL END;
+    p.expr := e;
+    RETURN p;
+    *****************************************************)
+  END Fold;
+
+PROCEDURE <A NAME="Bounder"><procedure>Bounder</procedure></A> (p: P;  VAR min, max: Target.Int) =
+  VAR min1, max1: Target.Int;
+  BEGIN
+    Expr.GetBounds (p.expr, min, max);
+    EVAL Type.GetBounds (p.tipe, min1, max1);
+    IF TInt.LT (min, min1) THEN min := min1 END;
+    IF TInt.LT (max1, max) THEN max := max1 END;
+  END Bounder;
+
+PROCEDURE <A NAME="NoteWrites"><procedure>NoteWrites</procedure></A> (&lt;*UNUSED*&gt; p: P) =
+  BEGIN
+    (* nothing to trace *)
+  END NoteWrites;
+
+BEGIN
+END CopyExpr.
+</PRE>
+</inModule>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

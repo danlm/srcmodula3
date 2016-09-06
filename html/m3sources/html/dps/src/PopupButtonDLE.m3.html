@@ -1,0 +1,249 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: dps/src/PopupButtonDLE.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>dps/src/PopupButtonDLE.m3</H2></A><HR>
+<inModule>
+<PRE><A HREF="../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE>UNSAFE  For procedure=NIL test 
+<PRE>MODULE <module><implements><A HREF="PopupButtonDLE.i3.html">PopupButtonDLE</A></implements></module>;
+
+IMPORT <A HREF="DPS.i3.html">DPS</A>, <A HREF="DPSWindow.i3.html">DPSWindow</A>, <A HREF="../../fmtlex/src/Fmt.i3.html">Fmt</A>, <A HREF="wraps.i3.html">wraps</A>;
+
+CONST xMargin = 5.0;
+CONST yMargin = 3.0;
+CONST fontHeight = DPS.StandardFontPoints;
+CONST fontDescender = 0.0;
+
+CONST itemsBelowButton = 1.0;
+
+CONST grayStrokeWidthText = &quot;4.0&quot;; (* Only 'inside' paints, due to clip. *)
+CONST colorStrokeWidthText = &quot;4.0&quot;; (* Only 'inside' paints, due to clip. *)
+
+PROCEDURE <A NAME="Repaint"><procedure>Repaint</procedure></A> (e: E; box: DPS.Box; &lt;*UNUSED*&gt; only: REFANY := NIL): TEXT =
+ VAR data: TEXT := &quot;&quot;;
+  BEGIN
+  IF DPS.BoxesIntersect (e.box, box) THEN data := DPSForButton(e); END;
+  IF e.hot AND DPS.BoxesIntersect (e.itemBox, box) THEN
+    data := data &amp; DPSForItemBox (e);
+    END;
+  RETURN &quot; gsave &quot; &amp; data &amp; &quot; grestore &quot;;
+  END Repaint;
+
+PROCEDURE <A NAME="DPSForButton"><procedure>DPSForButton</procedure></A> (e: E): TEXT =
+ VAR data: TEXT;
+  BEGIN
+  data := PushBoxCoords (e.box) &amp; Fmt.Real(DPS.StandardFontPoints)
+   &amp; &quot; 0.5 mul ButtonDLEDrawRoundedPath &quot;;
+  IF e.hot THEN data := data &amp; &quot; clip &quot;
+     &amp; &quot; 0.0 0.5 0.95 sethsbcolor gsave fill grestore &quot;
+     &amp; &quot; 0.0 1.0 0.5 sethsbcolor &quot;
+     &amp; colorStrokeWidthText &amp; &quot; setlinewidth stroke &quot;;
+   ELSE data := data &amp; &quot; clip 0.95 setgray gsave fill grestore &quot;
+     &amp; &quot;0.5 setgray &quot; &amp; grayStrokeWidthText &amp; &quot; setlinewidth stroke &quot;;
+    END;
+  data := data
+    &amp; Fmt.Real(e.box.low.x + xMargin) &amp; &quot; &quot;
+    &amp; Fmt.Real(e.box.low.y + yMargin + fontDescender) &amp; &quot; moveto &quot;
+    &amp; &quot; (&quot; &amp; e.text &amp; &quot;) &quot;
+    &amp; &quot; ButtonDLEFont setfont 0.0 setgray show &quot;;
+  RETURN data;
+  END DPSForButton;
+
+PROCEDURE <A NAME="DPSForItemBox"><procedure>DPSForItemBox</procedure></A> (e: E): TEXT =
+ VAR data: TEXT;
+  BEGIN
+  data := PushBoxCoords (e.itemBox)
+   &amp; Fmt.Real(DPS.StandardFontPoints)
+   &amp; &quot; 0.5 mul ButtonDLEDrawRoundedPath &quot;
+   &amp; &quot; clip 0.95 setgray gsave fill grestore &quot;
+   &amp; &quot;0.5 setgray &quot; &amp; grayStrokeWidthText &amp; &quot; setlinewidth stroke &quot;;
+  IF e.items # NIL THEN FOR k := 0 TO NUMBER(e.items^)-1 DO
+    data := data &amp; RewriteItemText (e, e.items^[k]);
+    END; END;
+  RETURN data;
+  END DPSForItemBox;
+
+PROCEDURE <A NAME="RewriteItemText"><procedure>RewriteItemText</procedure></A> (&lt;*UNUSED*&gt; e: E; i:Item): TEXT =
+ VAR data: TEXT;
+  BEGIN
+  data := &quot; &quot; &amp; Fmt.Real(i.textPlace.x) &amp; &quot; &quot;
+    &amp; Fmt.Real(i.textPlace.y) &amp; &quot; moveto &quot;
+    &amp; &quot; (&quot; &amp; i.text &amp; &quot;) &quot;
+    &amp; &quot; ButtonDLEFont setfont &quot;;
+  IF i.hot THEN data := data &amp; &quot; 0.0 1.0 1.0 sethsbcolor show &quot;;
+   ELSE data := data &amp; &quot; 0.5 setgray show &quot;
+    END;
+  RETURN data;
+  END RewriteItemText;
+
+PROCEDURE <A NAME="RewriteItem"><procedure>RewriteItem</procedure></A> (e: E; i:Item) =
+  BEGIN
+  e.ImmediatePostScript ( &quot; gsave &quot; &amp; RewriteItemText(e, i) &amp; &quot; grestore &quot; );
+  END RewriteItem;
+
+PROCEDURE <A NAME="PushBoxCoords"><procedure>PushBoxCoords</procedure></A> (box: DPS.Box): TEXT =
+  BEGIN
+  RETURN &quot; &quot; &amp; Fmt.Real(box.low.x) &amp; &quot; &quot; &amp; Fmt.Real(box.low.y) &amp; &quot; &quot;
+   &amp; Fmt.Real(box.high.x) &amp; &quot; &quot; &amp; Fmt.Real(box.high.y) &amp; &quot; &quot;;
+  END PushBoxCoords;
+
+PROCEDURE <A NAME="RecalculateItems"><procedure>RecalculateItems</procedure></A> (e: E; t: DPSWindow.T) =
+ VAR height, width, maxWidth: REAL;
+  BEGIN
+  IF e.items=NIL THEN e.itemBox := DPS.ZeroBox; RETURN; END;
+  IF NUMBER(e.items^) &lt; 1 THEN RETURN; END;
+  e.itemBox.low.x := e.box.low.x;
+  e.itemBox.high.y := e.box.low.y - itemsBelowButton;
+  e.itemBox.low.y := e.itemBox.high.y
+   - ( FLOAT(NUMBER(e.items^)) * fontHeight + yMargin + yMargin );
+  maxWidth := 0.0;
+  FOR k := 0 TO NUMBER(e.items^)-1 DO
+    wraps.Stringwidth (t.ctx, &quot;ButtonDLEFont&quot;, e.items^[k].text, height, width);
+    e.items^[k].textPlace.x := e.itemBox.low.x + xMargin;
+    e.items^[k].textPlace.y := e.itemBox.high.y
+      - ( yMargin + FLOAT(k+1)*fontHeight - fontDescender );
+    maxWidth := MAX (maxWidth, width);
+    END;
+  e.itemBox.high.x := e.itemBox.low.x + maxWidth + xMargin + xMargin;
+  END RecalculateItems;
+
+PROCEDURE <A NAME="Init"><procedure>Init</procedure></A> (e: E; t: DPSWindow.T) =
+ VAR height, width: REAL;
+  BEGIN
+  IF e.initialized THEN RETURN; END;
+  t.SendFoundation ( &quot; /ButtonDLEDrawCircledPath &quot;
+   &amp; &quot; { /highy exch def /highx exch def /lowy exch def /lowx exch def &quot;
+   &amp; &quot; /half highy lowy sub 2 div def &quot;
+   &amp; &quot; newpath lowx half add highy moveto &quot;
+   &amp; &quot; lowx half add lowy half add half 90 270 arc &quot;
+   &amp; &quot; highx half sub lowy lineto &quot;
+   &amp; &quot; highx half sub lowy half add half 270 90 arc &quot;
+   &amp; &quot; lowx half add highy lineto closepath } def &quot; );
+  t.SendFoundation ( &quot; /ButtonDLEDrawRoundedPath &quot;
+   &amp; &quot; { /r exch def /highy exch def /highx exch def &quot;
+   &amp; &quot; /lowy exch def /lowx exch def &quot;
+   &amp; &quot; newpath lowx lowy r add moveto &quot;
+   &amp; &quot; lowx r add highy r sub r 180 90 arcn &quot;
+   &amp; &quot; highx r sub highy r sub r 90 0 arcn &quot;
+   &amp; &quot; highx r sub lowy r add r 0 270 arcn &quot;
+   &amp; &quot; lowx r add lowy r add r 270 180 arcn &quot;
+   &amp; &quot;  closepath } def &quot; );
+  t.SendFoundation ( &quot; /ButtonDLEFont /Times-Roman findfont &quot;
+    &amp; Fmt.Real(fontHeight) &amp; &quot; scalefont def &quot; );
+  wraps.Stringwidth (t.ctx, &quot;ButtonDLEFont&quot;, e.text, height, width);
+  e.box.high.x := e.box.low.x + xMargin + width + xMargin;
+  e.box.high.y := e.box.low.y + yMargin + fontHeight + yMargin;
+  e.text := DPS.EscapeText(e.text); (* Fixed, unexaminable, only have to convert once. *)
+  e.initialized := TRUE;
+  END Init;
+
+PROCEDURE <A NAME="ItemMoused"><procedure>ItemMoused</procedure></A> (e: E; &lt;*UNUSED*&gt; t: DPSWindow.T; place: DPS.Place): Item =
+ VAR box:DPS.Box;
+  BEGIN
+  IF e.items#NIL THEN FOR k := 0 TO NUMBER(e.items^)-1 DO
+    box := DPS.Box {
+      DPS.Place {e.itemBox.low.x, e.items^[k].textPlace.y},
+      DPS.Place {e.itemBox.high.x, e.items^[k].textPlace.y + fontHeight} };
+    IF DPS.PlaceIsInBox (place, box) THEN RETURN e.items^[k]; END;
+    END; END;
+  RETURN NIL;
+  END ItemMoused;
+
+PROCEDURE <A NAME="Mouse"><procedure>Mouse</procedure></A> (e: E; t: DPSWindow.T; event: DPS.MouseEvent): BOOLEAN =
+ VAR in: BOOLEAN;
+ VAR new, old: Item;
+ VAR possibleNewItems: REF ARRAY OF Item;
+ VAR fudgedBox: DPS.Box;
+  BEGIN
+  in := DPS.PlaceIsInBox (event.place, e.box);
+  IF e.hot THEN (* We handle everything! *)
+    IF event.clickType = DPS.ClickType.LastUp THEN
+      e.hot := FALSE;
+      fudgedBox := e.itemBox; fudgedBox.low.y := fudgedBox.low.y - 1.0;
+      (* There may be something wrong with DPS clipping. *)
+      e.Dirty (fudgedBox, NIL);
+      e.Dirty (e.box, e);
+      new := ItemMoused (e, t, event.place);
+      IF new # NIL (* Can no longer test method#NIL. *) THEN new.Proc(); END;
+     ELSE (* Not LastUp. Keep correct item highlighted. *)
+      new := ItemMoused (e, t, event.place);
+      old := NIL;
+      IF e.items # NIL THEN
+        LOOP FOR k := 0 TO NUMBER(e.items^)-1 DO
+          IF e.items^[k].hot THEN old := e.items^[k]; EXIT; END;
+          END; EXIT; END;
+        END;
+      IF new # old THEN
+        IF old # NIL THEN old.hot := FALSE; RewriteItem(e, old); END;
+        IF new # NIL THEN new.hot := TRUE; RewriteItem(e, new); END;
+        END;
+      END;
+    RETURN TRUE; (* We handled it! *)
+    END;
+  IF in THEN
+    IF event.clickType = DPS.ClickType.FirstDown THEN
+      (* Can no longer use a NIL value of a method, alas .. 28jan92 *)
+      (*
+      IF e.Proc # ProcIsReallyNIL THEN
+        e.items := e.Proc(t);
+        RecalculateItems(e, t);
+       ELSIF e.itemBox.low.x=0.0 THEN RecalculateItems(e, t);
+        END;
+      *)
+      possibleNewItems := e.Proc(t);
+      IF possibleNewItems # e.items THEN
+        e.items := e.Proc(t);
+        RecalculateItems(e, t);
+       ELSIF e.itemBox.low.x=0.0 THEN RecalculateItems(e, t);
+        END;
+      e.hot := TRUE;
+      IF e.items#NIL THEN FOR k := 0 TO NUMBER(e.items^)-1 DO
+        e.items^[k].hot := FALSE;
+        END; END;
+      EVAL e.MoveToLast();
+      e.ImmediatePostScript ( &quot; gsave &quot; &amp; DPSForButton(e) &amp; &quot; grestore &quot;);
+      e.ImmediatePostScript ( &quot; gsave &quot; &amp; DPSForItemBox(e) &amp; &quot; grestore &quot;);
+      END;
+    END;
+  RETURN in;
+  END Mouse;
+
+PROCEDURE <A NAME="ProcIsReallyNIL"><procedure>ProcIsReallyNIL</procedure></A> (e: E; &lt;*UNUSED*&gt;t: DPSWindow.T): REF ARRAY OF Item =
+  BEGIN
+  RETURN e.items;
+  END ProcIsReallyNIL;
+
+  BEGIN
+  END PopupButtonDLE.
+</PRE>
+</inModule>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

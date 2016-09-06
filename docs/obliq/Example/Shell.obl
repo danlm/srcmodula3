@@ -1,0 +1,39 @@
+(* Unix shells. *)
+
+module Shell;
+
+let breakLines =
+  proc(answer)
+    if answer is "" then []
+    else
+      text_explode("\n",
+        text_sub(answer, 0, text_length(answer)-1))
+    end
+  end;
+
+(* E.g.: exec("/bin/ls -l"); *)
+let exec =
+  proc(command)
+    breakLines(
+      process_filter(processor, text_explode(" ", command), ""))
+  end;
+  
+(* E.g.: sh("ls *.ps"); sh("ls | /usr/ucb/wc"); *)
+let sh =
+  proc(command)
+    breakLines(
+      process_filter(processor, ["/bin/sh"], command))
+  end;
+  
+(* Interactive shell. Exit with "quit". *)
+let shi =
+  proc()
+    loop
+      let l = rd_getLine(rd_stdin);
+      if text_equal(l, "quit") then exit end;
+      wr_putText(wr_stdout,
+        process_filter(processor, ["/bin/sh"], l));
+      wr_flush(wr_stdout);
+    end
+  end;
+

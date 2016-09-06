@@ -1,0 +1,35 @@
+(* Starts a network object daemon on a given machine, and waits for 
+   it to come online. *)
+
+module Netobjd
+export
+  obtainNetobjd(machine: Text): Ok;
+
+let startNetobjd =
+  proc(machine: Text): Ok,
+    process_new(processor, ["rsh", machine, "exec", "netobjd-ip"], true);
+  end;
+
+let contactNetobjd =
+  proc(machine: Text): Ok ! net_failure,
+    var retry = 10;
+    loop
+      try 
+	net_export("ping", machine, {});
+	exit;
+      except
+	net_failure =>
+	  retry := retry-1;
+	  if retry is 0 then raise(net_failure) end;
+	  pause(1.0);
+      end;
+    end;
+  end;
+
+let obtainNetobjd =
+  proc(machine: Text): Ok,
+    startNetobjd(machine);
+    contactNetobjd(machine);
+  end;
+
+end module;

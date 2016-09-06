@@ -1,0 +1,54 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: m3linker/src/MxGen.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>m3linker/src/MxGen.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE> File: MxGen.i3                                              
+ Last Modified On Fri Nov 11 13:00:26 PST 1994 By kalsow     
+
+<P><PRE>INTERFACE <interface><A HREF="MxGen.m3.html">MxGen</A></interface>;
+
+IMPORT <A HREF="Mx.i3.html">Mx</A>, <A HREF="../../rw/src/Common/Wr.i3.html">Wr</A>;
+
+PROCEDURE <A HREF="MxGen.m3.html#GenerateMain">GenerateMain</A> (base       : Mx.LinkSet;
+                        output     : Wr.T;
+                        verbose    : BOOLEAN;
+                        windowsGUI : BOOLEAN);
+</PRE><BLOCKQUOTE><EM> write the list of compilation units in 'base' on 'output' in a
+   correct Modula-3 initialization order.  It is an error to pass a 'base'
+   that hasn't successfully passed through 'MxCheck.IsProgram'. </EM></BLOCKQUOTE><PRE>
+
+END MxGen.
+</PRE>
+</inInterface>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

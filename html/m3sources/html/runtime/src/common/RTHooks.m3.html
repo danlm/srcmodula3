@@ -1,0 +1,142 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: runtime/src/common/RTHooks.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>runtime/src/common/RTHooks.m3</H2></A><HR>
+<inModule>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM>                                                             </EM></BLOCKQUOTE><PRE>
+</PRE> Many of the routines in the RTHooks interface are exported directly
+   by other modules of the runtime:
+ <P>
+<PRE>
+          PushEFrame, PopEFrame   are in Thread
+          LockMutex, UnlockMutex  are in Thread
+          Allocate*, Dispose*     are in RTAllocator
+</PRE>
+
+
+<P><PRE>UNSAFE MODULE <module><implements><A HREF="RTHooks.i3.html">RTHooks</A></implements></module>;
+
+IMPORT <A HREF="RT0.i3.html">RT0</A>, <A HREF="RTException.i3.html">RTException</A>, <A HREF="RTMisc.i3.html">RTMisc</A>, <A HREF="../../../text/src/Text.i3.html">Text</A>, <A HREF="../../../word/src/Word.i3.html">Word</A>;
+
+&lt;*UNUSED*&gt; VAR copyright := ARRAY [0..36] OF TEXT {
+  &quot;              SRC Modula-3 Non-commercial License&quot;,
+  &quot;&quot;,
+  &quot;SRC Modula-3 is distributed by Digital Equipment Corporation ('DIGITAL'),&quot;,
+  &quot;a corporation of the Commonwealth of Massachusetts.  DIGITAL hereby grants&quot;,
+  &quot;to you a non-transferable, non-exclusive, royalty free worldwide license&quot;,
+  &quot;to use, copy, modify, prepare integrated and derivative works of and&quot;,
+  &quot;distribute SRC Modula-3 for non-commercial purposes, subject to your&quot;,
+  &quot;agreement to the following terms and conditions:&quot;,
+  &quot;&quot;,
+  &quot;  - The SRC Modula-3 Non-commercial License shall be included in the code&quot;,
+  &quot;    and must be retained in all copies of SRC Modula-3 (full or partial;&quot;,
+  &quot;    original, modified, derivative, or otherwise):&quot;,
+  &quot;&quot;,
+  &quot;  - You acquire no ownership right, title, or interest in SRC Modula-3&quot;,
+  &quot;    except as provided herein.&quot;,
+  &quot;&quot;,
+  &quot;  - You agree to make available to DIGITAL all improvements,&quot;,
+  &quot;    enhancements, extensions, and modifications to SRC Modula-3 which&quot;,
+  &quot;    are made by you or your sublicensees and distributed to others and&quot;,
+  &quot;    hereby grant to DIGITAL an irrevocable, fully paid, worldwide, and&quot;,
+  &quot;    non-exclusive license under your intellectual property rights,&quot;,
+  &quot;    including patent and copyright, to use and sublicense, without&quot;,
+  &quot;  limititation, these modifications.&quot;,
+  &quot;&quot;,
+  &quot;  - SRC Modula-3 is a research work which is provided 'as is',&quot;,
+  &quot;    and  DIGITAL disclaims all warranties&quot;,
+  &quot;    with regard to this software, including all implied warranties of&quot;,
+  &quot;    merchantability and fitness of purpose.  In no event shall DIGITAL be&quot;,
+  &quot;    liable for any special, direct, indirect, or consequential damages or&quot;,
+  &quot;    any damages whatsoever resulting from loss of use, data or profits,&quot;,
+  &quot;    whether in an action of contract, negligence or other tortious action,&quot;,
+  &quot;    arising out of or in connection with the use or performance of this&quot;,
+  &quot;    software. &quot;,
+  &quot;&quot;,
+  &quot;&quot;,
+  &quot;              Copyright (C) 1990 Digital Equipment Corporation&quot;,
+  &quot;                       All Rights Reserved&quot;
+   };
+</PRE>----------------------------------------------------------------- RAISE ---
+
+<P><PRE>PROCEDURE <A NAME="Raise"><procedure>Raise</procedure></A> (exception: ADDRESS;  arg: ADDRESS) RAISES ANY =
+  BEGIN
+    RTException.Raise (exception, arg);
+  END Raise;
+
+PROCEDURE <A NAME="ResumeRaise"><procedure>ResumeRaise</procedure></A> (info: ADDRESS) RAISES ANY =
+  TYPE Info = UNTRACED REF RECORD exception, arg: ADDRESS END;
+  VAR p := LOOPHOLE (info, Info);
+  BEGIN
+    RTException.ResumeRaise (p.exception, p.arg);
+  END ResumeRaise;
+</PRE>----------------------------------------------- builtin TEXT operations ---
+
+<P><PRE>PROCEDURE <A NAME="Concat"><procedure>Concat</procedure></A> (a, b: TEXT): TEXT =
+  BEGIN
+    RETURN Text.Cat (a, b);
+  END Concat;
+</PRE>-------------------------------------------------------- runtime errors ---
+
+<P><PRE>CONST
+  msgs = ARRAY [0..9] OF TEXT {
+    (* 0 *) &quot;ASSERT failed&quot;,
+    (* 1 *) &quot;Value out of range&quot;,
+    (* 2 *) &quot;Subscript out of range&quot;,
+    (* 3 *) &quot;Incompatible array shapes&quot;,
+    (* 4 *) &quot;Attempt to dereference NIL&quot;,
+    (* 5 *) &quot;NARROW failed&quot;,
+    (* 6 *) &quot;Function did not return a value&quot;,
+    (* 7 *) &quot;Unhandled value in CASE statement&quot;,
+    (* 8 *) &quot;Unhandled type in TYPECASE statement&quot;,
+    (* 9 *) &quot;Stack overflow&quot;
+  };
+
+PROCEDURE <A NAME="ReportFault"><procedure>ReportFault</procedure></A> (module: ADDRESS(*RT0.ModulePtr*);  info: INTEGER)=
+  VAR
+    line : INTEGER       := Word.RightShift (info, 4);
+    code : INTEGER       := Word.And (info, 16_f);
+    mi   : RT0.ModulePtr := module;
+    file : RT0.String    := NIL;
+    msg  : TEXT          := &quot;bad error code!&quot;;
+  BEGIN
+    IF (0 &lt;= code) AND (code &lt;= LAST (msgs)) THEN msg := msgs[code]; END;
+    IF (mi # NIL) THEN file := mi.file; END;
+    RTMisc.FatalErrorS (file, line, msg);
+  END ReportFault;
+
+BEGIN
+END RTHooks.
+</PRE>
+</inModule>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

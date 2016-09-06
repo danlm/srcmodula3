@@ -1,0 +1,77 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: ui/src/winvbt/WinScrnPixmap.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>ui/src/winvbt/WinScrnPixmap.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM> Digital Internal Use Only                                                 </EM></BLOCKQUOTE><PRE>
+</PRE>                                                                           
+       Created on Tue Jan 17 16:08:07 PST 1995 by najork                   
+
+<P>
+<P><PRE>INTERFACE <interface><A HREF="WinScrnPixmap.m3.html">WinScrnPixmap</A></interface>;
+
+IMPORT <A HREF="../vbt/PaintPrivate.i3.html">PaintPrivate</A>, <A HREF="../../../geometry/src/Rect.i3.html">Rect</A>, <A HREF="../vbt/ScrnPixmap.i3.html">ScrnPixmap</A>, <A HREF="../../../win32/src/WinDef.i3.html">WinDef</A>, <A HREF="WinScreenType.i3.html">WinScreenType</A>;
+</PRE> The moral equivalent of <CODE>PixmapRecord</CODE> in xvbt world is 
+   <CODE>XScrnTpRep.PixmapRec</CODE>. 
+
+<P><PRE>TYPE
+  PixmapRecord = RECORD
+    hbmp   : WinDef.HBITMAP;
+    domain : Rect.T;  (* domain.north is used to link free records *)
+  END;
+
+CONST
+  SolidPixmap: PaintPrivate.Pixmap = -1;
+
+PROCEDURE <A HREF="WinScrnPixmap.m3.html#NewOracle">NewOracle</A> (st: WinScreenType.T): ScrnPixmap.Oracle;
+
+PROCEDURE <A HREF="WinScrnPixmap.m3.html#NewPixmap">NewPixmap</A> (         st   : WinScreenType.T;
+                              hbmp : WinDef.HBITMAP;
+                     READONLY dom  : Rect.T;
+                              depth: INTEGER): ScrnPixmap.T;
+
+PROCEDURE <A HREF="WinScrnPixmap.m3.html#PixmapDomain">PixmapDomain</A> (st: WinScreenType.T; pmId: INTEGER): Rect.T;
+
+PROCEDURE <A HREF="WinScrnPixmap.m3.html#PixmapFromRaw">PixmapFromRaw</A> (st: WinScreenType.T;
+                         pm: ScrnPixmap.Raw): WinDef.HBITMAP;
+</PRE><P>
+ * Debugging gear
+ 
+<PRE>PROCEDURE <A HREF="WinScrnPixmap.m3.html#DumpPixmap">DumpPixmap</A> (pm: ScrnPixmap.T);
+PROCEDURE <A HREF="WinScrnPixmap.m3.html#DumpPixmapRecord">DumpPixmapRecord</A> (pmr: PixmapRecord);
+PROCEDURE <A HREF="WinScrnPixmap.m3.html#DumpRaw">DumpRaw</A> (pm: ScrnPixmap.Raw);
+
+END WinScrnPixmap.
+</PRE>
+</inInterface>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

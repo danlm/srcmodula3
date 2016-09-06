@@ -1,0 +1,119 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: m3front/src/exprs/PlusExpr.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>m3front/src/exprs/PlusExpr.m3</H2></A><HR>
+<inModule>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE> File: PlusExpr.m3                                           
+
+<P><PRE>MODULE <module><implements><A HREF="PlusExpr.i3.html">PlusExpr</A></implements></module>;
+
+IMPORT <A HREF="../misc/M3.i3.html">M3</A>, <A HREF="Expr.i3.html">Expr</A>, <A HREF="ExprRep.i3.html">ExprRep</A>, <A HREF="../types/Type.i3.html">Type</A>, <A HREF="../builtinTypes/Int.i3.html">Int</A>, <A HREF="../builtinTypes/Reel.i3.html">Reel</A>, <A HREF="../builtinTypes/LReel.i3.html">LReel</A>, <A HREF="../builtinTypes/EReel.i3.html">EReel</A>;
+
+TYPE
+  P = ExprRep.Ta BRANDED &quot;PlusExpr.P&quot; OBJECT
+      OVERRIDES
+        typeOf       := TypeOf;
+        check        := Check;
+        need_addr    := ExprRep.NotAddressable;
+        prep         := Prep;
+        compile      := Compile;
+        prepLV       := ExprRep.NotLValue;
+        compileLV    := ExprRep.NotLValue;
+        prepBR       := ExprRep.NotBoolean;
+        compileBR    := ExprRep.NotBoolean;
+        evaluate     := Fold;
+        isEqual      := EqCheck;
+        getBounds    := ExprRep.NoBounds;
+        isWritable   := ExprRep.IsNever;
+        isDesignator := ExprRep.IsNever;
+	isZeroes     := ExprRep.IsNever;
+	genFPLiteral := ExprRep.NoFPLiteral;
+	prepLiteral  := ExprRep.NoPrepLiteral;
+	genLiteral   := ExprRep.NoLiteral;
+        note_write   := ExprRep.NotWritable;
+      END;
+
+PROCEDURE <A NAME="New"><procedure>New</procedure></A> (a: Expr.T): Expr.T =
+  VAR p: P;
+  BEGIN
+    p := NEW (P);
+    ExprRep.Init (p);
+    p.a := a;
+    RETURN p;
+  END New;
+
+PROCEDURE <A NAME="TypeOf"><procedure>TypeOf</procedure></A> (p: P): Type.T =
+  BEGIN
+    RETURN Expr.TypeOf (p.a);
+  END TypeOf;
+
+PROCEDURE <A NAME="Check"><procedure>Check</procedure></A> (p: P;  VAR cs: Expr.CheckState) =
+  VAR t: Type.T;
+  BEGIN
+    Expr.TypeCheck (p.a, cs);
+    p.type := Expr.TypeOf (p.a);
+    t := Type.Base (p.type);
+    IF (t # Int.T) AND (t # Reel.T) AND (t # LReel.T) AND (t # EReel.T) THEN
+      p.type := Expr.BadOperands (&quot;unary \'+\'&quot;, t);
+    END;
+  END Check;
+
+PROCEDURE <A NAME="EqCheck"><procedure>EqCheck</procedure></A> (a: P;  e: Expr.T;  x: M3.EqAssumption): BOOLEAN =
+  BEGIN
+    TYPECASE e OF
+    | NULL =&gt; RETURN FALSE;
+    | P(b) =&gt; RETURN Expr.IsEqual (a.a, b.a, x);
+    ELSE      RETURN Expr.IsEqual (a.a, e, x);
+    END;
+  END EqCheck;
+
+PROCEDURE <A NAME="Prep"><procedure>Prep</procedure></A> (p: P) =
+  BEGIN
+    Expr.Prep (p.a);
+  END Prep;
+
+PROCEDURE <A NAME="Compile"><procedure>Compile</procedure></A> (p: P) =
+  BEGIN
+    Expr.Compile (p.a);
+  END Compile;
+
+PROCEDURE <A NAME="Fold"><procedure>Fold</procedure></A> (p: P): Expr.T =
+  BEGIN
+    RETURN Expr.ConstValue (p.a);
+  END Fold;
+
+BEGIN
+END PlusExpr.
+</PRE>
+</inModule>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

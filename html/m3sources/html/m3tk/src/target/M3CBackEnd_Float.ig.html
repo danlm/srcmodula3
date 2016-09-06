@@ -1,0 +1,78 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: m3tk/src/target/M3CBackEnd_Float.ig</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>m3tk/src/target/M3CBackEnd_Float.ig</H2></A><HR>
+<inInterface>
+<PRE>GENERIC INTERFACE <genericInterface><A HREF="M3CBackEnd_Float.mg.html">M3CBackEnd_Float</A></genericInterface>(FloatType);
+
+Copyright
+
+IMPORT M3AST_AS, M3AST_SM, M3CStdProcs, M3CBackEnd;
+
+REVEAL M3AST_SM.Exp_value &lt;: ROOT;
+
+TYPE T = M3AST_SM.Exp_value BRANDED OBJECT sm_value: FloatType.T END;
+
+PROCEDURE <A HREF="M3CBackEnd_Float.mg.html#New_value">New_value</A>(r: FloatType.T): T RAISES {};
+
+PROCEDURE <A HREF="M3CBackEnd_Float.mg.html#StdUnaryOp">StdUnaryOp</A>(
+    f: M3CStdProcs.Func;
+    e: T;
+    VAR (*out*) er: M3AST_SM.Exp_value;
+    ft: M3AST_AS.FLOAT_TYPE := NIL
+    ): M3CBackEnd.NumStatus RAISES {};
+
+PROCEDURE <A HREF="M3CBackEnd_Float.mg.html#StdBinaryOp">StdBinaryOp</A>(
+    f: M3CStdProcs.Func;
+    e1, e2: T;
+    VAR (*out*) er: M3AST_SM.Exp_value)
+    : M3CBackEnd.NumStatus
+    RAISES {};
+
+PROCEDURE <A HREF="M3CBackEnd_Float.mg.html#UnaryOp">UnaryOp</A>(
+    op: M3AST_AS.UNARY;
+    e: T;
+    VAR (*out*) er: M3AST_SM.Exp_value)
+    : M3CBackEnd.NumStatus
+    RAISES {};
+
+PROCEDURE <A HREF="M3CBackEnd_Float.mg.html#BinaryOp">BinaryOp</A>(
+    op: M3AST_AS.BINARY;
+    e1, e2: T;
+    VAR (*out*) er: M3AST_SM.Exp_value)
+    : M3CBackEnd.NumStatus
+    RAISES {};
+
+END M3CBackEnd_Float.
+</PRE>
+</inInterface>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

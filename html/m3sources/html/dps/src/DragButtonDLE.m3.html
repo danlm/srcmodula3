@@ -1,0 +1,92 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: dps/src/DragButtonDLE.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>dps/src/DragButtonDLE.m3</H2></A><HR>
+<inModule>
+<PRE><A HREF="../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+
+MODULE <module><implements><A HREF="DragButtonDLE.i3.html">DragButtonDLE</A></implements></module>;
+
+IMPORT <A HREF="ButtonDLE.i3.html">ButtonDLE</A>, <A HREF="DPS.i3.html">DPS</A>, <A HREF="DPSWindow.i3.html">DPSWindow</A>;
+
+PROCEDURE <A NAME="Mouse"><procedure>Mouse</procedure></A> (e: E; t: DPSWindow.T; event: DPS.MouseEvent): BOOLEAN =
+ VAR in: BOOLEAN;
+  BEGIN
+  Init (e, t);
+  in := DPS.PlaceIsInBox (event.place, e.box);
+  IF e.hot THEN (* We handle everything! *)
+    IF event.clickType = DPS.ClickType.LastUp THEN
+      e.hot := FALSE;
+      e.Dirty (e.box, e);
+      e.Up (t, event);
+      END;
+    RETURN TRUE; (* We handled it! *)
+    END;
+  IF in THEN
+    IF event.clickType = DPS.ClickType.FirstDown THEN
+      e.hot := TRUE;
+      EVAL e.MoveToLast();
+      e.Dirty (e.box, e);
+      e.Down (t, event);
+      END;
+    END;
+  RETURN in;
+  END Mouse;
+
+PROCEDURE <A NAME="Init"><procedure>Init</procedure></A> (e: E; t: DPSWindow.T) =
+  BEGIN
+  ButtonDLE.Init (e, t);
+  END Init;
+
+PROCEDURE <A NAME="Down"><procedure>Down</procedure></A> (&lt;*UNUSED*&gt; e: E;
+                &lt;*UNUSED*&gt; t: DPSWindow.T;
+                &lt;*UNUSED*&gt; event: DPS.MouseEvent) =
+  BEGIN
+  END Down;
+
+PROCEDURE <A NAME="Move"><procedure>Move</procedure></A> (&lt;*UNUSED*&gt; e: E;
+                &lt;*UNUSED*&gt; t: DPSWindow.T;
+                &lt;*UNUSED*&gt; event: DPS.MouseEvent) =
+  BEGIN
+  END Move;
+
+PROCEDURE <A NAME="Up"><procedure>Up</procedure></A> (&lt;*UNUSED*&gt; e: E;
+              &lt;*UNUSED*&gt; t: DPSWindow.T;
+              &lt;*UNUSED*&gt; event: DPS.MouseEvent) =
+  BEGIN
+  END Up;
+
+  BEGIN
+  END DragButtonDLE.
+</PRE>
+</inModule>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

@@ -1,0 +1,20 @@
+(* A server for factorial and counting. Useful to see how many recursive calls 
+   one can do in a server thread (which cannot grow). *)
+
+module FactServer;
+
+let fact =
+  net_export("fact","", 
+    { m => 
+        meth(s,n) 
+          if n is 0 then 1 else n * s.m(n-1) end
+        end
+    });
+
+let count =
+  net_export("count","",
+    { m =>
+        meth(s,n)
+          if n is 0 then 0 else s.m(n-1) end;
+        end
+    });

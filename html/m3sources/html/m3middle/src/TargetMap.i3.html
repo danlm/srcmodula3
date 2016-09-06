@@ -1,0 +1,65 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: m3middle/src/TargetMap.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>m3middle/src/TargetMap.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM>                                                             </EM></BLOCKQUOTE><PRE>
+</PRE> File: TargetMap.i3                                          
+ Last Modified On Fri Nov 19 09:33:45 PST 1993 By kalsow     
+      Modified On Mon Mar 11 22:16:28 1991 By muller         
+
+<P><PRE>INTERFACE <interface><A HREF="TargetMap.m3.html">TargetMap</A></interface>;
+</PRE>  Modula-3 target description
+<P>
+    This interface defines some useful arrays that map over
+    target's types.
+
+
+<P><PRE>FROM <A HREF="Target.i3.html">Target</A> IMPORT CGType, Precision, Int_type, Float_type;
+
+VAR(* CONST *)
+  CG_Align       : ARRAY CGType OF CARDINAL;
+  CG_Align_bytes : ARRAY CGType OF CARDINAL;
+  CG_Size        : ARRAY CGType OF CARDINAL;
+  CG_Bytes       : ARRAY CGType OF CARDINAL;
+  CG_Base        : ARRAY CGType OF CGType;
+  Int_types      : ARRAY [0..7] OF Int_type;
+  Float_types    : ARRAY Precision OF Float_type;
+
+PROCEDURE <A HREF="TargetMap.m3.html#Init">Init</A>();
+</PRE><BLOCKQUOTE><EM> initializes the maps from the values exported by Target </EM></BLOCKQUOTE><PRE>
+
+END TargetMap.
+</PRE>
+</inInterface>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

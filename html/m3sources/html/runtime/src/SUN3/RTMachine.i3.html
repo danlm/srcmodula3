@@ -1,0 +1,138 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: runtime/src/SUN3/RTMachine.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>runtime/src/SUN3/RTMachine.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM>                                                          </EM></BLOCKQUOTE><PRE>
+</PRE> This interface defines platform (machine + OS) dependent
+   types and constants. 
+
+<P><PRE>INTERFACE <interface>RTMachine</interface>;
+
+IMPORT <A HREF="#x1">Csetjmp</A>;
+</PRE>--------------------------------------------------------- thread state ---
+
+<P><PRE>TYPE
+  State = Csetjmp.jmp_buf;
+  (* The machine state is saved in a &quot;State&quot;.  This type is really
+     opaque to the client, i.e. it does not need to be an array. *)
+
+&lt;*EXTERNAL &quot;_setjmp&quot; *&gt;
+PROCEDURE SaveState (VAR s: State): INTEGER;
+</PRE><BLOCKQUOTE><EM> Capture the currently running thread's state </EM></BLOCKQUOTE><PRE>
+
+CONST
+  FramePadBottom = 2;
+  FramePadTop    = 0;
+  (* Additional padding words from above and below an existing
+     thread's stack pointer to copy when creating a new thread *)
+</PRE>------------------------------------------------------------------ heap ---
+
+<P> The heap page size is machine-dependent, since it might depend on the
+   architecture's VM page size (if VM is TRUE).  Otherwise, 8192 bytes is a
+   reasonable page size.  The page size must be a power of two. 
+
+<P><PRE>CONST
+  BytesPerHeapPage    = 8192;        (* bytes per page *)
+  LogBytesPerHeapPage = 13;
+  AdrPerHeapPage      = 8192;        (* addresses per page *)
+  LogAdrPerHeapPage   = 13;
+</PRE> The collector supports the use of VM protection to achieve incremental,
+   generational collection.  This is not possible on all architectures, and
+   it may not be implemented in all cases where it is possible.  The
+   boolean constant <CODE>VMHeap</CODE> is <CODE>TRUE</CODE> iff all necessary support is
+   present for this architecture.  <CODE>VMHeap</CODE> is <CODE>TRUE</CODE> for the DS3100,
+   whose implementation you might use as a reference. 
+
+<P><PRE>CONST
+  VMHeap = FALSE;
+</PRE>--------------------------------------------------------- thread stacks ---
+
+<P><PRE>CONST
+  PointerAlignment = 2;
+  (* The C compiler allocates all pointers on 'PointerAlignment'-byte
+     boundaries.  The garbage collector scans thread stacks, but only
+     looks at these possible pointer locations.  Setting this value
+     smaller than is needed will only make your system run slower.
+     Setting it too large will cause the collector to collect storage
+     that is not free. *)
+
+CONST
+  StackFrameAlignment = 8;
+  (* Stack frames must be aligned to this constraint (in ADRSIZE units).
+     It's not a big deal if this value is too large, but it may break
+     the thread mechanism to make it too small. *)
+</PRE>----------------------------------------------- exception stack walking ---
+ The <CODE>FrameInfo</CODE> type must minimally include fields named <CODE>pc</CODE> and <CODE>sp</CODE>. 
+
+<P><PRE>CONST
+  Has_stack_walker = FALSE;
+  (* Indicates whether this platform supports the stack walking functions
+     defined in the &quot;RTStack&quot; interface. *)
+
+TYPE FrameInfo = RECORD pc, sp: ADDRESS END;
+
+END RTMachine.
+</PRE>
+</inInterface>
+<HR>
+<A NAME="x1">interface Csetjmp is in:
+</A><UL>
+<LI><A HREF="../../../C/src/AIX386/Csetjmp.i3.html#0TOP0">C/src/AIX386/Csetjmp.i3</A>
+<LI><A HREF="../../../C/src/ALPHA_OSF/Csetjmp.i3.html#0TOP0">C/src/ALPHA_OSF/Csetjmp.i3</A>
+<LI><A HREF="../../../C/src/AP3000/Csetjmp.i3.html#0TOP0">C/src/AP3000/Csetjmp.i3</A>
+<LI><A HREF="../../../C/src/ARM/Csetjmp.i3.html#0TOP0">C/src/ARM/Csetjmp.i3</A>
+<LI><A HREF="../../../C/src/DS3100/Csetjmp.i3.html#0TOP0">C/src/DS3100/Csetjmp.i3</A>
+<LI><A HREF="../../../C/src/FreeBSD/Csetjmp.i3.html#0TOP0">C/src/FreeBSD/Csetjmp.i3</A>
+<LI><A HREF="../../../C/src/FreeBSD2/Csetjmp.i3.html#0TOP0">C/src/FreeBSD2/Csetjmp.i3</A>
+<LI><A HREF="../../../C/src/HP300/Csetjmp.i3.html#0TOP0">C/src/HP300/Csetjmp.i3</A>
+<LI><A HREF="../../../C/src/HPPA/Csetjmp.i3.html#0TOP0">C/src/HPPA/Csetjmp.i3</A>
+<LI><A HREF="../../../C/src/IBMR2/Csetjmp.i3.html#0TOP0">C/src/IBMR2/Csetjmp.i3</A>
+<LI><A HREF="../../../C/src/IBMRT/Csetjmp.i3.html#0TOP0">C/src/IBMRT/Csetjmp.i3</A>
+<LI><A HREF="../../../C/src/IRIX5/Csetjmp.i3.html#0TOP0">C/src/IRIX5/Csetjmp.i3</A>
+<LI><A HREF="../../../C/src/LINUX/Csetjmp.i3.html#0TOP0">C/src/LINUX/Csetjmp.i3</A>
+<LI><A HREF="../../../C/src/LINUXELF/Csetjmp.i3.html#0TOP0">C/src/LINUXELF/Csetjmp.i3</A>
+<LI><A HREF="../../../C/src/NEXT/Csetjmp.i3.html#0TOP0">C/src/NEXT/Csetjmp.i3</A>
+<LI><A HREF="../../../C/src/NT386/Csetjmp.i3.html#0TOP0">C/src/NT386/Csetjmp.i3</A>
+<LI><A HREF="../../../C/src/OKI/Csetjmp.i3.html#0TOP0">C/src/OKI/Csetjmp.i3</A>
+<LI><A HREF="../../../C/src/SEQUENT/Csetjmp.i3.html#0TOP0">C/src/SEQUENT/Csetjmp.i3</A>
+<LI><A HREF="../../../C/src/SOLgnu/Csetjmp.i3.html#0TOP0">C/src/SOLgnu/Csetjmp.i3</A>
+<LI><A HREF="../../../C/src/SOLsun/Csetjmp.i3.html#0TOP0">C/src/SOLsun/Csetjmp.i3</A>
+<LI><A HREF="../../../C/src/SPARC/Csetjmp.i3.html#0TOP0">C/src/SPARC/Csetjmp.i3</A>
+<LI><A HREF="../../../C/src/SUN3/Csetjmp.i3.html#0TOP0">C/src/SUN3/Csetjmp.i3</A>
+<LI><A HREF="../../../C/src/SUN386/Csetjmp.i3.html#0TOP0">C/src/SUN386/Csetjmp.i3</A>
+<LI><A HREF="../../../C/src/UMAX/Csetjmp.i3.html#0TOP0">C/src/UMAX/Csetjmp.i3</A>
+<LI><A HREF="../../../C/src/VAX/Csetjmp.i3.html#0TOP0">C/src/VAX/Csetjmp.i3</A>
+</UL>
+<P>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

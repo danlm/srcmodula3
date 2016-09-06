@@ -1,0 +1,160 @@
+#line 2 "Main_m.c"
+#include "M3Runtime.h"
+/*------------------*/
+/*------------------*/
+/*------------------*/
+/*------------------*/
+#define _t7b565322 INTEGER
+/*------------------*/
+/*------------------*/
+/*------------------*/
+
+_PRIVATE _t7b565322 Main__j;
+
+
+_EXPORT void _M0_Main ()
+{
+   _t7b565322 _z2;
+{
+   int _from, _to, _index;
+   _from =  0 ;
+   _to =  9 ;
+   {
+      _LOCAL _t7b565322 i;
+      for (_index = _from; _index <= _to; _index += 1){
+         i = (_t7b565322) _index;
+      };
+   };
+};
+{
+   int _from, _to, _index;
+   _from =  9 ;
+   _to =  0 ;
+   {
+      _LOCAL _t7b565322 i;
+      for (_index = _from; _index <= _to; _index += 1){
+         i = (_t7b565322) _index;
+      };
+   };
+};
+{
+   int _from, _to, _index;
+   _from =  0 ;
+   _to =  9 ;
+   {
+      _LOCAL _t7b565322 i;
+      for (_index = _from; _index <= _to; _index += 3){
+         i = (_t7b565322) _index;
+      };
+   };
+};
+{
+   int _from, _to, _index;
+   _from =  9 ;
+   _to =  0 ;
+   {
+      _LOCAL _t7b565322 i;
+      for (_index = _from; _index >= _to; _index += -3){
+         i = (_t7b565322) _index;
+      };
+   };
+};
+{
+   int _from, _to, _index;
+   _from =  0 ;
+   _to =  9 ;
+   {
+      _LOCAL _t7b565322 i;
+      for (_index = _from; _index <= _to; _index += 3){
+         i = (_t7b565322) _index;
+         Main__j = i;
+         goto for_4;
+      };
+   };
+};
+for_4: /**/;
+{
+   int _from, _to, _index;
+   int _by;
+   _from =  0 ;
+   _to =  9 ;
+   _by = Main__j;
+   {
+      _LOCAL _t7b565322 i;
+      for (_index = _from; ((_by<0)?(_index>=_to):(_index<=_to)); _index += _by){
+         i = (_t7b565322) _index;
+         Main__j = i;
+         goto for_5;
+      };
+   };
+};
+for_5: /**/;
+{
+   int _from, _to, _index;
+   int _by;
+   _z2 = Main__j +  0 ;
+   _from = _z2;
+   _z2 = Main__j +  9 ;
+   _to = _z2;
+   _z2 =  2  * Main__j;
+   _by = _z2;
+   {
+      _LOCAL _t7b565322 i;
+      for (_index = _from; ((_by<0)?(_index>=_to):(_index<=_to)); _index += _by){
+         i = (_t7b565322) _index;
+         Main__j = i;
+         goto for_6;
+      };
+   };
+};
+for_6: /**/;
+{
+   int _from, _to, _index;
+   _from =  0 ;
+   _to =  9 ;
+   {
+      _LOCAL _t7b565322 i;
+      for (_index = _from; _index <= _to; _index += 3){
+         i = (_t7b565322) _index;
+         Main__j = i;
+         {
+            int _from, _to, _index;
+            _from =  0 ;
+            _to =  9 ;
+            {
+               _LOCAL _t7b565322 i;
+               for (_index = _from; _index <= _to; _index += 3){
+                  i = (_t7b565322) _index;
+                  Main__j = i;
+                  goto for_8;
+               };
+            };
+         };
+         for_8: /**/;
+         goto for_7;
+      };
+   };
+};
+for_7: /**/;
+return;
+};
+
+_EXPORT void _M1_Main ()
+{
+};
+/*------------------*/
+/*------------------*/
+/*------------------*/
+/*------------------*/
+/*------------------*/
+/*------------------*/
+/*------------------*/
+/*------------------*/
+/*------------------*/
+/*------------------*/
+/*------------------*/
+/*------------------*/
+/*------------------*/
+/*------------------*/
+/*------------------*/
+/*------------------*/

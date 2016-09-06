@@ -1,0 +1,57 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: ui/src/winvbt/WinMsg.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>ui/src/winvbt/WinMsg.i3</H2></A><HR>
+<inInterface>
+<PRE>
+INTERFACE <interface><A HREF="WinMsg.m3.html">WinMsg</A></interface>;
+
+IMPORT <A HREF="../../../win32/src/WinUser.i3.html">WinUser</A>;
+
+PROCEDURE <A HREF="WinMsg.m3.html#ToText">ToText</A> (msg: INTEGER): TEXT;
+</PRE><BLOCKQUOTE><EM> Returns a string describing the Windows message <CODE>msg</CODE>.
+   Returns <CODE>NIL</CODE> if the message is not known </EM></BLOCKQUOTE><PRE>
+
+CONST (* Trestle extensions to the standard Windows messages *)
+  CREATE_OFFSCREEN_VBT = WinUser.WM_USER + 1;
+  RESHAPE_VBT          = WinUser.WM_USER + 2;
+  DELETE_VBT           = WinUser.WM_USER + 3;
+  SYNC_VBT             = WinUser.WM_USER + 4;
+  FORGE_VBT            = WinUser.WM_USER + 5;
+  ICONIZE_VBT          = WinUser.WM_USER + 6;
+  OVERLAP_VBT          = WinUser.WM_USER + 7;
+  RETITLE_VBT          = WinUser.WM_USER + 8;
+
+END WinMsg.
+</PRE>
+</inInterface>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

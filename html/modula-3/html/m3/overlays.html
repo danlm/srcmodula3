@@ -1,0 +1,69 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: Overlays</TITLE>
+</HEAD>
+<BODY BGCOLOR="#ffffff" VLINK="#006633">
+
+<H2>Overlays</H2>
+<P>
+
+The compiler and runtime system support (on some machines) a limited
+form of dynamic loading.  This feature allows you to compile and link
+the usually large, fixed piece of your program, the <I>iceberg</I>,
+once.  And then, recompile and link a much smaller piece, the
+<I>tip</I>, in each cycle of editing and debugging.
+<P>
+
+To produce an iceberg for a program <I>foo</I>, invoke
+<B>m3</B> with "<B>-o</B> <I>foo.b</I>"
+and a list of the modules and libraries that are to be in the iceberg.
+The presence of the <B>.b</B>
+suffix tells the compiler to build an iceberg.
+The compiler will generate two additional files,
+<I>foo.bx</I> which contains the linker information for the iceberg and
+<I>foo.by</I> which contains the global symbol table for the iceberg.
+<P>
+
+To produce the corresponding tip, invoke <B>m3</B>
+as you would if there was no iceberg,
+replacing the modules and libraries included
+in the iceberg by the iceberg's name.
+The compiler will produce a short shell script
+under the name of your program, <I>foo</I>,
+and the actual bits of the overlay in another file,
+<I>foo.ov</I>.
+<P>
+
+For example, if you would normally build your program
+with the following command:
+<PRE>
+    m3 -o foo A.m3 B.i3 B.m3 C.i3 C.m3 -lmylib
+</PRE>
+Then, the following builds an iceberg that contains
+C and mylib:
+<PRE>
+    m3 -o foo.b C.i3 C.m3 -lmylib
+</PRE>
+And finally,
+<PRE>
+    m3 -o foo A.m3 B.i3 B.m3 foo.b
+</PRE>
+builds the tip.
+<P>
+
+
+<HR>
+<A HREF="../home.html">[Modula-3 home page]</A>
+<P>
+<A HREF="mailto:m3-request@src.dec.com">
+<ADDRESS>m3-request@src.dec.com</ADDRESS></A>
+<PRE>
+Last modified on Thu Jan  4 11:09:09 PST 1996 by heydon
+     modified on Thu Apr 21 13:10:26 PDT 1994 by kalsow
+     modified on Fri Feb  7 00:38:19 PST 1992 by muller
+</PRE>
+
+Copyright (C) 1992, 1996, Digital Equipment Corporation. All rights reserved.<BR>
+See the <A HREF="http://www.research.digital.com/SRC/m3sources/html/COPYRIGHT.html">COPYRIGHT</A> for a full description.
+</BODY>
+</HTML>

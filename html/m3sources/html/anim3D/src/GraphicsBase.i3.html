@@ -1,0 +1,58 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: anim3D/src/GraphicsBase.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>anim3D/src/GraphicsBase.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM> Digital Internal Use Only                                                 </EM></BLOCKQUOTE><PRE>
+</PRE>                                                                           
+       Created on Wed Feb 16 14:53:40 PST 1994 by najork                   
+
+<P> A <CODE>GraphicsBase.T</CODE> is an abstraction of a window system (e.g.\ X, Trestle, 
+   or NT) and a 3D graphics library (e.g.\ PEX or OpenGL). 
+<P>
+   I have not yet isolated the window- and graphics-system dependent code;
+   this is on my to-do list. Consequently, this interface still needs to be 
+   fleshed out. 
+
+<P><PRE>INTERFACE <interface><A HREF="GraphicsBase.m3.html">GraphicsBase</A></interface>;
+
+IMPORT <A HREF="ProxiedObj.i3.html">ProxiedObj</A>;
+
+TYPE <A HREF="GraphicsBase.m3.html#T">T</A> &lt;: ProxiedObj.T;
+
+EXCEPTION Failure;
+
+END GraphicsBase.
+</PRE>
+</inInterface>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

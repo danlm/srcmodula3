@@ -1,0 +1,77 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: gef/derived/gefeventAlgClass.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>gef/derived/gefeventAlgClass.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE>********************************************************************
+<PRE>
+      *  NOTE: This file is generated automatically from the event 
+      *        definition file gefevent.evt.
+ </PRE>
+********************************************************************
+
+<P><PRE>INTERFACE <interface><A HREF="gefeventAlgClass.m3.html">gefeventAlgClass</A></interface>;
+
+&lt;* NOWARN *&gt; IMPORT <A HREF="../../libm3/derived/RefList.i3.html">RefList</A>;
+&lt;* NOWARN *&gt; IMPORT <A HREF="../../slisp/src/SLispClass.i3.html">SLispClass</A>;
+IMPORT <A HREF="../../zeus/src/Algorithm.i3.html">Algorithm</A>, <A HREF="../../zeus/src/AlgorithmClass.i3.html">AlgorithmClass</A>;
+
+&lt;* PRAGMA LL *&gt;
+
+TYPE
+  EventDataRec = RECORD
+    stopAtInit: BOOLEAN := TRUE;
+    waitAtInit: CARDINAL := 1;
+    ctOfInit: CARDINAL := 0;
+    stopAtEvent: BOOLEAN := TRUE;
+    waitAtEvent: CARDINAL := 1;
+    ctOfEvent: CARDINAL := 0;
+    stopAtPause: BOOLEAN := TRUE;
+    waitAtPause: CARDINAL := 1;
+    ctOfPause: CARDINAL := 0;
+  END;
+
+  <A HREF="gefeventAlgClass.m3.html#T">T</A> &lt;: Public;
+  Public = Algorithm.T OBJECT
+      eventDataRec: EventDataRec;
+      METHODS
+        feFeedback ( name: TEXT; args: RefList.T);    &lt;* LL = VBT.mu *&gt;
+      END;
+
+REVEAL
+  Algorithm.T &lt;: AlgorithmClass.T;
+
+END gefeventAlgClass.
+</PRE>
+</inInterface>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

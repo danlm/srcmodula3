@@ -1,0 +1,108 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: text/src/Text.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>text/src/Text.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE> A non-nil <CODE>TEXT</CODE> represents an immutable, zero-based sequence of
+   characters.  <CODE>NIL</CODE> does not represent any sequence of characters,
+   it will not be returned from any procedure in this interface, and
+   it is a checked runtime error to pass <CODE>NIL</CODE> to any procedure in
+   this interface. 
+
+<P><PRE>INTERFACE <interface><A HREF="#x1">Text</A></interface>;
+
+IMPORT <A HREF="../../word/src/Word.i3.html">Word</A>;
+
+TYPE T = TEXT;
+
+CONST Brand = &quot;Text-1.0&quot;;
+
+PROCEDURE <A HREF="Text.m3.html#Cat">Cat</A>(t, u: T): T;
+</PRE><BLOCKQUOTE><EM> Return the concatenation of <CODE>t</CODE> and <CODE>u</CODE>. </EM></BLOCKQUOTE><PRE>
+
+PROCEDURE <A HREF="Text.m3.html#Equal">Equal</A>(t, u: T): BOOLEAN;
+</PRE><BLOCKQUOTE><EM> Return <CODE>TRUE</CODE> if <CODE>t</CODE> and <CODE>u</CODE> have the same length and
+   (case-sensitive) contents. </EM></BLOCKQUOTE><PRE>
+
+PROCEDURE <A HREF="Text.m3.html#GetChar">GetChar</A>(t: T; i: CARDINAL): CHAR;
+</PRE><BLOCKQUOTE><EM> Return character <CODE>i</CODE> of <CODE>t</CODE>.  It is a checked runtime error if <CODE>i
+   &gt;= Length(t)</CODE>. </EM></BLOCKQUOTE><PRE>
+
+PROCEDURE <A HREF="Text.m3.html#Length">Length</A>(t: T): CARDINAL;
+</PRE><BLOCKQUOTE><EM> Return the number of characters in <CODE>t</CODE>. </EM></BLOCKQUOTE><PRE>
+
+PROCEDURE <A HREF="Text.m3.html#Empty">Empty</A>(t: T): BOOLEAN;
+</PRE><BLOCKQUOTE><EM> Equivalent to <CODE>Length(t) = 0</CODE>. </EM></BLOCKQUOTE><PRE>
+
+PROCEDURE <A HREF="Text.m3.html#Sub">Sub</A>(t: T; start: CARDINAL;
+  length: CARDINAL := LAST(CARDINAL)): T;
+</PRE><BLOCKQUOTE><EM> Return a sub-sequence of <CODE>t</CODE>: empty if <CODE>start &gt;= Length(t)</CODE> or
+   <CODE>length = 0</CODE>; otherwise the subsequence ranging from <CODE>start</CODE> to the
+   minimum of <CODE>start+length-1</CODE> and <CODE>Length(t)-1</CODE>. </EM></BLOCKQUOTE><PRE>
+
+PROCEDURE <A HREF="Text.m3.html#SetChars">SetChars</A>(VAR a: ARRAY OF CHAR; t: T);
+</PRE><BLOCKQUOTE><EM> For each <CODE>i</CODE> from 0 to <CODE>MIN(LAST(a), Length(t)-1)</CODE>, set <CODE>a[i]</CODE> to
+   <CODE>GetChar(t, i)</CODE>.  </EM></BLOCKQUOTE><PRE>
+
+PROCEDURE <A HREF="Text.m3.html#FromChar">FromChar</A>(ch: CHAR): T;
+</PRE><BLOCKQUOTE><EM> Return a text containing the single character <CODE>ch</CODE>. </EM></BLOCKQUOTE><PRE>
+
+PROCEDURE <A HREF="Text.m3.html#FromChars">FromChars</A>(READONLY a: ARRAY OF CHAR): T;
+</PRE><BLOCKQUOTE><EM> Return a text containing the characters of <CODE>a</CODE>. </EM></BLOCKQUOTE><PRE>
+
+PROCEDURE <A HREF="UnsafeHash.m3.html#Hash">Hash</A>(t: T): Word.T;
+</PRE><BLOCKQUOTE><EM> Return a hash function of the contents of <CODE>t</CODE>. </EM></BLOCKQUOTE><PRE>
+
+PROCEDURE <A HREF="Text.m3.html#Compare">Compare</A>(t1, t2: T): [-1..1];
+</PRE><BLOCKQUOTE><EM> Return -1 if <CODE>t1</CODE> occurs before <CODE>t2</CODE>, 0 if <CODE>Equal(t1, t2)</CODE>, +1 if
+   <CODE>t1</CODE> occurs after <CODE>t2</CODE> in lexicographic order. </EM></BLOCKQUOTE><PRE>
+
+PROCEDURE <A HREF="Text.m3.html#FindChar">FindChar</A>(t: T; c: CHAR; start := 0): INTEGER;
+</PRE><BLOCKQUOTE><EM> If <CODE>c = t[i]</CODE> for some <CODE>i</CODE> in <CODE>[start~..~Length(t)-1]</CODE>, return the
+   smallest such <CODE>i</CODE>; otherwise, return -1. </EM></BLOCKQUOTE><PRE>
+
+PROCEDURE <A HREF="Text.m3.html#FindCharR">FindCharR</A>(t: T; c: CHAR;  start := LAST(INTEGER)): INTEGER;
+</PRE><BLOCKQUOTE><EM> If <CODE>c = t[i]</CODE> for some <CODE>i</CODE> in <CODE>[0~..~MIN(start, Length(t)-1)]</CODE>,
+   return the largest such <CODE>i</CODE>; otherwise, return -1. </EM></BLOCKQUOTE><PRE>
+
+END Text.
+</PRE>
+</inInterface>
+<HR>
+<A NAME="x1">Text's implementation  is in:
+</A><UL>
+<LI><A HREF="Text.m3.html#0TOP0">text/src/Text.m3</A>
+<LI><A HREF="UnsafeHash.m3.html#0TOP0">text/src/UnsafeHash.m3</A>
+</UL>
+<P>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

@@ -1,0 +1,100 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: trestle_by_example/src/react/React.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>trestle_by_example/src/react/React.m3</H2></A><HR>
+<inModule>
+<PRE>MODULE <module>React</module> EXPORTS <A HREF="../../../main/src/Main.i3.html"><implements>Main</A></implements>;
+IMPORT <A HREF="../../../ui/src/vbt/Trestle.i3.html">Trestle</A>, <A HREF="../../../ui/src/vbt/VBT.i3.html">VBT</A>, <A HREF="../../../ui/src/split/TextVBT.i3.html">TextVBT</A>, <A HREF="../../../lego/src/SwitchVBT.i3.html">SwitchVBT</A>, <A HREF="../../../lego/src/ChoiceVBT.i3.html">ChoiceVBT</A>, <A HREF="../../../lego/src/ReactivityVBT.i3.html">ReactivityVBT</A>;
+IMPORT <A HREF="../../../lego/src/MarginFeedbackVBT.i3.html">MarginFeedbackVBT</A>, <A HREF="../../../lego/src/BiFeedbackVBT.i3.html">BiFeedbackVBT</A>, ShadowedFeedbackVBTASShVBT;
+IMPORT <A HREF="../../../lego/src/Shadow.i3.html">Shadow</A>, <A HREF="../../../geometry/src/Axis.i3.html">Axis</A>, <A HREF="../../../ui/src/split/HVSplit.i3.html">HVSplit</A>, <A HREF="../../../ui/src/split/HVBar.i3.html">HVBar</A>;
+FROM <A HREF="../common/Colors.i3.html">Colors</A> IMPORT lblue, dblue;
+
+TYPE
+  S = SwitchVBT.T OBJECT
+      METHODS
+        init (ch: VBT.T; s: Shadow.T): S := Init
+      END;
+
+PROCEDURE <A NAME="Init"><procedure>Init</procedure></A> (self: S; ch: VBT.T; s: Shadow.T): S =
+  VAR m := MarginFeedbackVBT.NewCheck(NEW(ShVBT.T).init(ch, s));
+  BEGIN
+    EVAL SwitchVBT.T.init(self, f := NEW(BiFeedbackVBT.T).init(m));
+    RETURN (self);
+  END Init;
+
+PROCEDURE <A NAME="ActiveAction"><procedure>ActiveAction</procedure></A> (v: ChoiceVBT.T; READONLY cd: VBT.MouseRec) =
+  BEGIN
+    ReactivityVBT.Set(button, ReactivityVBT.State.Active);
+  END ActiveAction;
+
+PROCEDURE <A NAME="PassiveAction"><procedure>PassiveAction</procedure></A> (v: ChoiceVBT.T; READONLY cd: VBT.MouseRec) =
+  BEGIN
+    ReactivityVBT.Set(button, ReactivityVBT.State.Passive);
+  END PassiveAction;
+
+PROCEDURE <A NAME="DormantAction"><procedure>DormantAction</procedure></A> (v: ChoiceVBT.T; READONLY cd: VBT.MouseRec) =
+  BEGIN
+    ReactivityVBT.Set(button, ReactivityVBT.State.Dormant);
+  END DormantAction;
+
+PROCEDURE <A NAME="VanishAction"><procedure>VanishAction</procedure></A> (v: ChoiceVBT.T; READONLY cd: VBT.MouseRec) =
+  BEGIN
+    ReactivityVBT.Set(button, ReactivityVBT.State.Vanish);
+  END VanishAction;
+
+VAR
+  shadow := Shadow.New(size := 5.0, light := lblue, dark := dblue);
+  button := ReactivityVBT.New(
+              NEW(SwitchVBT.T).init(
+                NEW(ShVBT.T).init(TextVBT.New(&quot;React&quot;), shadow)));
+  switch1 := NEW(S).init(TextVBT.New(&quot;Active&quot;), shadow);
+  switch2 := NEW(S).init(TextVBT.New(&quot;Passive&quot;), shadow);
+  switch3 := NEW(S).init(TextVBT.New(&quot;Dormant&quot;), shadow);
+  switch4 := NEW(S).init(TextVBT.New(&quot;Vanish&quot;), shadow);
+  group   := NEW (ChoiceVBT.Group);
+  choice1 := NEW(ChoiceVBT.T, callback := ActiveAction).init(
+               switch1, group);
+  choice2 := NEW(ChoiceVBT.T, callback := PassiveAction).init(
+               switch2, group);
+  choice3 := NEW(ChoiceVBT.T, callback := DormantAction).init(
+               switch3, group);
+  choice4 := NEW(ChoiceVBT.T, callback := VanishAction).init(
+               switch4, group);
+  main := HVSplit.Cons(Axis.T.Ver, choice1, choice2, choice3, choice4,
+                       HVBar.New(), button);
+BEGIN
+  Trestle.Install(main);
+  Trestle.AwaitDelete(main)
+END React.
+</PRE>
+</inModule>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

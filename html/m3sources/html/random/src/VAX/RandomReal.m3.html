@@ -1,0 +1,107 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: random/src/VAX/RandomReal.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>random/src/VAX/RandomReal.m3</H2></A><HR>
+<inModule>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+
+UNSAFE MODULE <module><implements><A HREF="../Common/RandomReal.i3.html">RandomReal</A></implements></module>;
+
+IMPORT <A HREF="../../../word/src/Word.i3.html">Word</A>, <A HREF="../Common/Random.i3.html">Random</A>;
+</PRE>  <P>
+  Implements Random.Real and Random.LongReal for the VAX architecture,
+  assuming the DFLOAT format for LONGREAL. 
+
+<P><PRE>PROCEDURE <A NAME="Real"><procedure>Real</procedure></A> (r: Random.T): REAL =
+  CONST ExponentBias = 129;  (* Exponent bias for REAL *)
+        FractionBits = 23;   (* Number of explicit fraction bits *)
+        WordSize = 32;       (* Size of INTEGER in bits *)
+  VAR frac, exp: INTEGER;
+  BEGIN
+    (* Generate a random fraction and get its first non-zero word: *)
+    exp  := ExponentBias - 1;
+    frac := r.integer ();
+    WHILE (frac = 0) AND (exp &gt;= WordSize) DO
+      (* This loop is (almost) never executed: *)
+      DEC (exp, WordSize);
+      frac := r.integer ();
+    END;
+
+    (* Normalize: *)
+    WHILE (frac &gt; 0) AND (exp &gt; 0) DO
+      (* This loop is executed about once on the average. *)
+      frac := Word.Shift (frac, 1);
+      DEC (exp);
+    END;
+    IF exp &lt;= 0 THEN RETURN 0.0 END;  (* Store zero on underflow *)
+    IF ((ExponentBias - 1 - exp) MOD WordSize) &gt;  WordSize - FractionBits THEN
+      (* Needs more random bits *)
+      frac := r.integer ();
+    END;
+
+    (* Repack as REAL: *)
+    RETURN LOOPHOLE (
+      Word.Rotate(
+        Word.Or (
+          Word.Shift (exp, FractionBits),
+          Word.Shift (
+            Word.And (frac, 16_7fffffff),
+            -(WordSize - 1 - FractionBits)
+          )
+        ),
+        16
+      ),
+      REAL
+    );
+  END Real;
+
+PROCEDURE <A NAME="Longreal"><procedure>Longreal</procedure></A> (r: Random.T): LONGREAL =
+  TYPE XX = ARRAY [0..1] OF Word.T;
+  VAR ans: LONGREAL;
+  BEGIN
+    LOOPHOLE (ans, XX)[0]
+      := LOOPHOLE(Real(r), Word.T); (* Exp and high-order fraction bits *)
+    LOOPHOLE (ans, XX)[1]
+      := r.integer ();              (* Low-order fraction bits *)
+    RETURN ans;
+  END Longreal;
+
+PROCEDURE <A NAME="Extended"><procedure>Extended</procedure></A> (r: Random.T): EXTENDED =
+  BEGIN
+    RETURN LOOPHOLE (Longreal (r), EXTENDED);
+  END Extended;
+
+BEGIN
+END RandomReal.
+</PRE>
+</inModule>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

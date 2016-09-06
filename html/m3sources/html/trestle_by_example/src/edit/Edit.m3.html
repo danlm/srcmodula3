@@ -1,0 +1,79 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: trestle_by_example/src/edit/Edit.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>trestle_by_example/src/edit/Edit.m3</H2></A><HR>
+<inModule>
+<PRE>MODULE <module>Edit</module> EXPORTS <A HREF="../../../main/src/Main.i3.html"><implements>Main</A></implements>;
+
+IMPORT <A HREF="../../../ui/src/vbt/Trestle.i3.html">Trestle</A>, <A HREF="../../../ui/src/vbt/VBT.i3.html">VBT</A>, <A HREF="../../../etext/src/TextPort.i3.html">TextPort</A>, <A HREF="../../../geometry/src/Axis.i3.html">Axis</A>, <A HREF="../../../ui/src/vbt/Font.i3.html">Font</A>, <A HREF="../../../ui/src/vbt/PaintOp.i3.html">PaintOp</A>, <A HREF="../../../ui/src/split/HVBar.i3.html">HVBar</A>, <A HREF="../../../ui/src/split/HVSplit.i3.html">HVSplit</A>,
+       <A HREF="../../../ui/src/split/RigidVBT.i3.html">RigidVBT</A>;
+FROM <A HREF="../../../etext/src/TextPort.i3.html">TextPort</A> IMPORT Model;
+IMPORT <A HREF="../../../rw/src/Common/Wr.i3.html">Wr</A>, <A HREF="../../../rw/src/Common/Stdio.i3.html">Stdio</A>;
+FROM <A HREF="../common/Colors.i3.html">Colors</A> IMPORT red, blue;
+
+CONST
+  vmin    = 40.0;                (* Size in millimeters *)
+  vmax    = 100.0;               (* Size in millimeters *)
+  hmin    = 40.0;                (* Size in millimeters *)
+  hmax    = 100.0;               (* Size in millimeters *)
+  times14 = &quot;-*-times-*-r-*-*-14-*-*-*-*-*-*-*&quot;;
+
+VAR
+  font    := Font.FromName(ARRAY OF TEXT{times14});
+  red_sch := PaintOp.MakeColorScheme(bg := PaintOp.Bg, fg := red);
+  single := NEW(TextPort.T).init(
+              singleLine := TRUE, colorScheme := red_sch, font := font,
+              model := Model.Emacs);
+  blue_sch := PaintOp.MakeColorScheme(bg := PaintOp.Bg, fg := blue);
+  multi := NEW(TextPort.T).init(
+             singleLine := FALSE, colorScheme := blue_sch, font := font,
+             model := Model.Emacs);
+  split := HVSplit.Cons(Axis.T.Ver, single, HVBar.New(), multi);
+  main  := RigidVBT.FromHV(split, hmin, vmin, hmax, vmax);
+
+BEGIN
+  TextPort.SetText(single, &quot;Single Line Editor&quot;);
+  TextPort.SetText(multi, &quot;Multi Line Editor&quot;);
+  Trestle.Install(main);
+  Trestle.AwaitDelete(main);
+  (* If either text has been modified, then print it out when we're
+     done. *)
+  IF TextPort.IsModified(single) THEN
+    Wr.PutText(Stdio.stdout, TextPort.GetText(single) &amp; &quot;\n&quot;);
+  END;
+  IF TextPort.IsModified(multi) THEN
+    Wr.PutText(Stdio.stdout, TextPort.GetText(multi) &amp; &quot;\n&quot;);
+  END;
+END Edit.
+</PRE>
+</inModule>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

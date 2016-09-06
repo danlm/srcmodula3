@@ -1,0 +1,464 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: motif/src/XmN.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>motif/src/XmN.m3</H2></A><HR>
+<inModule>
+<PRE><A HREF="../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM>                                                           </EM></BLOCKQUOTE><PRE>
+</PRE>                                                           
+ Contributed by Harry George (hgeorge@eskimo.com), 5/16/95 
+
+<P><PRE>UNSAFE MODULE <module><implements><A HREF="XmN.i3.html">XmN</A></implements></module>;
+</PRE><BLOCKQUOTE><EM>Generated from Xm.h by ctom3 on 7/26/93</EM></BLOCKQUOTE><PRE>
+
+FROM <A HREF="../../C/src/Common/M3toC.i3.html">M3toC</A> IMPORT TtoS;
+IMPORT <A HREF="../../X11R4/src/Common/XtN.i3.html">XtN</A>;
+
+PROCEDURE <A NAME="Init"><procedure>Init</procedure></A> () =
+  BEGIN
+    IF (accelerator # NIL) THEN RETURN END;
+
+    accelerator := TtoS(&quot;accelerator&quot;);
+    accelerators := TtoS(&quot;accelerators&quot;);
+    acceleratorText := TtoS(&quot;acceleratorText&quot;);
+    adjustLast := TtoS(&quot;adjustLast&quot;);
+    adjustMargin := TtoS(&quot;adjustMargin&quot;);
+    alignment := TtoS(&quot;alignment&quot;);
+    ancestorSensitive := TtoS(&quot;ancestorSensitive&quot;);
+    armCallback := TtoS(&quot;armCallback&quot;);
+    background := TtoS(&quot;background&quot;);
+    backgroundPixmap := TtoS(&quot;backgroundPixmap&quot;);
+    bitmap := TtoS(&quot;bitmap&quot;);
+    borderColor := TtoS(&quot;borderColor&quot;);
+    border := TtoS(&quot;borderColor&quot;);
+    borderPixmap := TtoS(&quot;borderPixmap&quot;);
+    borderWidth := TtoS(&quot;borderWidth&quot;);
+    buttonAccelerators := TtoS(&quot;buttonAccelerators&quot;);
+    buttonAcceleratorText := TtoS(&quot;buttonAcceleratorText&quot;);
+    buttonCount := TtoS(&quot;buttonCount&quot;);
+    buttonMnemoniccharSets := TtoS(&quot;buttonMnemoniccharSets&quot;);
+    buttonMnemonics := TtoS(&quot;buttonMnemonics&quot;);
+    buttons := TtoS(&quot;buttons&quot;);
+    buttonSet := TtoS(&quot;buttonSet&quot;);
+    buttonType := TtoS(&quot;buttonType&quot;);
+    cascadePixmap := TtoS(&quot;cascadePixmap&quot;);
+    cascadingCallback := TtoS(&quot;cascadingCallback&quot;);
+    children := TtoS(&quot;children&quot;);
+    colormap := TtoS(&quot;colormap&quot;);
+    commandWindowLocation := TtoS(&quot;commandWindowLocation&quot;);
+    defaultFontList := TtoS(&quot;defaultFontList&quot;);
+    depth := TtoS(&quot;depth&quot;);
+    destroyCallback := TtoS(&quot;destroyCallback&quot;);
+    disarmCallback := TtoS(&quot;disarmCallback&quot;);
+    editType := TtoS(&quot;editType&quot;);
+    entryAlignment := TtoS(&quot;entryAlignment&quot;);
+    entryBorder := TtoS(&quot;entryBorder&quot;);
+    entryClass := TtoS(&quot;entryClass&quot;);
+    entryCallback := TtoS(&quot;entryCallback&quot;);
+    exposeCallback := TtoS(&quot;exposeCallback&quot;);
+    file := TtoS(&quot;file&quot;);
+    fillOnSelect := TtoS(&quot;fillOnSelect&quot;);
+    filterLabelString := TtoS(&quot;filterLabelString&quot;);
+    font := TtoS(&quot;font&quot;);
+    fontList := TtoS(&quot;fontList&quot;);
+    forceBars := TtoS(&quot;forceBars&quot;);
+    foreground := TtoS(&quot;foreground&quot;);
+    function := TtoS(&quot;function&quot;);
+    height := TtoS(&quot;height&quot;);
+    highlight := TtoS(&quot;highlight&quot;);
+    index := TtoS(&quot;index&quot;);
+    indicatorOn := TtoS(&quot;indicatorOn&quot;);
+    indicatorSize := TtoS(&quot;indicatorSize&quot;);
+    indicatorType := TtoS(&quot;indicatorType&quot;);
+    initialResourcesPersistent := TtoS(&quot;initialResourcesPersistent&quot;);
+    innerHeight := TtoS(&quot;innerHeight&quot;);
+    innerWidth := TtoS(&quot;innerWidth&quot;);
+    innerWindow := TtoS(&quot;innerWindow&quot;);
+    insertPosition := TtoS(&quot;insertPosition&quot;);
+    internalHeight := TtoS(&quot;internalHeight&quot;);
+    internalWidth := TtoS(&quot;internalWidth&quot;);
+    isAligned := TtoS(&quot;isAligned&quot;);
+    isHomogeneous := TtoS(&quot;isHomogeneous&quot;);
+    jumpProc := TtoS(&quot;jumpProc&quot;);
+    justify := TtoS(&quot;justify&quot;);
+    labelInsensitivePixmap := TtoS(&quot;labelInsensitivePixmap&quot;);
+    labelPixmap := TtoS(&quot;labelPixmap&quot;);
+    labelString := TtoS(&quot;labelString&quot;);
+    labelType := TtoS(&quot;labelType&quot;);
+    length := TtoS(&quot;length&quot;);
+    listUpdated := TtoS(&quot;listUpdated&quot;);
+    lowerRight := TtoS(&quot;lowerRight&quot;);
+    mapCallback := TtoS(&quot;mapCallback&quot;);
+    mappedWhenManaged := TtoS(&quot;mappedWhenManaged&quot;);
+    mappingDelay := TtoS(&quot;mappingDelay&quot;);
+    marginHeight := TtoS(&quot;marginHeight&quot;);
+    marginTop := TtoS(&quot;marginTop&quot;);
+    marginBottom := TtoS(&quot;marginBottom&quot;);
+    marginWidth := TtoS(&quot;marginWidth&quot;);
+    marginRight := TtoS(&quot;marginRight&quot;);
+    marginLeft := TtoS(&quot;marginLeft&quot;);
+    menuAccelerator := TtoS(&quot;menuAccelerator&quot;);
+    menuCursor := TtoS(&quot;menuCursor&quot;);
+    menuEntry := TtoS(&quot;menuEntry&quot;);
+    menuHelpWidget := TtoS(&quot;menuHelpWidget&quot;);
+    menuHistory := TtoS(&quot;menuHistory&quot;);
+    menuPost := TtoS(&quot;menuPost&quot;);
+    mnemonic := TtoS(&quot;mnemonic&quot;);
+    mnemoniccharSet := TtoS(&quot;mnemoniccharSet&quot;);
+    name := TtoS(&quot;name&quot;);
+    navigationType := TtoS(&quot;navigationType&quot;);
+    notify := TtoS(&quot;notify&quot;);
+    numChildren := TtoS(&quot;numChildren&quot;);
+    numColumns := TtoS(&quot;numColumns&quot;);
+    optionLabel := TtoS(&quot;optionLabel&quot;);
+    optionMnemonic := TtoS(&quot;optionMnemonic&quot;);
+    orientation := TtoS(&quot;orientation&quot;);
+    packing := TtoS(&quot;packing&quot;);
+    parameter := TtoS(&quot;parameter&quot;);
+    popdownCallback := TtoS(&quot;popdownCallback&quot;);
+    popupCallback := TtoS(&quot;popupCallback&quot;);
+    popupEnabled := TtoS(&quot;popupEnabled&quot;);
+    postFromButton := TtoS(&quot;postFromButton&quot;);
+    postFromCount := TtoS(&quot;postFromCount&quot;);
+    postFromList := TtoS(&quot;postFromList&quot;);
+    radioAlwaysOne := TtoS(&quot;radioAlwaysOne&quot;);
+    radioBehavior := TtoS(&quot;radioBehavior&quot;);
+    recomputeSize := TtoS(&quot;recomputeSize&quot;);
+    resize := TtoS(&quot;resize&quot;);
+    resizeCallback := TtoS(&quot;resizeCallback&quot;);
+    reverseVideo := TtoS(&quot;reverseVideo&quot;);
+    rowColumnType := TtoS(&quot;rowColumnType&quot;);
+    scaleMultiple := TtoS(&quot;scaleMultiple&quot;);
+    screen := TtoS(&quot;screen&quot;);
+    scrollProc := TtoS(&quot;scrollProc&quot;);
+    scrollDCursor := TtoS(&quot;scrollDCursor&quot;);
+    scrollHCursor := TtoS(&quot;scrollHCursor&quot;);
+    scrollLCursor := TtoS(&quot;scrollLCursor&quot;);
+    scrollRCursor := TtoS(&quot;scrollRCursor&quot;);
+    scrollUCursor := TtoS(&quot;scrollUCursor&quot;);
+    scrollVCursor := TtoS(&quot;scrollVCursor&quot;);
+    selectColor := TtoS(&quot;selectColor&quot;);
+    selection := TtoS(&quot;selection&quot;);
+    selectionArray := TtoS(&quot;selectionArray&quot;);
+    selectInsensitivePixmap := TtoS(&quot;selectInsensitivePixmap&quot;);
+    selectPixmap := TtoS(&quot;selectPixmap&quot;);
+    sensitive := TtoS(&quot;sensitive&quot;);
+    set := TtoS(&quot;set&quot;);
+    shadow := TtoS(&quot;shadow&quot;);
+    shown := TtoS(&quot;shown&quot;);
+    simpleCallback := TtoS(&quot;simpleCallback&quot;);
+    space := TtoS(&quot;space&quot;);
+    spacing := TtoS(&quot;spacing&quot;);
+    string := TtoS(&quot;string&quot;);
+    stringDirection := TtoS(&quot;stringDirection&quot;);
+    subMenuId := TtoS(&quot;subMenuId&quot;);
+    textOptions := TtoS(&quot;textOptions&quot;);
+    textSink := TtoS(&quot;textSink&quot;);
+    textSource := TtoS(&quot;textSource&quot;);
+    thickness := TtoS(&quot;thickness&quot;);
+    thumb := TtoS(&quot;thumb&quot;);
+    thumbProc := TtoS(&quot;thumbProc&quot;);
+    top := TtoS(&quot;top&quot;);
+    translations := TtoS(&quot;translations&quot;);
+    traversalType := TtoS(&quot;traversalType&quot;);
+    troughColor := TtoS(&quot;troughColor&quot;);
+    unmapCallback := TtoS(&quot;unmapCallback&quot;);
+    unselectPixmap := TtoS(&quot;unselectPixmap&quot;);
+    update := TtoS(&quot;update&quot;);
+    useBottom := TtoS(&quot;useBottom&quot;);
+    useRight := TtoS(&quot;useRight&quot;);
+    value := TtoS(&quot;value&quot;);
+    visibleWhenOff := TtoS(&quot;visibleWhenOff&quot;);
+    whichButton := TtoS(&quot;whichButton&quot;);
+    width := TtoS(&quot;width&quot;);
+    window := TtoS(&quot;window&quot;);
+    x := TtoS(&quot;x&quot;);
+    y := TtoS(&quot;y&quot;);
+    iconName := TtoS(&quot;iconName&quot;);
+    iconPixmap := TtoS(&quot;iconPixmap&quot;);
+    iconWindow := TtoS(&quot;iconWindow&quot;);
+    iconMask := TtoS(&quot;iconMask&quot;);
+    windowGroup := TtoS(&quot;windowGroup&quot;);
+    saveUnder := TtoS(&quot;saveUnder&quot;);
+    transient := TtoS(&quot;transient&quot;);
+    overrideRedirect := TtoS(&quot;overrideRedirect&quot;);
+    allowShellResize := TtoS(&quot;allowShellResize&quot;);
+    createPopupChildProc := TtoS(&quot;createPopupChildProc&quot;);
+    title := TtoS(&quot;title&quot;);
+    argc := TtoS(&quot;argc&quot;);
+    argv := TtoS(&quot;argv&quot;);
+    iconX := TtoS(&quot;iconX&quot;);
+    iconY := TtoS(&quot;iconY&quot;);
+    input := TtoS(&quot;input&quot;);
+    iconic := TtoS(&quot;iconic&quot;);
+    initialState := TtoS(&quot;initialState&quot;);
+    geometry := TtoS(&quot;geometry&quot;);
+    minWidth := TtoS(&quot;minWidth&quot;);
+    minHeight := TtoS(&quot;minHeight&quot;);
+    maxWidth := TtoS(&quot;maxWidth&quot;);
+    maxHeight := TtoS(&quot;maxHeight&quot;);
+    widthInc := TtoS(&quot;widthInc&quot;);
+    heightInc := TtoS(&quot;heightInc&quot;);
+    minAspectY := TtoS(&quot;minAspectY&quot;);
+    maxAspectY := TtoS(&quot;maxAspectY&quot;);
+    minAspectX := TtoS(&quot;minAspectX&quot;);
+    maxAspectX := TtoS(&quot;maxAspectX&quot;);
+    wmTimeout := TtoS(&quot;wmTimeout&quot;);
+    waitForWm := TtoS(&quot;waitforwm&quot;);
+    foreground := TtoS(&quot;foreground&quot;);
+    traversalOn := TtoS(&quot;traversalOn&quot;);
+    highlightOnEnter := TtoS(&quot;highlightOnEnter&quot;);
+    sizePolicy := TtoS(&quot;sizePolicy&quot;);
+    highlightThickness := TtoS(&quot;highlightThickness&quot;);
+    highlightColor := TtoS(&quot;highlightColor&quot;);
+    highlightPixmap := TtoS(&quot;highlightPixmap&quot;);
+    shadowThickness := TtoS(&quot;shadowThickness&quot;);
+    topShadowColor := TtoS(&quot;topShadowColor&quot;);
+    topShadowPixmap := TtoS(&quot;topShadowPixmap&quot;);
+    bottomShadowColor := TtoS(&quot;bottomShadowColor&quot;);
+    bottomShadowPixmap := TtoS(&quot;bottomShadowPixmap&quot;);
+    unitType := TtoS(&quot;unitType&quot;);
+    helpCallback := TtoS(&quot;helpCallback&quot;);
+    userData := TtoS(&quot;userData&quot;);
+    childPosition := TtoS(&quot;childPosition&quot;);
+    horizontalSpacing := TtoS(&quot;horizontalSpacing&quot;);
+    verticalSpacing := TtoS(&quot;verticalSpacing&quot;);
+    fractionBase := TtoS(&quot;fractionBase&quot;);
+    rubberPositioning := TtoS(&quot;rubberPositioning&quot;);
+    resizePolicy := TtoS(&quot;resizePolicy&quot;);
+    topAttachment := TtoS(&quot;topAttachment&quot;);
+    bottomAttachment := TtoS(&quot;bottomAttachment&quot;);
+    leftAttachment := TtoS(&quot;leftAttachment&quot;);
+    rightAttachment := TtoS(&quot;rightAttachment&quot;);
+    topWidget := TtoS(&quot;topWidget&quot;);
+    bottomWidget := TtoS(&quot;bottomWidget&quot;);
+    leftWidget := TtoS(&quot;leftWidget&quot;);
+    rightWidget := TtoS(&quot;rightWidget&quot;);
+    topPosition := TtoS(&quot;topPosition&quot;);
+    bottomPosition := TtoS(&quot;bottomPosition&quot;);
+    leftPosition := TtoS(&quot;leftPosition&quot;);
+    rightPosition := TtoS(&quot;rightPosition&quot;);
+    topOffset := TtoS(&quot;topOffset&quot;);
+    bottomOffset := TtoS(&quot;bottomOffset&quot;);
+    leftOffset := TtoS(&quot;leftOffset&quot;);
+    rightOffset := TtoS(&quot;rightOffset&quot;);
+    resizable := TtoS(&quot;resizable&quot;);
+    fillOnArm := TtoS(&quot;fillOnArm&quot;);
+    armColor := TtoS(&quot;armColor&quot;);
+    armPixmap := TtoS(&quot;armPixmap&quot;);
+    showAsDefault := TtoS(&quot;showAsDefault&quot;);
+    defaultButtonShadowThickness := TtoS(&quot;defaultButtonShadowThickness&quot;);
+    multiClick := TtoS(&quot;multiClick&quot;);
+    pushButtonEnabled := TtoS(&quot;pushButtonEnabled&quot;);
+    shadowType := TtoS(&quot;shadowType&quot;);
+    arrowDirection := TtoS(&quot;arrowDirection&quot;);
+    activateCallback := TtoS(&quot;activateCallback&quot;);
+    helpCallback := TtoS(&quot;helpCallback&quot;);
+    margin := TtoS(&quot;margin&quot;);
+    separatorType := TtoS(&quot;separatorType&quot;);
+    minimum := TtoS(&quot;minimum&quot;);
+    maximum := TtoS(&quot;maximum&quot;);
+    sliderSize := TtoS(&quot;sliderSize&quot;);
+    showArrows := TtoS(&quot;showArrows&quot;);
+    processingDirection := TtoS(&quot;processingDirection&quot;);
+    increment := TtoS(&quot;increment&quot;);
+    pageIncrement := TtoS(&quot;pageIncrement&quot;);
+    initialDelay := TtoS(&quot;initialDelay&quot;);
+    repeatDelay := TtoS(&quot;repeatDelay&quot;);
+    valueChangedCallback := TtoS(&quot;valueChangedCallback&quot;);
+    incrementCallback := TtoS(&quot;incrementCallback&quot;);
+    decrementCallback := TtoS(&quot;decrementCallback&quot;);
+    pageIncrementCallback := TtoS(&quot;pageIncrementCallback&quot;);
+    pageDecrementCallback := TtoS(&quot;pageDecrementCallback&quot;);
+    toTopCallback := TtoS(&quot;toTopCallback&quot;);
+    toBottomCallback := TtoS(&quot;toBottomCallback&quot;);
+    dragCallback := TtoS(&quot;dragCallback&quot;);
+    listSpacing := TtoS(&quot;listSpacing&quot;);
+    listMarginWidth := TtoS(&quot;listMarginWidth&quot;);
+    listMarginHeight := TtoS(&quot;listMarginHeight&quot;);
+    items := TtoS(&quot;items&quot;);
+    itemCount := TtoS(&quot;itemCount&quot;);
+    selectedItems := TtoS(&quot;selectedItems&quot;);
+    selectedItemCount := TtoS(&quot;selectedItemCount&quot;);
+    visibleItemCount := TtoS(&quot;visibleItemCount&quot;);
+    selectionPolicy := TtoS(&quot;selectionPolicy&quot;);
+    listSizePolicy := TtoS(&quot;listSizePolicy&quot;);
+    doubleClickinterval := TtoS(&quot;doubleClickinterval&quot;);
+    singleSelectionCallback := TtoS(&quot;singleSelectionCallback&quot;);
+    multipleSelectionCallback := TtoS(&quot;multipleSelectionCallback&quot;);
+    extendedSelectionCallback := TtoS(&quot;extendedSelectionCallback&quot;);
+    browseSelectionCallback := TtoS(&quot;browseSelectionCallback&quot;);
+    defaultActionCallback := TtoS(&quot;defaultActionCallback&quot;);
+    automaticSelection := TtoS(&quot;automaticSelection&quot;);
+    topItemPosition := TtoS(&quot;topItemPosition&quot;);
+    horizontalScrollBar := TtoS(&quot;horizontalScrollBar&quot;);
+    verticalScrollBar := TtoS(&quot;verticalScrollBar&quot;);
+    workWindow := TtoS(&quot;workWindow&quot;);
+    clipWindow := TtoS(&quot;clipWindow&quot;);
+    scrollingPolicy := TtoS(&quot;scrollingPolicy&quot;);
+    visualPolicy := TtoS(&quot;visualPolicy&quot;);
+    scrollBarDisplayPolicy := TtoS(&quot;scrollBarDisplayPolicy&quot;);
+    scrollBarPlacement := TtoS(&quot;scrollBarPlacement&quot;);
+    updateSliderSize := TtoS(&quot;updateSliderSize&quot;);
+    scrolledWindowMarginHeight := TtoS(&quot;scrolledWindowMarginHeight&quot;);
+    scrolledWindowMarginWidth := TtoS(&quot;scrolledWindowMarginWidth&quot;);
+    commandWindow := TtoS(&quot;commandWindow&quot;);
+    menuBar := TtoS(&quot;menuBar&quot;);
+    messageWindow := TtoS(&quot;messageWindow&quot;);
+    mainWindowMarginHeight := TtoS(&quot;mainWindowMarginHeight&quot;);
+    mainWindowMarginWidth := TtoS(&quot;mainWindowMarginWidth&quot;);
+    showSeparator := TtoS(&quot;showSeparator&quot;);
+    source := TtoS(&quot;source&quot;);
+    outputCreate := TtoS(&quot;outputCreate&quot;);
+    inputCreate := TtoS(&quot;inputCreate&quot;);
+    autoShowCursorPosition := TtoS(&quot;autoShowCursorPosition&quot;);
+    cursorPosition := TtoS(&quot;cursorPosition&quot;);
+    editable := TtoS(&quot;editable&quot;);
+    maxLength := TtoS(&quot;maxLength&quot;);
+    focusCallback := TtoS(&quot;focusCallback&quot;);
+    losingFocusCallback := TtoS(&quot;losingFocusCallback&quot;);
+    modifyVerifyCallback := TtoS(&quot;modifyVerifyCallback&quot;);
+    motionVerifyCallback := TtoS(&quot;motionVerifyCallback&quot;);
+    gainPrimaryCallback := TtoS(&quot;gainPrimaryCallback&quot;);
+    losePrimaryCallback := TtoS(&quot;losePrimaryCallback&quot;);
+    verifyBell := TtoS(&quot;verifyBell&quot;);
+    wordWrap := TtoS(&quot;wordWrap&quot;);
+    blinkRate := TtoS(&quot;blinkRate&quot;);
+    resizeWidth := TtoS(&quot;resizeWidth&quot;);
+    resizeHeight := TtoS(&quot;resizeHeight&quot;);
+    scrollHorizontal := TtoS(&quot;scrollHorizontal&quot;);
+    scrollVertical := TtoS(&quot;scrollVertical&quot;);
+    scrollLeftSide := TtoS(&quot;scrollLeftSide&quot;);
+    scrollTopSide := TtoS(&quot;scrollTopSide&quot;);
+    cursorPositionVisible := TtoS(&quot;cursorPositionVisible&quot;);
+    toPositionCallback := TtoS(&quot;toPositionCallback&quot;);
+    columns := TtoS(&quot;columns&quot;);
+    rows := TtoS(&quot;rows&quot;);
+    selectThreshold := TtoS(&quot;selectThreshold&quot;);
+    selectionArrayCount := TtoS(&quot;selectionArrayCount&quot;);
+    pendingDelete := TtoS(&quot;pendingDelete&quot;);
+    editMode := TtoS(&quot;editMode&quot;);
+    topcharacter := TtoS(&quot;topcharacter&quot;);
+    refigureMode := TtoS(&quot;refigureMode&quot;);
+    separatorOn := TtoS(&quot;separatorOn&quot;);
+    sashIndent := TtoS(&quot;sashIndent&quot;);
+    sashWidth := TtoS(&quot;sashWidth&quot;);
+    sashHeight := TtoS(&quot;sashHeight&quot;);
+    sashShadowThickness := TtoS(&quot;sashShadowThickness&quot;);
+    allowResize := TtoS(&quot;allowResize&quot;);
+    skipAdjust := TtoS(&quot;skipAdjust&quot;);
+    paneMinimum := TtoS(&quot;paneMinimum&quot;);
+    paneMaximum := TtoS(&quot;paneMaximum&quot;);
+    inputCallback := TtoS(&quot;inputCallback&quot;);
+    okCallback := TtoS(&quot;okCallback&quot;);
+    cancelCallback := TtoS(&quot;cancelCallback&quot;);
+    applyCallback := TtoS(&quot;applyCallback&quot;);
+    noMatchCallback := TtoS(&quot;noMatchCallback&quot;);
+    commandEnteredCallback := TtoS(&quot;commandEnteredCallback&quot;);
+    commandChangedCallback := TtoS(&quot;commandChangedCallback&quot;);
+    okLabelString := TtoS(&quot;okLabelString&quot;);
+    cancelLabelString := TtoS(&quot;cancelLabelString&quot;);
+    helpLabelString := TtoS(&quot;helpLabelString&quot;);
+    applyLabelString := TtoS(&quot;applyLabelString&quot;);
+    selectionLabelString := TtoS(&quot;selectionLabelString&quot;);
+    listLabelString := TtoS(&quot;listLabelString&quot;);
+    promptString := TtoS(&quot;promptString&quot;);
+    defaultButton := TtoS(&quot;defaultButton&quot;);
+    cancelButton := TtoS(&quot;cancelButton&quot;);
+    buttonFontList := TtoS(&quot;buttonFontList&quot;);
+    labelFontList := TtoS(&quot;labelFontList&quot;);
+    textFontList := TtoS(&quot;textFontList&quot;);
+    textTranslations := TtoS(&quot;textTranslations&quot;);
+    allowOverlap := TtoS(&quot;allowOverlap&quot;);
+    defaultPosition := TtoS(&quot;defaultPosition&quot;);
+    autoUnmanage := TtoS(&quot;autoUnmanage&quot;);
+    allowShellResize := TtoS(&quot;allowShellResize&quot;);
+    dialogTitle := TtoS(&quot;dialogTitle&quot;);
+    noResize := TtoS(&quot;noResize&quot;);
+    dialogStyle := TtoS(&quot;dialogStyle&quot;);
+    mustMatch := TtoS(&quot;mustMatch&quot;);
+    noMatchString := TtoS(&quot;noMatchString&quot;);
+    directory := TtoS(&quot;directory&quot;);
+    pattern := TtoS(&quot;pattern&quot;);
+    dirSpec := TtoS(&quot;dirSpec&quot;);
+    dirMask := TtoS(&quot;dirMask&quot;);
+    fileTypeMask := TtoS(&quot;fileTypeMask&quot;);
+    directoryValid := TtoS(&quot;directoryValid&quot;);
+    dirListItems := TtoS(&quot;dirListItems&quot;);
+    dirListItemCount := TtoS(&quot;dirListItemCount&quot;);
+    dirListLabelString := TtoS(&quot;dirListLabelString&quot;);
+    fileListItems := TtoS(&quot;fileListItems&quot;);
+    fileListItemCount := TtoS(&quot;fileListItemCount&quot;);
+    fileListLabelString := TtoS(&quot;fileListLabelString&quot;);
+    qualifySearchDataProc := TtoS(&quot;qualifySearchDataProc&quot;);
+    dirSearchProc := TtoS(&quot;dirSearchProc&quot;);
+    fileSearchProc := TtoS(&quot;fileSearchProc&quot;);
+    listItems := TtoS(&quot;listItems&quot;);
+    listItemCount := TtoS(&quot;listItemCount&quot;);
+    listVisibleItemCount := TtoS(&quot;listVisibleItemCount&quot;);
+    historyItems := TtoS(&quot;historyItems&quot;);
+    historyItemCount := TtoS(&quot;historyItemCount&quot;);
+    historyVisibleItemCount := TtoS(&quot;historyVisibleItemCount&quot;);
+    historyMaxItems := TtoS(&quot;historyMaxItems&quot;);
+    textAccelerators := TtoS(&quot;textAccelerators&quot;);
+    textValue := TtoS(&quot;textValue&quot;          (* used in text widget *));
+    textString := TtoS(&quot;textString&quot;);
+    textColumns := TtoS(&quot;textColumns&quot;);
+    command := TtoS(&quot;command&quot;);
+    defaultButtonType := TtoS(&quot;defaultButtonType&quot;);
+    minimizeButtons := TtoS(&quot;minimizeButtons&quot;);
+    messageString := TtoS(&quot;messageString&quot;);
+    messageAlignment := TtoS(&quot;messageAlignment&quot;);
+    symbolPixmap := TtoS(&quot;symbolPixmap&quot;);
+    dialogType := TtoS(&quot;dialogType&quot;);
+    scaleWidth := TtoS(&quot;scaleWidth&quot;);
+    scaleHeight := TtoS(&quot;scaleHeight&quot;);
+    decimalPoints := TtoS(&quot;decimalPoints&quot;);
+    showValue := TtoS(&quot;showValue&quot;);
+    titleString := TtoS(&quot;titleString&quot;);
+
+    (*load from XtN*)
+    visual := XtN.visual;
+    iconNameEncoding := XtN.iconNameEncoding;
+    transientFor := XtN.transientFor;
+    baseHeight := XtN.baseHeight;
+    baseWidth := XtN.baseWidth;
+    titleEncoding := XtN.titleEncoding;
+    winGravity := XtN.winGravity;
+  END Init;
+
+BEGIN
+  Init ();
+END XmN.
+</PRE>
+</inModule>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

@@ -1,0 +1,74 @@
+(* Code for drawing circles. *)
+
+module Circle;
+
+(* The procedure below returns a circle, given its center, its diameter, 
+   the thickness of its border, and its color. The border is inset within
+   the circle; if border>>=diameter//2.0 the circle is solid. 
+*)
+
+(* A circle has three useful methods: 
+   move (change position and diameter, optionally animated)
+   setBorder (change border size, not animated)
+   setColor (change color, not animated)
+*)
+   
+let circle =
+  proc(g, x, y, diameter, border, col)
+    let c =
+      { v1 => graph_newVertex(g),
+        v2 => graph_newVertex(g),
+        lt => graph_newVertex(g),
+        lb => graph_newVertex(g),
+        rt => graph_newVertex(g),
+        rb => graph_newVertex(g),
+        el => ok,
+        er => ok,
+        border => border,
+        move =>
+          meth(s, x, y, diameter, anim)
+            let r = 0.5 * (diameter-s.border);
+            let k = 0.67 * (diameter-s.border);
+            graph_moveVertex(s.v1, x, y-r, anim);
+            graph_moveVertex(s.v2, x, y+r, anim);
+            graph_moveVertex(s.lt, x-k, y-r, anim);
+            graph_moveVertex(s.lb, x-k, y+r, anim);
+            graph_moveVertex(s.rt, x+k, y-r, anim);
+            graph_moveVertex(s.rb, x+k, y+r, anim);
+          end,
+        setBorder =>
+          meth(s, border)
+            s.border := border;
+            graph_setEdgeWidth(s.el, border);
+            graph_setEdgeWidth(s.er, border);
+          end,
+        setColor =>
+          meth(s, col)
+            let c = color_named(col);
+            graph_setEdgeColor(s.el, c);
+            graph_setEdgeColor(s.er, c);
+          end,
+        };
+      c.el := graph_newEdge(c.v1, c.v2);
+      c.er := graph_newEdge(c.v2, c.v1);
+      c.move(x, y, diameter, false);
+      c.setBorder(border);
+      c.setColor(col);
+      graph_moveEdgeBezier(c.el, c.v1, c.v2, c.lt, c.lb, false);
+      graph_moveEdgeBezier(c.er, c.v2, c.v1, c.rb, c.rt, false);
+      c;
+    end;
+
+(* usage
+
+let g = graph_new();
+
+let c = circle(g, 0.5, 0.5, 0.5, 0.1, "blue");
+
+graph_show(g);
+
+let a = proc() graph_animate(g, 0., 2.) end;
+
+*)
+
+end module;

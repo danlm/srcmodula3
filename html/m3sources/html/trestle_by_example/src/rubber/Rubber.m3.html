@@ -1,0 +1,98 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: trestle_by_example/src/rubber/Rubber.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>trestle_by_example/src/rubber/Rubber.m3</H2></A><HR>
+<inModule>
+<PRE>MODULE <module>Rubber</module> EXPORTS <A HREF="../../../main/src/Main.i3.html"><implements>Main</A></implements>;
+IMPORT <A HREF="../../../ui/src/vbt/Trestle.i3.html">Trestle</A>, <A HREF="../../../ui/src/vbt/VBT.i3.html">VBT</A>, <A HREF="../../../ui/src/split/RigidVBT.i3.html">RigidVBT</A>, <A HREF="../../../ui/src/split/BorderedVBT.i3.html">BorderedVBT</A>, <A HREF="../../../geometry/src/Point.i3.html">Point</A>, <A HREF="../../../geometry/src/Rect.i3.html">Rect</A>, <A HREF="../../../geometry/src/Path.i3.html">Path</A>, <A HREF="../../../geometry/src/Region.i3.html">Region</A>,
+       <A HREF="../../../ui/src/vbt/PaintOp.i3.html">PaintOp</A>;
+FROM <A HREF="../../../ui/src/vbt/VBT.i3.html">VBT</A> IMPORT ClickType;
+TYPE
+  T = VBT.Leaf OBJECT
+        nw, se : Point.T;
+        path   : Path.T;
+        banding            := FALSE;
+      OVERRIDES
+        repaint  := Repaint;
+        mouse    := Mouse;
+        position := Position;
+      END;
+
+PROCEDURE <A NAME="Repaint"><procedure>Repaint</procedure></A> (v: T; READONLY rgn: Region.T) =
+  BEGIN
+    VBT.PaintRegion(v, rgn, PaintOp.Bg);
+  END Repaint;
+
+PROCEDURE <A NAME="Mouse"><procedure>Mouse</procedure></A> (v: T; READONLY cd: VBT.MouseRec) =
+  BEGIN
+    IF (cd.clickType = ClickType.FirstDown) THEN
+      v.banding := TRUE;
+      v.nw := cd.cp.pt;
+      Path.Reset(v.path);
+      VBT.SetCage(v, VBT.CageFromPosition(cd.cp));
+    ELSIF (v.banding AND cd.clickType = ClickType.LastUp) THEN
+      v.banding := FALSE;
+      v.se := cd.cp.pt;
+    ELSIF (v.banding) THEN       (* Chord Cancel *)
+      v.banding := FALSE;
+    END;
+  END Mouse;
+
+PROCEDURE <A NAME="Position"><procedure>Position</procedure></A> (v: T; READONLY cd: VBT.PositionRec) =
+  BEGIN
+    IF NOT v.banding THEN
+      VBT.SetCage(v, VBT.EverywhereCage);
+    ELSIF cd.cp.gone THEN
+      VBT.SetCage(v, VBT.GoneCage)
+    ELSE
+      VBT.Stroke(v, Rect.Full, v.path, op := PaintOp.Swap); (* Erase old *)
+      Path.Reset(v.path);
+      Path.MoveTo(v.path, v.nw);
+      Path.LineTo(v.path, Point.T{v.nw.h, cd.cp.pt.v});
+      Path.LineTo(v.path, cd.cp.pt);
+      Path.LineTo(v.path, Point.T{cd.cp.pt.h, v.nw.v});
+      Path.Close(v.path);
+      VBT.Stroke(v, Rect.Full, v.path, op := PaintOp.Swap); (* Draw new *)
+      VBT.SetCage(v, VBT.CageFromPosition(cd.cp));
+    END;
+  END Position;
+
+VAR
+  leaf := NEW(T, path := NEW(Path.T));
+  main := BorderedVBT.New(RigidVBT.FromHV(leaf, 35.0, 35.0));
+BEGIN
+  Trestle.Install(main);
+  Trestle.AwaitDelete(main)
+END Rubber.
+</PRE>
+</inModule>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

@@ -1,0 +1,8 @@
+# Host: Motorola 88k running SVR4
+
+XM_FILE= xm-delta88v4.h
+XDEPFILES= 
+
+NAT_FILE= nm-delta88v4.h
+NATDEPFILES= fork-child.o m88k-nat.o corelow.o \
+	core-svr4.o procfs.o solib.o

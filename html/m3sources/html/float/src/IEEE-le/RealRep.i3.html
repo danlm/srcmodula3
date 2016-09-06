@@ -1,0 +1,57 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: float/src/IEEE-le/RealRep.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>float/src/IEEE-le/RealRep.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM>                                                                           </EM></BLOCKQUOTE><PRE>
+
+INTERFACE <interface>RealRep</interface>;
+</PRE> This interface describes the layout of IEEE single precision reals
+   on little endian machines 
+
+<P><PRE>TYPE
+  T = RECORD
+    significand: BITS 23 FOR [16_0 .. 16_7fffff] := 0;
+    exponent:    BITS  8 FOR [16_0 .. 16_ff]     := 0;
+    sign:        BITS  1 FOR [16_0 .. 16_1]      := 0;
+  END;
+
+CONST
+  NegInf = T { sign := 1, exponent := 16_ff };
+  PosInf = T { sign := 0, exponent := 16_ff };
+  Nan    = T { sign := 0, exponent := 16_ff, significand := 1 };
+
+END RealRep.
+</PRE>
+</inInterface>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

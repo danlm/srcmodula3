@@ -1,0 +1,232 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: rw/src/Common/RdImpl.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>rw/src/Common/RdImpl.m3</H2></A><HR>
+<inModule>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE> This module implements the pieces of Rd that only require
+   the facilities visible in RdClass and UnsafeRd. 
+
+<P><PRE>MODULE <module>RdImpl</module> EXPORTS <A HREF="Rd.i3.html"><implements>Rd</A></implements>;
+IMPORT <A HREF="RdClass.i3.html">RdClass</A>, <A HREF="../../../text/src/Text.i3.html">Text</A>, <A HREF="../../../text/src/TextF.i3.html">TextF</A>;
+FROM <A HREF="../../../thread/src/Common/Thread.i3.html">Thread</A> IMPORT Alerted;
+FROM <A HREF="UnsafeRd.i3.html">UnsafeRd</A> IMPORT FastGetSub;
+
+PROCEDURE <A NAME="GetSubLine"><procedure>GetSubLine</procedure></A> (rd: T;  VAR(*out*) str: ARRAY OF CHAR): CARDINAL
+  RAISES {Failure, Alerted} =
+  VAR i: CARDINAL := 0;
+  BEGIN
+    RdClass.Lock (rd);
+    TRY
+      LOOP
+        (* i chars have been read into str *)
+        IF i = NUMBER (str) THEN  RETURN i  END;
+        IF rd.cur = rd.hi THEN
+          IF rd.closed THEN Error () END;
+          IF rd.seek (rd.cur, FALSE) = RdClass.SeekResult.Eof THEN RETURN i END
+        END;
+        (* rd is ready *)
+        VAR
+          n := MIN (rd.hi, rd.cur + NUMBER (str) - i) - rd.lo + rd.st;
+          j := rd.cur - rd.lo + rd.st;
+        BEGIN
+          WHILE (j # n) AND (rd.buff[j] # '\n') DO INC (j) END;
+          VAR
+            rd_cur := rd.cur - rd.lo + rd.st;
+            k := j - rd_cur;
+          BEGIN
+            SUBARRAY (str, i, k) := SUBARRAY (rd.buff^, rd_cur, k);
+            INC (i, k);
+            INC (rd.cur, k);
+          END;
+          IF (j # n) THEN
+            (* we found a newline *)
+            str[i] := '\n';
+            INC (i);
+            INC (rd.cur);
+            RETURN i;
+          END;
+        END;
+      END;
+    FINALLY
+      RdClass.Unlock (rd);
+    END;
+  END GetSubLine;
+
+PROCEDURE <A NAME="GetText"><procedure>GetText</procedure></A> (rd: T;  length: CARDINAL): TEXT
+  RAISES { Failure, Alerted } =
+  VAR txt: TEXT;
+  BEGIN
+    RdClass.Lock (rd);
+    TRY
+      IF rd.closed THEN Error () END;
+
+      IF (rd.lo &lt;= rd.cur) AND (rd.hi - rd.cur &gt;= length) THEN
+        (* the bytes we need are already in the buffer *)
+        txt := Text.FromChars (
+                 SUBARRAY (rd.buff^, rd.cur - rd.lo + rd.st, length));
+        INC (rd.cur, length);
+
+      ELSIF (NOT rd.intermittent) THEN
+        (* we know how long the reader is... *)
+        VAR len := MIN (length, rd.length () - rd.cur); BEGIN
+          txt := TextF.New (len);
+          EVAL FastGetSub (rd, SUBARRAY (txt^, 0, len));
+        END;
+
+      ELSE (* general case *)
+        txt := SlowGetText (rd, length);
+      END;
+    FINALLY
+      RdClass.Unlock (rd);
+    END;
+    RETURN txt;
+  END GetText;
+
+TYPE Buffer = REF RECORD next: Buffer;  buf: ARRAY [0..2039] OF CHAR END;
+
+PROCEDURE <A NAME="SlowGetText"><procedure>SlowGetText</procedure></A> (rd: T;  length: CARDINAL): TEXT
+  RAISES { Failure, Alerted } =
+  VAR
+    copied: CARDINAL := 0;
+    head : Buffer := NIL;
+    tail : Buffer := NIL;
+  BEGIN
+
+    (* build a list of buffers *)
+    LOOP
+      IF (copied = length) THEN EXIT END;
+      VAR b := NEW (Buffer, next := NIL); BEGIN
+        IF (head = NIL)
+          THEN head      := b;
+          ELSE tail.next := b;
+        END;
+        tail := b;
+      END;
+      VAR
+        n := MIN (length - copied, NUMBER (tail.buf));
+        i := FastGetSub (rd, SUBARRAY (tail.buf, 0, n));
+      BEGIN
+        INC (copied, i);
+        IF (i &lt; n) THEN EXIT END;
+      END;
+    END;
+
+    (* assemble the result *)
+    VAR
+      txt := TextF.New (copied);
+      i := 0;
+      n : INTEGER;
+    BEGIN
+      WHILE (head # NIL) DO
+        n := MIN (copied - i, NUMBER (head.buf));
+        SUBARRAY (txt^, i, n) := SUBARRAY (head.buf, 0, n);
+        head := head.next;
+        INC (i, n);
+      END;
+      RETURN txt;
+    END;
+  END SlowGetText;
+
+PROCEDURE <A NAME="GetLine"><procedure>GetLine</procedure></A> (rd: T): TEXT RAISES {EndOfFile, Failure, Alerted} =
+  VAR txt := &quot;&quot;;   j, n: INTEGER;
+  BEGIN
+    RdClass.Lock (rd);
+    TRY
+      LOOP (* INV: txt contains the partial result *)
+        IF rd.cur = rd.hi THEN
+          IF rd.closed THEN Error () END;
+          IF rd.seek (rd.cur, FALSE) = RdClass.SeekResult.Eof THEN
+            IF (Text.Length (txt) &gt; 0) THEN RETURN txt END;
+            RAISE EndOfFile;
+          END;
+        END;
+        (* rd is ready *)
+        n := rd.hi - rd.lo + rd.st;
+        j := rd.cur - rd.lo + rd.st;
+        WHILE (j # n) AND rd.buff[j] # '\n' DO INC(j) END;
+        VAR rd_cur := rd.cur - rd.lo + rd.st;
+            len := j - rd_cur;
+         BEGIN
+          IF len &gt;= 1 AND j # n  AND rd.buff[j-1] = '\r' THEN
+            (* segment ends in \r\n *)
+            txt := txt &amp; Text.FromChars (SUBARRAY (rd.buff^, rd_cur, len-1));
+            INC (rd.cur, len+1);
+            RETURN txt;
+          ELSIF j # n THEN
+            (* segment ends in \n *)
+            txt := txt &amp; Text.FromChars (SUBARRAY (rd.buff^, rd_cur, len));
+            INC (rd.cur, len+1);
+            IF NOT Text.Empty(txt) AND
+                 Text.GetChar(txt, Text.Length(txt)-1) = '\r' THEN
+              txt := Text.Sub(txt, 0, Text.Length(txt)-1)
+            END;
+            RETURN txt;
+          ELSE
+            (* segment does not contain line break *)
+            txt := txt &amp; Text.FromChars (SUBARRAY (rd.buff^, rd_cur, len));
+            INC (rd.cur, len);
+          END;
+        END;
+      END; (* LOOP *)
+    FINALLY
+      RdClass.Unlock (rd);
+    END;
+  END GetLine;
+
+PROCEDURE <A NAME="Intermittent"><procedure>Intermittent</procedure></A> (rd: T): BOOLEAN RAISES { } =
+  BEGIN
+    RETURN (rd.intermittent);
+  END Intermittent;
+
+PROCEDURE <A NAME="Seekable"><procedure>Seekable</procedure></A> (rd: T): BOOLEAN RAISES { } =
+  BEGIN
+    RETURN (rd.seekable);
+  END Seekable;
+
+PROCEDURE <A NAME="Closed"><procedure>Closed</procedure></A> (rd: T): BOOLEAN RAISES { } =
+  BEGIN
+    RETURN (rd.closed);
+  END Closed;
+
+EXCEPTION FatalError;   &lt;* FATAL FatalError *&gt;
+
+PROCEDURE <A NAME="Error"><procedure>Error</procedure></A> () RAISES {} =
+  BEGIN
+    RAISE FatalError;
+  END Error;
+
+BEGIN
+END RdImpl.
+</PRE>
+</inModule>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

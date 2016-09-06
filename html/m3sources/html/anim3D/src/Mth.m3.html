@@ -1,0 +1,81 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: anim3D/src/Mth.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>anim3D/src/Mth.m3</H2></A><HR>
+<inModule>
+<PRE><A HREF="../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM> Digital Internal Use Only                                                 </EM></BLOCKQUOTE><PRE>
+</PRE>                                                                           
+       Created on Mon Feb  7 20:12:10 PST 1994 by najork                   
+
+<P>
+<P><PRE>MODULE <module><implements><A HREF="Mth.i3.html">Mth</A></implements></module>;
+
+IMPORT <A HREF="#x1">Math</A>;
+
+PROCEDURE <A NAME="sin"><procedure>sin</procedure></A> (x : REAL) : REAL =
+  BEGIN
+    RETURN FLOAT (Math.sin (FLOAT (x, LONGREAL)));
+  END sin;
+
+PROCEDURE <A NAME="cos"><procedure>cos</procedure></A> (x : REAL) : REAL =
+  BEGIN
+    RETURN FLOAT (Math.cos (FLOAT (x, LONGREAL)));
+  END cos;
+
+PROCEDURE <A NAME="asin"><procedure>asin</procedure></A> (x : REAL) : REAL =
+  BEGIN
+    RETURN FLOAT (Math.asin (FLOAT (x, LONGREAL)));
+  END asin;
+
+PROCEDURE <A NAME="acos"><procedure>acos</procedure></A> (x : REAL) : REAL =
+  BEGIN
+    RETURN FLOAT (Math.acos (FLOAT (x, LONGREAL)));
+  END acos;
+
+PROCEDURE <A NAME="sqrt"><procedure>sqrt</procedure></A> (x : REAL) : REAL =
+  BEGIN
+    RETURN FLOAT (Math.sqrt (FLOAT (x, LONGREAL)));
+  END sqrt;
+
+BEGIN
+END Mth.
+</PRE>
+</inModule>
+<HR>
+<A NAME="x1">interface Math is in:
+</A><UL>
+<LI><A HREF="../../arith/src/POSIX/Math.i3.html#0TOP0">arith/src/POSIX/Math.i3</A>
+<LI><A HREF="../../arith/src/WIN32/Math.i3.html#0TOP0">arith/src/WIN32/Math.i3</A>
+</UL>
+<P>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

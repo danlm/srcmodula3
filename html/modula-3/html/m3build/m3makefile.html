@@ -1,0 +1,53 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: m3makefiles</TITLE>
+</HEAD>
+<BODY BGCOLOR="#ffffff" VLINK="#006633">
+
+<H2>m3makefiles</H2>
+<P>
+
+<TT>m3makefile</TT>s are in fact
+<A HREF="../quake/quake.html"><TT>quake</TT></A> programs.
+<A HREF="../quake/quake.html"><TT>quake</TT></A> is an interpreter for a small, but powerful
+programming language.
+It's an imperative language with variables, arrays, tables, conditionals,
+loops, and procedures.
+The full features of that language are available if required,
+but very few <TT>m3makefile</TT>s need this extra generality.
+<P>
+
+Described with
+<A HREF="m3build.html">m3build</A> are the facilities (many of them programmed
+in <A HREF="../quake/quake.html"><TT>quake</TT></A>) that <TT>m3build</TT> users should need.
+Most <TT>m3makefile</TT>s are simply sequences of calls to
+these predefined procedures.
+<P>
+
+<A HREF="../quake/quake.html">Quake</A> has one slightly quirky feature:
+<EM>when evaluated, undefined variables return their names as strings</EM>.
+So, <TT>module(foo)</TT> will call the
+predefined <TT>module</TT> procedure and pass it the value of the variable
+<TT>foo</TT>.  If <TT>foo</TT> is undefined, the string <TT>"foo"</TT> will
+be passed.  If <TT>foo</TT> is defined, something else is passed.  It's
+better to write <TT>module("foo")</TT> and avoid confusion.
+Many of the SRC Modula-3 <TT>m3makefile</TT>s depend on this
+feature.  It would be better if they didn't and we recommend that you
+avoid it.
+<P>
+
+<HR>
+<A HREF="../home.html">[Modula-3 home page]</A>
+<P>
+<A HREF="mailto:m3-request@src.dec.com">
+<ADDRESS>m3-request@src.dec.com</ADDRESS></A>
+<PRE>
+Last modified on Thu Jan  4 11:07:53 PST 1996 by heydon 
+     modified on Thu Apr 21 16:43:34 PDT 1994 by kalsow 
+     modified on Thu Jan  7 18:40:57 PST 1993 by muller 
+</PRE>
+
+Copyright (C) 1992, 1996, Digital Equipment Corporation. All rights reserved.<BR>
+See the <A HREF="http://www.research.digital.com/SRC/m3sources/html/COPYRIGHT.html">COPYRIGHT</A> for a full description.
+</BODY>
+</HTML>

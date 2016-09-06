@@ -1,0 +1,66 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: dps/src/TextLineDLE.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>dps/src/TextLineDLE.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+
+INTERFACE <interface><A HREF="TextLineDLE.m3.html">TextLineDLE</A></interface>;
+
+IMPORT <A HREF="DisplayList.i3.html">DisplayList</A>, <A HREF="DPS.i3.html">DPS</A>, <A HREF="DPSWindow.i3.html">DPSWindow</A>;
+
+TYPE E = DisplayList.E OBJECT
+  initialized: BOOLEAN := FALSE;
+  hasInputFocus: BOOLEAN := FALSE;
+  text: TEXT := &quot;&quot;; hot: BOOLEAN := FALSE;
+ METHODS
+  Proc (t: DPSWindow.T; text: TEXT; char: CHAR) := Proc;
+ OVERRIDES
+  Repaint := Repaint;
+  Mouse := Mouse;
+  Char := Char;
+  LoseInputFocus := LoseInputFocus;
+  END;
+
+PROCEDURE <A HREF="TextLineDLE.m3.html#Init">Init</A> (e: E; t: DPSWindow.T);
+
+PROCEDURE <A HREF="TextLineDLE.m3.html#Repaint">Repaint</A> (e: E; box: DPS.Box; only: REFANY := NIL): TEXT;
+PROCEDURE <A HREF="TextLineDLE.m3.html#Mouse">Mouse</A> (e: E; t: DPSWindow.T; event: DPS.MouseEvent): BOOLEAN;
+PROCEDURE <A HREF="TextLineDLE.m3.html#Char">Char</A> (e: E; t: DPSWindow.T; char: CHAR): BOOLEAN;
+PROCEDURE <A HREF="TextLineDLE.m3.html#Proc">Proc</A> (e: E; t: DPSWindow.T; text: TEXT; char: CHAR); (* A no-op. *)
+
+PROCEDURE <A HREF="TextLineDLE.m3.html#LoseInputFocus">LoseInputFocus</A> (e: E);
+
+  END TextLineDLE.
+</PRE>
+</inInterface>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

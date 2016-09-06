@@ -1,0 +1,50 @@
+
+You are cordially invited to a meeting of the Modula-3 User Group at
+OOPSLA'95, in Austin, Texas.
+
+This meeting is open to all, especially current users  and others 
+interested in learning more about Modula-3! Our meeting will include 
+presentations on what people are do with Modula-3 in various organizations.  
+
+- Craig Chambers & Jeff Dean of University of Washington will describe
+  their work on applying advanced optimizations to Modula-3 programs
+  as part of the Vortex project.
+
+- Allan Heydon of DEC Systems Research Center will present Juno-2, an
+  extensible constraint-based drawing package written in Modula-3.
+   
+- Blair MacIntyre of Columbia University will persent his prototype
+  augmented reality system written using Modula-3 Network Objects.
+
+- Lauren Schmitt of Critical Mass Inc will unveil Photon, a
+  programming environment written for Modula-3.
+
+We also hope to cover a variety of topics about Modula-3 such as:
+ports to PC OSs  (Win/NT, Win'95, OS/2, Linux), evangelizing, commercial 
+use, academic and research use, and  distributed applications with 
+Modula-3. 
+
+Please join us!
+
+
+
+WHAT        Modula-3 User Group Meeting
+WHERE       OOPSLA'95, Austin, Texas,
+WHEN        October 16-20, 1995. 
+            Check OOPSLA'95 birds of a feather (BOF) listings
+ORGANIZERS  Farshad Nayeri & Geoff Wyant 
+            nayeri@gte.com & geoff.wyant@east.sun.com
+
+
+WHAT IS MODULA-3?
+
+Modula-3 is a simple and modular programming language, providing
+facilities  for exception handling, concurrency,  object-oriented 
+programming, automatic garbage collection, a nd systems programming 
+without involving the  complexities forced by other  languages of 
+its class. Modula-3 is both a practical  implementation language  
+for large software projects and an excellent teaching  language. 
+
+An implementation of Modula-3 is available free of charge from
+Digital Systems Research Center.
+

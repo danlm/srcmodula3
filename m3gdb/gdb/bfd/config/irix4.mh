@@ -1,0 +1,4 @@
+HDEFINES = -G 4 -DIRIX_CORE
+HDEPFILES = irix-core.o
+LDFLAGS = -lmalloc
+RANLIB = echo

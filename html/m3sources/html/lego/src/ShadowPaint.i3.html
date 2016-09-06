@@ -1,0 +1,81 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: lego/src/ShadowPaint.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>lego/src/ShadowPaint.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM>                                                                           </EM></BLOCKQUOTE><PRE>
+
+INTERFACE <interface><A HREF="ShadowPaint.m3.html">ShadowPaint</A></interface>;
+</PRE> Utilities for painting shadows. For all procedures, LL=VBT.mu; they are
+   typically called from within a VBT's repaint method. 
+
+<P><PRE>IMPORT <A HREF="../../geometry/src/Axis.i3.html">Axis</A>, <A HREF="../../ui/src/vbt/PaintOp.i3.html">PaintOp</A>, <A HREF="../../ui/src/vbt/Pixmap.i3.html">Pixmap</A>, <A HREF="../../geometry/src/Rect.i3.html">Rect</A>, <A HREF="../../geometry/src/Region.i3.html">Region</A>, <A HREF="Shadow.i3.html">Shadow</A>, <A HREF="../../ui/src/vbt/VBT.i3.html">VBT</A>;
+
+PROCEDURE <A HREF="ShadowPaint.m3.html#Bar">Bar</A> (         v     : VBT.T;
+               READONLY clip  : Region.T;
+                        shadow: Shadow.T;
+                        style : Shadow.Style;
+                        axis  : Axis.T;
+               READONLY target: Rect.T        );
+</PRE><BLOCKQUOTE><EM> Paint a <CODE>bar</CODE> shadow in VBT v in the specified style, clipped against
+   the specified region. The shadow fills target rectangle in the
+   horizontal or vertical orientation. Styles Chiseled and Lowered are
+   synonomous, as are Ridged and Raised. </EM></BLOCKQUOTE><PRE>
+
+PROCEDURE <A HREF="ShadowPaint.m3.html#Border">Border</A> (         v      : VBT.T;
+                  READONLY clip   : Region.T;
+                           shadow : Shadow.T;
+                           style  : Shadow.Style;
+                  READONLY in, out: Rect.T        );
+</PRE><BLOCKQUOTE><EM> Paint a <CODE>border</CODE> shadow in VBT v in the specified style, clipped against
+   the specified region. The shadow is a rectangular tube, with the
+   specified inner and outer borders. </EM></BLOCKQUOTE><PRE>
+
+PROCEDURE <A HREF="ShadowPaint.m3.html#Diamond">Diamond</A> (         v           : VBT.T;
+                   READONLY clip        : Region.T;
+                            shadow      : Shadow.T;
+                            style       : Shadow.Style;
+                   READONLY in, out     : Rect.T;
+                            insideOp    : PaintOp.T;
+                            insidePixmap: Pixmap.T      );
+</PRE><BLOCKQUOTE><EM> Paint a <CODE>diamond</CODE> shadow in VBT v in the specified style, clipped
+   against the specified region. The shadow is a diamondular tube, whose
+   inner and outer vertices are the midpoints of in and out rectangles.
+   Styles Chiseled and Ridged are (incorrectly) implemented as Lowered and
+   Raised respectively. The inside of the diamond is filled with the given
+   pixmap in the given colors. </EM></BLOCKQUOTE><PRE>
+
+END ShadowPaint.
+</PRE>
+</inInterface>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

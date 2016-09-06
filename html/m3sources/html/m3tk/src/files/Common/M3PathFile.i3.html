@@ -1,0 +1,76 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: m3tk/src/files/Common/M3PathFile.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>m3tk/src/files/Common/M3PathFile.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+
+INTERFACE <interface><A HREF="M3PathFile.m3.html">M3PathFile</A></interface>;
+
+IMPORT <A HREF="../../../../os/src/Common/OSError.i3.html">OSError</A>, <A HREF="../../../../rw/src/Common/Rd.i3.html">Rd</A>;
+IMPORT <A HREF="M3PathElem.i3.html">M3PathElem</A>, <A HREF="M3PathElemList.i3.html">M3PathElemList</A>;
+
+CONST
+  FileName = &quot;m3path&quot;; (* default name for path file *)
+
+PROCEDURE <A HREF="M3PathFile.m3.html#Read">Read</A>(
+    dir := M3PathElem.CurrentDir;
+    name := FileName;
+    doTransitiveClosure := TRUE)
+    : M3PathElemList.T
+    RAISES {OSError.E, Rd.Failure};
+</PRE> Reads the named {\it m3path} file in the named directory. An m3path
+file has a system dependent format but always contains a list of
+directory names. This routine returns these names as a list of
+<CODE>M3PathElem.T</CODE>s.  The names are NOT transformed to be relative to the
+current directory. E.g. if one name on the list was <CODE>foo</CODE> it means
+subdirectory <CODE>foo</CODE> in directory <CODE>dir</CODE> not <CODE>foo</CODE> in the current
+directory.
+<P>
+A directory may be indicated as read-only, in which case the
+<CODE>readOnly</CODE> method will return TRUE. This is intended as an
+optimisation, to avoid repeated scanning of zillions of directories.
+<P>
+If the given m3path file does not exist (or is inaccessible so that it is
+impossible to determine if it exists or not) the result will be NIL.
+<P>
+Read will raise <CODE>OSError.E</CODE> or <CODE>Rd.Failure</CODE> if a stream error occurs while 
+opening and processing the m3path file.
+<P>
+If <CODE>doTransitiveClosure</CODE> then the list returned is the transitive closure
+of the directories on the m3path.  Duplicates are removed, the list is
+constructed breadth first. 
+
+<P><PRE>END M3PathFile.
+</PRE>
+</inInterface>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

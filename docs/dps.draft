@@ -1,0 +1,433 @@
+(* Copyright (C) 1992, Digital Equipment Corporation                         *)
+(* All rights reserved.                                                      *)
+(* See the file COPYRIGHT for a full description.                            *)
+
+(* Last modified on Mon Feb 10 18:06:20 PST 1992 by muller                   *)
+(*      modified on Mon Feb 10 16:54:50 PST 1992 by ayers                    *)
+
+
+
+
+
+                   Display PostScript With X
+
+Abstract
+
+The Display PostScript facility (DPS), offered by the Adobe Corporation for
+several computers, supplies a PostScript interface to a basic X11
+windowing system. DPS allows a client program to create images within an
+X11 window by writing PostScript commands (as ascii text or via a more
+efficient arrangement) to a PostScript interpreter running within the X11
+server.
+
+This is very convenient for a client interested in creating sophisticated
+images, producing high-quality typography, or wishing to integrate his
+display imaging with his printing.
+
+But the imaging model presented by X11 and the imaging model presented by
+PostScript are quite different. 
+
+
+The Differing World-Views
+
+Both the X11 and the PostScript sub-systems are well-known, and I will not
+attempt a summary here. Rather, I will recapitulate the characteristics
+and differences that are important when one wishes to use PostScript
+within the X11 world.
+
+    The coordinate systems
+
+    The X11 coordinate system has its origin at the upper left corner of
+    the window, with x increasing rightward and y increasing downward, and
+    the units of x and y are (integer) pixels. Clients can deal in meters
+    (or points or inches) by interrogating the X11 server and discovering
+    the size of a pixel, but this is uncommon.
+
+    The PostScript (and DPS) coordinate system starts out with its origin
+    at the lower left corner of the image space, with x increasing
+    rightward and y increasing upward (matching the mathematician's first
+    quadrant), and the units of x and y are (continuous) points.  The
+    PostScript user can change the coordinate space: he can translate,
+    rotate, and scale it. And such coordinate transformations are popular
+    and are often done dynamically, e.g. the client defines a macro that
+    images a shape at [0.0,0.0] and displays it at several locations by
+    repeatedly translating the origin and imaging.
+
+    The imaging model
+
+    The X11 client images pixels. His model is that an imaging operation
+    affects some number of pixels, and the affected pixel values are
+    adjusted: new value := func (old value, supplied value). In
+    particular, the client can 'invert' a pixel value, and he can, with
+    multi-bit pixels, define 'color' values and alter particular 'bit
+    planes'
+
+    The PostScript client deals with areas. He is insulated from the world
+    of pixels and pixel values. The PostScript client 'paints' into
+    mathematically defined areas, and the operation changes the 'color' of
+    the affected area. The 'paint' is normally a value from a continuous
+    three dimensional color space (hue/saturation/brightness or
+    red/green/blue, the client's choice) or a continuous one-dimensional
+    gray space.  The client cannot define a 'paint' that is a function of
+    the area's current color, and so there is no such thing as
+    'inverting.'
+
+    User input
+    
+    X11 contains a rich suite of procedures for dealing with user input.
+
+    Display PostScript is solely an imaging arrangement. It contains
+    no notion of user input.
+
+    Windowing
+
+    X11 allows the client to create sub-windows within an existing window.
+    Such sub-windowing allows for the automatic
+    partitioning of input events, and it allows the client to have
+    parent-window painting operations automatically 'clipped' so as to not
+    paint into sub-windows.
+
+    Display PostScript operates within an X11 window. It has no
+    windowing or sub-windowing arrangement of its own.
+
+    Server subroutines
+
+    X11 has no explicit notion of a 'subroutine' stored in the server. It
+    does, however, support off-screen images ('pixmaps') in the server.
+
+    PostScript supports the definition of 'client defined operations' stored
+    in the server. These are valuable for DPS, as they enable the server
+    to cache and reuse expensive computations. 
+
+    Printing
+
+    X11 does not support printing; printing is a separate consideration.
+    (Although there are X11 tools that will produce a screen dump.)
+
+    One of the major benefits of Display PostScript is that the same client
+    operations that produce a screen image will (or should) produce a
+    printed image (at full device resolution) if sent to a printer.
+
+    Multiple threads
+
+    X11 has a certain amount of support for multi-threaded applications.
+    (Its library is written using the standard C arrangements, which do
+    not really support multi-threading.)
+
+    DPS continues PostScript's single-threaded design. For example, there
+    is one "graphics state" for a window -- that is for a PostScript
+    environment; if two threads naively draw lines, each storing the 'line
+    width' into the graphics state, one will lose. 
+
+
+Major Concerns
+
+Given these differences between Display PostScript and X11, an attempt to
+incorporate DPS imaging within an X11 window raises the following
+concerns:
+
+    How will user input be conveyed to the client? 
+
+    How will the X11 coordinate system be transformed to the DPS
+    coordinate system?  (This is necessary, for example, when conveying an
+    input mouse event.)
+
+    What about sub-windows?
+    
+    How can a "print me the image" functionality be incorporated?
+
+    How are transient screen artifacts (e.g. a blinking cursor) supported?
+
+    
+
+DPS-X
+
+[a lot of stuff, including a description of the subclassing of the windows]
+
+    
+
+Transforming Coordinates
+
+    Transforming between a DPS coordinate space and a X11 coordinate space is 
+    mathematically simple, and treated well in the PostScript "red book."
+
+    The difficulty is in deciding what the appropriate DPS coordinate space is.
+
+    One can ask DPS for the current DPS-to-X11 coordinate transformation.
+    The problem is that the current transformation may not be the
+    transformation that you want. 
+    
+    Recall that a convenient paradigm for the PostScript client is a)
+    define an operation that, e.g. paints a square at [0,0] b) paint a
+    multitude of squares by repeated executions of {save coords; translate
+    coords to [xn,yn]; paint square; restore coordinates}.
+
+    It would be unfortunate if the aysnchronous input-handling procedures
+    asked about the DPS-to-X11 coordinate transformation while the
+    coordinates were temporarily transformed by something like the above.
+
+    Our solution is to avoid asking DPS about the current PostScript
+    coordinates when we need to make a transformation. Rather, we 
+      a) distinguish between "temporary" and "real" DPS
+         coordinate transforms. The client is obliged to keep DPS-X cognizant
+         of the latter, by using a special procedure (separate from the regular
+         "send this PostScript") to change the "real" cordinates.  
+      b) keeps track of the current "real" coordinate transformation, and uses
+         it when converting coordinates.
+
+
+    Multi-threaded applications
+
+    We support multi-threaded applications by serializing calls on X11 and
+    calls on DPS. In particular:
+
+      All input processing is performed in a single thread that "pulls"
+      input events from X11.
+
+      All DPS output operations acquire a global lock before sending the
+      client's PostScript to the X11 server. So the client can be assured
+      that the commands presented in a single output procedure call are
+      executed without intervening PostScript.  Lock/Unlock operations
+      on the global lock are exported, so demanding clients can serailize
+      a sequence of operations. 
+      
+
+
+    Printing an image
+
+    The user can command "produce a PostScript file that will print the
+    window's current image."  To achieve this functionality, DPS-X:
+
+      Begins a file with a PostScript header.
+
+      Appends the "foundation" text that exists for the window
+
+      Appends the "background transformation" of the window.
+
+        (The background transformation is the PostScript tranformation
+        that converts DPS coordinates to X11 window coordinates before any
+        client transformations are considered, and is maintained by DPS-X.
+        It enables, e.g., the PostScript coordinates to stay origined at
+        the lower left corner when a window is re-sized by the user.) 
+
+      Appends the "current transformation" of the window.
+
+        (The current transformation is the union of the PostScript
+        transformations that the client has "permanently" applied
+        to the window.)
+
+      Calls the "repaint procedure" for the window, and copies the
+      resulting outputted PostScript and appends it to the file.  The
+      output is captured by storing in the window-object (for the duration
+      of the repaint) a non-NIL sink for client-supplied PostScript.  Note
+      that, in the case of a multi-threaded client, some "extra" output
+      may be captured, as a separate thread of the client may be, e.g.,
+      updating the window to reflect an input event. This will not, in
+      general, hurt anything, since a multi-threaded client is already
+      committed to maintaining a consistent window-image dispite
+      asynchronous repaint requests.
+
+
+    User input
+
+    We do not attempt to supply the client of DPS-X with the rich
+    user-input facilities of X11. This is reasonable because we expect
+    that the DPS-X client is dealing with the interior of an imaging
+    window, rather than dealing with issues of window management, which is
+    where the complex facilities of X11 are really useful.  
+
+    The creator of a DPS-X window (a DPS.T = DPSWindow.T) supplies the 
+    system with several "call back" procedures.  Note that a typical 
+    client of these interfaces will not be concerned with the details 
+    of a DPS.T, because he will create a window with a display list (a
+    DLWindow.T, a subclass of a DPS.T), and will deal solely with the
+    elements of the display list.  The default methods of the DLWindow.T
+    will suffice. 
+
+      Repaint (box: Box): Text.T. This procedure (of the client's) is called  
+      when "the system" demands that a portion of the window be repainted.
+      This is entirely analogous to the equivalent X-event, except, of
+      course, that the window area to be repainted is defined in the DPS
+      coordinate space. The client returns a PostScript string that, when
+      sent to the DPS server, will perform the requested repaint.
+
+      Mouse (event: MouseEvent): BOOLEAN. This procedure is called when a mouse
+      event occurs. (More exactly: when DPS-X receives a mouse event from
+      X11.)  The "MouseEvent" record contains the X11 information about
+      the button state, the modifier (shift etc) state, and the
+      coordinates of the event. The return value indicates whether
+      this client processed the event.
+
+      Key (event: KeyEvent): BOOLEAN. This procedure is called when a key event
+      occurs. The client receives the raw X11 key number, the modifiers,
+      and the X11 "click type". We provide (as does X11) a "CharFromKey"
+      procedure that will map a key event into an ASCII character code. The 
+      return value indicates whether this client processed the event.
+      
+
+    Sub-windows
+
+    We provide no sub-windowing facility.  A client who wishes to deal with
+    both DPS and X11 can use X11 calls to create sub-windows, but he will
+    have to manage the coordinate shifting etc. himself. 
+
+    Again, we hope that the client views the DPS-X window as an imaging
+    area, and so will not miss the ability to populate a window with
+    a collection of (possibly overlapping) sub-windows.
+
+
+    The Display List
+
+    We *do* provide a simple arrangement for repainting overlapping images
+    "in z" and for connecting user input events, particularly mouse
+    events, with particular client images:
+
+      The subclass DLWindow is a "data-list" window. In a DLWindow's 
+      data is a list of paintable "elements'. These elements have
+      their own repaint procedures and mouse procedures. When a DLWindow
+      receives a repaint request or a mouse event from the DPS-X system, it 
+      in turn calls on the elements of the list.
+
+      The list is considered to be sorted "in z", so repaint calls are
+      executed by traversing the list "back to front" and mouse events are
+      passed to elements "front to back" until an element processes the
+      event. this provides appropriate "overlapping object" semantics.
+
+      A DLWindow's list element is a DisplayList.T, which is an element of
+      a tree.  
+
+      An ordinary client of these interfaces deals extensively in objects
+      that are sub-classes of a DisplayList.T.  It is these sub-classes
+      which are, e.g., the command buttons, pop-up menus, and type-in
+      regions within the main DPSWindow.
+
+      The leaf-elements of the display list tree are the client's images.
+      The non-leaves are the client's compound elements. Thus the client
+      can create, e.g., a "pop up menu" that defines a border and
+      click-able texts.  
+
+      A DisplayList.T contains a "box" data element which is a bounding
+      box that includes the area of the element (and of its sub-elements).
+      Repaint and Mouse methods are only called if the intersection of
+      the to-be-repainted area or the mouse click with the bounding
+      is non-empty. 
+
+      Events are passed to DisplayList elements hierarchically. A window
+      passes an event to (one or more) of its top-level DisplayList
+      elements. Those elemetns, in turn, may pass the eent (perhaps
+      modified) to their children.
+
+      A DisplayList.T includes typical mwindow-system methods, such as:
+
+      Repaint (box: Box; window: DPSWindow.T): Text.T. 
+
+      This method (of the client's) is called when "the system" demands
+      that a portion of a window be repainted.  This is entirely analogous
+      to the equivalent X-event, except, of course, that the window area
+      to be repainted is defined in the DPS coordinate space. The client
+      returns a PostScript string that, when sent to the DPS server, will
+      perform the requested repaint.
+
+      Mouse (window: DPSWindow.T; event: MouseEvent): BOOLEAN. 
+
+      This method is called when a mouse event occurs. (More exactly: when
+      DPS-X receives a mouse event from X11.)  The "MouseEvent" record
+      contains the X11 information about the button state, the modifier
+      (shift etc) state, and the coordinates of the event. The return
+      value indicates whether this client processed the event.
+
+      Char (window: DPSWindow.T; char: CHAR): BOOLEAN.
+ 
+      This method is called when a character (as converted from raw
+      X11 keyboard transitions) is available.  The character is passed 
+      to the child of the display list root that owns the "input focus"
+      -- if any.
+      
+      GetInputFocus (). 
+
+      This method is called, typically by the client in response to a
+      mouse click, to make a display list element the "input focus."
+      
+            
+
+...
+
+
+  Maintenance of a DisplayList tree structure
+
+    A display list element is a subclass of a Linked2Tree, a
+    general-purpose tree object.  The tree-related methods in a display
+    list element are those of a Linked2Tree.T.  They include Insert,
+    Delete, and tree-walking methods.
+
+    A Linked2Tree.T is a subclass of MUTEX, and the lock within a Linked2Tree.T
+    is used to ensure that the tree-structure is maintained consistently.  The
+    basic invariant is that, whenever the mutex in a Linked2Tree.T is
+    not locked, the tree containing that element is well-formed. Thus one
+    can obtain the mutex and follow the parent, child, and sibling links to
+    another tree element.  
+
+    The only locks associated with a tree are those of the individual elements.
+    One could make a rule that, e.g., owning an element's lock gives one the
+    right to modify the sub-tree rooted there, but we take a different stance.
+
+    We use the mutex as a private lock, accessed only by the methods of a
+    Linked2Tree.T.  Thus one walks a tree *without* global consistency.
+    One can be "at" some node (Linked2Tree.T) N and have another thread
+    remove N from the tree. A subsequent walk from N will be traversing
+    the isolated tree that is now rooted at N.  For display list purposes,
+    this is reasonable; in general, elements may be added and removed from
+    a display list while asynchronous processing is going on; if a node,
+    e.g., calls upward in its tree and ends up at a root that is *not*
+    imbedded in a DLWindow, the operation is simply a no-op.  If a display
+    list calls is traversing downward to, e.g.  give a mouse event to a
+    leaf, and ends up in a isolated subtree due to a simultaneous
+    list-deletion, the worst that can happen is that the event is lost.
+    (And since changes to the window tree are only made through overt
+    client actions, the client can easily single-thread them if necessary.)
+      
+            
+...
+
+
+  Catching errors in PostScript
+
+    Often, the client program imaging via Display PostScript would like a
+    "clean" error indication if his PostScript produces an error in the
+    PostScript interpreter.  
+
+    Unfortunately, the clients PostScript stream is copied to the server by
+    xlib; it is the server that validates the stream. So a server-discovered 
+    error ois found after a normal "send this PostScript" procedure has exited.
+
+    The way around this is to encapsulate the client's PostScript within
+    additional PostScript that executes the client PostScript and returns
+    an error indication. Since the error indication must be recovered
+    *synchronously* from the DPS server, this is potentially damaging to
+    throughput.
+
+    The DPS-X implementation provides two modes of client PostScript: "regular"
+    and "nervous."  Only "nervous" mode explicitly checks for client PostScript
+    errors.  A "nervous" indication can be supplied on a "send" call, or a
+    "always nervous" flag may be set on a DPS-X window. I originally thought 
+    that "nervous" mode would be very expensive, but testing (with application
+    program and window server on the same machine) did not bear
+    this out, and so I routinely run "nervously."  Applications that are very
+    sensitive to painting speed will probably output "nervously" only when
+    they are writing PostScript that is user-supplied.
+
+    The construct that encapsulates the client's PostScript and 
+    allows for error-returns is this:
+
+        { <clients text> } stopped { 0 } { 1 } ifelse /success exch def
+
+    followed by a DPS retrieval of the value of "success" with a simple
+    DPS "wrap."
+
+    
+
+
+Transient Screen Artifacts
+
+    In the current system, there is no special support for transient screen
+    effects, like a blinking cursor.

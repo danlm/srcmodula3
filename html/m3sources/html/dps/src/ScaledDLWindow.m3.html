@@ -1,0 +1,86 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: dps/src/ScaledDLWindow.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>dps/src/ScaledDLWindow.m3</H2></A><HR>
+<inModule>
+<PRE><A HREF="../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+
+MODULE <module><implements><A HREF="ScaledDLWindow.i3.html">ScaledDLWindow</A></implements></module>;
+
+IMPORT <A HREF="ButtonDLE.i3.html">ButtonDLE</A>, <A HREF="DLWindow.i3.html">DLWindow</A>, <A HREF="DPSWindow.i3.html">DPSWindow</A>, <A HREF="DPS.i3.html">DPS</A>, <A HREF="../../rw/src/Common/Stdio.i3.html">Stdio</A>, <A HREF="../../fmtlex/src/Fmt.i3.html">Fmt</A>, <A HREF="../../rw/src/Common/Wr.i3.html">Wr</A>, <A HREF="../../thread/src/Common/Thread.i3.html">Thread</A>;
+
+PROCEDURE <A NAME="Paint"><procedure>Paint</procedure></A> (t: T; box: DPS.Box; only: REFANY) =
+  &lt;*FATAL DPS.BadPostScript*&gt;
+  BEGIN
+  DLWindow.Paint (t, box, only);
+  IF (t.desiredWidth # 0.0) AND (t.desiredHeight # 0.0) THEN
+    t.Send (&quot; gsave 0.5 setgray 0 setlinewidth newpath &quot;
+     &amp; Fmt.Real(t.desiredWidth-10.0) &amp; &quot; &quot;
+      &amp; Fmt.Real(t.desiredHeight) &amp; &quot; moveto &quot;
+     &amp; Fmt.Real(t.desiredWidth) &amp; &quot; &quot;
+      &amp; Fmt.Real(t.desiredHeight) &amp; &quot; lineto &quot;
+     &amp; Fmt.Real(t.desiredWidth) &amp; &quot; &quot;
+      &amp; Fmt.Real(t.desiredHeight-10.0) &amp; &quot; lineto stroke grestore&quot;);
+    END;
+  END Paint;
+
+PROCEDURE <A NAME="InstallButtons"><procedure>InstallButtons</procedure></A> (t: T) =
+ VAR be: ButtonDLE.E;
+  BEGIN
+  be := NEW ( ButtonDLE.E,
+   box := DPS.Box { DPS.Place {5.0, 5.0}, DPS.Place {5.0, 5.0} },
+   text := &quot;To PS&quot;, Proc := PostscriptButtonProc );
+   t.displayList.Append (be);
+  ButtonDLE.Init (be, t);
+  END InstallButtons;
+
+PROCEDURE <A NAME="PostscriptButtonProc"><procedure>PostscriptButtonProc</procedure></A> (&lt;*UNUSED*&gt; e: ButtonDLE.E;
+                                           window:DPSWindow. T;
+                                &lt;*UNUSED*&gt; event: DPS.MouseEvent) =
+  &lt;*FATAL Thread.Alerted, Wr.Failure*&gt;
+  BEGIN
+  Wr.PutText (Stdio.stdout, &quot;%!IPS-Adobe-1.0\n&quot;);
+  Wr.PutText (Stdio.stdout, &quot;%%Creator: Postscript Button in ScaledDLWindow\n&quot;);
+  Wr.PutText (Stdio.stdout, &quot;%%Title: Client Postscript Window\n&quot;);
+  Wr.PutText (Stdio.stdout, &quot;%%DocumentFonts: Times-Roman Times-Italic Times-Bold\n&quot;);
+  Wr.PutText (Stdio.stdout, &quot;%%EndComments\n&quot;);
+  Wr.PutText (Stdio.stdout, &quot;%%EndProlog\n\n&quot;);
+  DPS.PostscriptToWriter (window, Stdio.stdout);
+  Wr.PutText (Stdio.stdout, &quot;\nshowpage\n\n%%Trailer\n\n&quot;);
+  Wr.Flush (Stdio.stdout);
+  END PostscriptButtonProc;
+
+  BEGIN
+  END ScaledDLWindow.
+</PRE>
+</inModule>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

@@ -1,0 +1,67 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: dps/src/DisplayListStack.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>dps/src/DisplayListStack.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+
+INTERFACE <interface><A HREF="DisplayListStack.m3.html">DisplayListStack</A></interface>;
+
+IMPORT <A HREF="DisplayList.i3.html">DisplayList</A>, <A HREF="DPS.i3.html">DPS</A>, <A HREF="Linked2Tree.i3.html">Linked2Tree</A>;
+
+TYPE T = DisplayList.T OBJECT
+ METHODS
+  NswBoxOfChild (e: DisplayList.E; box: DPS.Box) := NewBoxOfChild;
+  Stack (firstHighY: REAL := -1.0) := Stack;
+ OVERRIDES
+  Prepend := Prepend;
+  Append := Append;
+  InsertBefore := InsertBefore;
+  InsertAfter := InsertAfter;
+  RemoveChild := RemoveChild;
+  END;
+TYPE E = T;
+TYPE R = T;
+
+PROCEDURE <A HREF="DisplayListStack.m3.html#NewBoxOfChild">NewBoxOfChild</A> (t: T; e: DisplayList.E; box: DPS.Box);
+PROCEDURE <A HREF="DisplayListStack.m3.html#Prepend">Prepend</A> (t: T; e: Linked2Tree.E);
+PROCEDURE <A HREF="DisplayListStack.m3.html#Append">Append</A> (t: T; e: Linked2Tree.E);
+PROCEDURE <A HREF="DisplayListStack.m3.html#InsertBefore">InsertBefore</A> (t: T; e, before: Linked2Tree.E);
+PROCEDURE <A HREF="DisplayListStack.m3.html#InsertAfter">InsertAfter</A> (t: T; e, after: Linked2Tree.E);
+PROCEDURE <A HREF="DisplayListStack.m3.html#RemoveChild">RemoveChild</A> (t: T; e: Linked2Tree.E);
+
+PROCEDURE <A HREF="DisplayListStack.m3.html#Stack">Stack</A> (t: T; firstHighY: REAL := -1.0);
+
+  END DisplayListStack.
+</PRE>
+</inInterface>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

@@ -1,0 +1,107 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: gef/src/GEFTable.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>gef/src/GEFTable.m3</H2></A><HR>
+<inModule>
+<PRE><A HREF="../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+
+MODULE <module><implements><A HREF="GEFTable.i3.html">GEFTable</A></implements></module>;
+
+TYPE
+  Entry = RECORD key, value: REFANY END;
+  Map = REF ARRAY OF Entry;
+
+REVEAL
+  <A NAME="T">T</A> = TPublic BRANDED OBJECT
+        next: INTEGER := 0;
+        map : Map;
+      OVERRIDES
+        init := Init;
+        get := Get;
+        put := Put;
+        clear := Clear;
+        enumerate := Enumerate;
+      END;
+
+PROCEDURE <A NAME="Init"><procedure>Init</procedure></A>(t: T; initialSize := 10): T =
+  BEGIN
+    t.map := NEW(Map, MAX(1, initialSize));
+    RETURN t;
+  END Init;
+
+PROCEDURE <A NAME="Put"><procedure>Put</procedure></A> (t: T; key, value: REFANY) =
+  BEGIN
+    IF t.next &gt; LAST(t.map^) THEN
+      WITH new = NEW(Map, 2 * NUMBER(t.map^)) DO
+        SUBARRAY(new^, 0, NUMBER(t.map^)) := t.map^;
+        t.next := NUMBER(t.map^);
+        t.map := new;
+      END;
+    END;
+    WITH e = t.map[t.next] DO e.key := key; e.value := value; END;
+    INC(t.next);
+  END Put;
+
+PROCEDURE <A NAME="Get"><procedure>Get</procedure></A> (t: T; key: REFANY): REFANY RAISES {NotFound} =
+  BEGIN
+    FOR i := 0 TO LAST(t.map^) DO
+      IF t.map[i].key = key THEN RETURN t.map[i].value END
+    END;
+    RAISE NotFound;
+  END Get;
+
+PROCEDURE <A NAME="Clear"><procedure>Clear</procedure></A> (t: T) =
+  BEGIN
+    t.next := 0
+  END Clear;
+
+PROCEDURE <A NAME="Enumerate"><procedure>Enumerate</procedure></A> (            t    : T;
+                                 ep   : EnumerateProc;
+                                 data : REFANY;
+                     VAR (*OUT*) key  : REFANY;
+                     VAR (*OUT*) value: REFANY;        ): BOOLEAN =
+  BEGIN
+    FOR i := 0 TO t.next - 1 DO
+      IF ep(data, t.map[i].key, t.map[i].value) THEN
+        key := t.map[i].key;
+        value := t.map[i].value;
+        RETURN TRUE
+      END;
+    END;
+    RETURN FALSE;
+  END Enumerate;
+
+BEGIN
+END GEFTable.
+</PRE>
+</inModule>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

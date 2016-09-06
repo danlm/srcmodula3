@@ -1,0 +1,250 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: Release history</TITLE>
+</HEAD>
+<BODY BGCOLOR="#ffffff" VLINK="#006633">
+
+<H2>Release history</H2>
+<P>
+
+Here's a brief description of the releases:
+<P>
+
+<B>Version 3.5.3</B> fixes bugs, includes a working version of
+the RS6000/AIX boostrap and has a version of the HP/PA bootstrap
+that works with the current gcc 2.6.3 backend.  Also included
+in this release is support for PEX-based 3-D graphics and animation.
+The debugger, m3gdb, can handle floating-point literals and
+many more builtin functions.  A mostly-working version of Trestle
+on Windows is included.
+<P>
+
+<B>Version 3.5.2</B> fixes minor bugs.
+<P>
+
+<B>Version 3.5.1</B> fixes minor installation glitches
+and includes a Modula-3 version of m3zume.
+<P>
+
+<B>Version 3.5</B> fixes several minor installation glitches
+and upgrades the gcc-based backend from version 2.5.7 to 2.6.3.
+This version also includes untested support for Linux with ELF
+object files and shared libraries, support for ``stable objects'',
+and Sil, an example of native Windows programming in Modula-3.
+<P>
+
+<B>Version 3.4</B> includes new ports to PCs running Windows/NT or
+FreeBSD (1.1.5 or 2.0) and SGI/MIPS boxes running IRIX5.2.  The Windows/NT port
+does not include Trestle.  The driver program, m3, and the first
+pass of the compiler were merged into a single process.  Hence,
+the driver maintains a cache of parsed and typechecked interfaces
+for the duration of a build.
+<P>
+
+<B>Version 3.3</B> fixes several bugs in the 3.2 installation scripts.
+This release includes <EM>Visual Obliq</EM>, a system for rapidly prototyping
+distributed applications.
+<P>
+
+<B>Version 3.2</B> is mostly bug fixes for 3.1.  The new implementations
+of <TT>Fmt</TT> and <TT>Lex</TT> are included.  A mail and news reading
+program, <EM>Postcard</EM>, is included.
+A new
+<A HREF="../../m3sources/html/COPYRIGHT.html">license agreement/copyright
+notice</A> is attached to this version.  The new license allows commercial
+use of SRC Modula-3 with very few restrictions.
+<P>
+
+<B>Version 3.1</B> is the first version of the native-code world
+that should build and install on some platforms.  The following
+platforms should work out of the box: <TT>DS3100</TT>, <TT>ALPHA_OSF</TT>,
+and <TT>LINUX</TT>.  These platforms have had an initial round of bug fixes,
+but may still have problems: <TT>SPARC</TT>, <TT>HPPA</TT>,
+and <TT>IBMR2</TT>.
+All other platforms are untested.
+<P>
+
+A more detailed list of changes includes:
+<UL>
+<LI>The compiler has a new internal interface between the front-end and
+the back-end, M3CG.  This interface is supposed to be easy to
+implement.
+
+<LI>The front-end can compute in the target arithmetic system; in particular
+it is possible to cross-compile to machines with larger integers than
+the host.
+
+<LI>One back-end has been implemented on top of gcc.  The implementation of
+M3CG interface generates the tree representation used internally in gcc.
+From the gcc point of view, this back-end looks like a new front-end.
+Using this back-end, we have cross-compiled solitaire for mips, alpha and
+386 processors; there is no reason to believe that there would be a
+problem for the other architectures supported by gcc.
+
+<LI>Prof. Dave Hanson from Princeton wrote another implementation of the
+M3CG that is
+self-contained. He is currently working on the 386 code generation (he
+has done the mips code generation already).
+
+<LI>Gdb has been modified to understand Modula-3 debugging information
+produced by the back-ends.  gdb can now parse Modula-3 expressions, print
+Modula-3 values and evaluate some of the Modula-3 built-in operations.
+There is also a little bit of support for multi-threaded programs (you
+can look at the stacks of other threads).
+
+<LI>There is a replacement for m3make, m3build, that does not rely on
+cpp/awk/sed/make and what not, and removes some of the limitations of
+m3make.  m3makefiles are very similar.
+
+<LI>libm3 has been significantly changed by the Interface Police, mostly in
+the area of OS interfaces and data structures.
+
+<LI>For the OS interfaces, we still have the U* interfaces, but applications
+are not supposed to use those.  Instead they should use a new set of
+interfaces that are os-independent; for example, there is a Pathname
+interface that manipulates file names; there is a Process interface that
+manipulate child processes.  These interfaces enabled a prototype port
+of the C based version to Windows NT machines.
+
+<LI>For the data structures, generics have been introduced and the various
+data structures are more consistent.
+
+<LI>Because of m3build and the new OS interfaces, we can think about
+porting to OSes other than Unix.
+In particular a Windows NT port will be available at some point.
+
+<LI>The runtime has been improved quite a bit.
+
+<LI>New platforms: Alpha running OSF/1, 386 running Linux.  We will pay
+more attention to the porting instructions and support.
+
+<LI>I am not sure about all the changes in the libraries other than
+libm3.  I suspect that there will be few changes in trestle, but that
+mentor changed quite a bit.
+
+<LI>The Windows NT port uses native threads.  This should be a good model
+for other implementations of Thread using native threads.
+
+<LI>Also included are <EM>Network Objects</EM>, a tool to aid in building
+distributed systems, and <EM>Obliq</EM>, a small statically-scoped,
+untyped, object-oriented, higher-order, concurrent, distributed 
+and embeddable language.
+</UL>
+<P>
+
+<B>Version 3.0</B> is the first public release of the native-code
+compiler, new libraries, a new build tool <TT>m3build</TT>, and full symbolic
+debugger <TT>m3gdb</TT>.  This release does not build or install properly.
+It's primarily intended for brave pioneers and curious browsers.
+<P>
+
+<B>Version 2.11</B> is the first public release of the <TT>FormsVBT</TT>
+window toolkit and the <TT>Zeus</TT> animation system.
+<P>
+
+<B>Version 2.10</B> includes a port to the <TT>HP/PA</TT> and <TT>SUN 386i</TT>
+architectures and many improvements to the <TT>IBM RS/6000</TT> port.
+<P>
+
+<B>Version 2.0</B> implements the twelve language changes (i.e. generics,
+IEEE floating point interfaces, ...) that are included in
+<A HREF="bib.html#SPwM3">SPwM3</A>.
+Version stamp checking was moved into the <TT>m3</TT>
+driver, which also supports <TT>-make</TT> mode and generates enough type
+declarations to make debugging tolerable.  The compiler internals were
+rearranged and many bugs were removed.  Better code is produced.
+<P>
+
+<B>Version 1.6</B> fixes many bugs that have been reported.
+It also introduces the <TT>SUN3</TT>, <TT>UMAX</TT> and <TT>ARM</TT>
+architectures.  Some Unix interfaces have been added or modified
+(<TT>Usocket</TT>, <TT>Udir</TT>, <TT>Uexec</TT>, <TT>Uerror</TT>).
+The names in the
+<TT>Rd</TT> and <TT>Wr</TT> interfaces are now more coherent. The new
+<TT>Pkl</TT> interface allow input/output of binary data structures.  The
+runtime has been rewritten to be mostly in Modula-3; this allows for
+clean interfaces to the runtime; some limitations have been removed
+(profiling; scheduling).  The driver has been rewritten, so as to
+support shared libraries (on <TT>IBMR2</TT>, by default);
+the syntax of some options has changed.
+<P>
+
+<B>Version 1.5</B> supports five new architectures (<TT>AP300</TT>,
+<TT>AIX386</TT>, <TT>IBMR2</TT>, <TT>IBMRT</TT> and <TT>HP300</TT>). The driver
+has been modified to improve portability of user systems. The
+SRC Modula-3 libraries have been reorganized, and of course known bugs
+have been fixed. New demonstration programs and games are included.
+<P>
+
+<B>Version 1.4</B> is the second public release of SRC Modula-3.
+It uses the new features of version 1.3 and was alpha-tested by
+several SRC clients.  This version added <TT>&lt;*UNUSED*&gt;</TT> and
+<TT>&lt;*OBSOLETE*&gt;</TT> pragmas, simplified coverage profiling by
+having the compiler directly generate the counters, reduced the number of
+<TT>#line</TT> directives in the generated C, added ``map'' procedures so that
+the garbage collector can efficiently locate global references, packed
+enumerations into smaller C types, and fixed several bugs.
+<P>
+
+<B>Version 1.3</B> is for internal use only.  This version serves to
+snapshot the massive editing that has taken place since 1.2.  This
+version fixed the variable renaming problems, made <TT>TEXT</TT> a
+<TT>REF ARRAY OF CHAR</TT>, converted the text implementation to Modula-3,
+passed nested procedures as closures, used C initialization where
+possible for constants and variables, added warning messages, and
+fixed many bugs.
+<P>
+
+<B>Version 1.2</B>
+<P>
+
+Thanks to the new technology introduced in 1.1, porting the compiler
+to other machines is much easier.  We have ported it to DECstation~3100
+running Ultrix~3.1. A few bugs have been fixed.  The driver processes
+the options <TT>-D</TT> and <TT>-B</TT> in a slightly different way.
+<P>
+
+The installation procedure is new, and we no longer furnish
+executables as the intermediate C files are present on the release. 
+Because the intermediate C files vary according to the target machine,
+there are separate <TT>tar</TT> files for each of the supported machines.
+However, each distribution contains all of the sources; only the intermediate
+C files differ.
+<P>
+
+<B>Version 1.1</B>
+<P>
+
+This version is for internal use only. The main difference with
+Version 1.0 is the use of <TT>rcs</TT> and the use of <TT>imake</TT>
+rather than the standard <TT>make</TT>.
+<P>
+
+<B>Version 1.0</B>
+<P>
+
+This version is the first public release of the SRC Modula-3 system. It
+contains a Modula-3 compiler and runtime, a core library, a coverage
+analyzer, a dependency checker, a Modula-3 pretty printer, and a small
+test suite of Modula-3 programs.  The compiler generates C as an
+intermediate code.
+<P>
+
+It is known to run on VAX Ultrix 3.1.  We have not tested the software
+in any other configurations.  The software may function correctly on
+other versions of Ultrix, and if recompiled, may even work on other
+machines.
+<P>
+
+<HR>
+<A HREF="home.html">[Modula-3 home page]</A>
+<P>
+<A HREF="mailto:m3-request@src.dec.com">
+<ADDRESS>m3-request@src.dec.com</ADDRESS></A>
+<PRE>
+Last modified on Thu Jan  4 11:00:37 PST 1996 by heydon
+</PRE>
+Copyright (C) 1992, 1996, Digital Equipment Corporation. All rights reserved.<BR>
+See the <A HREF="http://www.research.digital.com/SRC/m3sources/html/COPYRIGHT.html">COPYRIGHT</A> for a full description.
+</BODY>
+</HTML>

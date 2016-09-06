@@ -1,0 +1,64 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: gef/src/GEFLisp.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>gef/src/GEFLisp.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+
+INTERFACE <interface><A HREF="GEFLisp.m3.html">GEFLisp</A></interface>;
+
+IMPORT <A HREF="GEFClass.i3.html">GEFClass</A>, <A HREF="../../libm3/DS/RefList.i3.html">RefList</A>, <A HREF="../../slisp/src/SLisp.i3.html">SLisp</A>;
+
+PROCEDURE <A HREF="GEFLisp.m3.html#RegisterPO">RegisterPO</A>(interp: SLisp.T; name: TEXT; po: GEFClass.ParseObject);
+</PRE><BLOCKQUOTE><EM> Register in <CODE>interp</CODE> a lisp function named <CODE>name</CODE> that will create an element of
+   type <CODE>po</CODE> </EM></BLOCKQUOTE><PRE>
+
+PROCEDURE <A HREF="GEFLisp.m3.html#RegisterFuns">RegisterFuns</A>(interp: SLisp.T);
+</PRE><BLOCKQUOTE><EM> Register in <CODE>interp</CODE> the GEF functions - <CODE>get</CODE> <CODE>set</CODE> and <CODE>delete</CODE>.
+   Also do ZeusifyInterp. </EM></BLOCKQUOTE><PRE>
+
+PROCEDURE <A HREF="GEFLisp.m3.html#ZeusifyInterp">ZeusifyInterp</A>(interp: SLisp.T);
+</PRE><BLOCKQUOTE><EM> Register zeus specific functions for print and backtrace +
+   variants of True and False </EM></BLOCKQUOTE><PRE>
+
+PROCEDURE <A HREF="GEFLisp.m3.html#EvalList">EvalList</A>(interp: SLisp.T; list: RefList.T): RefList.T RAISES {SLisp.Error};
+</PRE><BLOCKQUOTE><EM> return a list consisting of the evaluated value of each element of <CODE>list</CODE> </EM></BLOCKQUOTE><PRE>
+
+PROCEDURE <A HREF="GEFLisp.m3.html#QuoteList">QuoteList</A>(list: RefList.T): RefList.T;
+</PRE><BLOCKQUOTE><EM> return a list consisting of each element of <CODE>list</CODE> quoted.  i.e. 
+   QuoteList((a b c)) yields ((quote a) (quote b) (quote c))
+</EM></BLOCKQUOTE><PRE>
+
+END GEFLisp.
+</PRE>
+</inInterface>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

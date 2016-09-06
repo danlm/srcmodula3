@@ -1,0 +1,68 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: Version stamps</TITLE>
+</HEAD>
+<BODY BGCOLOR="#ffffff" VLINK="#006633">
+
+<H2>Version stamps</H2>
+<P>
+
+For each interface or module, the compiler generates an object file
+and a link info file that contains information for the linker.
+The link info file names the versions stamps imported and exported by the
+compilation unit.
+<P>
+
+A version stamp encodes the type and value of a symbol at the time
+it was compiled.  The Modula-3 linker ensures that the version stamps from
+separately compiled units are equal before linking a program.
+<P>
+
+Consider the following interface:
+<PRE>
+    INTERFACE Foo;
+    IMPORT Bar;
+    CONST A = 4;
+    CONST B = Bar.N + 1;
+    END Foo.
+</PRE>
+It exports two version stamps: one for the constant <TT>Foo.A</TT>, with type
+<TT>INTEGER</TT> and value 4, and one for the constant <TT>Foo.B</TT>,
+with type <TT>INTEGER</TT>
+and value 1 plus the value of <TT>Bar.N</TT> at the time of the complation.
+It also imports the version stamp of the constant <TT>Bar.N</TT>.
+<P>
+
+In general, the value of a version stamp is independent of the particular
+expression used to specify the symbol.
+For example, <TT>CONST A=2+2</TT> yields
+the same version stamp as <TT>CONST A=4</TT> or <TT>CONST X=3; A=X+1</TT>.
+<P>
+
+Version stamps are produced for each exported symbol in an interface
+(ie. each type, exception, variable, and procedure).  Modules import
+the version stamps of the symbols that they import.
+<P>
+
+In
+<A HREF="options.html"><B>-make</B></A> mode,
+the compiler only recompiles a source module if
+its object is missing or if any of its imported version
+stamps is no longer exported.
+<P>
+
+<HR>
+<A HREF="../home.html">[Modula-3 home page]</A>
+<P>
+<A HREF="mailto:m3-request@src.dec.com">
+<ADDRESS>m3-request@src.dec.com</ADDRESS></A>
+<PRE>
+Last modified on Thu Jan  4 11:09:09 PST 1996 by heydon
+     modified on Thu Apr 21 11:44:17 PDT 1994 by kalsow
+     modified on Fri Feb  7 00:38:19 PST 1992 by muller
+</PRE>
+
+Copyright (C) 1992, 1996, Digital Equipment Corporation. All rights reserved.<BR>
+See the <A HREF="http://www.research.digital.com/SRC/m3sources/html/COPYRIGHT.html">COPYRIGHT</A> for a full description.
+</BODY>
+</HTML>

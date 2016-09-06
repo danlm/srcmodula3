@@ -1,0 +1,64 @@
+(* An on-demand remote compute engine. *)
+
+module Engine
+export
+  type ObliqEngine = All(T) (()->T)->T,
+  All(T) exec(machine: Text, p:()->T): T ! net_failure,
+    (* Execute p() on the given machine, doing everything necessary
+       to set up the connection to the machine. *)
+  obtainObliqEngine(machine: Text): ObliqEngine ! net_failure;
+    (* Set up an obliq engine on machine, if necessary, and return it. *)
+
+let startObliqEngine =
+  proc(machine: Text): Ok,
+    process_new(processor, ["rsh", machine, "exec", "obliqsrv-std"], true);
+  end;
+
+let contactObliqEngine =
+  proc(machine: Text): ObliqEngine ! net_failure,
+    var retry = 10;
+    var engine = ok;
+    loop
+      try 
+	engine := net_import("stdObliqEngine", machine);
+	exit;
+      except
+	net_failure =>
+	  retry := retry-1;
+	  if retry is 0 then raise(net_failure) end;
+	  thread_pause(3.0);
+      end;
+    end;
+    engine;
+  end;
+
+let obtainObliqEngine =
+  proc(machine: Text): ObliqEngine ! net_failure,
+    try
+      net_importEngine("stdObliqEngine", machine);
+    except
+      net_failure =>
+	startObliqEngine(machine);
+        contactObliqEngine(machine);
+    end;
+  end;
+
+let exec =
+  All(T) proc(machine: Text, p:()->T):T ! net_failure,
+    obtainObliqEngine(machine)(p);
+  end;
+
+let forkExec =
+  (let mu = mutex();
+   (* uses this mutex to prevent starting multiple remote engines
+      in case none is available and several forkExec are called. *)
+   All(T) proc(machine: Text, p:()->T):T ! net_failure,
+     fork(
+       proc()
+         lock mu do
+           obtainObliqEngine(machine)(p);
+         end;
+       end); 
+   end);
+
+end module;

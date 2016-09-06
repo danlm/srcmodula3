@@ -1,0 +1,64 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: runtime/src/common/RTLinker.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>runtime/src/common/RTLinker.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE> RTLinker defines the values initialized by the linker and
+   startup code.
+
+
+<P><PRE>UNSAFE INTERFACE <interface><A HREF="RTLinker.m3.html">RTLinker</A></interface>;
+
+TYPE
+  LinkInfo = UNTRACED REF RECORD
+    (* global module table *)
+    n_modules  : INTEGER;
+    modules    : ADDRESS; (* REF ARRAY [0..n_modules-1] OF RT0.ModulePtr *)
+
+    (* external environment *)
+    argc       : INTEGER;
+    argv       : ADDRESS;
+    envp       : ADDRESS;
+    instance   : ADDRESS;  (* Windows &quot;instance&quot; handle *)
+
+    (* initial thread bounds *)
+    bottom_of_stack : ADDRESS;
+    top_of_stack    : ADDRESS;
+  END;
+
+VAR info: LinkInfo;
+
+END RTLinker.
+</PRE>
+</inInterface>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

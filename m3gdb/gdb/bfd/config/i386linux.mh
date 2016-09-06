@@ -1,0 +1,4 @@
+HDEFINES=-DTRAD_CORE
+HDEPFILES=trad-core.o
+# Apparently this is needed to build objdump in certain configurations.
+EXTRALIBS=-lm

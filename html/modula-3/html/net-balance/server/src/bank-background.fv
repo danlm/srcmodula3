@@ -1,0 +1,7 @@
+(Rim (Pen 10)
+  (VBox
+    (LabelFont "Lucidasans-18")
+    (Font "Lucidasans-24")
+    (Shape (Height + 0) (Rim (Pen 10) (VBox "Account Summary")))
+    (Generic %list)
+))

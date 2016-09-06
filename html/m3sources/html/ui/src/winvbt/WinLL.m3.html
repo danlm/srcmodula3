@@ -1,0 +1,132 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: ui/src/winvbt/WinLL.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>ui/src/winvbt/WinLL.m3</H2></A><HR>
+<inModule>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM> Digital Internal Use Only                                                 </EM></BLOCKQUOTE><PRE>
+</PRE>                                                                           
+       Created on Thu Feb  2 13:46:25 PST 1995 by najork                   
+
+<P>
+<P><PRE>MODULE <module><implements><A HREF="WinLL.i3.html">WinLL</A></implements></module>;
+
+IMPORT <A HREF="../../../thread/src/Common/Thread.i3.html">Thread</A>;
+
+TYPE
+  List = REF RECORD
+    mu  : MUTEX;
+    th  : Thread.T;
+    ctr : CARDINAL;
+    next: List;
+  END;
+
+VAR
+  list : List := NIL;
+  monitor := NEW (MUTEX);
+
+PROCEDURE <A NAME="Assert"><procedure>Assert</procedure></A> (mu: MUTEX) =
+  VAR
+    tmp := list;
+    th  := Thread.Self();
+  BEGIN
+    LOCK monitor DO
+      WHILE tmp # NIL DO
+        IF tmp.mu = mu THEN
+          &lt;* ASSERT (tmp.th = NIL AND tmp.ctr = 0) OR
+                    (tmp.th = th AND tmp.ctr &gt; 0) *&gt;
+          tmp.th := th;
+          INC (tmp.ctr);
+          RETURN;
+        END;
+        tmp := tmp.next;
+      END;
+      list := NEW (List, mu := mu, th := th, ctr := 1, next := list);
+    END;
+  END Assert;
+
+PROCEDURE <A NAME="Retract"><procedure>Retract</procedure></A> (mu: MUTEX) =
+  VAR
+    tmp := list;
+  BEGIN
+    LOCK monitor DO
+      WHILE tmp # NIL DO
+        IF tmp.mu = mu THEN
+          &lt;* ASSERT tmp.th = Thread.Self() AND tmp.ctr &gt; 0 *&gt;
+          DEC (tmp.ctr);
+          IF tmp.ctr = 0 THEN
+            tmp.th := NIL;
+          END;
+          RETURN;
+        END;
+        tmp := tmp.next;
+      END;
+      &lt;* ASSERT FALSE *&gt;
+    END;
+  END Retract;
+
+PROCEDURE <A NAME="Holds"><procedure>Holds</procedure></A> (mu: MUTEX): BOOLEAN =
+  VAR
+    tmp := list;
+  BEGIN
+    WHILE tmp # NIL DO
+      IF list.mu = mu THEN
+        RETURN tmp.th = Thread.Self();
+      END;
+      list := list.next;
+    END;
+    RETURN FALSE;
+  END Holds;
+
+PROCEDURE <A NAME="Acquire"><procedure>Acquire</procedure></A> (m: MUTEX) =
+  BEGIN
+    LOCK monitor DO
+      IF NOT Holds (m) THEN
+        Thread.Acquire (m);
+      END;
+    END;
+  END Acquire;
+
+PROCEDURE <A NAME="Release"><procedure>Release</procedure></A> (m: MUTEX) =
+  BEGIN
+    LOCK monitor DO
+      IF NOT Holds (m) THEN
+        Thread.Release (m);
+      END;
+    END;
+  END Release;
+
+BEGIN
+END WinLL.
+</PRE>
+</inModule>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

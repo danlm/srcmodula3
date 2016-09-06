@@ -1,0 +1,58 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: params/src/Params.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>params/src/Params.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM>      modified On Tue Sep 10 15:28:14 1985 By rovner         </EM></BLOCKQUOTE><PRE>
+</PRE> This interface provides access to the command line arguments given
+   to a process when it is started (see <CODE>Process.Create</CODE>).
+   \index{parameters of a process}
+   \index{process!parameters}
+
+
+<P><PRE>INTERFACE <interface><A HREF="Params.m3.html">Params</A></interface>;
+
+VAR (*CONST*) Count: CARDINAL;
+</PRE><BLOCKQUOTE><EM> Parameters are indexed from <CODE>0</CODE> (the command name) to <CODE>Count-1</CODE>. </EM></BLOCKQUOTE><PRE>
+
+PROCEDURE <A HREF="Params.m3.html#Get">Get</A>(n: CARDINAL): TEXT;
+</PRE><BLOCKQUOTE><EM> Return the parameter with index <CODE>n</CODE>.  It is a checked runtime error
+   if <CODE>n &gt;= Count</CODE>. </EM></BLOCKQUOTE><PRE>
+
+END Params.
+</PRE> Parameters that begin with the characters <CODE>@M3</CODE> are reserved for
+   use by the SRC Modula-3 runtime.  They are not included in the
+   value of <CODE>Count</CODE> or in the sequence indexed by <CODE>Get</CODE>. 
+
+</inInterface>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

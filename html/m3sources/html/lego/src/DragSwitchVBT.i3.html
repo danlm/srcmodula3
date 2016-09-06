@@ -1,0 +1,78 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: lego/src/DragSwitchVBT.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>lego/src/DragSwitchVBT.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM>                                                                           </EM></BLOCKQUOTE><PRE>
+&lt;* PRAGMA LL *&gt;
+&lt;* PRAGMA SUBTYPE *&gt;
+</PRE> A <CODE>DragSwitchVBT</CODE> is a switch version of Trestle's
+   <CODE>DragBtnVBT</CODE>.
+<P>
+   Actually, <CODE>DragBtnVBT</CODE> does not exist.  If it existed, it
+   would be a <CODE>ButtonVBT</CODE> subclass that generates events while a
+   mouse button is down and has moved since the last time an
+   event was generated.  Events are generated even when the mouse
+   is outside the <CODE>VBT</CODE>'s domain, as long as it remains on the
+   screen.
+<P>
+   The <CODE>pre</CODE> method is invoked on the first click in the <CODE>VBT</CODE>; the
+   <CODE>post</CODE> method is called on an uncanceled upclick; the <CODE>cancel</CODE>
+   method is called whenever the mouse is ``chorded''; the <CODE>during</CODE>
+   method is called whenever the mouse has moved since the last call
+   to <CODE>during</CODE> or <CODE>pre</CODE>.  A new cage containing the current
+   cursor position will be set before calls to <CODE>pre</CODE> and
+   <CODE>during</CODE>.  The <CODE>callback</CODE> method is invoked on an uncancelled
+   upclick.  The default <CODE>during</CODE> and <CODE>callback</CODE> methods are
+   no-ops. 
+
+<P><PRE>INTERFACE <interface><A HREF="DragSwitchVBT.m3.html">DragSwitchVBT</A></interface>;
+
+IMPORT <A HREF="../../ui/src/split/ButtonVBT.i3.html">ButtonVBT</A>, <A HREF="FeedbackVBT.i3.html">FeedbackVBT</A>, <A HREF="../../ui/src/vbt/VBT.i3.html">VBT</A>;
+
+TYPE
+  &lt;* SUBTYPE T &lt;: MulitFilter.T *&gt;
+  <A HREF="DragSwitchVBT.m3.html#T">T</A> &lt;: Public;
+  Public = ButtonVBT.T OBJECT
+           METHODS
+             &lt;* LL.sup &lt;= VBT.mu *&gt;
+             init (f: FeedbackVBT.T): T;
+             &lt;* LL.sup = VBT.mu *&gt;
+             during   (READONLY cd: VBT.PositionRec);
+             callback (READONLY cd: VBT.MouseRec);
+           END;
+
+END DragSwitchVBT.
+</PRE>
+</inInterface>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

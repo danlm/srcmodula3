@@ -1,0 +1,65 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: trestle_by_example/src/overlap/Overlap.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>trestle_by_example/src/overlap/Overlap.m3</H2></A><HR>
+<inModule>
+<PRE>MODULE <module>Overlap</module> EXPORTS <A HREF="../../../main/src/Main.i3.html"><implements>Main</A></implements>;
+
+IMPORT <A HREF="../../../ui/src/vbt/Trestle.i3.html">Trestle</A>, <A HREF="../../../lego/src/ZChassisVBT.i3.html">ZChassisVBT</A>, <A HREF="../../../ui/src/split/TextVBT.i3.html">TextVBT</A>, <A HREF="../../../ui/src/split/BorderedVBT.i3.html">BorderedVBT</A>, <A HREF="../../../ui/src/split/ZSplit.i3.html">ZSplit</A>, <A HREF="../../../ui/src/split/TextureVBT.i3.html">TextureVBT</A>,
+       <A HREF="../../../ui/src/vbt/PaintOp.i3.html">PaintOp</A>;
+IMPORT <A HREF="../../../geometry/src/Rect.i3.html">Rect</A>, <A HREF="../../../ui/src/vbt/Font.i3.html">Font</A>, <A HREF="../../../ui/src/split/RigidVBT.i3.html">RigidVBT</A>, <A HREF="../../../lego/src/ZChildVBT.i3.html">ZChildVBT</A>;
+
+CONST
+  min     = 100.0;               (* size in millimeters *)
+  max     = 999.0;               (* size in millimeters *)
+  h       = 100;                 (* width in pixels *)
+  v       = 100;                 (* height in pixels *)
+  times14 = &quot;-*-times-*-r-*-*-14-*-*-*-*-*-*-*&quot;;
+
+VAR
+  font := Font.FromName(ARRAY OF TEXT{times14});
+  ch1  := BorderedVBT.New(TextVBT.New(&quot;Hi Mom&quot;, fnt := font));
+  zc1  := NEW(ZChassisVBT.T).init(ch1, TextVBT.New(&quot;Mom&quot;));
+  ch2  := BorderedVBT.New(TextVBT.New(&quot;Hi Dad&quot;, fnt := font));
+  zc2  := NEW(ZChassisVBT.T).init(ch2, TextVBT.New(&quot;Dad&quot;));
+  main := ZSplit.New(RigidVBT.FromHV(
+                       TextureVBT.New(PaintOp.Bg), min, min, max, max));
+  dom := Rect.FromSize(h, v);
+BEGIN
+  ZSplit.Insert(main, zc1, dom);
+  ZSplit.Insert(main, zc2, dom);
+  Trestle.Install(main);
+  Trestle.AwaitDelete(main)
+END Overlap.
+</PRE>
+</inModule>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

@@ -1,0 +1,49 @@
+(* A server for "fortunes". Clients may add new fortunes, on the way back from 
+   chinese restaurants, and retrieve fortunes one at a time. The database is    
+   pickled to survive server outages. *)
+
+module FortuneServer;
+
+let writeList =
+  proc(list)
+    let w = wr_open(fileSys, "fortune.obq");
+    pickle_write(w, list);
+    wr_close(w)
+  end;
+
+let readList =
+  proc()
+    try
+      let r = rd_open(fileSys, "fortune.obq");
+      let a = pickle_read(r);
+      rd_close(r);
+      a
+    else []
+    end
+  end;
+
+var i = -1;
+
+let fortune =
+  {protected, serialized,
+     list =>
+        readList(),
+        
+     tell => 
+       meth(self)
+         if #(self.list) is 0 then "<bad luck>"
+         else  
+           i := i+1;
+           if i >= #(self.list) then i:=0 end;
+           self.list[i]
+         end
+       end,
+       
+     learn =>
+       meth(self, t)
+         self.list := self.list @ [t];
+         writeList(self.list);
+       end,
+  };
+
+net_export("fortune","", fortune);

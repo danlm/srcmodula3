@@ -1,0 +1,82 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: videovbt/src/WIN32/AudioVBT.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>videovbt/src/WIN32/AudioVBT.m3</H2></A><HR>
+<inModule>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM> Digital Internal Use Only                                                 </EM></BLOCKQUOTE><PRE>
+</PRE>                                                                           
+       Created on Thu Sep  7 08:32:38 PDT 1995 by najork                   
+
+<P>
+<P><PRE>MODULE <module><implements><A HREF="../AudioVBT.i3.html">AudioVBT</A></implements></module>;
+
+IMPORT <A HREF="../../../atom/src/Atom.i3.html">Atom</A>, <A HREF="../../../libm3/DS/AtomList.i3.html">AtomList</A>, <A HREF="#x1">Jva</A>, <A HREF="../../../os/src/Common/OSError.i3.html">OSError</A>, <A HREF="../../../ui/src/vbt/VBT.i3.html">VBT</A>;
+
+REVEAL <A NAME="T">T</A> = Public BRANDED OBJECT OVERRIDES init := Init END;
+
+PROCEDURE <A NAME="Init"><procedure>Init</procedure></A> (&lt;*UNUSED*&gt; t            : T;
+                &lt;*UNUSED*&gt; ch           : VBT.T;
+                &lt;*UNUSED*&gt; source       : TEXT;
+                &lt;*UNUSED*&gt; mute         : BOOLEAN;
+                &lt;*UNUSED*&gt; ignoreMapping: BOOLEAN;
+                &lt;*UNUSED*&gt; volume       : Jva.Volume): T RAISES {OSError.E} =
+  VAR
+    msg := AtomList.List1 (Atom.FromText (&quot;JVideo not supported&quot;));
+  BEGIN
+    RAISE OSError.E (msg);
+  END Init;
+
+PROCEDURE <A NAME="SetMute"><procedure>SetMute</procedure></A> (&lt;*UNUSED*&gt; t: T; &lt;*UNUSED*&gt; mute: BOOLEAN) =
+  BEGIN
+  END SetMute;
+
+PROCEDURE <A NAME="SetIgnoreMapping"><procedure>SetIgnoreMapping</procedure></A> (&lt;*UNUSED*&gt; t: T; &lt;*UNUSED*&gt; ignore: BOOLEAN) =
+  BEGIN
+  END SetIgnoreMapping;
+
+PROCEDURE <A NAME="SetVolume"><procedure>SetVolume</procedure></A> (&lt;*UNUSED*&gt; t: T; &lt;*UNUSED*&gt; volume: Jva.Volume) =
+  BEGIN
+  END SetVolume;
+
+BEGIN
+END AudioVBT.
+</PRE>
+</inModule>
+<HR>
+<A NAME="x1">interface Jva is in:
+</A><UL>
+<LI><A HREF="../../../jvideo/src/POSIX/Jva.i3.html#0TOP0">jvideo/src/POSIX/Jva.i3</A>
+<LI><A HREF="../../../jvideo/src/WIN32/Jva.i3.html#0TOP0">jvideo/src/WIN32/Jva.i3</A>
+</UL>
+<P>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

@@ -1,0 +1,1485 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: m3middle/src/M3CG_Clean.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>m3middle/src/M3CG_Clean.m3</H2></A><HR>
+<inModule>
+<PRE><A HREF="../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM>                                                             </EM></BLOCKQUOTE><PRE>
+
+MODULE <module><implements><A HREF="M3CG_Clean.i3.html">M3CG_Clean</A></implements></module>;
+
+IMPORT <A HREF="Target.i3.html">Target</A>, <A HREF="TInt.i3.html">TInt</A>, <A HREF="TFloat.i3.html">TFloat</A>, <A HREF="TargetMap.i3.html">TargetMap</A>, <A HREF="M3CG.i3.html">M3CG</A>, <A HREF="M3CG_Ops.i3.html">M3CG_Ops</A>;
+
+FROM <A HREF="M3CG.i3.html">M3CG</A> IMPORT ByteOffset, ByteSize, Frequency, CallingConvention;
+FROM <A HREF="M3CG.i3.html">M3CG</A> IMPORT Var, Proc, Label, Sign, Alignment;
+FROM <A HREF="M3CG.i3.html">M3CG</A> IMPORT Type, ZType, AType, RType, IType, MType;
+
+TYPE
+  Op = {
+    load_clean_tmp,
+    set_source_file,
+    set_source_line,
+    free_temp,
+    set_label,
+    jump,
+    if_true,
+    if_false,
+    if_eq,
+    if_ne,
+    if_gt,
+    if_ge,
+    if_lt,
+    if_le,
+    load,
+    store,
+    store_ref,
+    load_address,
+    load_indirect,
+    store_indirect,
+    store_ref_indirect,
+    load_nil,
+    load_integer,
+    load_float,
+    eq,
+    ne,
+    gt,
+    ge,
+    lt,
+    le,
+    add,
+    subtract,
+    multiply,
+    divide,
+    div,
+    mod,
+    negate,
+    abs,
+    max,
+    min,
+    round,
+    trunc,
+    floor,
+    ceiling,
+    cvt_float,
+    set_union,
+    set_difference,
+    set_intersection,
+    set_sym_difference,
+    set_member,
+    set_eq,
+    set_ne,
+    set_gt,
+    set_ge,
+    set_lt,
+    set_le,
+    set_range,
+    set_singleton,
+    not,
+    and,
+    or,
+    xor,
+    shift,
+    shift_left,
+    shift_right,
+    rotate,
+    rotate_left,
+    rotate_right,
+    extract,
+    extract_n,
+    extract_mn,
+    insert,
+    insert_n,
+    insert_mn,
+    swap,
+    pop,
+    copy_n,
+    copy,
+    zero_n,
+    zero,
+    loophole,
+    check_nil,
+    check_lo,
+    check_hi,
+    check_range,
+    check_index,
+    check_eq,
+    add_offset,
+    index_address,
+    start_call_direct,
+    start_call_indirect,
+    pop_param,
+    pop_struct,
+    pop_static_link,
+    pcall_direct,
+    fcall_direct,
+    pcall_indirect,
+    fcall_indirect,
+    load_procedure,
+    load_static_link,
+    comment
+  };
+
+CONST
+  OpType = ARRAY Op OF Type {
+    Type.Void, (* load_clean_tmp *)
+    Type.Void, (* set_source_file *)
+    Type.Void, (* set_source_line *)
+    Type.Void, (* free_temp *)
+    Type.Void, (* set_label *)
+    Type.Void, (* jump *)
+    Type.Void, (* if_true *)
+    Type.Void, (* if_false *)
+    Type.Void, (* if_eq *)
+    Type.Void, (* if_ne *)
+    Type.Void, (* if_gt *)
+    Type.Void, (* if_ge *)
+    Type.Void, (* if_lt *)
+    Type.Void, (* if_le *)
+    Type.Void, (* load *)
+    Type.Void, (* store *)
+    Type.Void, (* store_ref *)
+    Type.Addr, (* load_address *)
+    Type.Void, (* load_indirect *)
+    Type.Void, (* store_indirect *)
+    Type.Void, (* store_ref_indirect *)
+    Type.Addr, (* load_nil *)
+    Type.Int,  (* load_integer *)
+    Type.Void, (* load_float *)
+    Type.Int,  (* eq *)
+    Type.Int,  (* ne *)
+    Type.Int,  (* gt *)
+    Type.Int,  (* ge *)
+    Type.Int,  (* lt *)
+    Type.Int,  (* le *)
+    Type.Void, (* add *)
+    Type.Void, (* subtract *)
+    Type.Void, (* multiply *)
+    Type.Void, (* divide *)
+    Type.Int,  (* div *)
+    Type.Int,  (* mod *)
+    Type.Void, (* negate *)
+    Type.Void, (* abs *)
+    Type.Void, (* max *)
+    Type.Void, (* min *)
+    Type.Int,  (* round *)
+    Type.Int,  (* trunc *)
+    Type.Int,  (* floor *)
+    Type.Int,  (* ceiling *)
+    Type.Void, (* cvt_float *)
+    Type.Void, (* set_union *)
+    Type.Void, (* set_difference *)
+    Type.Void, (* set_intersection *)
+    Type.Void, (* set_sym_difference *)
+    Type.Int,  (* set_member *)
+    Type.Int,  (* set_eq *)
+    Type.Int,  (* set_ne *)
+    Type.Int,  (* set_gt *)
+    Type.Int,  (* set_ge *)
+    Type.Int,  (* set_lt *)
+    Type.Int,  (* set_le *)
+    Type.Void, (* set_range *)
+    Type.Void, (* set_singleton *)
+    Type.Int,  (* not *)
+    Type.Int,  (* and *)
+    Type.Int,  (* or *)
+    Type.Int,  (* xor *)
+    Type.Int,  (* shift *)
+    Type.Int,  (* shift_left *)
+    Type.Int,  (* shift_right *)
+    Type.Int,  (* rotate *)
+    Type.Int,  (* rotate_left *)
+    Type.Int,  (* rotate_right *)
+    Type.Int,  (* extract *)
+    Type.Int,  (* extract_n *)
+    Type.Int,  (* extract_mn *)
+    Type.Int,  (* insert *)
+    Type.Int,  (* insert_n *)
+    Type.Int,  (* insert_mn *)
+    Type.Void, (* swap *)
+    Type.Void, (* pop *)
+    Type.Void, (* copy_n *)
+    Type.Void, (* copy *)
+    Type.Void, (* zero_n *)
+    Type.Void, (* zero *)
+    Type.Void, (* loophole *)
+    Type.Addr, (* check_nil *)
+    Type.Int,  (* check_lo *)
+    Type.Int,  (* check_hi *)
+    Type.Int,  (* check_range *)
+    Type.Int,  (* check_index *)
+    Type.Void, (* check_eq *)
+    Type.Addr, (* add_offset *)
+    Type.Addr, (* index_address *)
+    Type.Void, (* start_call_direct *)
+    Type.Void, (* start_call_indirect *)
+    Type.Void, (* pop_param *)
+    Type.Void, (* pop_struct *)
+    Type.Void, (* pop_static_link *)
+    Type.Void, (* pcall_direct *)
+    Type.Void, (* fcall_direct *)
+    Type.Void, (* pcall_indirect *)
+    Type.Void, (* fcall_indirect *)
+    Type.Addr, (* load_procedure *)
+    Type.Addr, (* load_static_link *)
+    Type.Void  (* comment *)
+  };
+
+CONST
+  Pushes = ARRAY Op OF INTEGER {
+    1, (* load_clean_tmp *)
+    0, (* set_source_file *)
+    0, (* set_source_line *)
+    0, (* free_temp *)
+    0, (* set_label *)
+    0, (* jump *)
+   -1, (* if_true *)
+   -1, (* if_false *)
+   -2, (* if_eq *)
+   -2, (* if_ne *)
+   -2, (* if_gt *)
+   -2, (* if_ge *)
+   -2, (* if_lt *)
+   -2, (* if_le *)
+    1, (* load *)
+   -1, (* store *)
+   -1, (* store_ref *)
+    1, (* load_address *)
+    0, (* load_indirect *)
+   -2, (* store_indirect *)
+   -2, (* store_ref_indirect *)
+    1, (* load_nil *)
+    1, (* load_integer *)
+    1, (* load_float *)
+   -1, (* eq *)
+   -1, (* ne *)
+   -1, (* gt *)
+   -1, (* ge *)
+   -1, (* lt *)
+   -1, (* le *)
+   -1, (* add *)
+   -1, (* subtract *)
+   -1, (* multiply *)
+   -1, (* divide *)
+   -1, (* div *)
+   -1, (* mod *)
+    0, (* negate *)
+    0, (* abs *)
+   -1, (* max *)
+   -1, (* min *)
+    0, (* round *)
+    0, (* trunc *)
+    0, (* floor *)
+    0, (* ceiling *)
+    0, (* cvt_float *)
+   -3, (* set_union *)
+   -3, (* set_difference *)
+   -3, (* set_intersection *)
+   -3, (* set_sym_difference *)
+   -1, (* set_member *)
+   -1, (* set_eq *)
+   -1, (* set_ne *)
+   -1, (* set_gt *)
+   -1, (* set_ge *)
+   -1, (* set_lt *)
+   -1, (* set_le *)
+   -3, (* set_range *)
+   -2, (* set_singleton *)
+    0, (* not *)
+   -1, (* and *)
+   -1, (* or *)
+   -1, (* xor *)
+   -1, (* shift *)
+   -1, (* shift_left *)
+   -1, (* shift_right *)
+   -1, (* rotate *)
+   -1, (* rotate_left *)
+   -1, (* rotate_right *)
+   -2, (* extract *)
+   -1, (* extract_n *)
+    0, (* extract_mn *)
+   -3, (* insert *)
+   -2, (* insert_n *)
+   -1, (* insert_mn *)
+    0, (* swap *)
+   -1, (* pop *)
+   -3, (* copy_n *)
+   -2, (* copy *)
+   -2, (* zero_n *)
+   -1, (* zero *)
+    0, (* loophole *)
+    0, (* check_nil *)
+    0, (* check_lo *)
+    0, (* check_hi *)
+    0, (* check_range *)
+   -1, (* check_index *)
+   -2, (* check_eq *)
+    0, (* add_offset *)
+   -1, (* index_address *)
+    0, (* start_call_direct *)
+    0, (* start_call_indirect *)
+   -1, (* pop_param *)
+   -1, (* pop_struct *)
+   -1, (* pop_static_link *)
+    0, (* pcall_direct *)
+    1, (* fcall_direct *)
+    0, (* pcall_indirect *)
+    1, (* fcall_indirect *)
+    1, (* load_procedure *)
+    1, (* load_static_link *)
+    0  (* comment *)
+  };
+
+TYPE
+  OpInfo = RECORD
+    op    : Op;
+    depth : INTEGER;
+    result: Type;
+    txt   : TEXT;
+    int   : INTEGER;
+    int2  : INTEGER;
+    var   : Var;
+    bool  : BOOLEAN;
+    lab   : Label;
+    type  : Type;
+    type2 : Type;
+    tint  : Target.Int;
+    tint2 : Target.Int;
+    flt   : Target.Float;
+    sign1 : Sign;
+    sign2 : Sign;
+    proc  : Proc;
+    cconv : Target.CallingConvention;
+  END;
+
+TYPE OpBuffer = REF ARRAY OF OpInfo;
+
+TYPE
+  U = M3CG.T OBJECT
+        clean_jumps  : BOOLEAN  := FALSE;
+        clean_stores : BOOLEAN  := FALSE;
+        buffer       : OpBuffer := NIL;
+        next_buf     : INTEGER  := 0;
+        stack_depth  : INTEGER := 0;
+      METHODS
+        make_clean (depth: INTEGER) := Make_clean;
+        flush_buffer () := Flush_buffer;
+
+        stuff (op: Op;
+               int : INTEGER := 0;
+               type: Type    := Type.Void) := Stuff;
+
+        stuffX (op: Op;
+               txt : TEXT    := NIL;
+               int : INTEGER := 0;
+               int2: INTEGER := 0;
+               var : Var     := NIL;
+               bool: BOOLEAN := FALSE;
+               lab : Label   := 0;
+               type: Type    := Type.Void;
+               type2: Type   := Type.Void;
+               READONLY tint: Target.Int := TInt.Zero;
+               READONLY tint2: Target.Int := TInt.Zero;
+               READONLY flt: Target.Float := TFloat.ZeroR;
+               sign1: Sign := Sign.Positive;
+               sign2: Sign := Sign.Positive;
+               proc: Proc := NIL;
+               cconv: CallingConvention := NIL
+              ) := StuffX;
+
+      OVERRIDES
+        end_unit   := end_unit;
+        set_source_file := set_source_file;
+        set_source_line := set_source_line;
+        free_temp := free_temp;
+        end_procedure := end_procedure;
+        begin_block := begin_block;
+        end_block := end_block;
+        note_procedure_origin := note_procedure_origin;
+        set_label := set_label;
+        jump := jump;
+        if_true  := if_true;
+        if_false := if_false;
+        if_eq := if_eq;
+        if_ne := if_ne;
+        if_gt := if_gt;
+        if_ge := if_ge;
+        if_lt := if_lt;
+        if_le := if_le;
+        case_jump := case_jump;
+        exit_proc := exit_proc;
+        load  := load;
+        store := store;
+        store_ref := store_ref;
+        load_address := load_address;
+        load_indirect := load_indirect;
+        store_indirect := store_indirect;
+        store_ref_indirect := store_ref_indirect;
+        load_nil      := load_nil;
+        load_integer  := load_integer;
+        load_float    := load_float;
+        eq       := eq;
+        ne       := ne;
+        gt       := gt;
+        ge       := ge;
+        lt       := lt;
+        le       := le;
+        add      := add;
+        subtract := subtract;
+        multiply := multiply;
+        divide   := divide;
+        div      := div;
+        mod      := mod;
+        negate   := negate;
+        abs      := abs;
+        max      := max;
+        min      := min;
+        round    := round;
+        trunc    := trunc;
+        floor    := floor;
+        ceiling  := ceiling;
+        cvt_float := cvt_float;
+        set_union          := set_union;
+        set_difference     := set_difference;
+        set_intersection   := set_intersection;
+        set_sym_difference := set_sym_difference;
+        set_member         := set_member;
+        set_eq       := set_eq;
+        set_ne       := set_ne;
+        set_gt       := set_gt;
+        set_ge       := set_ge;
+        set_lt       := set_lt;
+        set_le       := set_le;
+        set_range    := set_range;
+        set_singleton := set_singleton;
+        not := not;
+        and := and;
+        or  := or;
+        xor := xor;
+        shift        := shift;
+        shift_left   := shift_left;
+        shift_right  := shift_right;
+        rotate       := rotate;
+        rotate_left  := rotate_left;
+        rotate_right := rotate_right;
+        extract := extract;
+        extract_n := extract_n;
+        extract_mn := extract_mn;
+        insert  := insert;
+        insert_n  := insert_n;
+        insert_mn  := insert_mn;
+        swap := swap;
+        pop  := pop;
+        copy := copy;
+        copy_n := copy_n;
+        zero := zero;
+        zero_n := zero_n;
+        loophole := loophole;
+        assert_fault := assert_fault;
+        narrow_fault := narrow_fault;
+        return_fault := return_fault;
+        case_fault := case_fault;
+        typecase_fault := typecase_fault;
+        check_nil := check_nil;
+        check_lo := check_lo;
+        check_hi := check_hi;
+        check_range := check_range;
+        check_index := check_index;
+        check_eq := check_eq;
+        add_offset := add_offset;
+        index_address := index_address;
+        start_call_direct := start_call_direct;
+        call_direct := call_direct;
+        start_call_indirect := start_call_indirect;
+        call_indirect := call_indirect;
+        pop_param := pop_param;
+        pop_struct := pop_struct;
+        pop_static_link := pop_static_link;
+        load_procedure := load_procedure;
+        load_static_link := load_static_link;
+        comment := comment;
+      END;
+</PRE>--------------------------------------------------- buffer manipulation ---
+
+<P><PRE>PROCEDURE <A NAME="Make_clean"><procedure>Make_clean</procedure></A> (self: U;  depth: INTEGER) =
+  VAR s: INTEGER;
+  BEGIN
+    s := DoClean (self, self.next_buf-1, self.stack_depth - depth);
+    DoFlush (self, s, self.next_buf);
+    self.next_buf := MAX (0, self.stack_depth - depth);
+    self.stack_depth := self.next_buf;
+  END Make_clean;
+
+PROCEDURE <A NAME="DoClean"><procedure>DoClean</procedure></A> (self: U;  end, hgt: INTEGER): INTEGER =
+  VAR start: INTEGER;  t: Type;  tmp: Var;
+  BEGIN
+    (* find the tail segment [start..end] that's at least 'hgt' deep *)
+    LOOP
+      IF (end &lt; 0) THEN EXIT END;
+      WITH x = self.buffer[end] DO
+        IF (x.depth &lt;= hgt) AND (x.result # Type.Void) THEN EXIT END;
+      END;
+      DEC (end);
+    END;
+
+    IF (end &lt; 0) THEN
+      RETURN 0;
+
+    ELSIF (hgt &lt;= 0) THEN
+      DoFlush (self, 0, end+1);
+
+    ELSE
+      start := DoClean (self, end-1, hgt-1);
+      IF (start # end) OR (start # hgt-1)
+        OR (self.buffer[end].op # Op.load_clean_tmp) THEN
+        DoFlush (self, start, end+1);
+        t := self.buffer[end].result;
+        tmp := self.child.declare_temp (TargetMap.CG_Bytes[t],
+                                        TargetMap.CG_Align[t],
+                                        TargetMap.CG_Base[t],
+                                        in_memory := FALSE);
+        self.child.store (tmp, 0, t);
+        WITH x = self.buffer[hgt-1] DO
+          x.op     := Op.load_clean_tmp;
+          x.var    := tmp;
+          x.depth  := hgt;
+          x.result := t;
+        END;
+      END;
+    END;
+
+    RETURN end + 1;
+  END DoClean;
+
+PROCEDURE <A NAME="Flush_buffer"><procedure>Flush_buffer</procedure></A> (self: U) =
+  BEGIN
+    DoFlush (self, 0, self.next_buf);
+    self.next_buf := 0;
+    self.stack_depth := 0;
+  END Flush_buffer;
+
+PROCEDURE <A NAME="DoFlush"><procedure>DoFlush</procedure></A> (self: U;  a, b: INTEGER) =
+  VAR ch := self.child;
+  BEGIN
+    FOR i := a TO b-1 DO
+      WITH x = self.buffer [i] DO
+        CASE x.op OF
+        | Op.load_clean_tmp =&gt;
+              ch.load (x.var, 0, x.type);
+              ch.free_temp (x.var);
+        | Op.set_source_file =&gt; ch.set_source_file (x.txt);
+        | Op.set_source_line =&gt; ch.set_source_line (x.int);
+        | Op.free_temp =&gt; ch.free_temp (x.var);
+        | Op.set_label =&gt; ch.set_label (x.lab, x.bool);
+        | Op.jump =&gt; ch.jump (x.lab);
+        | Op.if_true =&gt; ch.if_true (x.lab, x.int);
+        | Op.if_false =&gt; ch.if_false (x.lab, x.int);
+        | Op.if_eq =&gt; ch.if_eq (x.lab, x.type, x.int);
+        | Op.if_ne =&gt; ch.if_ne (x.lab, x.type, x.int);
+        | Op.if_gt =&gt; ch.if_gt (x.lab, x.type, x.int);
+        | Op.if_ge =&gt; ch.if_ge (x.lab, x.type, x.int);
+        | Op.if_lt =&gt; ch.if_lt (x.lab, x.type, x.int);
+        | Op.if_le =&gt; ch.if_le (x.lab, x.type, x.int);
+        | Op.load =&gt; ch.load (x.var, x.int, x.type);
+        | Op.store =&gt; ch.store (x.var, x.int, x.type);
+        | Op.store_ref =&gt; ch.store_ref (x.var, x.int);
+        | Op.load_address =&gt; ch.load_address (x.var, x.int);
+        | Op.load_indirect =&gt; ch.load_indirect (x.int, x.type);
+        | Op.store_indirect =&gt; ch.store_indirect (x.int, x.type);
+        | Op.store_ref_indirect =&gt; ch.store_ref_indirect (x.int, x.bool);
+        | Op.load_nil =&gt; ch.load_nil ();
+        | Op.load_integer =&gt; ch.load_integer (x.tint);
+        | Op.load_float =&gt; ch.load_float (x.flt);
+        | Op.eq =&gt; ch.eq (x.type);
+        | Op.ne =&gt; ch.ne (x.type);
+        | Op.gt =&gt; ch.gt (x.type);
+        | Op.ge =&gt; ch.ge (x.type);
+        | Op.lt =&gt; ch.lt (x.type);
+        | Op.le =&gt; ch.le (x.type);
+        | Op.add =&gt; ch.add (x.type);
+        | Op.subtract =&gt; ch.subtract (x.type);
+        | Op.multiply =&gt; ch.multiply (x.type);
+        | Op.divide =&gt; ch.divide (x.type);
+        | Op.div =&gt; ch.div (x.type, x.sign1, x.sign2);
+        | Op.mod =&gt; ch.mod (x.type, x.sign1, x.sign2);
+        | Op.negate =&gt; ch.negate (x.type);
+        | Op.abs =&gt; ch.abs (x.type);
+        | Op.max =&gt; ch.max (x.type);
+        | Op.min =&gt; ch.min (x.type);
+        | Op.round =&gt; ch.round (x.type);
+        | Op.trunc =&gt; ch.trunc (x.type);
+        | Op.floor =&gt; ch.floor (x.type);
+        | Op.ceiling =&gt; ch.ceiling (x.type);
+        | Op.cvt_float =&gt; ch.cvt_float (x.type2, x.type);
+        | Op.set_union =&gt; ch.set_union (x.int);
+        | Op.set_difference =&gt; ch.set_difference (x.int);
+        | Op.set_intersection =&gt; ch.set_intersection (x.int);
+        | Op.set_sym_difference =&gt; ch.set_sym_difference (x.int);
+        | Op.set_member =&gt; ch.set_member (x.int);
+        | Op.set_eq =&gt; ch.set_eq (x.int);
+        | Op.set_ne =&gt; ch.set_ne (x.int);
+        | Op.set_gt =&gt; ch.set_gt (x.int);
+        | Op.set_ge =&gt; ch.set_ge (x.int);
+        | Op.set_lt =&gt; ch.set_lt (x.int);
+        | Op.set_le =&gt; ch.set_le (x.int);
+        | Op.set_range =&gt; ch.set_range (x.int);
+        | Op.set_singleton =&gt; ch.set_singleton (x.int);
+        | Op.not =&gt; ch.not ();
+        | Op.and =&gt; ch.and ();
+        | Op.or =&gt; ch.or ();
+        | Op.xor =&gt; ch.xor ();
+        | Op.shift =&gt; ch.shift ();
+        | Op.shift_left =&gt; ch.shift_left ();
+        | Op.shift_right =&gt; ch.shift_right ();
+        | Op.rotate =&gt; ch.rotate ();
+        | Op.rotate_left =&gt; ch.rotate_left ();
+        | Op.rotate_right =&gt; ch.rotate_right ();
+        | Op.extract =&gt; ch.extract (x.bool);
+        | Op.extract_n =&gt; ch.extract_n (x.bool, x.int);
+        | Op.extract_mn =&gt; ch.extract_mn (x.bool, x.int, x.int2);
+        | Op.insert =&gt; ch.insert ();
+        | Op.insert_n =&gt; ch.insert_n (x.int);
+        | Op.insert_mn =&gt; ch.insert_mn (x.int, x.int2);
+        | Op.swap =&gt; ch.swap (x.type, x.type2);
+        | Op.pop =&gt; ch.pop (x.type);
+        | Op.copy_n =&gt; ch.copy_n (x.type, x.bool);
+        | Op.copy =&gt; ch.copy (x.int, x.type, x.bool);
+        | Op.zero_n =&gt; ch.zero_n (x.type);
+        | Op.zero =&gt; ch.zero (x.int, x.type);
+        | Op.loophole =&gt; ch.loophole (x.type2, x.type);
+        | Op.check_nil =&gt; ch.check_nil ();
+        | Op.check_lo =&gt; ch.check_lo (x.tint);
+        | Op.check_hi =&gt; ch.check_hi (x.tint);
+        | Op.check_range =&gt; ch.check_range (x.tint, x.tint2);
+        | Op.check_index =&gt; ch.check_index ();
+        | Op.check_eq =&gt; ch.check_eq ();
+        | Op.add_offset =&gt; ch.add_offset (x.int);
+        | Op.index_address =&gt; ch.index_address (x.int);
+        | Op.start_call_direct =&gt; ch.start_call_direct (x.proc, x.int, x.type);
+        | Op.start_call_indirect =&gt; ch.start_call_indirect (x.type, x.cconv);
+        | Op.pop_param =&gt; ch.pop_param (x.type);
+        | Op.pop_struct =&gt; ch.pop_struct (x.int, x.int2);
+        | Op.pop_static_link =&gt; ch.pop_static_link ();
+        | Op.pcall_direct =&gt; ch.call_direct (x.proc, Type.Void);
+        | Op.fcall_direct =&gt; ch.call_direct (x.proc, x.type);
+        | Op.pcall_indirect =&gt; ch.call_indirect (Type.Void, x.cconv);
+        | Op.fcall_indirect =&gt; ch.call_indirect (x.type, x.cconv);
+        | Op.load_procedure =&gt; ch.load_procedure (x.proc);
+        | Op.load_static_link =&gt; ch.load_static_link (x.proc);
+        | Op.comment =&gt; ch.comment (x.txt);
+        END;
+      END;
+    END;
+  END DoFlush;
+
+PROCEDURE <A NAME="Stuff"><procedure>Stuff</procedure></A> (self: U;  op: Op;  int: INTEGER;  type: Type) =
+  BEGIN
+    IF (self.next_buf &gt;= NUMBER (self.buffer^)) THEN ExpandBuffer (self) END;
+    WITH x = self.buffer[self.next_buf] DO
+      INC (self.stack_depth, Pushes[op]);
+      x.depth  := self.stack_depth;
+      x.op     := op;
+      x.int    := int;
+      x.type   := type;
+      IF (OpType[op] = Type.Void)
+        THEN x.result := type;
+        ELSE x.result := OpType[op];
+      END;
+    END;
+    IF (self.stack_depth = 0) THEN Flush_buffer (self) END;
+  END Stuff;
+
+PROCEDURE <A NAME="StuffX"><procedure>StuffX</procedure></A> (self: U;
+               op: Op;
+               txt : TEXT    := NIL;
+               int : INTEGER := 0;
+               int2: INTEGER := 0;
+               var : Var     := NIL;
+               bool: BOOLEAN := FALSE;
+               lab : Label   := 0;
+               type: Type    := Type.Void;
+               type2: Type   := Type.Void;
+               READONLY tint: Target.Int := TInt.Zero;
+               READONLY tint2: Target.Int := TInt.Zero;
+               READONLY flt: Target.Float := TFloat.ZeroR;
+               sign1: Sign := Sign.Positive;
+               sign2: Sign := Sign.Positive;
+               proc: Proc := NIL;
+               cconv: CallingConvention := NIL
+              ) =
+  BEGIN
+    IF (self.next_buf &gt;= NUMBER (self.buffer^)) THEN ExpandBuffer (self) END;
+    WITH x = self.buffer[self.next_buf] DO
+      INC (self.stack_depth, Pushes[op]);
+      x.depth  := self.stack_depth;
+      x.op     := op;
+      x.txt    := txt;
+      x.int    := int;
+      x.int2   := int2;
+      x.var    := var;
+      x.bool   := bool;
+      x.lab    := lab;
+      x.type   := type;
+      x.type2  := type2;
+      x.tint   := tint;
+      x.tint2  := tint2;
+      x.flt    := flt;
+      x.sign1  := sign1;
+      x.sign2  := sign2;
+      x.proc   := proc;
+      x.cconv  := cconv;
+      IF (OpType[op] = Type.Void)
+        THEN x.result := type;
+        ELSE x.result := OpType[op];
+      END;
+    END;
+    IF (self.stack_depth = 0) THEN Flush_buffer (self) END;
+  END StuffX;
+
+PROCEDURE <A NAME="ExpandBuffer"><procedure>ExpandBuffer</procedure></A> (self: U) =
+  VAR n := NUMBER (self.buffer^);  new := NEW (OpBuffer, 2 * n);
+  BEGIN
+    SUBARRAY (new^, 0, n) := self.buffer^;
+    self.buffer := new;
+  END ExpandBuffer;
+</PRE>---------------------------------------------------------------------------
+
+<P><PRE>PROCEDURE <A NAME="New"><procedure>New</procedure></A> (child: M3CG.T;  jumps, stores: BOOLEAN): M3CG.T =
+  BEGIN
+    RETURN NEW (U,
+                child  := child,
+                buffer := NEW (OpBuffer, 100),
+                clean_jumps  := jumps,
+                clean_stores := stores
+               );
+  END New;
+</PRE>----------------------------------------------------- compilation units ---
+
+<P><PRE>PROCEDURE <A NAME="end_unit"><procedure>end_unit</procedure></A> (self: U) =
+  BEGIN
+    self.flush_buffer ();
+    self.child.end_unit ();
+  END end_unit;
+</PRE>------------------------------------------------ debugging line numbers ---
+
+<P><PRE>PROCEDURE <A NAME="set_source_file"><procedure>set_source_file</procedure></A> (self: U; file: TEXT) =
+  BEGIN
+    self.stuffX (Op.set_source_file, txt := file);
+  END set_source_file;
+
+PROCEDURE <A NAME="set_source_line"><procedure>set_source_line</procedure></A> (self: U; line: INTEGER) =
+  BEGIN
+    self.stuff (Op.set_source_line, int := line);
+  END set_source_line;
+</PRE>------------------------------------------------- variable declarations ---
+
+<P><PRE>PROCEDURE <A NAME="free_temp"><procedure>free_temp</procedure></A> (self: U;  v: Var) =
+  BEGIN
+    self.stuffX (Op.free_temp, var := v);
+  END free_temp;
+</PRE>------------------------------------------------------------ procedures ---
+
+<P><PRE>PROCEDURE <A NAME="end_procedure"><procedure>end_procedure</procedure></A> (self: U;  p: Proc) =
+  BEGIN
+    self.flush_buffer ();
+    self.child.end_procedure (p);
+  END end_procedure;
+
+PROCEDURE <A NAME="begin_block"><procedure>begin_block</procedure></A> (self: U) =
+  BEGIN
+    self.make_clean (0);
+    self.child.begin_block ();
+  END begin_block;
+
+PROCEDURE <A NAME="end_block"><procedure>end_block</procedure></A> (self: U) =
+  BEGIN
+    self.make_clean (0);
+    self.child.end_block ();
+  END end_block;
+
+PROCEDURE <A NAME="note_procedure_origin"><procedure>note_procedure_origin</procedure></A> (self: U;  p: Proc) =
+  BEGIN
+    self.make_clean (0);
+    self.child.note_procedure_origin (p);
+  END note_procedure_origin;
+</PRE>------------------------------------------------------------ statements ---
+
+<P><PRE>PROCEDURE <A NAME="set_label"><procedure>set_label</procedure></A> (self: U;  l: Label;  barrier: BOOLEAN) =
+  BEGIN
+    IF (self.clean_jumps) THEN
+      self.make_clean (0);
+      self.child.set_label (l, barrier);
+    ELSE
+      self.stuffX (Op.set_label, lab := l, bool := barrier);
+    END;
+  END set_label;
+
+PROCEDURE <A NAME="jump"><procedure>jump</procedure></A> (self: U; l: Label) =
+  BEGIN
+    IF (self.clean_jumps) THEN
+      self.make_clean (0);
+      self.child.jump (l);
+    ELSE
+      self.stuffX (Op.jump, lab := l);
+    END;
+  END jump;
+
+PROCEDURE <A NAME="if_true"><procedure>if_true</procedure></A>  (self: U; l: Label;  f: Frequency) =
+  BEGIN
+    IF (self.clean_jumps) THEN
+      self.make_clean (1);
+      self.child.if_true (l, f);
+    ELSE
+      self.stuffX (Op.if_true, lab := l, int := f);
+    END;
+  END if_true;
+
+PROCEDURE <A NAME="if_false"><procedure>if_false</procedure></A> (self: U; l: Label;  f: Frequency) =
+  BEGIN
+    IF (self.clean_jumps) THEN
+      self.make_clean (1);
+      self.child.if_false (l, f);
+    ELSE
+      self.stuffX (Op.if_false, lab := l, int := f);
+    END;
+  END if_false;
+
+PROCEDURE <A NAME="if_eq"><procedure>if_eq</procedure></A> (self: U;  l: Label;  t: ZType;  f: Frequency) =
+  BEGIN
+    IF (self.clean_jumps) THEN
+      self.make_clean (2);
+      self.child.if_eq (l, t, f);
+    ELSE
+      self.stuffX (Op.if_eq, lab := l, type := t, int := f);
+    END;
+  END if_eq;
+
+PROCEDURE <A NAME="if_ne"><procedure>if_ne</procedure></A> (self: U;  l: Label;  t: ZType;  f: Frequency) =
+  BEGIN
+    IF (self.clean_jumps) THEN
+      self.make_clean (2);
+      self.child.if_ne (l, t, f);
+    ELSE
+      self.stuffX (Op.if_ne, lab := l, type := t, int := f);
+    END;
+  END if_ne;
+
+PROCEDURE <A NAME="if_gt"><procedure>if_gt</procedure></A> (self: U;  l: Label;  t: ZType;  f: Frequency) =
+  BEGIN
+    IF (self.clean_jumps) THEN
+      self.make_clean (2);
+      self.child.if_gt (l, t, f);
+    ELSE
+      self.stuffX (Op.if_gt, lab := l, type := t, int := f);
+    END;
+  END if_gt;
+
+PROCEDURE <A NAME="if_ge"><procedure>if_ge</procedure></A> (self: U;  l: Label;  t: ZType;  f: Frequency) =
+  BEGIN
+    IF (self.clean_jumps) THEN
+      self.make_clean (2);
+      self.child.if_ge (l, t, f);
+    ELSE
+      self.stuffX (Op.if_ge, lab := l, type := t, int := f);
+    END;
+  END if_ge;
+
+PROCEDURE <A NAME="if_lt"><procedure>if_lt</procedure></A> (self: U;  l: Label;  t: ZType;  f: Frequency) =
+  BEGIN
+    IF (self.clean_jumps) THEN
+      self.make_clean (2);
+      self.child.if_lt (l, t, f);
+    ELSE
+      self.stuffX (Op.if_lt, lab := l, type := t, int := f);
+    END;
+  END if_lt;
+
+PROCEDURE <A NAME="if_le"><procedure>if_le</procedure></A> (self: U;  l: Label;  t: ZType;  f: Frequency) =
+  BEGIN
+    IF (self.clean_jumps) THEN
+      self.make_clean (2);
+      self.child.if_le (l, t, f);
+    ELSE
+      self.stuffX (Op.if_le, lab := l, type := t, int := f);
+    END;
+  END if_le;
+
+PROCEDURE <A NAME="case_jump"><procedure>case_jump</procedure></A> (self: U; READONLY labels: ARRAY OF Label) =
+  BEGIN
+    self.flush_buffer ();
+    self.child.case_jump (labels);
+  END case_jump;
+
+PROCEDURE <A NAME="exit_proc"><procedure>exit_proc</procedure></A> (self: U; t: Type) =
+  BEGIN
+    self.flush_buffer ();
+    self.child.exit_proc (t);
+  END exit_proc;
+</PRE>------------------------------------------------------------ load/store ---
+
+<P><PRE>PROCEDURE <A NAME="load"><procedure>load</procedure></A>  (self: U;  v: Var;  o: ByteOffset;  t: MType) =
+  BEGIN
+    self.stuffX (Op.load, var := v, int := o, type := t);
+  END load;
+
+PROCEDURE <A NAME="store"><procedure>store</procedure></A>  (self: U;  v: Var;  o: ByteOffset;  t: MType) =
+  BEGIN
+    IF (self.clean_stores) THEN
+      self.make_clean (1);
+      self.child.store (v, o, t);
+    ELSE
+      self.stuffX (Op.store, var := v, int := o, type := t);
+    END;
+  END store;
+
+PROCEDURE <A NAME="store_ref"><procedure>store_ref</procedure></A> (self: U;  v: Var;  o: ByteOffset) =
+  BEGIN
+    IF (self.clean_stores) THEN
+      self.make_clean (1);
+      self.child.store_ref (v, o);
+    ELSE
+      self.stuffX (Op.store_ref, var := v, int := o);
+    END;
+  END store_ref;
+
+PROCEDURE <A NAME="load_address"><procedure>load_address</procedure></A> (self: U;  v: Var;  o: ByteOffset) =
+  BEGIN
+    self.stuffX (Op.load_address, var := v, int := o);
+  END load_address;
+
+PROCEDURE <A NAME="load_indirect"><procedure>load_indirect</procedure></A> (self: U;  o: ByteOffset;  t: MType) =
+  BEGIN
+    self.stuff (Op.load_indirect, int := o, type := t);
+  END load_indirect;
+
+PROCEDURE <A NAME="store_indirect"><procedure>store_indirect</procedure></A> (self: U;  o: ByteOffset;  t: MType) =
+  BEGIN
+    IF (self.clean_stores) THEN
+      self.make_clean (2);
+      self.child.store_indirect (o, t);
+    ELSE
+      self.stuff (Op.store_indirect, int := o, type := t);
+    END;
+  END store_indirect;
+
+PROCEDURE <A NAME="store_ref_indirect"><procedure>store_ref_indirect</procedure></A> (self: U;  o: ByteOffset;  var: BOOLEAN) =
+  BEGIN
+    IF (self.clean_stores) THEN
+      self.make_clean (2);
+      self.child.store_ref_indirect (o, var);
+    ELSE
+      self.stuffX (Op.store_ref_indirect, int := o, bool := var);
+    END;
+  END store_ref_indirect;
+</PRE>-------------------------------------------------------------- literals ---
+
+<P><PRE>PROCEDURE <A NAME="load_nil"><procedure>load_nil</procedure></A> (self: U) =
+  BEGIN
+    self.stuff (Op.load_nil);
+  END load_nil;
+
+PROCEDURE <A NAME="load_integer"><procedure>load_integer</procedure></A> (self: U;  READONLY i: Target.Int) =
+  BEGIN
+    self.stuffX (Op.load_integer, tint := i);
+  END load_integer;
+
+PROCEDURE <A NAME="load_float"><procedure>load_float</procedure></A> (self: U;  READONLY f: Target.Float) =
+  CONST FType = ARRAY Target.Precision OF Type
+                { Type.Reel, Type.LReel, Type.XReel };
+  BEGIN
+    self.stuffX (Op.load_float, flt := f, type := FType [f.pre]);
+  END load_float;
+</PRE>------------------------------------------------------------ arithmetic ---
+
+<P><PRE>PROCEDURE <A NAME="eq"><procedure>eq</procedure></A> (self: U;  t: ZType) =
+  BEGIN
+    self.stuff (Op.eq, type := t);
+  END eq;
+
+PROCEDURE <A NAME="ne"><procedure>ne</procedure></A> (self: U;  t: ZType) =
+  BEGIN
+    self.stuff (Op.ne, type := t);
+  END ne;
+
+PROCEDURE <A NAME="gt"><procedure>gt</procedure></A> (self: U;  t: ZType) =
+  BEGIN
+    self.stuff (Op.gt, type := t);
+  END gt;
+
+PROCEDURE <A NAME="ge"><procedure>ge</procedure></A> (self: U;  t: ZType) =
+  BEGIN
+    self.stuff (Op.ge, type := t);
+  END ge;
+
+PROCEDURE <A NAME="lt"><procedure>lt</procedure></A> (self: U;  t: ZType) =
+  BEGIN
+    self.stuff (Op.lt, type := t);
+  END lt;
+
+PROCEDURE <A NAME="le"><procedure>le</procedure></A> (self: U;  t: ZType) =
+  BEGIN
+    self.stuff (Op.le, type := t);
+  END le;
+
+PROCEDURE <A NAME="add"><procedure>add</procedure></A> (self: U;  t: AType) =
+  BEGIN
+    self.stuff (Op.add, type := t);
+  END add;
+
+PROCEDURE <A NAME="subtract"><procedure>subtract</procedure></A> (self: U;  t: AType) =
+  BEGIN
+    self.stuff (Op.subtract, type := t);
+  END subtract;
+
+PROCEDURE <A NAME="multiply"><procedure>multiply</procedure></A> (self: U;  t: AType) =
+  BEGIN
+    self.stuff (Op.multiply, type := t);
+  END multiply;
+
+PROCEDURE <A NAME="divide"><procedure>divide</procedure></A> (self: U;  t: RType) =
+  BEGIN
+    self.stuff (Op.divide, type := t);
+  END divide;
+
+PROCEDURE <A NAME="div"><procedure>div</procedure></A> (self: U;  t: IType;  a, b: Sign) =
+  BEGIN
+    self.stuffX (Op.div, type := t, sign1 := a, sign2 := b);
+  END div;
+
+PROCEDURE <A NAME="mod"><procedure>mod</procedure></A> (self: U;  t: IType;  a, b: Sign) =
+  BEGIN
+    self.stuffX (Op.mod, type := t, sign1 := a, sign2 := b);
+  END mod;
+
+PROCEDURE <A NAME="negate"><procedure>negate</procedure></A> (self: U;  t: AType) =
+  BEGIN
+    self.stuff (Op.negate, type := t);
+  END negate;
+
+PROCEDURE <A NAME="abs"><procedure>abs</procedure></A> (self: U;  t: AType) =
+  BEGIN
+    self.stuff (Op.abs, type := t);
+  END abs;
+
+PROCEDURE <A NAME="max"><procedure>max</procedure></A> (self: U;  t: ZType) =
+  BEGIN
+    self.stuff (Op.max, type := t);
+  END max;
+
+PROCEDURE <A NAME="min"><procedure>min</procedure></A> (self: U;  t: ZType) =
+  BEGIN
+    self.stuff (Op.min, type := t);
+  END min;
+
+PROCEDURE <A NAME="round"><procedure>round</procedure></A> (self: U;  t: RType) =
+  BEGIN
+    self.stuff (Op.round, type := t);
+  END round;
+
+PROCEDURE <A NAME="trunc"><procedure>trunc</procedure></A> (self: U;  t: RType) =
+  BEGIN
+    self.stuff (Op.trunc, type := t);
+  END trunc;
+
+PROCEDURE <A NAME="floor"><procedure>floor</procedure></A> (self: U;  t: RType) =
+  BEGIN
+    self.stuff (Op.floor, type := t);
+  END floor;
+
+PROCEDURE <A NAME="ceiling"><procedure>ceiling</procedure></A>  (self: U;  t: RType) =
+  BEGIN
+    self.stuff (Op.ceiling, type := t);
+  END ceiling;
+
+PROCEDURE <A NAME="cvt_float"><procedure>cvt_float</procedure></A> (self: U;  t: AType;  u: RType) =
+  BEGIN
+    self.stuffX (Op.cvt_float, type := u,  type2 := t);
+  END cvt_float;
+</PRE>------------------------------------------------------------------ sets ---
+
+<P><PRE>PROCEDURE <A NAME="set_union"><procedure>set_union</procedure></A> (self: U;  s: ByteSize) =
+  BEGIN
+    self.stuff (Op.set_union, int := s);
+  END set_union;
+
+PROCEDURE <A NAME="set_difference"><procedure>set_difference</procedure></A> (self: U;  s: ByteSize) =
+  BEGIN
+    self.stuff (Op.set_difference, int := s);
+  END set_difference;
+
+PROCEDURE <A NAME="set_intersection"><procedure>set_intersection</procedure></A> (self: U;  s: ByteSize) =
+  BEGIN
+    self.stuff (Op.set_intersection, int := s);
+  END set_intersection;
+
+PROCEDURE <A NAME="set_sym_difference"><procedure>set_sym_difference</procedure></A> (self: U;  s: ByteSize) =
+  BEGIN
+    self.stuff (Op.set_sym_difference, int := s);
+  END set_sym_difference;
+
+PROCEDURE <A NAME="set_member"><procedure>set_member</procedure></A> (self: U;  s: ByteSize) =
+  BEGIN
+    self.stuff (Op.set_member, int := s);
+  END set_member;
+
+PROCEDURE <A NAME="set_eq"><procedure>set_eq</procedure></A> (self: U;  s: ByteSize) =
+  BEGIN
+    self.stuff (Op.set_eq, int := s);
+  END set_eq;
+
+PROCEDURE <A NAME="set_ne"><procedure>set_ne</procedure></A> (self: U;  s: ByteSize) =
+  BEGIN
+    self.stuff (Op.set_ne, int := s);
+  END set_ne;
+
+PROCEDURE <A NAME="set_gt"><procedure>set_gt</procedure></A> (self: U;  s: ByteSize) =
+  BEGIN
+    self.stuff (Op.set_gt, int := s);
+  END set_gt;
+
+PROCEDURE <A NAME="set_ge"><procedure>set_ge</procedure></A> (self: U;  s: ByteSize) =
+  BEGIN
+    self.stuff (Op.set_ge, int := s);
+  END set_ge;
+
+PROCEDURE <A NAME="set_lt"><procedure>set_lt</procedure></A> (self: U;  s: ByteSize) =
+  BEGIN
+    self.stuff (Op.set_lt, int := s);
+  END set_lt;
+
+PROCEDURE <A NAME="set_le"><procedure>set_le</procedure></A> (self: U;  s: ByteSize) =
+  BEGIN
+    self.stuff (Op.set_le, int := s);
+  END set_le;
+
+PROCEDURE <A NAME="set_range"><procedure>set_range</procedure></A> (self: U;  s: ByteSize) =
+  BEGIN
+    self.stuff (Op.set_range, int := s);
+  END set_range;
+
+PROCEDURE <A NAME="set_singleton"><procedure>set_singleton</procedure></A> (self: U;  s: ByteSize) =
+  BEGIN
+    self.stuff (Op.set_singleton, int := s);
+  END set_singleton;
+</PRE>------------------------------------------------- Word.T bit operations ---
+
+<P><PRE>PROCEDURE <A NAME="not"><procedure>not</procedure></A> (self: U) =
+  BEGIN
+    self.stuff (Op.not);
+  END not;
+
+PROCEDURE <A NAME="and"><procedure>and</procedure></A> (self: U) =
+  BEGIN
+    self.stuff (Op.and);
+  END and;
+
+PROCEDURE <A NAME="or"><procedure>or</procedure></A> (self: U) =
+  BEGIN
+    self.stuff (Op.or);
+  END or;
+
+PROCEDURE <A NAME="xor"><procedure>xor</procedure></A> (self: U) =
+  BEGIN
+    self.stuff (Op.xor);
+  END xor;
+
+PROCEDURE <A NAME="shift"><procedure>shift</procedure></A> (self: U) =
+  BEGIN
+    self.stuff (Op.shift);
+  END shift;
+
+PROCEDURE <A NAME="shift_left"><procedure>shift_left</procedure></A> (self: U) =
+  BEGIN
+    self.stuff (Op.shift_left);
+  END shift_left;
+
+PROCEDURE <A NAME="shift_right"><procedure>shift_right</procedure></A>  (self: U) =
+  BEGIN
+    self.stuff (Op.shift_right);
+  END shift_right;
+
+PROCEDURE <A NAME="rotate"><procedure>rotate</procedure></A> (self: U) =
+  BEGIN
+    self.stuff (Op.rotate);
+  END rotate;
+
+PROCEDURE <A NAME="rotate_left"><procedure>rotate_left</procedure></A>  (self: U) =
+  BEGIN
+    self.stuff (Op.rotate_left);
+  END rotate_left;
+
+PROCEDURE <A NAME="rotate_right"><procedure>rotate_right</procedure></A> (self: U) =
+  BEGIN
+    self.stuff (Op.rotate_right);
+  END rotate_right;
+
+PROCEDURE <A NAME="extract"><procedure>extract</procedure></A> (self: U;  sign: BOOLEAN) =
+  BEGIN
+    self.stuffX (Op.extract, bool := sign);
+  END extract;
+
+PROCEDURE <A NAME="extract_n"><procedure>extract_n</procedure></A> (self: U;  sign: BOOLEAN;  n: INTEGER) =
+  BEGIN
+    self.stuffX (Op.extract_n, bool := sign,  int := n);
+  END extract_n;
+
+PROCEDURE <A NAME="extract_mn"><procedure>extract_mn</procedure></A> (self: U;  sign: BOOLEAN;  m, n: INTEGER) =
+  BEGIN
+    self.stuffX (Op.extract_mn, bool := sign, int := m, int2 := n);
+  END extract_mn;
+
+PROCEDURE <A NAME="insert"><procedure>insert</procedure></A>  (self: U) =
+  BEGIN
+    self.stuff (Op.insert);
+  END insert;
+
+PROCEDURE <A NAME="insert_n"><procedure>insert_n</procedure></A>  (self: U;  n: INTEGER) =
+  BEGIN
+    self.stuff (Op.insert_n, int := n);
+  END insert_n;
+
+PROCEDURE <A NAME="insert_mn"><procedure>insert_mn</procedure></A>  (self: U;  m, n: INTEGER) =
+  BEGIN
+    self.stuffX (Op.insert_mn, int := m, int2 := n);
+  END insert_mn;
+</PRE>------------------------------------------------ misc. stack/memory ops ---
+
+<P><PRE>PROCEDURE <A NAME="swap"><procedure>swap</procedure></A> (self: U;  a, b: Type) =
+  BEGIN
+    self.stuffX (Op.swap, type := a, type2 := b);
+  END swap;
+
+PROCEDURE <A NAME="pop"><procedure>pop</procedure></A>  (self: U;  t: Type) =
+  BEGIN
+    self.stuff (Op.pop, type := t);
+  END pop;
+
+PROCEDURE <A NAME="copy_n"><procedure>copy_n</procedure></A> (self: U;  t: MType;  overlap: BOOLEAN) =
+  BEGIN
+    self.stuffX (Op.copy_n, type := t, bool := overlap);
+  END copy_n;
+
+PROCEDURE <A NAME="copy"><procedure>copy</procedure></A> (self: U;  n: INTEGER;  t: MType;  overlap: BOOLEAN) =
+  BEGIN
+    self.stuffX (Op.copy, int := n, type := t, bool := overlap);
+  END copy;
+
+PROCEDURE <A NAME="zero_n"><procedure>zero_n</procedure></A> (self: U;  t: MType) =
+  BEGIN
+    self.stuff (Op.zero_n, type := t);
+  END zero_n;
+
+PROCEDURE <A NAME="zero"><procedure>zero</procedure></A> (self: U;  n: INTEGER;  t: MType) =
+  BEGIN
+    self.stuff (Op.zero, int := n, type := t);
+  END zero;
+</PRE>----------------------------------------------------------- conversions ---
+
+<P><PRE>PROCEDURE <A NAME="loophole"><procedure>loophole</procedure></A> (self: U;  from, two: ZType) =
+  BEGIN
+    self.stuffX (Op.loophole, type := two, type2 := from);
+  END loophole;
+</PRE>------------------------------------------------ traps &amp; runtime checks ---
+
+<P><PRE>PROCEDURE <A NAME="assert_fault"><procedure>assert_fault</procedure></A> (self: U) =
+  BEGIN
+    self.flush_buffer ();
+    self.child.assert_fault ();
+  END assert_fault;
+
+PROCEDURE <A NAME="narrow_fault"><procedure>narrow_fault</procedure></A> (self: U) =
+  BEGIN
+    self.flush_buffer ();
+    self.child.narrow_fault ();
+  END narrow_fault;
+
+PROCEDURE <A NAME="return_fault"><procedure>return_fault</procedure></A> (self: U) =
+  BEGIN
+    self.flush_buffer ();
+    self.child.return_fault ();
+  END return_fault;
+
+PROCEDURE <A NAME="case_fault"><procedure>case_fault</procedure></A> (self: U) =
+  BEGIN
+    self.flush_buffer ();
+    self.child.case_fault ();
+  END case_fault;
+
+PROCEDURE <A NAME="typecase_fault"><procedure>typecase_fault</procedure></A> (self: U) =
+  (* Abort *)
+  BEGIN
+    self.flush_buffer ();
+    self.child.typecase_fault ();
+  END typecase_fault;
+
+PROCEDURE <A NAME="check_nil"><procedure>check_nil</procedure></A> (self: U) =
+  BEGIN
+    self.stuff (Op.check_nil);
+  END check_nil;
+
+PROCEDURE <A NAME="check_lo"><procedure>check_lo</procedure></A> (self: U;  READONLY i: Target.Int) =
+  BEGIN
+    self.stuffX (Op.check_lo, tint := i);
+  END check_lo;
+
+PROCEDURE <A NAME="check_hi"><procedure>check_hi</procedure></A> (self: U;  READONLY i: Target.Int) =
+  BEGIN
+    self.stuffX (Op.check_hi, tint := i);
+  END check_hi;
+
+PROCEDURE <A NAME="check_range"><procedure>check_range</procedure></A> (self: U;  READONLY a, b: Target.Int) =
+  BEGIN
+    self.stuffX (Op.check_range, tint := a, tint2 := b);
+  END check_range;
+
+PROCEDURE <A NAME="check_index"><procedure>check_index</procedure></A> (self: U) =
+  BEGIN
+    self.stuff (Op.check_index);
+  END check_index;
+
+PROCEDURE <A NAME="check_eq"><procedure>check_eq</procedure></A> (self: U) =
+  BEGIN
+    self.stuff (Op.check_eq);
+  END check_eq;
+</PRE>---------------------------------------------------- address arithmetic ---
+
+<P><PRE>PROCEDURE <A NAME="add_offset"><procedure>add_offset</procedure></A> (self: U; i: INTEGER) =
+  BEGIN
+    self.stuff (Op.add_offset, int := i);
+  END add_offset;
+
+PROCEDURE <A NAME="index_address"><procedure>index_address</procedure></A> (self: U;  size: INTEGER) =
+  BEGIN
+    self.stuff (Op.index_address, int := size);
+  END index_address;
+</PRE>------------------------------------------------------- procedure calls ---
+
+<P><PRE>PROCEDURE <A NAME="start_call_direct"><procedure>start_call_direct</procedure></A> (self: U;  p: Proc;  lev: INTEGER;  t: Type) =
+  BEGIN
+    IF (self.clean_jumps) THEN
+      self.make_clean (0);
+      self.child.start_call_direct (p, lev, t);
+    ELSE
+      self.stuffX (Op.start_call_direct, proc := p, int := lev, type := t);
+    END;
+  END start_call_direct;
+
+PROCEDURE <A NAME="start_call_indirect"><procedure>start_call_indirect</procedure></A> (self: U;  t: Type;  cc: CallingConvention) =
+  BEGIN
+    IF (self.clean_jumps) THEN
+      self.make_clean (0);
+      self.child.start_call_indirect (t, cc);
+    ELSE
+      self.stuffX (Op.start_call_indirect, type := t, cconv := cc);
+    END;
+  END start_call_indirect;
+
+PROCEDURE <A NAME="pop_param"><procedure>pop_param</procedure></A> (self: U;  t: MType) =
+  BEGIN
+    IF (self.clean_stores) THEN
+      self.make_clean (1);
+      self.child.pop_param (t);
+    ELSE
+      self.stuff (Op.pop_param, type := t);
+    END;
+  END pop_param;
+
+PROCEDURE <A NAME="pop_struct"><procedure>pop_struct</procedure></A> (self: U;  s: ByteSize;  a: Alignment) =
+  BEGIN
+    IF (self.clean_stores) THEN
+      self.make_clean (1);
+      self.child.pop_struct (s, a);
+    ELSE
+      self.stuffX (Op.pop_struct, int := s, int2 := a);
+    END;
+  END pop_struct;
+
+PROCEDURE <A NAME="pop_static_link"><procedure>pop_static_link</procedure></A> (self: U) =
+  BEGIN
+    IF (self.clean_stores) THEN
+      self.make_clean (1);
+      self.child.pop_static_link ();
+    ELSE
+      self.stuff (Op.pop_static_link);
+    END;
+  END pop_static_link;
+
+PROCEDURE <A NAME="call_direct"><procedure>call_direct</procedure></A> (self: U; p: Proc;  t: Type) =
+  BEGIN
+    IF (self.clean_jumps) THEN
+      self.make_clean (0);
+      self.child.call_direct (p, t);
+    ELSIF (t = Type.Void) THEN
+      self.stuffX (Op.pcall_direct, proc := p);
+    ELSE
+      self.stuffX (Op.fcall_direct, proc := p, type := t);
+    END;
+  END call_direct;
+
+PROCEDURE <A NAME="call_indirect"><procedure>call_indirect</procedure></A> (self: U; t: Type;  cc: CallingConvention) =
+  BEGIN
+    IF (self.clean_jumps) THEN
+      self.make_clean (0);
+      self.child.call_indirect (t, cc);
+    ELSIF (t = Type.Void) THEN
+      self.stuffX (Op.pcall_indirect, cconv := cc);
+    ELSE
+      self.stuffX (Op.fcall_indirect, type := t, cconv := cc);
+    END;
+  END call_indirect;
+</PRE>------------------------------------------- procedure and closure types ---
+
+<P><PRE>PROCEDURE <A NAME="load_procedure"><procedure>load_procedure</procedure></A> (self: U;  p: Proc) =
+  BEGIN
+    self.stuffX (Op.load_procedure,  proc := p);
+  END load_procedure;
+
+PROCEDURE <A NAME="load_static_link"><procedure>load_static_link</procedure></A> (self: U;  p: Proc) =
+  BEGIN
+    self.stuffX (Op.load_static_link,  proc := p);
+  END load_static_link;
+</PRE>----------------------------------------------------------------- misc. ---
+
+<P><PRE>PROCEDURE <A NAME="comment"><procedure>comment</procedure></A> (self: U;  a, b, c, d: TEXT := NIL) =
+  VAR x: TEXT := &quot;&quot;;
+  BEGIN
+    IF (a # NIL) THEN x := x &amp; a END;
+    IF (b # NIL) THEN x := x &amp; b END;
+    IF (c # NIL) THEN x := x &amp; c END;
+    IF (d # NIL) THEN x := x &amp; d END;
+    self.stuffX (Op.comment, txt := x);
+  END comment;
+
+BEGIN
+END M3CG_Clean.
+</PRE>
+</inModule>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

@@ -1,0 +1,106 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: fmtlex/src/FmtBuf.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>fmtlex/src/FmtBuf.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM>                                                             </EM></BLOCKQUOTE><PRE>
+</PRE> The <CODE>FmtBuf</CODE> interface provides functionality similar to the <CODE>Fmt</CODE>
+   interface, but the formatted result is written into a user-supplied
+   character buffer, rather than being returned as a <CODE>TEXT</CODE>. 
+
+<P><PRE>INTERFACE <interface><A HREF="FmtBuf.m3.html">FmtBuf</A></interface>;
+
+IMPORT <A HREF="Fmt.i3.html">Fmt</A>, <A HREF="../../word/src/Word.i3.html">Word</A>;
+IMPORT <A HREF="#x1">Real</A> AS R, <A HREF="#x2">LongReal</A> AS LR, <A HREF="#x3">Extended</A> AS ER;
+
+TYPE
+  T = ARRAY OF CHAR;
+  Base = Fmt.Base;
+  Style = Fmt.Style;
+</PRE> Each of these routines has the same specification as the corresponding
+   routine in the <CODE>Fmt</CODE> interface, except that they write the result into
+   the character buffer <CODE>b</CODE> and return the number of characters written.
+   A checked run-time error occurs if the buffer <CODE>b</CODE> is not large enough
+   to hold the result. See the <CODE>FmtBufF</CODE> interface for an analysis of a
+   conservative upper-bound on the required buffer size. 
+
+<P><PRE>PROCEDURE <A HREF="FmtBuf.m3.html#Int">Int</A>(VAR (*OUT*) b: T; n: INTEGER; base: Base := 10): CARDINAL;
+PROCEDURE <A HREF="FmtBuf.m3.html#Unsigned">Unsigned</A>(VAR (*OUT*) b: T; n: Word.T; base: Base := 16): CARDINAL;
+
+PROCEDURE <A HREF="FmtBuf.m3.html#Real">Real</A>(
+    VAR (*OUT*) b: T;
+    x: REAL;
+    style := Style.Auto;
+    prec: CARDINAL := R.MaxSignifDigits - 1;
+    literal := FALSE)
+  : CARDINAL;
+PROCEDURE <A HREF="FmtBuf.m3.html#LongReal">LongReal</A>(
+    VAR (*OUT*) b: T;
+    x: LONGREAL;
+    style := Style.Auto;
+    prec: CARDINAL := LR.MaxSignifDigits - 1;
+    literal := FALSE)
+  : CARDINAL;
+PROCEDURE <A HREF="FmtBuf.m3.html#Extended">Extended</A>(
+    VAR (*OUT*) b: T;
+    x: EXTENDED;
+    style := Style.Auto;
+    prec: CARDINAL := ER.MaxSignifDigits - 1;
+    literal := FALSE)
+  : CARDINAL;
+
+END FmtBuf.
+</PRE>
+</inInterface>
+<HR>
+<A NAME="x1">interface Real is in:
+</A><UL>
+<LI><A HREF="../../float/src/IEEE/Real.i3.html#0TOP0">float/src/IEEE/Real.i3</A>
+<LI><A HREF="../../float/src/VAX/Real.i3.html#0TOP0">float/src/VAX/Real.i3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x2">interface LongReal is in:
+</A><UL>
+<LI><A HREF="../../float/src/IEEE/LongReal.i3.html#0TOP0">float/src/IEEE/LongReal.i3</A>
+<LI><A HREF="../../float/src/VAX/LongReal.i3.html#0TOP0">float/src/VAX/LongReal.i3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x3">interface Extended is in:
+</A><UL>
+<LI><A HREF="../../float/src/IEEE/Extended.i3.html#0TOP0">float/src/IEEE/Extended.i3</A>
+<LI><A HREF="../../float/src/VAX/Extended.i3.html#0TOP0">float/src/VAX/Extended.i3</A>
+</UL>
+<P>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

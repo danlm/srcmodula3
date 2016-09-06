@@ -1,0 +1,61 @@
+(* An animation of contravariance. *)
+
+module Contra
+import Circle;
+
+let g = graph_new();
+
+let genSets =
+  proc(col)
+    let aSet = Circle_circle(g, 0.25, 0.5, 0.3, 0.01, col);
+    let bSet = Circle_circle(g, 0.75, 0.5, 0.2, 0.01, col);
+    let aTop = graph_newVertex(g);
+    graph_moveVertex(aTop, 0.25, 0.35, false);
+    let aBot = graph_newVertex(g);
+    graph_moveVertex(aBot, 0.25, 0.65, false);
+    let bTop = graph_newVertex(g);
+    graph_moveVertex(bTop, 0.75, 0.4, false);
+    let bBot = graph_newVertex(g);
+    graph_moveVertex(bBot, 0.75, 0.6, false);
+    let abTop = graph_newEdge(aTop, bTop);
+    graph_setEdgeColor(abTop, color_named("black"));
+    graph_setEdgeArrows(abTop, false, true);
+    let abBot = graph_newEdge(aBot, bBot);
+    graph_setEdgeColor(abBot, color_named("black"));
+    graph_setEdgeArrows(abBot, false, true);
+    {aSet=>aSet, bSet=>bSet, 
+     aTop=>aTop, aBot=>aBot, bTop=>bTop, bBot=>bBot}
+  end;
+
+let abPrimeSets = genSets("red");
+let abSets = genSets("blue");
+(* graph_vertexToFront(abSet.bSet); *)
+
+let r = proc() graph_redisplay(g) end;
+let h = proc() graph_hide(g) end;
+let a =
+  proc()
+    abPrimeSets.aSet.move(0.25, 0.5, 0.2, true);
+    abPrimeSets.bSet.move(0.75, 0.5, 0.4, true);
+    graph_moveVertex(abPrimeSets.aTop, 0.25, 0.4, true);
+    graph_moveVertex(abPrimeSets.bTop, 0.75, 0.3, true);
+    graph_moveVertex(abPrimeSets.aBot, 0.25, 0.6, true);
+    graph_moveVertex(abPrimeSets.bBot, 0.75, 0.7, true);
+    graph_animate(g, 0., 5.);
+    
+    abPrimeSets.aSet.move(0.25, 0.5, 0.3, true);
+    abPrimeSets.bSet.move(0.75, 0.5, 0.2, true);
+    graph_moveVertex(abPrimeSets.aTop, 0.25, 0.35, true);
+    graph_moveVertex(abPrimeSets.bTop, 0.75, 0.4, true);
+    graph_moveVertex(abPrimeSets.aBot, 0.25, 0.65, true);
+    graph_moveVertex(abPrimeSets.bBot, 0.75, 0.6, true);
+    graph_animate(g, 0., 5.);
+    
+  end;
+
+graph_show(g);
+
+pause(5.0);
+
+a();
+

@@ -1,0 +1,71 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: ui/src/split/SelectQueue.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>ui/src/split/SelectQueue.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM>                                                                           </EM></BLOCKQUOTE><PRE>
+</PRE> by Steve Glassman, Mark Manasse and Greg Nelson           
+<PRE>&lt;*PRAGMA LL*&gt;
+
+INTERFACE <interface><A HREF="SelectQueue.m3.html">SelectQueue</A></interface>;
+
+IMPORT <A HREF="../vbt/VBT.i3.html">VBT</A>;
+
+TYPE Elem = RECORD v: VBT.T; cd: VBT.MiscRec END;
+
+TYPE T =
+  RECORD
+    lo, hi: CARDINAL := 0;
+    buff: REF ARRAY OF Elem := NIL
+  END;
+  (* buff[lo..hi-1] circularly are the active entries;
+     lo = hi =&gt; the queue is empty; lo # hi =&gt; buff # NIL. *)
+
+CONST Empty = T{0, 0, NIL};
+
+&lt;*INLINE*&gt; PROCEDURE <A HREF="SelectQueue.m3.html#IsEmpty">IsEmpty</A>(READONLY rb: T): BOOLEAN;
+</PRE><BLOCKQUOTE><EM> Return whether rb is empty. </EM></BLOCKQUOTE><PRE>
+
+PROCEDURE <A HREF="SelectQueue.m3.html#Insert">Insert</A>(VAR rb: T; READONLY e: Elem);
+</PRE><BLOCKQUOTE><EM> Insert e into rb, extending rb if necessary. </EM></BLOCKQUOTE><PRE>
+
+EXCEPTION Exhausted;
+
+PROCEDURE <A HREF="SelectQueue.m3.html#Remove">Remove</A>(VAR rb: T): Elem RAISES {Exhausted};
+</PRE><BLOCKQUOTE><EM> Raise the exception if br is empty, else remove the
+   oldest element of rb and return it. </EM></BLOCKQUOTE><PRE>
+
+END SelectQueue.
+</PRE>
+</inInterface>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

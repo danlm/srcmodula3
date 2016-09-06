@@ -1,0 +1,7 @@
+(* A crude time server. *)
+
+module TimeServer;
+
+let timeServer =
+  net_export("ObliqTimeServer", "",
+    {time => meth(s) process_filter(processor, ["/bin/date"], "") end});

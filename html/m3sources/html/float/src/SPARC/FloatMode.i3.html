@@ -1,0 +1,259 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: float/src/SPARC/FloatMode.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>float/src/SPARC/FloatMode.i3</H2></A><HR>
+<inInterface>
+<PRE></PRE> Copyright (C) 1992, Xerox                                                 
+
+<P> The interface <CODE>FloatMode</CODE> allows you to test the behavior of
+   rounding and of numerical exceptions.  On some implementations it
+   also allows you to change the behavior, on a per-thread basis. 
+
+<P><PRE>INTERFACE <interface><A HREF="#x1">FloatMode</A></interface>;
+
+CONST IEEE = TRUE;
+</PRE><BLOCKQUOTE><EM> <CODE>TRUE</CODE> for fully-compliant IEEE implementations. </EM></BLOCKQUOTE><PRE>
+
+EXCEPTION Failure;
+</PRE><BLOCKQUOTE><EM> Raised by attempts to set modes that are not supported by the
+   implementation. </EM></BLOCKQUOTE><PRE>
+
+TYPE RoundingMode =
+  {NearestElseEven, TowardMinusInfinity, TowardPlusInfinity,
+   TowardZero, NearestElseAwayFromZero, IBM370, Other};
+</PRE><BLOCKQUOTE><EM> Rounding modes.  The first four are the IEEE modes. </EM></BLOCKQUOTE><PRE>
+
+CONST RoundDefault = RoundingMode.NearestElseEven;
+</PRE><BLOCKQUOTE><EM> Implementation-dependent: the default mode for rounding arithmetic
+   operations, used by a newly forked thread.  This also specifies the
+   behavior of the <CODE>ROUND</CODE> operation in half-way cases. </EM></BLOCKQUOTE><PRE>
+
+PROCEDURE <A HREF="#x2">SetRounding</A>(md: RoundingMode) RAISES {Failure};
+</PRE><BLOCKQUOTE><EM> Change the rounding mode for the calling thread to <CODE>md</CODE>, or raise
+   the exception if this cannot be done.  This affects the implicit
+   rounding in floating-point operations; it does not affect the
+   <CODE>ROUND</CODE> operation.  Generally this can be done only on IEEE
+   implementations and only if <CODE>md</CODE> is an IEEE mode. </EM></BLOCKQUOTE><PRE>
+
+PROCEDURE <A HREF="#x3">GetRounding</A>(): RoundingMode;
+</PRE><BLOCKQUOTE><EM> Return the rounding mode for the calling thread. </EM></BLOCKQUOTE><PRE>
+
+TYPE Flag = {Invalid, Inexact, Overflow, Underflow,
+  DivByZero, IntOverflow, IntDivByZero};
+</PRE> Associated with each thread is a set of boolean status flags
+   recording whether the condition represented by the flag has
+   occurred in the thread since the flag was last reset.  The meaning
+   of the first five flags is defined precisely in the IEEE floating
+   point standard; roughly they mean:
+<P>
+\begin{quote}   
+   <CODE>Invalid</CODE> = invalid argument to an operation.  
+<P>
+   <CODE>Inexact</CODE> = an operation produced an inexact result.
+<P>
+   <CODE>Overflow</CODE> = a floating-point operation produced a result whose
+   absolute value is too large to be represented.
+<P>
+   <CODE>Underflow</CODE> = a floating-point operation produced a result whose
+   absolute value is too small to be represented.
+<P>
+   <CODE>DivByZero</CODE> = floating-point division by zero.
+<P>
+   The meaning of the last two flags is:
+<P>
+   <CODE>IntOverflow</CODE> = an integer operation produced a result whose
+   absolute value is too large to be represented.
+<P>
+   <CODE>IntDivByZero</CODE> = integer <CODE>DIV</CODE> or <CODE>MOD</CODE> by zero.
+\end{quote}
+
+
+<P><PRE>CONST NoFlags = SET OF Flag {};
+
+PROCEDURE <A HREF="#x4">GetFlags</A>(): SET OF Flag;
+</PRE><BLOCKQUOTE><EM> Return the set of flags for the current thread. </EM></BLOCKQUOTE><PRE>
+
+PROCEDURE <A HREF="#x5">SetFlags</A>(s: SET OF Flag)
+  : SET OF Flag RAISES {Failure};
+</PRE><BLOCKQUOTE><EM> Set the flags for the current thread to <CODE>s</CODE>, and return their
+   previous values. </EM></BLOCKQUOTE><PRE>
+
+PROCEDURE <A HREF="#x6">ClearFlag</A>(f: Flag);
+</PRE><BLOCKQUOTE><EM> Turn off the flag <CODE>f</CODE> for the current thread. </EM></BLOCKQUOTE><PRE>
+
+EXCEPTION Trap(Flag);
+
+TYPE Behavior = {Trap, SetFlag, Ignore};
+</PRE> The behavior of an operation that causes one of the flag conditions
+   is either:
+  <P>
+\begin{quote}  
+   <CODE>Ignore</CODE> = return some result and do nothing.
+<P>
+   <CODE>SetFlag</CODE> = return some result and set the condition flag.  For
+   IEEE implementations, the result of the operation is defined by the
+   standard.
+        <P>
+   <CODE>Trap</CODE> = possibly set the condition flag; in any case raise the
+   <CODE>Trap</CODE> exception with the appropriate flag as the argument.
+\end{quote}
+
+
+<P><PRE>PROCEDURE <A HREF="#x7">SetBehavior</A>(f: Flag; b: Behavior) RAISES {Failure};
+</PRE><BLOCKQUOTE><EM> Set the behavior of the current thread for the flag <CODE>f</CODE> to be <CODE>b</CODE>,
+   or raise <CODE>Failure</CODE> if this cannot be done. </EM></BLOCKQUOTE><PRE>
+
+PROCEDURE <A HREF="#x8">GetBehavior</A>(f: Flag): Behavior;
+</PRE><BLOCKQUOTE><EM> Return the behavior of the current thread for the flag <CODE>f</CODE>. </EM></BLOCKQUOTE><PRE>
+</PRE>----------------------------------------------------------------- misc. ---
+
+<P><PRE>TYPE ThreadState = RECORD
+    behavior: ARRAY Flag OF Behavior;
+    sticky: ARRAY Flag OF BOOLEAN;
+  END;
+</PRE><BLOCKQUOTE><EM> One copy per thread, saved by the thread implementation. </EM></BLOCKQUOTE><PRE>
+
+PROCEDURE <A HREF="#x9">InitThread</A>(VAR s: ThreadState);
+</PRE><BLOCKQUOTE><EM> Initialize the current thread to the default floating-point state. </EM></BLOCKQUOTE><PRE>
+
+END FloatMode.
+</PRE>
+</inInterface>
+<HR>
+<A NAME="x1">FloatMode's implementation  is in:
+</A><UL>
+<LI><A HREF="../DS3100/FloatMode.m3.html#0TOP0">float/src/DS3100/FloatMode.m3</A>
+<LI><A HREF="../IEEE-default/FloatMode.m3.html#0TOP0">float/src/IEEE-default/FloatMode.m3</A>
+<LI><A HREF="../IRIX5/FloatMode.m3.html#0TOP0">float/src/IRIX5/FloatMode.m3</A>
+<LI><A HREF="../SOLsun/FloatMode.m3.html#0TOP0">float/src/SOLsun/FloatMode.m3</A>
+<LI><A HREF="FloatMode.m3.html#0TOP0">float/src/SPARC/FloatMode.m3</A>
+<LI><A HREF="../SUN386/FloatMode.m3.html#0TOP0">float/src/SUN386/FloatMode.m3</A>
+<LI><A HREF="../VAX/FloatMode.m3.html#0TOP0">float/src/VAX/FloatMode.m3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x2">procedure FloatMode.SetRounding is in:
+</A><UL>
+<LI><A HREF="../DS3100/FloatMode.m3.html#SetRounding">float/src/DS3100/FloatMode.m3</A>
+<LI><A HREF="../IEEE-default/FloatMode.m3.html#SetRounding">float/src/IEEE-default/FloatMode.m3</A>
+<LI><A HREF="../IRIX5/FloatMode.m3.html#SetRounding">float/src/IRIX5/FloatMode.m3</A>
+<LI><A HREF="../SOLsun/FloatMode.m3.html#SetRounding">float/src/SOLsun/FloatMode.m3</A>
+<LI><A HREF="FloatMode.m3.html#SetRounding">float/src/SPARC/FloatMode.m3</A>
+<LI><A HREF="../SUN386/FloatMode.m3.html#SetRounding">float/src/SUN386/FloatMode.m3</A>
+<LI><A HREF="../VAX/FloatMode.m3.html#SetRounding">float/src/VAX/FloatMode.m3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x3">procedure FloatMode.GetRounding is in:
+</A><UL>
+<LI><A HREF="../DS3100/FloatMode.m3.html#GetRounding">float/src/DS3100/FloatMode.m3</A>
+<LI><A HREF="../IEEE-default/FloatMode.m3.html#GetRounding">float/src/IEEE-default/FloatMode.m3</A>
+<LI><A HREF="../IRIX5/FloatMode.m3.html#GetRounding">float/src/IRIX5/FloatMode.m3</A>
+<LI><A HREF="../SOLsun/FloatMode.m3.html#GetRounding">float/src/SOLsun/FloatMode.m3</A>
+<LI><A HREF="FloatMode.m3.html#GetRounding">float/src/SPARC/FloatMode.m3</A>
+<LI><A HREF="../SUN386/FloatMode.m3.html#GetRounding">float/src/SUN386/FloatMode.m3</A>
+<LI><A HREF="../VAX/FloatMode.m3.html#GetRounding">float/src/VAX/FloatMode.m3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x4">procedure FloatMode.GetFlags is in:
+</A><UL>
+<LI><A HREF="../DS3100/FloatMode.m3.html#GetFlags">float/src/DS3100/FloatMode.m3</A>
+<LI><A HREF="../IEEE-default/FloatMode.m3.html#GetFlags">float/src/IEEE-default/FloatMode.m3</A>
+<LI><A HREF="../IRIX5/FloatMode.m3.html#GetFlags">float/src/IRIX5/FloatMode.m3</A>
+<LI><A HREF="../SOLsun/FloatMode.m3.html#GetFlags">float/src/SOLsun/FloatMode.m3</A>
+<LI><A HREF="FloatMode.m3.html#GetFlags">float/src/SPARC/FloatMode.m3</A>
+<LI><A HREF="../SUN386/FloatMode.m3.html#GetFlags">float/src/SUN386/FloatMode.m3</A>
+<LI><A HREF="../VAX/FloatMode.m3.html#GetFlags">float/src/VAX/FloatMode.m3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x5">procedure FloatMode.SetFlags is in:
+</A><UL>
+<LI><A HREF="../DS3100/FloatMode.m3.html#SetFlags">float/src/DS3100/FloatMode.m3</A>
+<LI><A HREF="../IEEE-default/FloatMode.m3.html#SetFlags">float/src/IEEE-default/FloatMode.m3</A>
+<LI><A HREF="../IRIX5/FloatMode.m3.html#SetFlags">float/src/IRIX5/FloatMode.m3</A>
+<LI><A HREF="../SOLsun/FloatMode.m3.html#SetFlags">float/src/SOLsun/FloatMode.m3</A>
+<LI><A HREF="FloatMode.m3.html#SetFlags">float/src/SPARC/FloatMode.m3</A>
+<LI><A HREF="../SUN386/FloatMode.m3.html#SetFlags">float/src/SUN386/FloatMode.m3</A>
+<LI><A HREF="../VAX/FloatMode.m3.html#SetFlags">float/src/VAX/FloatMode.m3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x6">procedure FloatMode.ClearFlag is in:
+</A><UL>
+<LI><A HREF="../DS3100/FloatMode.m3.html#ClearFlag">float/src/DS3100/FloatMode.m3</A>
+<LI><A HREF="../IEEE-default/FloatMode.m3.html#ClearFlag">float/src/IEEE-default/FloatMode.m3</A>
+<LI><A HREF="../IRIX5/FloatMode.m3.html#ClearFlag">float/src/IRIX5/FloatMode.m3</A>
+<LI><A HREF="../SOLsun/FloatMode.m3.html#ClearFlag">float/src/SOLsun/FloatMode.m3</A>
+<LI><A HREF="FloatMode.m3.html#ClearFlag">float/src/SPARC/FloatMode.m3</A>
+<LI><A HREF="../SUN386/FloatMode.m3.html#ClearFlag">float/src/SUN386/FloatMode.m3</A>
+<LI><A HREF="../VAX/FloatMode.m3.html#ClearFlag">float/src/VAX/FloatMode.m3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x7">procedure FloatMode.SetBehavior is in:
+</A><UL>
+<LI><A HREF="../DS3100/FloatMode.m3.html#SetBehavior">float/src/DS3100/FloatMode.m3</A>
+<LI><A HREF="../IEEE-default/FloatMode.m3.html#SetBehavior">float/src/IEEE-default/FloatMode.m3</A>
+<LI><A HREF="../IRIX5/FloatMode.m3.html#SetBehavior">float/src/IRIX5/FloatMode.m3</A>
+<LI><A HREF="../SOLsun/FloatMode.m3.html#SetBehavior">float/src/SOLsun/FloatMode.m3</A>
+<LI><A HREF="FloatMode.m3.html#SetBehavior">float/src/SPARC/FloatMode.m3</A>
+<LI><A HREF="../SUN386/FloatMode.m3.html#SetBehavior">float/src/SUN386/FloatMode.m3</A>
+<LI><A HREF="../VAX/FloatMode.m3.html#SetBehavior">float/src/VAX/FloatMode.m3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x8">procedure FloatMode.GetBehavior is in:
+</A><UL>
+<LI><A HREF="../DS3100/FloatMode.m3.html#GetBehavior">float/src/DS3100/FloatMode.m3</A>
+<LI><A HREF="../IEEE-default/FloatMode.m3.html#GetBehavior">float/src/IEEE-default/FloatMode.m3</A>
+<LI><A HREF="../IRIX5/FloatMode.m3.html#GetBehavior">float/src/IRIX5/FloatMode.m3</A>
+<LI><A HREF="../SOLsun/FloatMode.m3.html#GetBehavior">float/src/SOLsun/FloatMode.m3</A>
+<LI><A HREF="FloatMode.m3.html#GetBehavior">float/src/SPARC/FloatMode.m3</A>
+<LI><A HREF="../SUN386/FloatMode.m3.html#GetBehavior">float/src/SUN386/FloatMode.m3</A>
+<LI><A HREF="../VAX/FloatMode.m3.html#GetBehavior">float/src/VAX/FloatMode.m3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x9">procedure FloatMode.InitThread is in:
+</A><UL>
+<LI><A HREF="../DS3100/FloatMode.m3.html#InitThread">float/src/DS3100/FloatMode.m3</A>
+<LI><A HREF="../IEEE-default/FloatMode.m3.html#InitThread">float/src/IEEE-default/FloatMode.m3</A>
+<LI><A HREF="../IRIX5/FloatMode.m3.html#InitThread">float/src/IRIX5/FloatMode.m3</A>
+<LI><A HREF="../SOLsun/FloatMode.m3.html#InitThread">float/src/SOLsun/FloatMode.m3</A>
+<LI><A HREF="FloatMode.m3.html#InitThread">float/src/SPARC/FloatMode.m3</A>
+<LI><A HREF="../SUN386/FloatMode.m3.html#InitThread">float/src/SUN386/FloatMode.m3</A>
+<LI><A HREF="../VAX/FloatMode.m3.html#InitThread">float/src/VAX/FloatMode.m3</A>
+</UL>
+<P>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

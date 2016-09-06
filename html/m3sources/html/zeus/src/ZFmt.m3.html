@@ -1,0 +1,79 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: zeus/src/ZFmt.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>zeus/src/ZFmt.m3</H2></A><HR>
+<inModule>
+<PRE><A HREF="../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM> Digital Internal Use Only                                                 </EM></BLOCKQUOTE><PRE>
+</PRE>                                                                           
+       Created on Sun Jun  5 16:59:40 PDT 1994 by najork                   
+
+<P>
+<P><PRE>MODULE <module><implements><A HREF="ZFmt.i3.html">ZFmt</A></implements></module>;
+
+IMPORT <A HREF="../../fmtlex/src/Fmt.i3.html">Fmt</A>, <A HREF="../../text/src/TextConv.i3.html">TextConv</A>;
+
+PROCEDURE <A NAME="Int"><procedure>Int</procedure></A> (n : INTEGER) : TEXT =
+  BEGIN
+    RETURN Fmt.Int (n)
+  END Int;
+
+PROCEDURE <A NAME="Bool"><procedure>Bool</procedure></A> (b : BOOLEAN) : TEXT =
+  BEGIN
+    IF b THEN RETURN &quot;true&quot; ELSE RETURN &quot;false&quot; END
+  END Bool;
+
+PROCEDURE <A NAME="Char"><procedure>Char</procedure></A> (c : CHAR) : TEXT =
+  BEGIN
+    RETURN Fmt.Char (c)
+  END Char;
+
+PROCEDURE <A NAME="Real"><procedure>Real</procedure></A> (r : REAL) : TEXT =
+  BEGIN
+    RETURN Fmt.Real (r, style := Fmt.Style.Fix, literal := TRUE);
+  END Real;
+
+PROCEDURE <A NAME="LongReal"><procedure>LongReal</procedure></A> (r : LONGREAL) : TEXT =
+  BEGIN
+    RETURN Fmt.LongReal (r, style := Fmt.Style.Fix, literal := TRUE);
+  END LongReal;
+
+PROCEDURE <A NAME="Text"><procedure>Text</procedure></A> (t: TEXT): TEXT =
+  BEGIN
+    RETURN TextConv.Encode (t)
+  END Text;
+
+BEGIN
+END ZFmt.
+</PRE>
+</inModule>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

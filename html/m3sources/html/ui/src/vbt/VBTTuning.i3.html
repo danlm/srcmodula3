@@ -1,0 +1,76 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: ui/src/vbt/VBTTuning.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>ui/src/vbt/VBTTuning.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM>                                                                           </EM></BLOCKQUOTE><PRE>
+</PRE> VBTTuning.i3, coded Fri Oct 31 11:24:53 1986 by cgn 
+<PRE>&lt;*PRAGMA LL*&gt;
+</PRE> This interface defines values that can be changed to 
+   maximize Trestle's performance on particular systems. 
+   
+<P><PRE>INTERFACE <interface>VBTTuning</interface>;
+
+IMPORT <A HREF="../../../word/src/Word.i3.html">Word</A>;
+
+CONST
+  BatchSize: CARDINAL = 325;
+  BatchLatency: CARDINAL = 50000;
+  HVParlim: CARDINAL = 100000;
+  ZParlim: CARDINAL = 100000;
+  ResumeLength: CARDINAL = 1;
+  CombineLimit: CARDINAL
+    = (BatchSize * ADRSIZE(Word.T)) DIV 2;
+</PRE> The value <CODE>BatchSize</CODE> is the number of <CODE>Word.T</CODE>'s in a standard
+   painting batch.
+<P>
+   The value <CODE>BatchLatency</CODE> is the number of microseconds before a 
+   paint batch is automatically forced.
+<P>
+   The values <CODE>HVParlim</CODE> and <CODE>ZParlim</CODE> are the default
+   minimum child areas (in pixels) for which <CODE>ZSplit</CODE> and <CODE>HVSplit</CODE> 
+   will fork separate repaint or reshaping threads. 
+<P>
+   <CODE>ResumeLength</CODE> is the size that a queue of paint batches must
+   shrink to before a cross-address space filter will unblock a
+   thread that painted into an overfull queue.  It must
+   be at least 1. 
+   <P>
+   The value <CODE>CombineLimit</CODE> is the number of addressable 
+   units (e.g., bytes) in a batch beyond which Trestle will
+   not consider combining another batch into it. 
+
+<P><PRE>END VBTTuning.
+</PRE>
+</inInterface>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

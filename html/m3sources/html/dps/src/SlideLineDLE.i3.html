@@ -1,0 +1,75 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: dps/src/SlideLineDLE.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>dps/src/SlideLineDLE.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+
+INTERFACE <interface><A HREF="SlideLineDLE.m3.html">SlideLineDLE</A></interface>;
+
+IMPORT <A HREF="DisplayList.i3.html">DisplayList</A>, <A HREF="DPS.i3.html">DPS</A>, <A HREF="DPSWindow.i3.html">DPSWindow</A>;
+
+TYPE E = DisplayList.E OBJECT
+  initialized: BOOLEAN := FALSE;
+  hasInputFocus: BOOLEAN := FALSE;
+  text: TEXT := &quot;&quot;; hot: BOOLEAN := FALSE;
+  isPostscript: BOOLEAN; (* Calculated at Init() by peeking at text. *)
+  aboveLeading: REAL := -1.0;
+  height: REAL := -1.0;
+  belowLeading: REAL := -1.0;
+  leftLeading: REAL := -1.0;
+  showPostScript: TEXT := &quot;&quot;;
+  fontName: TEXT;
+  typefacePoints: REAL := -1.0; (* Real defaults in implementation. *)
+  insertAfterIndex: INTEGER := 0; (* After zeroth is at start. *)
+  togetherWithNext: BOOLEAN := FALSE; (* Should be in subclass? *)
+  widths: REF ARRAY OF REAL := NIL;
+  r, g, b: REAL:= 0.0;
+ OVERRIDES
+  Repaint := Repaint;
+  Mouse := Mouse;
+  Char := Char;
+  LoseInputFocus := LoseInputFocus;
+  END;
+
+PROCEDURE <A HREF="SlideLineDLE.m3.html#Init">Init</A> (e: E; t: DPSWindow.T);
+
+PROCEDURE <A HREF="SlideLineDLE.m3.html#Repaint">Repaint</A> (e: E; box: DPS.Box; only: REFANY := NIL): TEXT;
+PROCEDURE <A HREF="SlideLineDLE.m3.html#Mouse">Mouse</A> (e: E; t: DPSWindow.T; event: DPS.MouseEvent): BOOLEAN;
+PROCEDURE <A HREF="SlideLineDLE.m3.html#Char">Char</A> (e: E; t: DPSWindow.T; char: CHAR): BOOLEAN;
+
+PROCEDURE <A HREF="SlideLineDLE.m3.html#LoseInputFocus">LoseInputFocus</A> (e: E);
+
+  END SlideLineDLE.
+</PRE>
+</inInterface>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

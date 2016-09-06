@@ -1,0 +1,187 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: runtime/src/common/RT0.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>runtime/src/common/RT0.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE> RT0 is <CODE>the bottom of the world</CODE>.  It contains
+   types and constants that are shared by multiple modules of
+   the runtime and/or the compiler and linker.
+<P>
+   If you're using this interface, you're a wizard!
+<P>
+   This interface and its implemenation MUST NOT import any
+   other interface.
+
+
+<P><PRE>INTERFACE <interface><A HREF="RT0.m3.html">RT0</A></interface>;
+</PRE> These types CANNOT be changed without a synchronized change to the
+   output of the compiler and prelinker 
+
+<P>------------------------------------ compiler generated data structures ---
+
+<P><PRE>TYPE
+  Typecode    = [0 .. 16_FFFFF];         (* can fit in 20 bits *)
+  Fingerprint = ARRAY [0..1] OF [-16_7fffffff-1 .. 16_7fffffff]; (* 64 bits *)
+  String      = UNTRACED REF CHAR;       (* a '\000' terminated string *)
+  ModulePtr   = UNTRACED REF ModuleInfo;
+  ProcPtr     = UNTRACED REF ProcInfo;
+
+TYPE (* allocated at offset 0 of each compilation unit's global data *)
+  ModuleInfo = RECORD
+    file           : String;
+    type_cells     : ADDRESS;  (* initially a ref to a Typecell *)
+    type_cell_ptrs : ADDRESS;  (* initially a ref to a TypeLink *)
+    full_rev       : ADDRESS;  (* initially a ref to a Revelation *)
+    partial_rev    : ADDRESS;  (* initially a ref to a Revelation *)
+    proc_info      : ProcPtr;
+    try_scopes     : ADDRESS;  (* RTExRep.Scope *)
+    var_map        : ADDRESS;  (* RTTypeMap.T *)
+    gc_map         : ADDRESS;  (* reduced RTTypeMap.T *)
+    link           : PROCEDURE ();
+    main           : PROCEDURE ();
+  END;
+
+TYPE (* one of these is generated for each top-level procedure *)
+  ProcInfo = RECORD
+    proc   : ADDRESS;
+    name   : String;
+    export : ADDRESS;
+  END;
+
+TYPE
+  TypeLink = RECORD
+    next : ADDRESS;  (* init code patches this to be a TypeDefn *)
+    type : INTEGER;  (* init code patches this to be a Typecode *)
+  END;
+
+TYPE
+  RevPtr     = UNTRACED REF Revelation;
+  Revelation = RECORD lhs_id, rhs_id: INTEGER; END;
+</PRE>------------------------------------------- linker generated type cells ---
+
+<P><PRE>TYPE
+  MethodSuite = UNTRACED REF RECORD
+    typecode : INTEGER;  (* Typecode *)
+    methods  : (* ARRAY [0..n] OF *) ADDRESS;
+  END;
+
+TYPE
+  TypeDefn = UNTRACED REF Typecell;
+  Typecell = RECORD
+    typecode         : INTEGER; (*Typecode*)
+    lastSubTypeTC    : INTEGER; (*Typecode*)
+    selfID           : INTEGER;
+    fp               : Fingerprint;
+    traced           : INTEGER; (* 0=&gt;untraced, 1=&gt;traced *)
+    dataOffset       : INTEGER;
+    dataSize         : INTEGER;
+    dataAlignment    : INTEGER;
+    methodOffset     : INTEGER;
+    methodSize       : INTEGER;
+    nDimensions      : INTEGER;       (* &gt; 0 iff open array *)
+    elementSize      : INTEGER;
+    defaultMethods   : ADDRESS;       (* # NIL iff object type *)
+    type_map         : ADDRESS;       (* RTTypeMap.T *)
+    gc_map           : ADDRESS;       (* reduced RTTypeMap.T for collector *)
+    type_desc        : ADDRESS;
+    initProc         : TypeInitProc;  (* called by NEW *)
+    linkProc         : TypeSetupProc; (* called during initialization *)
+    parentID         : INTEGER;
+    parent           : TypeDefn;
+    children         : TypeDefn;
+    sibling          : TypeDefn;
+    brand            : String;
+    name             : String;
+    next             : TypeDefn;
+  END;
+</PRE><BLOCKQUOTE><EM><P>
+  dataOffset:
+     for object types, the quantity to add to the address of the object
+             to get to the fields that belong to this object type;
+     for refs, unused;
+     for open arrays, the quantity to add to the address of the array
+             to get to the elements
+  dataSize:
+     for object types, the size of the fields that belong to this type;
+     for refs, the size of the referent;
+     for open array types, the size of the <CODE>open overhead</CODE>, including
+             padding to align the elements; i.e. ADR (a[0]) - ADR (a)
+  dataAlignment:
+     for object types, the alignment of the referent;
+     for refs, the alignment of the referent;
+     for open arrays, the alignment of the full array, including the header
+</EM></BLOCKQUOTE><PRE>
+
+TYPE
+  TypeInitProc  = PROCEDURE (ref: ADDRESS);
+  TypeSetupProc = PROCEDURE (def: TypeDefn);
+</PRE>----------------------------------------- compiler generated references ---
+
+<P><PRE>CONST
+  NilTypecode  : Typecode = 0;
+  TextTypecode : Typecode = 1;
+
+CONST
+  SB = BITSIZE (ADDRESS) - 24;  (* # spare bits in a ref header *)
+
+TYPE
+  RefHeader = RECORD
+    forwarded : BITS  1 FOR BOOLEAN    := FALSE; (* used during collection *)
+    typecode  : BITS 20 FOR Typecode   := 0;     (* the typecode *)
+    weak      : BITS  1 FOR BOOLEAN    := FALSE; (* any weakrefs? *)
+    marka     : BITS  1 FOR BOOLEAN    := FALSE; (* used during collection *)
+    markb     : BITS  1 FOR BOOLEAN    := FALSE; (* used during collection *)
+    spare     : BITS SB FOR [0 .. 255] := 0;     (* for future expansion *)
+  END;
+
+TYPE  (* header for compiler generated TEXT literals (1-D open array of char)*)
+  TextHeader = RECORD
+    chars  : String;
+    length : INTEGER;
+  END;
+</PRE>--------------------------------- compiler generated procedure closures ---
+
+<P><PRE>CONST
+  ClosureMarker = -1;
+
+TYPE
+  ProcedureClosure = RECORD
+    marker : INTEGER; (* == -1 *)
+    proc   : ADDRESS; (* address of a nested procedure's body *)
+    frame  : ADDRESS; (* its parent's frame pointer *)
+  END;
+
+END RT0.
+</PRE>
+</inInterface>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

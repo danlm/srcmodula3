@@ -1,0 +1,54 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: gef/src/GEFAlg.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>gef/src/GEFAlg.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+
+INTERFACE <interface><A HREF="GEFAlg.m3.html">GEFAlg</A></interface>;
+
+IMPORT <A HREF="../../zeus/src/Algorithm.i3.html">Algorithm</A>, <A HREF="../../libm3/DS/RefList.i3.html">RefList</A>, <A HREF="../../slisp/src/SLisp.i3.html">SLisp</A>;
+
+TYPE
+  <A HREF="GEFAlg.m3.html#Interp">Interp</A> &lt;: PublicInterp;
+  PublicInterp = SLisp.T OBJECT
+  METHODS
+    init(alg: Algorithm.T): Interp;
+  END;
+
+PROCEDURE <A HREF="GEFAlg.m3.html#Feedback">Feedback</A>(interp: Interp; name: TEXT; args: RefList.T);
+</PRE><BLOCKQUOTE><EM> call the function <CODE>name</CODE> in <CODE>interp</CODE> (if it exists) with <CODE>args</CODE> </EM></BLOCKQUOTE><PRE>
+
+END GEFAlg.
+</PRE>
+</inInterface>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

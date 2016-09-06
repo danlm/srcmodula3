@@ -1,0 +1,86 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: unix/src/solaris-2-x/Udir.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>unix/src/solaris-2-x/Udir.m3</H2></A><HR>
+<inModule>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM>                                                             </EM></BLOCKQUOTE><PRE>
+
+MODULE <module><implements><A HREF="#x1">Udir</A></implements></module>;
+</PRE> Emulation of System V readdir in terms of Berkeley readdir.  This can
+   be eliminated when libucb is no longer linked into M3 programs. 
+  
+<P><PRE>VAR
+  dirent := NEW(struct_dirent_star);    (* The System V structure. *)
+
+PROCEDURE <A NAME="readdir"><procedure>readdir</procedure></A>(dirPtr: DIR_star): struct_dirent_star =
+  VAR direct := UCB_readdir(dirPtr); (* The Berkeley structure. *)
+  BEGIN
+    IF direct = NIL THEN RETURN NIL END;
+    dirent.d_ino    := direct.d_ino;
+ (* dirent.d_offset := 0; --- no documented way to calculate d_offset. *)
+    dirent.d_reclen := direct.d_reclen;
+    dirent.d_name   := direct.d_name;
+    RETURN dirent;
+  END readdir;
+
+BEGIN
+END Udir.
+</PRE>
+</inModule>
+<HR>
+<A NAME="x1">interface Udir is in:
+</A><UL>
+<LI><A HREF="../aix-3-2/Udir.i3.html#0TOP0">unix/src/aix-3-2/Udir.i3</A>
+<LI><A HREF="../aix-ps2-1-2/Udir.i3.html#0TOP0">unix/src/aix-ps2-1-2/Udir.i3</A>
+<LI><A HREF="../freebsd-1/Udir.i3.html#0TOP0">unix/src/freebsd-1/Udir.i3</A>
+<LI><A HREF="../freebsd-2/Udir.i3.html#0TOP0">unix/src/freebsd-2/Udir.i3</A>
+<LI><A HREF="../hpux-7-0/Udir.i3.html#0TOP0">unix/src/hpux-7-0/Udir.i3</A>
+<LI><A HREF="../ibm-4-3/Udir.i3.html#0TOP0">unix/src/ibm-4-3/Udir.i3</A>
+<LI><A HREF="../irix-5.2/Udir.i3.html#0TOP0">unix/src/irix-5.2/Udir.i3</A>
+<LI><A HREF="../linux/Udir.i3.html#0TOP0">unix/src/linux/Udir.i3</A>
+<LI><A HREF="../osf-1.generic/Udir.i3.html#0TOP0">unix/src/osf-1.generic/Udir.i3</A>
+<LI><A HREF="Udir.i3.html#0TOP0">unix/src/solaris-2-x/Udir.i3</A>
+<LI><A HREF="../sunos-4-x/Udir.i3.html#0TOP0">unix/src/sunos-4-x/Udir.i3</A>
+<LI><A HREF="../sysv-4.0/Udir.i3.html#0TOP0">unix/src/sysv-4.0/Udir.i3</A>
+<LI><A HREF="../ultrix-3-1.AP3000/Udir.i3.html#0TOP0">unix/src/ultrix-3-1.AP3000/Udir.i3</A>
+<LI><A HREF="../ultrix-3-1.ARM/Udir.i3.html#0TOP0">unix/src/ultrix-3-1.ARM/Udir.i3</A>
+<LI><A HREF="../ultrix-3-1.DS3100/Udir.i3.html#0TOP0">unix/src/ultrix-3-1.DS3100/Udir.i3</A>
+<LI><A HREF="../ultrix-3-1.NEXT/Udir.i3.html#0TOP0">unix/src/ultrix-3-1.NEXT/Udir.i3</A>
+<LI><A HREF="../ultrix-3-1.SEQUENT/Udir.i3.html#0TOP0">unix/src/ultrix-3-1.SEQUENT/Udir.i3</A>
+<LI><A HREF="../ultrix-3-1.SUN3/Udir.i3.html#0TOP0">unix/src/ultrix-3-1.SUN3/Udir.i3</A>
+<LI><A HREF="../ultrix-3-1.SUN386/Udir.i3.html#0TOP0">unix/src/ultrix-3-1.SUN386/Udir.i3</A>
+<LI><A HREF="../ultrix-3-1.UMAX/Udir.i3.html#0TOP0">unix/src/ultrix-3-1.UMAX/Udir.i3</A>
+<LI><A HREF="../ultrix-3-1.VAX/Udir.i3.html#0TOP0">unix/src/ultrix-3-1.VAX/Udir.i3</A>
+</UL>
+<P>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

@@ -1,0 +1,53 @@
+(* An example of agent hopping. *)
+
+(* First execute this line at another site: 
+   net_exportEngine("E1", "", "at site1"); *)
+
+let shout =
+   proc(str) sys_printText(str&"\n"); sys_printFlush() end;
+
+let state = {nextHop => "E1"};
+
+let hop = 
+  proc(engine, agent, state)
+    engine(
+      proc(arg) 
+        thread_fork(
+          proc () agent(copy(state), arg) end, 
+          0);
+	    ok
+      end);
+  end;
+
+let rec agent = 
+  proc(state, arg) 
+    shout(arg);
+    if state.nextHop is "" then
+	  thread_pause(3.0); (* pretend we are working *)
+	  shout("all done");
+    else
+      let atNextSite = net_importEngine(state.nextHop, "");
+	  shout("hopping to "&state.nextHop);
+	  state.nextHop := "";
+      hop(atNextSite, agent, state);
+	  shout("disengaged");
+    end;
+  end;
+
+agent(state, "at site 0");
+
+(* We want site 0 to disengage from the computation that carries on
+   at site 1; site 0 should not wait for site 1 to complete: this would not
+   be real agent migration.
+   This disengagement is achieved in the hop procedure by forking at the 'next' 
+   site and returning. We are implementing GOTO by RPC and fork!
+   The "ok" after forking is necessary because thread_fork returns a thread,
+   and threads cannot be returned across address spaces. *)
+
+(* For some reason having to do with sys_print I/O (which is used only for
+   demonstation purposes) we must type ^D at the interpreter at site 0, to 
+   get it back to the top level. Note that this does not mean that site 0 is 
+   still waiting for site 1 to return: the "disengaged" message appears at the
+   right time (and commenting out the sys_prints makes the problem disappear). 
+*)
+

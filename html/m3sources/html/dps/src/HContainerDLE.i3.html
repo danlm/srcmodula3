@@ -1,0 +1,77 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: dps/src/HContainerDLE.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>dps/src/HContainerDLE.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+
+INTERFACE <interface><A HREF="HContainerDLE.m3.html">HContainerDLE</A></interface>;
+</PRE>  A HContainerDLE.T is a subclass of DisplayList.T. (And similarly
+    for HContainerDLE.E.)
+<P>
+    A HContainerDLE.T arranges its children into a horizontal row,
+    origined at its own {x, y}, and sets its own width and height to
+    circumscribe them. 
+
+<P><PRE>IMPORT <A HREF="DisplayList.i3.html">DisplayList</A>, <A HREF="DPS.i3.html">DPS</A>, <A HREF="DPSWindow.i3.html">DPSWindow</A>, <A HREF="Linked2Tree.i3.html">Linked2Tree</A>;
+
+TYPE T = DisplayList.T OBJECT
+  initialized: BOOLEAN := FALSE;
+  separation: REAL := 0.0;
+ OVERRIDES
+  Prepend := Prepend;
+  Append := Append;
+  Remove := Remove;
+  Repaint := Repaint;
+  Mouse := Mouse;
+  Char := Char;
+  MakeChildLast := MakeChildLast;
+  END;
+
+TYPE E = T;
+
+PROCEDURE <A HREF="HContainerDLE.m3.html#Initialize">Initialize</A> (e: E; window: DPSWindow.T);
+
+PROCEDURE <A HREF="HContainerDLE.m3.html#Repaint">Repaint</A> (e: E; box: DPS.Box; only: REFANY := NIL): TEXT;
+PROCEDURE <A HREF="HContainerDLE.m3.html#Mouse">Mouse</A> (e: E; window: DPSWindow.T; event: DPS.MouseEvent): BOOLEAN;
+PROCEDURE <A HREF="HContainerDLE.m3.html#Char">Char</A> (e: E; window: DPSWindow.T; char: CHAR): BOOLEAN;
+
+PROCEDURE <A HREF="HContainerDLE.m3.html#Prepend">Prepend</A> (t: Linked2Tree.T; e: Linked2Tree.E);
+PROCEDURE <A HREF="HContainerDLE.m3.html#Append">Append</A> (t: Linked2Tree.T; e: Linked2Tree.E);
+PROCEDURE <A HREF="HContainerDLE.m3.html#Remove">Remove</A> (e: Linked2Tree.E);
+
+PROCEDURE <A HREF="HContainerDLE.m3.html#MakeChildLast">MakeChildLast</A> (t: Linked2Tree.T; e: Linked2Tree.E): Linked2Tree.E;
+
+  END HContainerDLE.
+</PRE>
+</inInterface>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

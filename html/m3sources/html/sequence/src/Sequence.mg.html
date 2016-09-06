@@ -1,0 +1,203 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: sequence/src/Sequence.mg</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>sequence/src/Sequence.mg</H2></A><HR>
+<inModule>
+<PRE><A HREF="../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM>                                                           </EM></BLOCKQUOTE><PRE>
+
+GENERIC MODULE <genericModule><A HREF="Sequence.ig.html">Sequence</A></genericModule>(Elem, Seq, Rep);
+</PRE><BLOCKQUOTE><EM> Where <CODE>Seq = Sequence(Elem)</CODE> and <CODE>Rep = SequenceRep(Elem, Seq)</CODE>. </EM></BLOCKQUOTE><PRE>
+
+REVEAL Seq.<A NAME="T">T</A> = Rep.Public BRANDED Seq.Brand OBJECT
+  OVERRIDES
+    init := Init;
+    fromArray := FromArray;
+    addhi := Addhi;
+    addlo := Addlo;
+    remhi := Remhi;
+    remlo := Remlo;
+    put := Put;
+    size := Size;
+    gethi := Gethi;
+    getlo := Getlo;
+    get := Get
+  END;
+
+VAR zero: Elem.T;
+</PRE><BLOCKQUOTE><EM> Modula-3 requires <CODE>zero</CODE> to be initialized to a value of type <CODE>Elem.T</CODE>.
+   With high probability the references within that value will be NIL.
+   Hence, setting elements of the sequence to <CODE>zero</CODE> should avoid
+   storage leaks. </EM></BLOCKQUOTE><PRE>
+
+PROCEDURE <A NAME="Init"><procedure>Init</procedure></A>(s: Seq.T; sizeHint: CARDINAL): Seq.T =
+  BEGIN
+    IF s.elem = NIL OR NUMBER(s.elem^) = 0 THEN
+      s.elem := NEW(Rep.RefArray, MAX(sizeHint, 1))
+    END (* IF *);
+    s.sz := 0; s.st := 0;
+    RETURN s
+  END Init;
+
+PROCEDURE <A NAME="FromArray"><procedure>FromArray</procedure></A>(s: Seq.T; READONLY a: ARRAY OF Elem.T): Seq.T =
+  BEGIN
+    s.sz := NUMBER(a);
+    s.st := 0;
+    s.elem := NEW(Rep.RefArray, MAX(s.sz, 1));
+    FOR i := 0 TO s.sz-1 DO
+      s.elem[i] := a[i]
+    END;
+    RETURN s
+  END FromArray;
+
+PROCEDURE <A NAME="Addhi"><procedure>Addhi</procedure></A>(s: Seq.T; READONLY x: Elem.T) =
+  BEGIN
+    IF s.sz = NUMBER(s.elem^) THEN Expand(s) END;
+    VAR i := s.st + s.sz; BEGIN
+      IF i &gt;= NUMBER(s.elem^) THEN i := i - NUMBER(s.elem^) END;
+      s.elem[i] := x
+    END;
+    INC(s.sz)
+  END Addhi;
+
+PROCEDURE <A NAME="Addlo"><procedure>Addlo</procedure></A>(s: Seq.T; READONLY x: Elem.T) =
+  BEGIN
+    IF s.sz = NUMBER(s.elem^) THEN Expand(s) END;
+    VAR i := s.st; BEGIN
+      IF i = 0 THEN i := LAST(s.elem^) ELSE i := i - 1 END;
+      s.elem[i] := x;
+      s.st := i
+    END;
+    INC(s.sz)
+  END Addlo;
+
+PROCEDURE <A NAME="Expand"><procedure>Expand</procedure></A>(s: Seq.T) =
+  VAR
+    n := NUMBER(s.elem^);
+    new := NEW(Rep.RefArray, 2 * n);
+    m := n - s.st;
+  BEGIN
+    SUBARRAY(new^, 0, m) := SUBARRAY(s.elem^, s.st, m);
+    SUBARRAY(new^, m, s.st) :=
+      SUBARRAY(s.elem^, 0, s.st);
+    s.st := 0;
+    s.elem := new
+   END Expand;
+
+PROCEDURE <A NAME="Remhi"><procedure>Remhi</procedure></A>(s: Seq.T): Elem.T =
+  VAR
+    j := s.st + s.sz - 1;
+    res: Elem.T;
+  BEGIN
+    IF j &gt;= NUMBER(s.elem^) THEN j := j - NUMBER(s.elem^) END;
+    DEC(s.sz);
+    WITH z = s.elem[j] DO  res := z;  z := zero;  END;
+    RETURN res;
+  END Remhi;
+
+PROCEDURE <A NAME="Remlo"><procedure>Remlo</procedure></A>(s: Seq.T): Elem.T =
+  VAR res: Elem.T;
+  BEGIN
+    WITH z = s.elem[s.st] DO  res := z;  z := zero;  END;
+    DEC(s.sz);
+    INC(s.st);
+    IF s.st = NUMBER(s.elem^) THEN s.st := 0 END;
+    RETURN res
+  END Remlo;
+
+PROCEDURE <A NAME="Put"><procedure>Put</procedure></A>(s: Seq.T; i: CARDINAL; READONLY x: Elem.T) =
+  VAR j := s.st + i; BEGIN
+    &lt;* ASSERT i &lt; s.sz *&gt;
+    IF j &gt;= NUMBER(s.elem^) THEN j := j - NUMBER(s.elem^) END;
+    s.elem[j] := x
+  END Put;
+
+PROCEDURE <A NAME="Get"><procedure>Get</procedure></A>(s: Seq.T; i: CARDINAL): Elem.T =
+  VAR j := s.st + i; BEGIN
+    &lt;* ASSERT i &lt; s.sz *&gt;
+    IF j &gt;= NUMBER(s.elem^) THEN j := j - NUMBER(s.elem^) END;
+    RETURN s.elem[j]
+  END Get;
+
+PROCEDURE <A NAME="Size"><procedure>Size</procedure></A>(s: Seq.T): CARDINAL =
+  BEGIN
+    RETURN s.sz
+  END Size;
+
+PROCEDURE <A NAME="Gethi"><procedure>Gethi</procedure></A>(s: Seq.T): Elem.T =
+  VAR j := s.st + s.sz - 1; BEGIN
+    &lt;* ASSERT s.sz &gt; 0 *&gt;
+    IF j &gt;= NUMBER(s.elem^) THEN
+      j := j - NUMBER(s.elem^)
+    END;
+    RETURN s.elem[j]
+  END Gethi;
+
+PROCEDURE <A NAME="Getlo"><procedure>Getlo</procedure></A>(s: Seq.T): Elem.T =
+  BEGIN
+    &lt;* ASSERT s.sz &gt; 0 *&gt;
+    RETURN s.elem[s.st]
+  END Getlo;
+
+PROCEDURE <A NAME="Cat"><procedure>Cat</procedure></A>(s, t: T): T =
+  VAR u := NEW(Seq.T); BEGIN
+    u.sz := s.sz + t.sz;
+    u.elem := NEW(Rep.RefArray, MAX(u.sz, 1));
+    FOR i := 0 TO s.sz-1 DO
+      u.elem[i] := s.get(i)
+    END;
+    FOR i := 0 TO t.sz-1 DO
+      u.elem[i + s.sz] := t.get(i)
+    END;
+    RETURN u
+  END Cat;
+
+PROCEDURE <A NAME="Sub"><procedure>Sub</procedure></A>(s: T; start: CARDINAL;
+    length: CARDINAL := LAST(CARDINAL)): T =
+  VAR u := NEW(Seq.T); BEGIN
+    IF start &gt;= s.sz OR length = 0 THEN
+      u.sz := 0
+    ELSE
+      u.sz := MIN(length, s.sz - start)
+    END;
+    u.elem := NEW(Rep.RefArray, MAX(u.sz, 1));
+    FOR i := 0 TO u.sz-1 DO
+      u.elem[i] := s.get(start + i)
+    END;
+    RETURN u
+  END Sub;
+
+BEGIN
+END Sequence.
+</PRE>
+</inModule>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

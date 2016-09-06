@@ -1,0 +1,127 @@
+<HTML>
+<HEAD>
+<TITLE>GNU Modula-3</TITLE>
+</HEAD>
+<BODY BGCOLOR="#ffffff" VLINK="#006633">
+
+<H2>GNU Modula-3</H2>
+<P>
+
+GNU Modula-3 was an independent
+implementation that was to be fully integrated with gcc.
+Initial reports were encouraging,
+but apparently work on the project has been suspended:
+<P>
+
+<HR>
+<PRE>
+From: hudson@cs.umass.edu (Rick Hudson)
+Subject: Re: Where to start - GNU M3 status.
+Date: 02 Mar 1994 20:53:10 GMT
+
+I put in as much time as anyone on the GM3 project and have it wired up and
+sort of running on my desk well enough to do run experiments. Unfortunately,
+it is in no shape for prime time. No threads and 20% of the SRC libraries
+don't even compile. Work slowed in July due to me switching projects and
+pretty much halted when it became obvious that SRC was doing such a good job
+on their compiler.
+
+We are porting pieces of our backend and runtime into the SRC stuff but it
+is just for internal research use since that is all we really have time for.
+Cheers,
+</PRE>
+
+<HR>
+<PRE>
+From: moss@cs.cmu.edu (Eliot Moss)
+Subject: GNU Modula-3 alpha release status
+Date: 25 Mar 93 17:53:12 GMT
+
+We said we'd try to get the initial (alpha) release of GNU
+Modula-3 out some time this month (March), and we're in the
+process of figuring out what to release and how to package it
+up. We expect to have something in roughly two weeks (watch
+this space for a notice).
+
+What would this be? First, it is a compiler for the VAX (only)
+under Ultrix (only), definitely without threads, and probably
+still failing a small number of the tests in the SRC test
+suite (which implies that not all of libm3 is likely to work
+either). The actual release information will detail more about
+what's working and what's not at that time. We DO currently
+pass all the compiler tests that the SRC compiler did when it
+was first released (i.e., the ones we fail are more obscure
+things that users uncovered over time).
+
+Second, the release itself will be a compressed tar file
+including sources and executables. The executables will
+probably work only if you put libraries, etc., in the expected
+places (otherwise, you'll need to rebuild from sources).The
+compiler is written in C and should be compiled with a recent
+version of gcc (so you'll need gcc installed). The system also
+uses gld (the GNU linker).
+
+This release should be most useful to people undertaking ports
+to other machines and operating systems, since it will give
+them a head start on understanding the compiler and getting
+the full system ready. It may be of some use for ordinary
+programming, but it really depends on whether you tend to use
+features that tickle the remaining bugs. We are indeed
+interested in alpha test reports, but only if they tell us
+something new (i.e., we'll provide a list of known
+deficiencies).
+
+When the release is made, we'll also start email discussions
+with the various parties who have indicated they might
+undertake ports, to help sort out who will do what.
+
+Regards, and thanks for your continued interest and
+encouragement -- EM
+</PRE>
+
+<HR>
+<PRE>
+From: moss@cs.cmu.edu (Eliot Moss)
+Subject: GNU Modula-3 pre-release
+Date: Wed, 5 May 1993 23:49:33 GMT
+
+At long last, the GNU Modula-3 project has a pre-release ready, for
+the VAX/Ultrix platform ONLY. Various folks had notified us of
+their interest in doing ports or alpha testing, and they have
+already been sent email with particulars on how to obtain the tar
+file, etc. There are a number of known bugs; I'll see about making
+a list available by ftp or something, for interested parties.
+
+It is our opinion that the prerelease is not mature enough for
+general use, but we wished to give a head start to those folks
+attempting ports, and we will make periodic patches available. If
+you want to use this compiler for serious program development or
+need something solid with debugging support for classroom use, you
+should wait until we've fixed more of the problems. (But to give a
+sense of what we HAVE accomplished, as I recall, all but 3 of the
+SRC compiler tests compile (there are 137 of them).) We hope to do
+a more general release, and support more platforms, in the summer.
+
+If you're interested in helping and have not previously contacted
+us, please send email to me and/or Rick Hudson
+(hudson@cs.umass.edu).
+
+Thanks to Digital and SRC for supporting us, and to Rick Hudson, Amer Diwan,
+and Norm Walsh, the guys who do all the hard work!
+</PRE>
+
+<HR>
+<A HREF="home.html">[Modula-3 home page]</A>
+<P>
+<A HREF="mailto:m3-request@src.dec.com">
+<ADDRESS>m3-request@src.dec.com</ADDRESS></A>
+<PRE>
+Last modified on Thu Jan  4 11:08:05 PST 1996 by heydon
+     modified on Fri Apr 22 13:31:33 PDT 1994 by kalsow
+</PRE>
+
+Copyright (C) 1992, 1996, Digital Equipment Corporation. All rights reserved.<BR>
+See the <A HREF="http://www.research.digital.com/SRC/m3sources/html/COPYRIGHT.html">COPYRIGHT</A> for a full description.
+</BODY>
+</HTML>
+

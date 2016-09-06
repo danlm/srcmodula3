@@ -1,0 +1,117 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: unix/src/ultrix-3-1.DS3100/Udmap.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>unix/src/ultrix-3-1.DS3100/Udmap.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+
+INTERFACE <interface>Udmap</interface>;
+
+FROM <A HREF="../../../C/src/Common/Ctypes.i3.html">Ctypes</A> IMPORT int, int_star;
+FROM <A HREF="#x1">Utypes</A> IMPORT swblk_t;
+</PRE>** &lt;sys/dmap.h&gt; **
+
+<P><PRE>TYPE
+  struct_dmap = RECORD
+    dm_last: int;        (* last element in dm_map *)
+    dm_cnt: int;         (* count of elements  with swap *)
+    dm_ptdaddr: int_star; (* address of disk address of page table *)
+    dm_map: ARRAY [0..0] OF swblk_t ; (* first disk block number in each chunk *)
+    END;
+  struct_dmap_star = UNTRACED REF struct_dmap;
+
+  struct_dblock = RECORD
+    db_base: swblk_t;        (* base of physical contig drum block *)
+    db_size: swblk_t;        (* size of block *)
+    END;
+
+  struct_swapu_t = RECORD
+    txt: int;        (* swap space for text *)
+    smem: int;       (* swap space for shared memory *)
+    total_used: int; (* total amount of swap space used *)
+    wasted: int;     (* amount of swap space wasted *)
+    END;
+
+&lt;*EXTERNAL*&gt; VAR swapu: struct_swapu_t;
+
+TYPE
+  struct_swfail_stat = RECORD
+    data_ex_fail: int;
+    stack_ex_fail: int;
+    fork_fail: int;
+    exec_fail: int;
+    uarea_fail: int;
+    lowswap_fail: int;
+    frag_fail: int;
+    text_dmap_fail: int;
+    text_swap_fail: int;
+    shm_dmap_fail: int;
+    shm_swap_fail: int;
+    END;
+
+&lt;*EXTERNAL*&gt; VAR
+  maxtsiz, maxdsiz, maxssiz: int;
+  availswap, availvas: int;
+  swapfrag: int;
+  maxretry: int;
+
+END Udmap.
+</PRE>
+</inInterface>
+<HR>
+<A NAME="x1">interface Utypes is in:
+</A><UL>
+<LI><A HREF="../aix-3-2/Utypes.i3.html#0TOP0">unix/src/aix-3-2/Utypes.i3</A>
+<LI><A HREF="../aix-ps2-1-2/Utypes.i3.html#0TOP0">unix/src/aix-ps2-1-2/Utypes.i3</A>
+<LI><A HREF="../freebsd-1/Utypes.i3.html#0TOP0">unix/src/freebsd-1/Utypes.i3</A>
+<LI><A HREF="../freebsd-2/Utypes.i3.html#0TOP0">unix/src/freebsd-2/Utypes.i3</A>
+<LI><A HREF="../hpux-7-0/Utypes.i3.html#0TOP0">unix/src/hpux-7-0/Utypes.i3</A>
+<LI><A HREF="../ibm-4-3/Utypes.i3.html#0TOP0">unix/src/ibm-4-3/Utypes.i3</A>
+<LI><A HREF="../irix-5.2/Utypes.i3.html#0TOP0">unix/src/irix-5.2/Utypes.i3</A>
+<LI><A HREF="../linux/Utypes.i3.html#0TOP0">unix/src/linux/Utypes.i3</A>
+<LI><A HREF="../osf-1.ALPHA_OSF/Utypes.i3.html#0TOP0">unix/src/osf-1.ALPHA_OSF/Utypes.i3</A>
+<LI><A HREF="../osf-1.DS3100/Utypes.i3.html#0TOP0">unix/src/osf-1.DS3100/Utypes.i3</A>
+<LI><A HREF="../solaris-2-x/Utypes.i3.html#0TOP0">unix/src/solaris-2-x/Utypes.i3</A>
+<LI><A HREF="../sunos-4-x/Utypes.i3.html#0TOP0">unix/src/sunos-4-x/Utypes.i3</A>
+<LI><A HREF="../sysv-4.0/Utypes.i3.html#0TOP0">unix/src/sysv-4.0/Utypes.i3</A>
+<LI><A HREF="../ultrix-3-1.AP3000/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.AP3000/Utypes.i3</A>
+<LI><A HREF="../ultrix-3-1.ARM/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.ARM/Utypes.i3</A>
+<LI><A HREF="Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.DS3100/Utypes.i3</A>
+<LI><A HREF="../ultrix-3-1.NEXT/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.NEXT/Utypes.i3</A>
+<LI><A HREF="../ultrix-3-1.SEQUENT/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.SEQUENT/Utypes.i3</A>
+<LI><A HREF="../ultrix-3-1.SUN3/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.SUN3/Utypes.i3</A>
+<LI><A HREF="../ultrix-3-1.SUN386/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.SUN386/Utypes.i3</A>
+<LI><A HREF="../ultrix-3-1.UMAX/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.UMAX/Utypes.i3</A>
+<LI><A HREF="../ultrix-3-1.VAX/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.VAX/Utypes.i3</A>
+</UL>
+<P>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

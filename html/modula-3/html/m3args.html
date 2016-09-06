@@ -1,0 +1,99 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: Runtime arguments </TITLE>
+</HEAD>
+<BODY BGCOLOR="#ffffff" VLINK="#006633">
+
+<H2>Runtime arguments</H2>
+<P>
+
+Command line arguments given to Modula-3 programs are divided in two
+groups.  <EM>Runtime parameters</EM> are those that start with the characters
+<B>@M3</B>.  They are reserved for the Modula-3 runtime and are accessible
+via the
+<A HREF="../../m3sources/html/runtime/src/common/RTParams.i3.html"><TT>RTParams</TT></A>
+interface.  The others are
+<EM>program arguments</EM> and are accessible via the
+<A HREF="../../m3sources/html/params/src/Params.i3.html"><TT>Params</TT></A>
+interface.
+<P>
+
+The following runtime parameters are recognized today;
+others are simply ignored.
+<UL>
+<LI> <B>@M3nogc</B> turns the garbage collector off.
+<P>
+
+<LI> <B>@M3showheap=</B><EM>name</EM> activates the logging of
+heap allocation and garbage collection events.  The program forks a
+process running the <EM>name</EM> program, and sends it these events as
+they occur.  If "<TT>=</TT><EM>name</EM>" is ommitted, the
+<A HREF="showheap.html"><TT>showheap</TT></A>
+program is forked (it is part of the <TT>tools</TT> archive); this
+program displays the status of the heap pages.
+<P>
+
+<LI> <B>@M3showthread=</B><EM>name</EM> activates the logging of
+thread switching events.  The program forks a
+process running the <EM>name</EM> program, and sends it these events as
+they occur.  If "<TT>=</TT><EM>name</EM>" is ommitted, the
+<A HREF="showthread.html"><TT>showthread</TT></A>
+program is forked (it is part of the <TT>tools</TT> archive); this
+program displays the status of the various threads.
+<P>
+
+<LI> <B>@M3shownew=</B><EM>name</EM> activates the logging of
+per-type heap allocations.  The program forks a
+process running the <EM>name</EM> program, and periodically sends it
+the number and sizes of recently allocated objects.
+If "<TT>=</TT><EM>name</EM>" is ommitted, the
+<A HREF="shownew.html"><TT>shownew</TT></A>
+program is forked (it is part of the <TT>tools</TT> archive); this
+program displays one of several bar graphs.
+<P>
+
+<LI> <B>@M3update=</B><EM>X</EM> sets the interval between
+shownew updates to <EM>X</EM> seconds.  <EM>X</EM> must be
+an integer.
+<P>
+
+<LI> <B>@M3noincremental</B>  disables incremental garbage collection;
+   uses stop-and-copy instead.
+<P>
+
+<LI> <B>@M3nogenerational</B> disables generational garbage collection.
+<P>
+
+<LI> <B>@M3novm</B> disables the use of
+<A HREF="gc.html">VM protection by the garbage collector</A>.
+On some platforms, <B>@M3novm</B> is essential for
+<A HREF="debugging.html#GC">debugging</A>.
+<B>@M3novm</B> implies <B>@M3noincremental</B> and <B>@M3nogenerational</B>.
+<P>
+
+<LI> <B>@M3paranoidgc</B> checks the heap for sanity after each collection.
+<P>
+
+<LI> <B>@M3stackdump</B> causes checked runtime errors to produce a stack
+dump on <TT>stderr</TT>.  On systems with stack walkers (DS3100 and ALPHA_OSF)
+the dump includes exception and procedure frames.  On other systems only
+the exception frames are dumped.
+
+</UL>
+<P>
+
+<HR>
+<A HREF="home.html">[Modula-3 home page]</A>
+<P>
+<A HREF="mailto:m3-request@src.dec.com">
+<ADDRESS>m3-request@src.dec.com</ADDRESS></A>
+<PRE>
+Last modified on Thu Jan  4 11:08:03 PST 1996 by heydon 
+     modified on Thu Jun  1 08:16:06 PDT 1995 by kalsow 
+     modified on Thu Jan  7 18:40:57 PST 1993 by muller 
+</PRE>
+
+Copyright (C) 1992, 1996, Digital Equipment Corporation. All rights reserved.<BR>
+See the <A HREF="http://www.research.digital.com/SRC/m3sources/html/COPYRIGHT.html">COPYRIGHT</A> for a full description.
+</BODY>
+</HTML>

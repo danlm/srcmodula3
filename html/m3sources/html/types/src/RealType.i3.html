@@ -1,0 +1,64 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: types/src/RealType.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>types/src/RealType.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE> An <CODE>RealType.T</CODE> is a <CODE>REAL</CODE>.  This interface is intended to be
+   used to instantiate generic interfaces and modules such as <CODE>Table</CODE>
+   and <CODE>List</CODE>. 
+
+<P><PRE>INTERFACE <interface><A HREF="RealType.m3.html">RealType</A></interface>;
+
+IMPORT <A HREF="../../word/src/Word.i3.html">Word</A>;
+
+TYPE T = REAL;
+
+CONST Brand = &quot;Real&quot;;
+
+PROCEDURE <A HREF="RealType.m3.html#Equal">Equal</A>(a, b: T): BOOLEAN;
+</PRE><BLOCKQUOTE><EM> Return <CODE>a = b</CODE>.  The result is undefined if either <CODE>a</CODE> or <CODE>b</CODE> is
+   an <CODE>NaN</CODE> (not a number) value. </EM></BLOCKQUOTE><PRE>
+
+PROCEDURE <A HREF="RealType.m3.html#Hash">Hash</A>(a: T): Word.T;
+</PRE><BLOCKQUOTE><EM> Return a hash value derived from <CODE>a</CODE>.  The result is undefined if
+   either <CODE>a</CODE> or <CODE>b</CODE> is an <CODE>NaN</CODE> (not a number) value. </EM></BLOCKQUOTE><PRE>
+
+PROCEDURE <A HREF="RealType.m3.html#Compare">Compare</A>(a, b: T): [-1..1];
+</PRE><BLOCKQUOTE><EM> Return <CODE>-1</CODE> if <CODE>a &lt; b</CODE>, <CODE>0</CODE> if <CODE>a = b</CODE>, or <CODE>+1</CODE> if <CODE>a &gt; b</CODE>.
+   The result is undefined if either <CODE>a</CODE> or <CODE>b</CODE> is an <CODE>NaN</CODE> (not a
+   number) value. </EM></BLOCKQUOTE><PRE>
+
+END RealType.
+</PRE>
+</inInterface>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

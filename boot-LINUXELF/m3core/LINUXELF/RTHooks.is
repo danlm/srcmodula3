@@ -1,0 +1,346 @@
+	.file	"RTHooks.ic"
+	.version	"01.01"
+gcc2_compiled.:
+
+.section	.text
+.L_text_b:
+	.previous
+
+.section	.data
+.L_data_b:
+	.previous
+
+.section	.rodata
+.L_rodata_b:
+	.previous
+
+.section	.bss
+.L_bss_b:
+	.previous
+
+.section	.debug_sfnames
+.L_sfnames_b:
+	.string	"/tmp_mnt/swindle/r/misc1/m3-export/new/boot-LINUXELF/m3core/LINUXELF/"
+	.previous
+
+.section	.line
+.L_line_b:
+	.4byte	.L_line_e-.L_line_b
+	.4byte	.L_text_b
+	.previous
+
+.section	.debug_srcinfo
+.L_srcinfo_b:
+	.4byte	.L_line_b
+	.4byte	.L_sfnames_b
+	.4byte	.L_text_b
+	.4byte	.L_text_e
+	.4byte	0xffffffff
+	.previous
+
+.section	.debug_pubnames
+	.4byte	.L_debug_b
+	.previous
+
+.section	.debug_aranges
+	.4byte	.L_debug_b
+	.previous
+
+.section	.debug
+.L_debug_b:
+.L_D1:
+	.4byte	.L_D1_e-.L_D1
+	.2byte	0x11
+	.2byte	0x12
+	.4byte	.L_D2
+	.2byte	0x38
+	.string	"RTHooks.ic"
+	.2byte	0x258
+	.string	"SRC Modula-3 2.6.3"
+	.2byte	0x136
+	.4byte	0x1
+	.2byte	0x111
+	.4byte	.L_text_b
+	.2byte	0x121
+	.4byte	.L_text_e
+	.2byte	0x106
+	.4byte	.L_line_b
+	.2byte	0x1b8
+	.string	"/tmp_mnt/swindle/r/misc1/m3-export/new/boot-LINUXELF/m3core/LINUXELF"
+	.2byte	0x8006
+	.4byte	.L_sfnames_b
+	.2byte	0x8016
+	.4byte	.L_srcinfo_b
+.L_D1_e:
+	.previous
+
+.globl MI_RTHooks
+.data
+	.align 4
+	.type	 MI_RTHooks,@object
+	.size	 MI_RTHooks,908
+MI_RTHooks:
+	.long MI_RTHooks+736
+	.long MI_RTHooks+112
+	.zero	112
+	.long -2020873848
+.byte 23
+.byte 114
+.byte 79
+.byte 158
+.byte 159
+.byte 155
+.byte 196
+.byte 25
+	.long 1
+	.zero	4
+	.long 8
+	.long 4
+	.zero	8
+	.long 1
+	.long 1
+	.zero	4
+	.long MI_RTHooks+880
+	.zero	4
+	.long MI_RTHooks+885
+	.zero	28
+	.long MI_RTHooks+889
+	.long MI_RTHooks+216
+	.zero	8
+	.long 562018850
+.byte 216
+.byte 255
+.byte 19
+.byte 46
+.byte 250
+.byte 69
+.byte 108
+.byte 15
+	.long 1
+	.zero	4
+	.long 8
+	.long 4
+	.zero	8
+	.long 1
+	.long 4
+	.zero	4
+	.long MI_RTHooks+853
+	.zero	4
+	.long MI_RTHooks+858
+	.zero	28
+	.long MI_RTHooks+862
+	.long MI_RTHooks+320
+	.zero	8
+	.long 1355119930
+.byte 202
+.byte 34
+.byte 107
+.byte 81
+.byte 240
+.byte 95
+.byte 174
+.byte 1
+	.long 1
+	.zero	4
+	.long 4
+	.long 4
+	.zero	20
+	.long MI_RTHooks+834
+	.zero	4
+	.long MI_RTHooks+836
+	.zero	28
+	.long MI_RTHooks+838
+	.long MI_RTHooks+424
+	.zero	8
+	.long 755546716
+.byte 119
+.byte 133
+.byte 99
+.byte 55
+.byte 43
+.byte 63
+.byte 107
+.byte 26
+	.long 1
+	.zero	4
+	.long 1
+	.long 1
+	.zero	20
+	.long MI_RTHooks+814
+	.zero	4
+	.long MI_RTHooks+816
+	.zero	28
+	.long MI_RTHooks+818
+	.long MI_RTHooks+528
+	.zero	8
+	.long 1786662552
+.byte 42
+.byte 137
+.byte 116
+.byte 103
+.byte 178
+.byte 199
+.byte 10
+.byte 13
+	.zero	8
+	.long 4
+	.long 4
+	.zero	20
+	.long MI_RTHooks+797
+	.zero	36
+	.long MI_RTHooks+799
+	.long MI_RTHooks+632
+	.zero	8
+	.long 397642238
+.byte 151
+.byte 46
+.byte 124
+.byte 1
+.byte 105
+.byte 167
+.byte 207
+.byte 22
+	.zero	8
+	.long 1
+	.long 1
+	.zero	20
+	.long MI_RTHooks+779
+	.zero	36
+	.long MI_RTHooks+781
+	.zero	4
+	.ascii	"/proj/m3/pkg/runtime/src/common/RTHooks.i3"
+	.zero	1
+.byte 16
+.byte 0
+	.ascii	"RTHooks.PtrChar"
+	.zero	1
+.byte 14
+.byte 0
+	.ascii	"RTHooks.PtrInt"
+	.zero	1
+.byte 16
+.byte 0
+.byte 1
+.byte 4
+	.ascii	"RTHooks.RefChar"
+	.zero	1
+.byte 14
+.byte 0
+.byte 1
+.byte 7
+	.ascii	"RTHooks.RefInt"
+	.zero	1
+.byte 24
+.byte 1
+.byte 14
+.byte 0
+.byte 0
+.byte 2
+.byte 11
+.byte 1
+.byte 7
+	.ascii	"RTHooks.IntBuffer"
+	.zero	1
+.byte 24
+.byte 1
+.byte 16
+.byte 0
+.byte 0
+.byte 2
+.byte 11
+.byte 1
+.byte 4
+	.ascii	"RTHooks.CharBuffer"
+	.zero	1
+
+.section	.debug_pubnames
+	.4byte	.L_P0
+	.string	"MI_RTHooks"
+	.previous
+
+.section	.debug
+.L_D3:
+	.4byte	.L_D3_e-.L_D3
+	.2byte	0x13
+	.2byte	0x12
+	.4byte	.L_D4
+	.set	.L_T58,.L_D3
+	.2byte	0xb6
+	.4byte	0x38c
+.L_D3_e:
+.L_D5:
+	.4byte	0x4
+.L_P0:
+.L_D4:
+	.4byte	.L_D4_e-.L_D4
+	.2byte	0x7
+	.2byte	0x12
+	.4byte	.L_D6
+	.2byte	0x38
+	.string	"MI_RTHooks"
+	.2byte	0x72
+	.4byte	.L_T58
+	.2byte	0x23
+	.2byte	.L_l4_e-.L_l4
+.L_l4:
+	.byte	0x3
+	.4byte	MI_RTHooks
+.L_l4_e:
+.L_D4_e:
+	.previous
+
+.section	.debug
+.L_D6:
+	.4byte	.L_D6_e-.L_D6
+	.align 4
+.L_D6_e:
+.L_D2:
+	.previous
+
+.section	.text
+.L_text_e:
+	.previous
+
+.section	.data
+.L_data_e:
+	.previous
+
+.section	.rodata
+.L_rodata_e:
+	.previous
+
+.section	.bss
+.L_bss_e:
+	.previous
+
+.section	.line
+.L_line_last:
+	.4byte	0x0
+	.2byte	0xffff
+	.4byte	.L_text_e-.L_text_b
+.L_line_e:
+	.previous
+
+.section	.debug_srcinfo
+	.4byte	.L_line_last-.L_line_b
+	.4byte	0xffffffff
+	.previous
+
+.section	.debug_pubnames
+	.4byte	0x0
+	.string	""
+	.previous
+
+.section	.debug_aranges
+	.4byte	.L_text_b
+	.4byte	.L_text_e-.L_text_b
+	.4byte	.L_data_b
+	.4byte	.L_data_e-.L_data_b
+	.4byte	.L_rodata_b
+	.4byte	.L_rodata_e-.L_rodata_b
+	.4byte	.L_bss_b
+	.4byte	.L_bss_e-.L_bss_b
+	.4byte	0x0
+	.4byte	0x0
+	.previous
+	.ident	"GCC: (GNU) 2.6.3"

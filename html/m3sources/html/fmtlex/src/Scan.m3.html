@@ -1,0 +1,130 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: fmtlex/src/Scan.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>fmtlex/src/Scan.m3</H2></A><HR>
+<inModule>
+<PRE><A HREF="../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM>								</EM></BLOCKQUOTE><PRE>
+</PRE> NOTE: This is a quick and dirty implementation.  Please
+    rewrite me to avoid all the allocations.  
+
+<P><PRE>MODULE <module><implements><A HREF="Scan.i3.html">Scan</A></implements></module>;
+
+IMPORT <A HREF="../../rw/src/Common/Rd.i3.html">Rd</A>, <A HREF="../../thread/src/Common/Thread.i3.html">Thread</A>, <A HREF="#x1">FloatMode</A>, <A HREF="Lex.i3.html">Lex</A>, <A HREF="../../text/src/Text.i3.html">Text</A>, <A HREF="../../rw/src/Common/TextRd.i3.html">TextRd</A>, <A HREF="../../text/src/TextF.i3.html">TextF</A>, <A HREF="../../word/src/Word.i3.html">Word</A>;
+&lt;*FATAL Rd.Failure, Thread.Alerted*&gt;
+
+PROCEDURE <A NAME="ScanWord"><procedure>ScanWord</procedure></A> (txt: TEXT): Rd.T RAISES {Lex.Error} =
+  (* Ensure that &quot;txt&quot; contains exactly on non-blank substring,
+     and return its span [start..stop) *)
+  VAR len := LAST (txt^);  x := 0;  start, stop: INTEGER;
+  BEGIN
+    (* skip leading white space *)
+    WHILE (x &lt; len) AND (txt[x] IN Lex.Blanks) DO INC (x); END;
+    start := x;
+
+    (* skip the non-blank word *)
+    WHILE (x &lt; len) AND (NOT txt[x] IN Lex.Blanks) DO INC (x); END;
+    stop := x;
+
+    (* verify that the rest of the string is blank *)
+    WHILE (x &lt; len) DO
+      IF (NOT txt[x] IN Lex.Blanks) THEN RAISE Lex.Error; END;
+      INC (x);
+    END;
+
+    RETURN TextRd.New (Text.Sub (txt, start, stop-start));
+  END ScanWord;
+
+PROCEDURE <A NAME="Bool"><procedure>Bool</procedure></A>(txt: TEXT): BOOLEAN RAISES {Lex.Error} =
+  VAR rd := ScanWord(txt); res := Lex.Bool(rd);
+  BEGIN
+    IF NOT Rd.EOF(rd) THEN RAISE Lex.Error END;
+    RETURN res
+  END Bool;
+
+PROCEDURE <A NAME="Int"><procedure>Int</procedure></A>(txt: TEXT; defaultBase: [2..16]): INTEGER
+    RAISES {Lex.Error, FloatMode.Trap} =
+  VAR rd := ScanWord(txt); res := Lex.Int(rd, defaultBase);
+  BEGIN
+    IF NOT Rd.EOF(rd) THEN RAISE Lex.Error END;
+    RETURN res
+  END Int;
+
+PROCEDURE <A NAME="Unsigned"><procedure>Unsigned</procedure></A>(txt: TEXT; defaultBase: [2..16]): Word.T
+    RAISES {Lex.Error, FloatMode.Trap} =
+  VAR rd := ScanWord(txt); res := Lex.Unsigned(rd, defaultBase);
+  BEGIN
+    IF NOT Rd.EOF(rd) THEN RAISE Lex.Error END;
+    RETURN res
+  END Unsigned;
+
+PROCEDURE <A NAME="Real"><procedure>Real</procedure></A>(txt: TEXT): REAL
+  RAISES {Lex.Error, FloatMode.Trap} =
+  VAR rd := ScanWord(txt); res := Lex.Real(rd);
+  BEGIN
+    IF NOT Rd.EOF(rd) THEN RAISE Lex.Error END;
+    RETURN res
+  END Real;
+
+PROCEDURE <A NAME="LongReal"><procedure>LongReal</procedure></A>(txt: TEXT): LONGREAL
+  RAISES {Lex.Error, FloatMode.Trap} =
+  VAR rd := ScanWord(txt); res := Lex.LongReal(rd);
+  BEGIN
+    IF NOT Rd.EOF(rd) THEN RAISE Lex.Error END;
+    RETURN res
+  END LongReal;
+
+PROCEDURE <A NAME="Extended"><procedure>Extended</procedure></A>(txt: TEXT): EXTENDED
+  RAISES {Lex.Error, FloatMode.Trap} =
+  VAR rd := ScanWord(txt); res := Lex.Extended(rd);
+  BEGIN
+    IF NOT Rd.EOF(rd) THEN RAISE Lex.Error END;
+    RETURN res
+  END Extended;
+
+BEGIN
+END Scan.
+</PRE>
+</inModule>
+<HR>
+<A NAME="x1">interface FloatMode is in:
+</A><UL>
+<LI><A HREF="../../float/src/DS3100/FloatMode.i3.html#0TOP0">float/src/DS3100/FloatMode.i3</A>
+<LI><A HREF="../../float/src/IEEE-default/FloatMode.i3.html#0TOP0">float/src/IEEE-default/FloatMode.i3</A>
+<LI><A HREF="../../float/src/IRIX5/FloatMode.i3.html#0TOP0">float/src/IRIX5/FloatMode.i3</A>
+<LI><A HREF="../../float/src/SOLsun/FloatMode.i3.html#0TOP0">float/src/SOLsun/FloatMode.i3</A>
+<LI><A HREF="../../float/src/SPARC/FloatMode.i3.html#0TOP0">float/src/SPARC/FloatMode.i3</A>
+<LI><A HREF="../../float/src/SUN386/FloatMode.i3.html#0TOP0">float/src/SUN386/FloatMode.i3</A>
+<LI><A HREF="../../float/src/VAX/FloatMode.i3.html#0TOP0">float/src/VAX/FloatMode.i3</A>
+</UL>
+<P>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

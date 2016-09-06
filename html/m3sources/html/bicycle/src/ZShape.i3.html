@@ -1,0 +1,87 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: bicycle/src/ZShape.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>bicycle/src/ZShape.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM> ZShape.i3, coded Fri Oct 31 11:24:53 1986 by cgn </EM></BLOCKQUOTE><PRE>
+
+&lt;*PRAGMA LL*&gt;
+</PRE> A <CODE>ZShape.T</CODE> is a parent window with overlapping non-rectangular
+   child windows.  This generalizes ZSplit by refining the notion
+   of domain to exclude bits that the child doesn't want. 
+   
+<P><PRE>INTERFACE <interface><A HREF="ZShape.m3.html">ZShape</A></interface>;
+
+IMPORT <A HREF="../../ui/src/vbt/VBT.i3.html">VBT</A>, <A HREF="../../geometry/src/Region.i3.html">Region</A>, <A HREF="../../ui/src/split/ZSplit.i3.html">ZSplit</A>;
+
+TYPE
+  <A HREF="ZShape.m3.html#T">T</A> &lt;: ZSplit.T;
+
+PROCEDURE <A HREF="ZShape.m3.html#New">New</A>(
+    bg: VBT.T := NIL;
+    saveBits := FALSE;
+    parlim: INTEGER := -1)
+    : T; &lt;* LL &lt;= VBT.mu *&gt;
+</PRE><BLOCKQUOTE><EM> <CODE>New(...)</CODE> is equivalent to <CODE>NEW(T).init(...)</CODE>. </EM></BLOCKQUOTE><PRE>
+</PRE> \subsubsection{Getting domains} 
+
+<P>
+<P><PRE>PROCEDURE <A HREF="ZShape.m3.html#GetDomain">GetDomain</A>(ch: VBT.T): Region.T;
+&lt;* LL.sup = VBT.mu *&gt;
+</PRE><BLOCKQUOTE><EM> Return the effective domain of <CODE>ch</CODE>. </EM></BLOCKQUOTE><PRE>
+</PRE> \subsubsection{Restricting the domain to a region} 
+
+<P> You can supply procedures to control what portions of a child's
+   domain are excluded when the child is reshaped.  If you don't
+   supply a procedure, the child will be rectangular.  If you do,
+   the procedure can return a region whose bounding box is equal
+   to the offered rectangle. 
+
+<P><PRE>PROCEDURE SetRegionControl(
+    ch: VBT.T;
+    rc: RegionControl); &lt;* LL.sup = VBT.mu *&gt;
+</PRE><BLOCKQUOTE><EM> Set the region control object for the child <CODE>ch</CODE> to be <CODE>rc</CODE>.  </EM></BLOCKQUOTE><PRE>
+</PRE> Setting the RegionControl to NIL causes ch to be rectangular.  The
+   RegionControl will be called after a child call to NewShape, a call
+   to ZSplit.Move, a call to the ZSplit ReshapeControl procedure, or
+   after a change in the RegionControl. 
+
+<P><PRE>TYPE RegionControl = OBJECT METHODS
+  apply(ch:VBT.T; READONLY dom: Rect.T)
+  : Region.T &lt;* LL.sup = VBT.mu.ch *&gt;
+END;
+
+END ZShape.
+</PRE>
+</inInterface>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

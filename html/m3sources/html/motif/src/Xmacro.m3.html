@@ -1,0 +1,148 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: motif/src/Xmacro.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>motif/src/Xmacro.m3</H2></A><HR>
+<inModule>
+<PRE><A HREF="../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM>                                                           </EM></BLOCKQUOTE><PRE>
+</PRE>                                                           
+ Contributed by Harry George (hgeorge@eskimo.com), 5/16/95 
+
+<P><PRE>UNSAFE MODULE <module><implements><A HREF="Xmacro.i3.html">Xmacro</A></implements></module>;
+
+IMPORT <A HREF="../../X11R4/src/Common/Xt.i3.html">Xt</A>, <A HREF="../../C/src/Common/M3toC.i3.html">M3toC</A>, <A HREF="#x1">Cstring</A>;
+FROM <A HREF="../../C/src/Common/Ctypes.i3.html">Ctypes</A> IMPORT short, unsigned_short, char_star;
+</PRE>-----------------
+<PRE>PROCEDURE <A NAME="AddrVal"><procedure>AddrVal</procedure></A>(value:ADDRESS):Xt.ArgVal =
+BEGIN
+  RETURN LOOPHOLE(value,Xt.ArgVal);
+END AddrVal;
+</PRE>-----------------
+<PRE>PROCEDURE <A NAME="CharVal"><procedure>CharVal</procedure></A>(value:CHAR):Xt.ArgVal=
+  BEGIN
+    RETURN LOOPHOLE (ORD (value), Xt.ArgVal);
+    (* does this work on big-endian machines?? *)
+  END CharVal;
+</PRE>*** not portable to 64 bit machines *****
+PROCEDURE CharVal(value:CHAR):Xt.ArgVal=
+  VAR tmp: RECORD pad1:short; pad2:CHAR; val:CHAR; END;
+  BEGIN
+    tmp.pad1:=0; tmp.pad2:='\000'; tmp.val:=value;
+    RETURN LOOPHOLE(tmp, Xt.ArgVal);
+  END CharVal;
+***************************************
+
+<P>-----------------
+<PRE>PROCEDURE <A NAME="IntVal"><procedure>IntVal</procedure></A>(value:INTEGER):Xt.ArgVal=
+BEGIN
+  RETURN LOOPHOLE(value,Xt.ArgVal);
+END IntVal;
+</PRE>-----------------
+<PRE>PROCEDURE <A NAME="ShortVal"><procedure>ShortVal</procedure></A>(value:short):Xt.ArgVal=
+  BEGIN
+    RETURN LOOPHOLE (ORD (value), Xt.ArgVal);
+  END ShortVal;
+</PRE>*** not portable to 64 bit machines *****
+PROCEDURE ShortVal(value:short):Xt.ArgVal=
+  VAR tmp: RECORD pad:short; val:short; END;
+  BEGIN
+    tmp.pad:=0; tmp.val:=value;
+    RETURN LOOPHOLE(tmp, Xt.ArgVal);
+  END ShortVal;
+***************************************
+
+<P>-----------------
+<PRE>PROCEDURE <A NAME="TextVal"><procedure>TextVal</procedure></A>(value:TEXT):Xt.ArgVal=
+BEGIN
+  RETURN LOOPHOLE(M3toC.TtoS(value), Xt.ArgVal);
+END TextVal;
+</PRE>-----------------
+<PRE>PROCEDURE <A NAME="UShortVal"><procedure>UShortVal</procedure></A>(value:unsigned_short):Xt.ArgVal=
+  BEGIN
+    RETURN LOOPHOLE (ORD (value), Xt.ArgVal);
+  END UShortVal;
+</PRE>*** not portable to 64 bit machines *****
+PROCEDURE UShortVal(value:unsigned_short):Xt.ArgVal=
+  VAR tmp: RECORD pad:short; val:unsigned_short; END;
+  BEGIN
+    tmp.pad:=0; tmp.val:=value;
+    RETURN LOOPHOLE(tmp,Xt.ArgVal);
+  END UShortVal;
+***************************************
+
+<P>-----------------
+<PRE>PROCEDURE <A NAME="XtNewString"><procedure>XtNewString</procedure></A>(str:char_star):char_star =
+VAR
+  len:CARDINAL;
+  newstr:char_star;
+BEGIN
+  len:=Cstring.strlen(str);
+  newstr:=LOOPHOLE(Xt.Malloc(len+1),char_star);
+  EVAL Cstring.strncpy(newstr,str,len);
+  RETURN newstr;
+END XtNewString;
+</PRE>-----------------
+<PRE>BEGIN
+END Xmacro.
+</PRE>
+</inModule>
+<HR>
+<A NAME="x1">interface Cstring is in:
+</A><UL>
+<LI><A HREF="../../C/src/AIX386/Cstring.i3.html#0TOP0">C/src/AIX386/Cstring.i3</A>
+<LI><A HREF="../../C/src/ALPHA_OSF/Cstring.i3.html#0TOP0">C/src/ALPHA_OSF/Cstring.i3</A>
+<LI><A HREF="../../C/src/AP3000/Cstring.i3.html#0TOP0">C/src/AP3000/Cstring.i3</A>
+<LI><A HREF="../../C/src/ARM/Cstring.i3.html#0TOP0">C/src/ARM/Cstring.i3</A>
+<LI><A HREF="../../C/src/DS3100/Cstring.i3.html#0TOP0">C/src/DS3100/Cstring.i3</A>
+<LI><A HREF="../../C/src/FreeBSD/Cstring.i3.html#0TOP0">C/src/FreeBSD/Cstring.i3</A>
+<LI><A HREF="../../C/src/FreeBSD2/Cstring.i3.html#0TOP0">C/src/FreeBSD2/Cstring.i3</A>
+<LI><A HREF="../../C/src/HP300/Cstring.i3.html#0TOP0">C/src/HP300/Cstring.i3</A>
+<LI><A HREF="../../C/src/HPPA/Cstring.i3.html#0TOP0">C/src/HPPA/Cstring.i3</A>
+<LI><A HREF="../../C/src/IBMR2/Cstring.i3.html#0TOP0">C/src/IBMR2/Cstring.i3</A>
+<LI><A HREF="../../C/src/IBMRT/Cstring.i3.html#0TOP0">C/src/IBMRT/Cstring.i3</A>
+<LI><A HREF="../../C/src/IRIX5/Cstring.i3.html#0TOP0">C/src/IRIX5/Cstring.i3</A>
+<LI><A HREF="../../C/src/LINUX/Cstring.i3.html#0TOP0">C/src/LINUX/Cstring.i3</A>
+<LI><A HREF="../../C/src/LINUXELF/Cstring.i3.html#0TOP0">C/src/LINUXELF/Cstring.i3</A>
+<LI><A HREF="../../C/src/NEXT/Cstring.i3.html#0TOP0">C/src/NEXT/Cstring.i3</A>
+<LI><A HREF="../../C/src/NT386/Cstring.i3.html#0TOP0">C/src/NT386/Cstring.i3</A>
+<LI><A HREF="../../C/src/OKI/Cstring.i3.html#0TOP0">C/src/OKI/Cstring.i3</A>
+<LI><A HREF="../../C/src/SEQUENT/Cstring.i3.html#0TOP0">C/src/SEQUENT/Cstring.i3</A>
+<LI><A HREF="../../C/src/SOLgnu/Cstring.i3.html#0TOP0">C/src/SOLgnu/Cstring.i3</A>
+<LI><A HREF="../../C/src/SOLsun/Cstring.i3.html#0TOP0">C/src/SOLsun/Cstring.i3</A>
+<LI><A HREF="../../C/src/SPARC/Cstring.i3.html#0TOP0">C/src/SPARC/Cstring.i3</A>
+<LI><A HREF="../../C/src/SUN3/Cstring.i3.html#0TOP0">C/src/SUN3/Cstring.i3</A>
+<LI><A HREF="../../C/src/SUN386/Cstring.i3.html#0TOP0">C/src/SUN386/Cstring.i3</A>
+<LI><A HREF="../../C/src/UMAX/Cstring.i3.html#0TOP0">C/src/UMAX/Cstring.i3</A>
+<LI><A HREF="../../C/src/VAX/Cstring.i3.html#0TOP0">C/src/VAX/Cstring.i3</A>
+</UL>
+<P>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

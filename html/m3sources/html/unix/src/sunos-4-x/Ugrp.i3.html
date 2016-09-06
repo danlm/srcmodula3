@@ -1,0 +1,95 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: unix/src/sunos-4-x/Ugrp.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>unix/src/sunos-4-x/Ugrp.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM>                                                            </EM></BLOCKQUOTE><PRE>
+</PRE>                                                            
+ Originally submitted on Fri, 22 Jul 1994 16:42:53 GMT      
+   by jredford@lehman.com (John Redford)                    
+
+<P><PRE>INTERFACE <interface>Ugrp</interface>;
+
+FROM <A HREF="../../../C/src/Common/Ctypes.i3.html">Ctypes</A> IMPORT char_star,char_star_star;
+FROM <A HREF="#x1">Utypes</A> IMPORT gid_t;
+</PRE>** &lt;grp.h&gt; **
+
+<P><PRE>TYPE
+  struct_group = RECORD
+    gr_name:    char_star;
+    gr_passwd:  char_star;
+    gr_gid:     gid_t;
+    gr_mem:     char_star_star;
+  END;
+
+  struct_group_star = UNTRACED REF struct_group;
+</PRE>** getgrent, getgrgid, getgrnam, setgrent, endgrent
+     - get group file entry **
+
+<P><PRE>&lt;*EXTERNAL*&gt; PROCEDURE getgrent(): struct_group_star;
+&lt;*EXTERNAL*&gt; PROCEDURE getgrgid(gid: gid_t): struct_group_star;
+&lt;*EXTERNAL*&gt; PROCEDURE getgrnam(name: char_star): struct_group_star;
+&lt;*EXTERNAL*&gt; PROCEDURE setgrent();
+&lt;*EXTERNAL*&gt; PROCEDURE endgrent();
+
+END Ugrp.
+</PRE>
+</inInterface>
+<HR>
+<A NAME="x1">interface Utypes is in:
+</A><UL>
+<LI><A HREF="../aix-3-2/Utypes.i3.html#0TOP0">unix/src/aix-3-2/Utypes.i3</A>
+<LI><A HREF="../aix-ps2-1-2/Utypes.i3.html#0TOP0">unix/src/aix-ps2-1-2/Utypes.i3</A>
+<LI><A HREF="../freebsd-1/Utypes.i3.html#0TOP0">unix/src/freebsd-1/Utypes.i3</A>
+<LI><A HREF="../freebsd-2/Utypes.i3.html#0TOP0">unix/src/freebsd-2/Utypes.i3</A>
+<LI><A HREF="../hpux-7-0/Utypes.i3.html#0TOP0">unix/src/hpux-7-0/Utypes.i3</A>
+<LI><A HREF="../ibm-4-3/Utypes.i3.html#0TOP0">unix/src/ibm-4-3/Utypes.i3</A>
+<LI><A HREF="../irix-5.2/Utypes.i3.html#0TOP0">unix/src/irix-5.2/Utypes.i3</A>
+<LI><A HREF="../linux/Utypes.i3.html#0TOP0">unix/src/linux/Utypes.i3</A>
+<LI><A HREF="../osf-1.ALPHA_OSF/Utypes.i3.html#0TOP0">unix/src/osf-1.ALPHA_OSF/Utypes.i3</A>
+<LI><A HREF="../osf-1.DS3100/Utypes.i3.html#0TOP0">unix/src/osf-1.DS3100/Utypes.i3</A>
+<LI><A HREF="../solaris-2-x/Utypes.i3.html#0TOP0">unix/src/solaris-2-x/Utypes.i3</A>
+<LI><A HREF="Utypes.i3.html#0TOP0">unix/src/sunos-4-x/Utypes.i3</A>
+<LI><A HREF="../sysv-4.0/Utypes.i3.html#0TOP0">unix/src/sysv-4.0/Utypes.i3</A>
+<LI><A HREF="../ultrix-3-1.AP3000/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.AP3000/Utypes.i3</A>
+<LI><A HREF="../ultrix-3-1.ARM/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.ARM/Utypes.i3</A>
+<LI><A HREF="../ultrix-3-1.DS3100/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.DS3100/Utypes.i3</A>
+<LI><A HREF="../ultrix-3-1.NEXT/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.NEXT/Utypes.i3</A>
+<LI><A HREF="../ultrix-3-1.SEQUENT/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.SEQUENT/Utypes.i3</A>
+<LI><A HREF="../ultrix-3-1.SUN3/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.SUN3/Utypes.i3</A>
+<LI><A HREF="../ultrix-3-1.SUN386/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.SUN386/Utypes.i3</A>
+<LI><A HREF="../ultrix-3-1.UMAX/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.UMAX/Utypes.i3</A>
+<LI><A HREF="../ultrix-3-1.VAX/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.VAX/Utypes.i3</A>
+</UL>
+<P>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

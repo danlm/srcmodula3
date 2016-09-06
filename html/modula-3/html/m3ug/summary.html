@@ -1,0 +1,267 @@
+<HTML>
+<HEAD>
+<TITLE>1995 Modula-3 Users Group Meeting</TITLE>
+</HEAD>
+<BODY BGCOLOR="#ffffff" VLINK="#006633">
+
+<H1>1995
+<A HREF="http://www.research.digital.com/SRC/modula-3/html/home.html">Modula-3</A>
+Users Group Meeting</H1>
+
+The fourth Modula-3 users group meeting was held Tuesday,
+17-Oct-95, at the OOPSLA '95 conference in Austin, Texas. There
+were about 30 people in attendence.<P>
+
+This year's meeting was organized by
+<A HREF="mailto:farshad@cmass.com">Farshad Nayeri</A> and
+<A HREF="mailto:gwyant@cloyd.east.sun.com">Geoff Wyant</A>.
+Contact either of them if you have any questions or are
+interested in future Modula-3 users group meetings. The
+<A HREF="announcement.html">eye-catching annoucement</A> for the 1995
+meeting is available on-line.<P>
+
+<H2>Presentations</H2>
+
+Here is a list of speakers and a summary of what they
+presented:
+
+<DL>
+<DT>
+<A HREF="http://www.research.digital.com/SRC/staff/heydon/bio.html"><B>Allan Heydon</B></A> -
+<A HREF="http://www.research.digital.com/SRC/home.html">Digital
+Systems Research Center (SRC)</A>
+<DD>
+<P>
+Allan discussed two topics: the status of Modula-3 at SRC, and
+the Juno-2 constraint-based drawing editor
+<A HREF="#Juno-2">[1]</A>.<P>
+
+The status of Modula-3 at SRC has changed recently because Bill
+Kalsow, the implementor of the SRC Modula-3 compiler, has left
+SRC for family reasons to live in Minnesota. But Modula-3 is
+still in use at SRC, and the SRC Modula-3 compiler has been
+stable and correctly compiling millions of lines of code for
+quite a while. Although active development within SRC of the
+Modula-3 development environment will cease, we are still
+answering <A HREF="mailto:m3-request@src.dec.com"><TT>m3-request</TT></A>
+mail, incorporating bug fixes and enhancements submitted by outside
+users, coordinating external efforts to port SRC Modula-3 to other
+platforms, and making new releases of the system.<P>
+
+Allan also gave a brief demonstration of Juno-2, a
+constraint-based drawing editor that he implemented with Greg
+Nelson. Juno-2 is written entirely in Modula-3. The demo was
+given on a Pentium-based laptop running LINUXELF. For more
+information on Juno-2, see the
+<A HREF="http://www.research.digital.com:80/SRC/juno-2/">Juno-2
+Home Page</A> and the article on the
+<A HREF="http://www.cmass.com/threads/1/threads.html#feature">Juno-2
+user interface</A> in the
+<A HREF="http://www.cmass.com/threads/1/threads.html">first issue</A> of
+<A HREF="http://www.cmass.com/threads">Threads</A>, the Modula-3
+newsletter.<P>
+
+<DT>
+<A HREF="http://ftp.cs.columbia.edu:80/~bm/"><B>Blair MacIntyre</B></A> -
+<A HREF="http://ftp.cs.columbia.edu:80/">Columbia University</A>
+<DD>
+<P>
+Blair gave a demonstration of his "augmented reality" system.
+Wearing a head-mounted display that reports three degrees of
+freedom (pitch, roll, and yaw), he showed a simple application
+in which the user is situated at the center of a compass, and
+various cities in the application's database appear as pyramids
+at the correct compass points (this is possible because the
+yaw value reported by the head-mounted display is an actual
+compass measurement).<P>
+
+The system is implemented in Modula-3 and
+<A HREF="http://www.research.digital.com/SRC/Obliq/Obliq.html">Obliq</A>,
+giving the programmer a toolkit that provides language-level
+support for building distributed virtual environments. The
+programmer can implement their applications in Obliq, Modula-3
+or any combination thereof since all toolkit objects (such as
+trackers and graphical objects) are accessible from both
+languages. Data distribution is almost entirely transparent,
+encouraging the programmer to make heavy use of threads
+communicating via shared objects.<P>
+
+His system is based on the distributed data-object paradigm for
+distributed shared memory. He implemented a <TT>SharedObj</TT>
+package, similar in flavour to Modula-3
+<A HREF="http://gatekeeper.dec.com/pub/DEC/SRC/research-reports/abstracts/src-rr-115.html">Network Objects</A>,
+which allows any data object to be declared as a shared object
+that is replicated fully in any process that is interested in
+it. These shared objects support asynchronous data propagation
+with atomic serializable updates, and asynchronous notification
+of updates. To accomplish this, he relied on existing Modula-3
+packages, especially Network Objects and
+<A HREF="http://www.research.digital.com/SRC/3D-animate/home.html">Obliq-3D</A>.<P>
+
+<DT>
+<A HREF="http://www.cs.washington.edu/homes/jdean/"><B>Jeff Dean</B></A> -
+<A HREF="http://www.cs.washington.edu/">University of Washington</A>
+<DD>
+<P>
+Jeff reported on the
+<A HREF="http://www.cs.washington.edu/research/projects/cecil/www/">Cecil/Vortex</A>
+work going on at the University of Washington to improve the
+performance of object-oriented programs through whole-program
+analysis <A HREF="#CecilGlobalOpt">[2]</A>. There was an OOPSLA
+technical talk on the system earlier that day
+<A HREF="#CecilReceiver">[3]</A>. Among other languages (Cecil,
+C++, and Java), they are also building a Modula-3 front-end for
+their Vortex compiler.<P>
+
+<DT>
+<A HREF="mailto:lps@cmass.com"><B>Lauren Schmitt</B></A> -
+<A HREF="http://www.cmass.com/">Critical Mass</A>
+<DD>
+<P>
+Lauren announced the formation of the company Critical Mass,
+which will be selling commercial versions of Modula-3. Their
+first product, Photon, is a development environment for
+Modula-3. The first release of Photon for Linux will be
+available sometime this December for $49.<P>
+
+<DT>
+<A HREF="http://froh.vlsi.polymtl.ca/dagenais/home/home.html"><B>Michel
+Dagenais</B></A> - Ecole Polytechnique de Montreal
+<DD>
+<P>
+Michel Dagenais mentioned several Modula-3 projects he and
+his students have been working on:<P>
+
+<DL>
+<DT><B>LINUXELF backend (work with Jerome Collin)</B>
+<DD>
+<P>
+Michel has recently released a native-code generator for
+the LINUXELF platform. At the meeting, Farshad Nayeri showed
+how quickly the backend compiled the Juno-2 application. Because
+it does not have to go through the filesystem and does not use
+gcc to generate code, compilers with native-code generators
+(namely, the LINUXELF and NT386 platforms) run significantly
+faster than other platforms. For example, a 486-based machine
+running Windows NT compiles code 4 times faster than an Alpha,
+even though the Alpha processor is twice as fast.<P>
+
+Michel reports that they still have some work to do on the
+LINUXELF backend:<P>
+
+<UL>
+<LI>generate position-independent code (for shared libraries)
+<LI>generate debugging symbols
+<LI>generate the equivalent of the current m3main.c file
+directly in the back-end
+</UL>
+<P>
+
+<DT><B><TT>m3build2</TT> + <TT>m3</TT> (work with Jerome Collin)</B>
+<DD>
+<P>
+M3build2 is the name of a program that integrates the current
+m3build program with the quake interpreter (used by m3build to
+evaluate m3makefiles). Michel and Jerome are further integrating
+m3build2 with the m3 compiler itself into a single process.<P>
+
+As part of the M3 Lite project at SRC, Bill Kalsow had eventually
+hoped to integrate all these programs and to turn them into a
+server process that could cache the AST's of imported interfaces
+across builds. Michel thinks that he and Jerome may go as far as
+making such an M3 compiler server.<P>
+
+<DT><B>m3tohtml and htmltolatex (with Martin Gagnom)</B>
+<DD>
+<P>
+One nice feature of SRC Modula-3 is that interfaces are the
+man pages. The current m3totex program, written by Greg Nelson,
+can be used to convert a Modula-3 interface into a printed
+document. Bill Kalsow wrote a program called m3browser that
+serves up Modula-3 interfaces and implementations as Web pages.
+One problem with this approach is that the current interfaces
+contain limited amounts of embedded LaTeX code, which the
+m3browser program does not know how to format.<P>
+
+Michel and Martin are converting all the current Modula-3
+interfaces to use HTML tags instead of LaTeX. They are also
+implementing tools based on m3totex and m3browser.
+The m3tohtml program converts a Modula-3 interface to HTML;
+the htmltolatex program can then be used to produce printed
+output. These tools will improve the format of the Modula-3
+on-line documentation.<P>
+
+<DT><B>Modula-3 port to OS/2 (with Louis Dominique Dubeau)</B>
+<DD>
+<P>
+Louis is porting Modula-3 to OS/2. This does not include a port
+of Trestle, the Modula-3 graphics/window system. The port should
+be complete very soon.<P>
+
+<DT><B>CanvasVBT (with Benoit Poirier)</B>
+<DD>
+<P>
+A CanvasVBT is a Trestle window that visualizes a display list.
+A display list represents a sequence of graphics operations; they
+have a program for converting PostScript to this representation.
+They also have a simple direct-manipulation editor for
+CanvasVBT's.<P>
+
+<DT><B>Modula-3 Development Environment for Novices</B>
+<DD>
+<P>
+Michel has been working on customizing emacs to create a
+Modula-3 environment that will be easier for novices to use.
+For example, he has menu commands for:<P>
+
+<UL>
+<LI>invoking m3build (with optional profiling and coverage analysis)
+<LI>running a program (with option of running showheap, shownew, etc.)
+<LI>easily searching the on-line interface documentation and
+    Modula-3 language definition
+<LI>pretty-printing Modula-3 code
+<LI>showing a FormsVBT form
+</UL>
+<P>
+
+In the first two cases, the options are selected through
+a GUI interface with checkboxes.<P>
+</DL>
+</DL>
+
+<H2>References</H2>
+
+<A NAME="Juno-2">[1]</A>
+"<A HREF="http://gatekeeper.dec.com/pub/DEC/SRC/research-reports/abstracts/src-rr-131a.html">The Juno-2 Constraint-Based Drawing Editor</A>",
+Allan Heydon and Greg Nelson,
+Research Report 131a,
+Systems Research Center,
+Digital Equipment Corporation.
+<P>
+
+<A NAME="CecilGlobalOpt">[2]</A>
+<A HREF="http://www.cs.washington.edu/research/projects/cecil/www/hierarchy.html">Optimization
+of Object-Oriented Programs Using Static Class Hierarchy Analysis</A>,
+Jeffrey Dean, David Grove, and Craig Chambers.
+In <EM>Proceedings of the European Conference on Object-Oriented Programming (ECOOP '95)</EM>,
+&Aring;rhus, Denmark,
+August 1995.
+<P>
+
+<A NAME="CecilReceiver">[3]</A>
+"<A HREF="http://www.cs.washington.edu/research/projects/cecil/www/profiles.html">Profile-guided receiver class prediction</A>",
+David Grove, Jeffrey Dean, Charles Garrett, and Craig Chambers,
+In <EM>Proceedings of the Conference on Object-Oriented Programming,
+Systems, Languages, and Applications (OOPSLA '95)</EM>,
+Austin, Texas,
+October, 1995,
+pgs. 108-123.
+<P>
+
+<PRE>
+Last modified on Tue Jun 11 09:17:38 PDT 1996 by heydon
+</PRE>
+Copyright (C) 1992, 1996, Digital Equipment Corporation. All rights reserved.<BR>
+See the <A HREF="http://www.research.digital.com/SRC/m3sources/html/COPYRIGHT.html">COPYRIGHT</A> for a full description.
+</BODY>
+</HTML>

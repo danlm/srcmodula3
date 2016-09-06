@@ -1,0 +1,139 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: dps/src/ButtonDLE.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>dps/src/ButtonDLE.m3</H2></A><HR>
+<inModule>
+<PRE><A HREF="../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+
+MODULE <module><implements><A HREF="ButtonDLE.i3.html">ButtonDLE</A></implements></module>;
+
+IMPORT <A HREF="DPS.i3.html">DPS</A>, <A HREF="DPSWindow.i3.html">DPSWindow</A>, <A HREF="../../fmtlex/src/Fmt.i3.html">Fmt</A>, <A HREF="wraps.i3.html">wraps</A>;
+
+CONST xMargin = 5.0;
+CONST yMargin = 3.0;
+CONST fontHeight = DPS.StandardFontPoints;
+CONST fontDescender = 2.0;
+
+CONST grayStrokeWidthText = &quot;4.0&quot;; (* Only 'inside' paints, due to clip. *)
+CONST colorStrokeWidthText = &quot;4.0&quot;; (* Only 'inside' paints, due to clip. *)
+
+PROCEDURE <A NAME="Repaint"><procedure>Repaint</procedure></A> (e: E; box: DPS.Box; &lt;*UNUSED*&gt; only: REFANY := NIL): TEXT =
+ VAR data: TEXT := &quot;&quot;;
+  BEGIN
+  IF NOT DPS.BoxesIntersect (e.box, box) THEN RETURN NIL; END;
+  data := DPS.BoxCoordsAsText (e.box) &amp; Fmt.Real(DPS.StandardFontPoints)
+    &amp; &quot; 0.5 mul ButtonDLEDrawRoundedPath &quot;;
+  IF e.hot THEN data := data &amp; &quot; clip &quot;
+     &amp; &quot; 0.0 0.5 0.95 sethsbcolor gsave fill grestore &quot;
+     &amp; &quot; 0.0 1.0 0.5 sethsbcolor &quot;
+     &amp; colorStrokeWidthText &amp; &quot; setlinewidth stroke &quot;;
+   ELSE data := data &amp; &quot; clip 0.95 setgray gsave fill grestore &quot;
+     &amp; &quot;0.5 setgray &quot; &amp; grayStrokeWidthText &amp; &quot; setlinewidth stroke &quot;;
+    END;
+  data := data
+    &amp; Fmt.Real(e.textPlace.x) &amp; &quot; &quot;
+    &amp; Fmt.Real(e.textPlace.y) &amp; &quot; moveto &quot;
+    &amp; &quot; (&quot; &amp; e.text &amp; &quot;) &quot;
+    &amp; &quot; ButtonDLEFont setfont 0.0 setgray show &quot;;
+  RETURN DPS.GSaveAndClip(box) &amp; data &amp; DPS.GRestore();
+  END Repaint;
+
+PROCEDURE <A NAME="Init"><procedure>Init</procedure></A> (e: E; t: DPSWindow.T) =
+ VAR height, width: REAL;
+  BEGIN
+  IF e.initialized THEN RETURN; END;
+  t.SendFoundation ( &quot; /ButtonDLEDrawCircledPath &quot;
+   &amp; &quot; { /highy exch def /highx exch def /lowy exch def /lowx exch def &quot;
+   &amp; &quot; /half highy lowy sub 2 div def &quot;
+   &amp; &quot; newpath lowx half add highy moveto &quot;
+   &amp; &quot; lowx half add lowy half add half 90 270 arc &quot;
+   &amp; &quot; highx half sub lowy lineto &quot;
+   &amp; &quot; highx half sub lowy half add half 270 90 arc &quot;
+   &amp; &quot; lowx half add highy lineto closepath } def &quot; );
+  t.SendFoundation ( &quot; /ButtonDLEDrawRoundedPath &quot;
+   &amp; &quot; { /r exch def /highy exch def /highx exch def &quot;
+   &amp; &quot; /lowy exch def /lowx exch def &quot;
+   &amp; &quot; newpath lowx lowy r add moveto &quot;
+   &amp; &quot; lowx r add highy r sub r 180 90 arcn &quot;
+   &amp; &quot; highx r sub highy r sub r 90 0 arcn &quot;
+   &amp; &quot; highx r sub lowy r add r 0 270 arcn &quot;
+   &amp; &quot; lowx r add lowy r add r 270 180 arcn &quot;
+   &amp; &quot;  closepath } def &quot; );
+  t.SendFoundation ( &quot; /ButtonDLEFont /Times-Roman findfont &quot;
+    &amp; Fmt.Real(fontHeight) &amp; &quot; scalefont def &quot; );
+  wraps.Stringwidth (t.ctx, &quot;ButtonDLEFont&quot;, e.text, height, width);
+  e.textPlace.x := e.box.low.x + xMargin;
+  e.textPlace.y := e.box.low.y + yMargin + fontDescender;
+  e.box.high.x := e.box.low.x + xMargin + width + xMargin;
+  e.box.high.y := e.box.low.y + yMargin + fontHeight + yMargin;
+  e.text := DPS.EscapeText(e.text);
+  (* ^^ Fixed, unexaminable, only have to convert once. *)
+  e.initialized := TRUE;
+  END Init;
+
+PROCEDURE <A NAME="Mouse"><procedure>Mouse</procedure></A> (e: E; t: DPSWindow.T; event: DPS.MouseEvent): BOOLEAN =
+ VAR in: BOOLEAN;
+  BEGIN
+  Init(e, t);
+  in := DPS.PlaceIsInBox (event.place, e.box);
+  IF e.hot THEN (* We handle everything! *)
+    IF event.clickType = DPS.ClickType.LastUp THEN
+      e.hot := FALSE;
+      e.Dirty (e.box, e);
+      IF in THEN e.Proc (t, event); END;
+     ELSIF NOT in THEN
+      e.hot := FALSE;
+      e.Dirty (e.box, e);
+      END;
+    RETURN TRUE; (* We handled it! *)
+    END;
+  IF in THEN
+    IF event.clickType = DPS.ClickType.FirstDown THEN
+      e.hot := TRUE;
+      EVAL e.MoveToLast();
+      e.Dirty (e.box, e);
+      END;
+    END;
+  RETURN in;
+  END Mouse;
+
+PROCEDURE <A NAME="Proc"><procedure>Proc</procedure></A> (&lt;*UNUSED*&gt; e: E;
+                &lt;*UNUSED*&gt; t: DPSWindow.T;
+                &lt;*UNUSED*&gt; event: DPS.MouseEvent) =
+  BEGIN
+  END Proc;
+
+  BEGIN
+  END ButtonDLE.
+</PRE>
+</inModule>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

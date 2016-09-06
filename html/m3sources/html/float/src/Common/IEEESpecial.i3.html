@@ -1,0 +1,52 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: float/src/Common/IEEESpecial.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>float/src/Common/IEEESpecial.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM>                                                                           </EM></BLOCKQUOTE><PRE>
+
+INTERFACE <interface><A HREF="IEEESpecial.m3.html">IEEESpecial</A></interface>;
+</PRE> This interface defines variables for the IEEE floating-point values
+   -infinity, +infinity, and NaN (not a number) for each of the three
+   floating-point types. On non-IEEE implementations, these variables
+   have arbitrary values. 
+
+<P><PRE>VAR (* CONST after initialization *)
+  RealNegInf, RealPosInf, RealNan: REAL;
+  LongNegInf, LongPosInf, LongNan: LONGREAL;
+  ExtdNegInf, ExtdPosInf, ExtdNan: EXTENDED;
+
+END IEEESpecial.
+</PRE>
+</inInterface>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

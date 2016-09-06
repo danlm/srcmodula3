@@ -1,0 +1,87 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: trestle_by_example/src/common/Picture.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>trestle_by_example/src/common/Picture.m3</H2></A><HR>
+<inModule>
+<PRE>MODULE <module><implements><A HREF="#x1">Picture</A></implements></module>;
+
+IMPORT <A HREF="../../../ui/src/vbt/Trestle.i3.html">Trestle</A>, <A HREF="../../../ui/src/vbt/VBT.i3.html">VBT</A>, <A HREF="../../../ui/src/split/TextVBT.i3.html">TextVBT</A>, <A HREF="../../../ui/src/split/RigidVBT.i3.html">RigidVBT</A>;
+IMPORT <A HREF="../../../text/src/Text.i3.html">Text</A>, <A HREF="../../../lego/src/Image.i3.html">Image</A>, <A HREF="../../../ui/src/vbt/PaintOp.i3.html">PaintOp</A>, <A HREF="../../../rw/src/Common/Rd.i3.html">Rd</A>, <A HREF="../../../lego/src/PixmapVBT.i3.html">PixmapVBT</A>, <A HREF="../../../vbtkitutils/src/UnixUtils.i3.html">UnixUtils</A>, FileStream;
+
+PROCEDURE <A NAME="GetPixmap"><procedure>GetPixmap</procedure></A> (rd: Rd.T): VBT.T =
+  VAR
+    image: Image.Raw;
+    op   : PaintOp.T;
+  BEGIN
+    TRY
+      image := Image.FromRd(rd)
+    EXCEPT
+      Rd.Failure, Image.Error =&gt; RETURN NIL
+    END;
+    TYPECASE image OF
+    | Image.RawBitmap =&gt; op := PaintOp.BgFg;
+    | Image.RawPixmap =&gt; op := PaintOp.Copy;
+    ELSE                         &lt;* ASSERT FALSE *&gt;
+    END;
+    RETURN PixmapVBT.New(Image.Unscaled(image), op)
+  END GetPixmap;
+
+PROCEDURE <A NAME="Get"><procedure>Get</procedure></A> (file: Text.T): VBT.T =
+  &lt;* FATAL UnixUtils.Error *&gt;
+  VAR rd: Rd.T;
+  BEGIN
+    IF NOT UnixUtils.ProbeFile(file, FALSE) OR UnixUtils.IsDirectory(file) THEN
+      RETURN NIL
+    END;
+    TRY
+      rd := FileStream.OpenRead(file);
+      TRY RETURN GetPixmap(rd) FINALLY Rd.Close(rd) END
+    EXCEPT
+      Rd.Failure =&gt;
+    END;
+    RETURN NIL
+  END Get;
+
+BEGIN
+  stampVBT := Get(&quot;../common/stamp.pbm&quot;);
+  wind_millVBT := Get(&quot;../common/wind_mill.pbm&quot;);
+END Picture.
+</PRE>
+</inModule>
+<HR>
+<A NAME="x1">interface Picture is in:
+</A><UL>
+<LI><A HREF="Picture.i3.html#0TOP0">trestle_by_example/src/common/Picture.i3</A>
+<LI><A HREF="../../../ui/src/picture/Picture.i3.html#0TOP0">ui/src/picture/Picture.i3</A>
+</UL>
+<P>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

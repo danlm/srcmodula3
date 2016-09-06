@@ -1,0 +1,77 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: os/src/WIN32/OSErrorWin32.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>os/src/WIN32/OSErrorWin32.m3</H2></A><HR>
+<inModule>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM>                                                          </EM></BLOCKQUOTE><PRE>
+
+UNSAFE MODULE <module>OSErrorWin32</module> EXPORTS <A HREF="../Common/OSError.i3.html"><implements>OSError</A></implements>, <A HREF="OSErrorWin32.i3.html"><implements>OSErrorWin32</A></implements>;
+
+IMPORT <A HREF="../Common/OSError.i3.html">OSError</A>;
+IMPORT <A HREF="../../../atom/src/Atom.i3.html">Atom</A>, <A HREF="../../../libm3/DS/AtomList.i3.html">AtomList</A>, <A HREF="../../../fmtlex/src/Fmt.i3.html">Fmt</A>;
+IMPORT <A HREF="../../../win32/src/WinBase.i3.html">WinBase</A>;
+
+VAR cache := ARRAY [0..2000] OF Atom.T { NIL, .. };
+</PRE><BLOCKQUOTE><EM> The table is initialized lazily. </EM></BLOCKQUOTE><PRE>
+
+PROCEDURE <A NAME="NewAtom"><procedure>NewAtom</procedure></A> (n: CARDINAL): Atom.T =
+  BEGIN
+    RETURN Atom.FromText(&quot;ErrorCode=&quot; &amp; Fmt.Int(n));
+  END NewAtom;
+
+PROCEDURE <A NAME="ErrnoAtom"><procedure>ErrnoAtom</procedure></A>(n: CARDINAL): Atom.T =
+  BEGIN
+    IF (n &lt; NUMBER (cache)) THEN
+      IF cache[n] = NIL THEN cache[n] := NewAtom(n) END;
+      RETURN cache[n];
+    ELSE
+      RETURN NewAtom (n);
+    END;
+  END ErrnoAtom;
+
+PROCEDURE <A NAME="Raise0"><procedure>Raise0</procedure></A>(errno: INTEGER) RAISES {OSError.E} =
+  BEGIN
+    RAISE OSError.E(
+      NEW(AtomList.T, head := ErrnoAtom(errno), tail := NIL))
+  END Raise0;
+
+PROCEDURE <A NAME="Raise"><procedure>Raise</procedure></A>() RAISES {OSError.E} =
+  BEGIN
+    Raise0(WinBase.GetLastError());
+  END Raise;
+
+BEGIN
+END OSErrorWin32.
+</PRE>
+</inModule>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

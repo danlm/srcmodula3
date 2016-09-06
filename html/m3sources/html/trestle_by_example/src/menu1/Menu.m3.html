@@ -1,0 +1,87 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: trestle_by_example/src/menu1/Menu.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>trestle_by_example/src/menu1/Menu.m3</H2></A><HR>
+<inModule>
+<PRE>MODULE <module>Menu</module> EXPORTS <A HREF="../../../main/src/Main.i3.html"><implements>Main</A></implements>;
+IMPORT <A HREF="../../../ui/src/vbt/Trestle.i3.html">Trestle</A>, <A HREF="../../../ui/src/vbt/VBT.i3.html">VBT</A>, <A HREF="../../../ui/src/split/TextVBT.i3.html">TextVBT</A>, <A HREF="../../../ui/src/split/RigidVBT.i3.html">RigidVBT</A>, <A HREF="../../../ui/src/split/HVSplit.i3.html">HVSplit</A>;
+IMPORT <A HREF="../../../ui/src/split/ButtonVBT.i3.html">ButtonVBT</A>, <A HREF="../../../ui/src/split/MenuBtnVBT.i3.html">MenuBtnVBT</A>, <A HREF="../../../ui/src/split/AnchorBtnVBT.i3.html">AnchorBtnVBT</A>, <A HREF="../../../ui/src/split/BorderedVBT.i3.html">BorderedVBT</A>;
+IMPORT <A HREF="../../../ui/src/vbt/PaintOp.i3.html">PaintOp</A>, <A HREF="../../../geometry/src/Axis.i3.html">Axis</A>, <A HREF="../../../rw/src/Common/Wr.i3.html">Wr</A>, <A HREF="../../../rw/src/Common/Stdio.i3.html">Stdio</A>;
+
+PROCEDURE <A NAME="OpenAction"><procedure>OpenAction</procedure></A> (v: ButtonVBT.T; READONLY cd: VBT.MouseRec) =
+  BEGIN
+    Wr.PutText(Stdio.stdout, &quot;Open\n&quot;);
+  END OpenAction;
+
+PROCEDURE <A NAME="CloseAction"><procedure>CloseAction</procedure></A> (v: ButtonVBT.T; READONLY cd: VBT.MouseRec) =
+  BEGIN
+    Wr.PutText(Stdio.stdout, &quot;Close\n&quot;);
+  END CloseAction;
+
+PROCEDURE <A NAME="CutAction"><procedure>CutAction</procedure></A> (v: ButtonVBT.T; READONLY cd: VBT.MouseRec) =
+  BEGIN
+    Wr.PutText(Stdio.stdout, &quot;Cut\n&quot;);
+  END CutAction;
+
+PROCEDURE <A NAME="PasteAction"><procedure>PasteAction</procedure></A> (v: ButtonVBT.T; READONLY cd: VBT.MouseRec) =
+  BEGIN
+    Wr.PutText(Stdio.stdout, &quot;Paste\n&quot;);
+  END PasteAction;
+
+CONST
+  horz = 30.0;
+  vert = 10.0;                   (* size of main window in millimeters *)
+VAR
+  (* build up the menu items for pull down menu1 *)
+  open  := MenuBtnVBT.TextItem(&quot;Open&quot;, OpenAction);
+  close := MenuBtnVBT.TextItem(&quot;Close&quot;, CloseAction);
+  (* build up the pull down menu1 *)
+  menu1 := BorderedVBT.New(HVSplit.Cons(Axis.T.Ver, open, close));
+  a1    := AnchorBtnVBT.New(ch := TextVBT.New(&quot;File&quot;), menu := menu1);
+  (* build up the menu items for pull down menu2 *)
+  cut   := MenuBtnVBT.TextItem(&quot;Cut&quot;, CutAction);
+  paste := MenuBtnVBT.TextItem(&quot;Paste&quot;, PasteAction);
+  (* build up the pulldown menu2 *)
+  menu2 := BorderedVBT.New(HVSplit.Cons(Axis.T.Ver, cut, paste));
+  a2    := AnchorBtnVBT.New(ch := TextVBT.New(&quot;Edit&quot;), menu := menu2);
+  (* Build up the menu bar containing the two anchor buttons *)
+  blue := PaintOp.FromRGB(0.0, 0.0, 1.0);
+  bar  := ButtonVBT.MenuBar(a1, a2, op := blue);
+  text := RigidVBT.FromHV(TextVBT.New(&quot;Menu demo&quot;), horz, vert);
+  main := HVSplit.Cons(Axis.T.Ver, bar, text);
+BEGIN
+  Trestle.Install(main);
+  Trestle.AwaitDelete(main);
+END Menu.
+</PRE>
+</inModule>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

@@ -1,0 +1,137 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: fmtlex/src/OldScan.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>fmtlex/src/OldScan.m3</H2></A><HR>
+<inModule>
+<PRE><A HREF="../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+
+UNSAFE MODULE <module><implements><A HREF="OldScan.i3.html">OldScan</A></implements></module>;
+
+IMPORT <A HREF="../../text/src/Text.i3.html">Text</A>, <A HREF="../../word/src/Word.i3.html">Word</A>, <A HREF="../../convert/src/Convert.i3.html">Convert</A>;
+
+PROCEDURE <A NAME="Bool"><procedure>Bool</procedure></A> (t: Text.T): BOOLEAN RAISES {BadFormat} =
+BEGIN
+  IF Text.Equal (t, &quot;TRUE&quot;) THEN
+    RETURN TRUE;
+  ELSIF Text.Equal (t, &quot;FALSE&quot;) THEN
+    RETURN FALSE;
+  ELSE
+    RAISE BadFormat; END;
+END Bool;
+
+PROCEDURE <A NAME="Int"><procedure>Int</procedure></A> (t: Text.T): INTEGER RAISES {BadFormat} =
+VAR
+      x : UNTRACED REF ARRAY OF CHAR;
+  value : INTEGER;
+   used : INTEGER;
+
+BEGIN
+  x := NEW (UNTRACED REF ARRAY OF CHAR, Text.Length(t));
+  Text.SetChars (x^, t);
+  value := Convert.ToInt (x^, used);
+  IF used = 0 THEN
+    DISPOSE (x);
+    RAISE BadFormat;
+  ELSE
+    DISPOSE (x);
+    RETURN value; END;
+END Int;
+
+PROCEDURE <A NAME="Unsigned"><procedure>Unsigned</procedure></A> (t: Text.T): Word.T RAISES {BadFormat} =
+VAR
+      x : UNTRACED REF ARRAY OF CHAR;
+  value : Word.T;
+   used : INTEGER;
+
+BEGIN
+  x := NEW (UNTRACED REF ARRAY OF CHAR, Text.Length(t));
+  Text.SetChars (x^, t);
+  value := Convert.ToUnsigned (x^, used);
+  IF used = 0 THEN
+    DISPOSE (x);
+    RAISE BadFormat;
+  ELSE
+    DISPOSE (x);
+    RETURN value; END;
+END Unsigned;
+
+PROCEDURE <A NAME="Real"><procedure>Real</procedure></A> (t: Text.T): REAL RAISES {BadFormat} =
+&lt;*FATAL Convert.Failed*&gt;
+VAR
+      x : UNTRACED REF ARRAY OF CHAR;
+  value : REAL;
+   used : INTEGER;
+
+BEGIN
+  x := NEW (UNTRACED REF ARRAY OF CHAR, Text.Length(t));
+  Text.SetChars (x^, t);
+  value := Convert.ToFloat (x^, used);
+  IF used = 0 THEN
+    DISPOSE (x);
+    RAISE BadFormat;
+  ELSE
+    DISPOSE (x);
+    RETURN value; END;
+END Real;
+
+PROCEDURE <A NAME="LongReal"><procedure>LongReal</procedure></A> (t: Text.T): LONGREAL RAISES {BadFormat} =
+&lt;*FATAL Convert.Failed*&gt;
+VAR
+      x : UNTRACED REF ARRAY OF CHAR;
+  value : LONGREAL;
+   used : INTEGER;
+
+BEGIN
+  x := NEW (UNTRACED REF ARRAY OF CHAR, Text.Length(t));
+  Text.SetChars (x^, t);
+  value := Convert.ToLongFloat (x^, used);
+  IF used = 0 THEN
+    DISPOSE (x);
+    RAISE BadFormat;
+  ELSE
+    DISPOSE (x);
+    RETURN value; END;
+END LongReal;
+
+PROCEDURE <A NAME="Char"><procedure>Char</procedure></A> (t: Text.T): CHAR RAISES {BadFormat} =
+BEGIN
+  IF Text.Length (t) = 0 THEN
+    RAISE BadFormat;
+  ELSE
+    RETURN Text.GetChar (t, 0); END;
+END Char;
+
+BEGIN
+END OldScan.
+</PRE>
+</inModule>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

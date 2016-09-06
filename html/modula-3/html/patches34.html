@@ -1,0 +1,155 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: Bugs and patches v3.4</TITLE>
+</HEAD>
+<BODY BGCOLOR="#ffffff" VLINK="#006633">
+
+<H2>Bugs and patches: version 3.4</H2>
+<P>
+
+Listed below are the known bugs and patches or workarounds for
+version 3.4 of SRC Modula-3. You may also want to consult the bugs
+and patches from the <A HREF="patches33.html">previous release,
+version 3.3</A>.
+
+<UL>
+<LI>All platforms:
+  <UL>
+  <LI><A HREF="#x009">gcc optimizer (Tick.m3)</A>
+  <LI><A HREF="#x010">missing debugging info</A>
+  <LI><A HREF="#x011">bad floating-point values</A>
+  </UL>
+<LI>SPARC
+  <UL>
+  <LI><A HREF="#x019">Trestle crashes under OpenWindows 3.0</A>
+  <LI><A HREF="#x031">GC failure on SunOS 4.1.1</A>
+  </UL>
+</UL>
+<P>
+
+There is a natural tension between the frequency of new
+releases and the number of patches that must be applied
+to an old release.  We try to make the right choice.
+If you have any wisdom or advice on how this tradeoff
+should be made, please send e-mail to
+<A HREF="mailto:m3-request@src.dec.com">m3-request@src.dec.com</A>.
+<P>
+    
+<!-------------------------------------------------------------------------->
+<HR>
+<A NAME="x009">
+<H2>gcc optimizer (Tick.m3)</H2><P>
+</A>
+
+The combination of the gcc optimizer and the m3 IL -> gcc tree
+translator is buggy.  It generates bad code for:
+<PRE>
+   Word.LT (16_80000000, x)
+</PRE>
+This code exists in the the Tick implementation.
+<P>
+
+<EM>Work-around:</EM><P>
+Don't turn on the optimizer.
+<P>
+
+<!-------------------------------------------------------------------------->
+<HR>
+<A NAME="x010">
+<H2>missing debugging info</H2><P>
+</A>
+
+The compiler front-end doesn't pass the following information
+to the back-end and therefore never gets into the debugger:
+<UL>
+<LI>the names and values of scalar constants
+<LI>the renaming that "IMPORT A AS B" introduces
+<LI>the Modula-3 type of procedure return values
+</UL>
+
+<EM>Work-around:</EM><P>
+None.
+<P>
+
+<!-------------------------------------------------------------------------->
+<HR>
+<A NAME="x011">
+<H2>bad floating-point values</H2><P>
+</A>
+
+The compiler front-end doesn't use the recommended
+Lex interface to read floating point values.  Hence,
+very large, very small and very precise values may
+not be read correctly by the compiler.
+<P>
+
+The front-end uses host floating-point arithmetic to
+fold floating-point constants -- even when being used
+as a cross-compiler.  Hence, cross-compilers may not
+compute the correct constants.
+<P>
+
+The front-end doesn't generate IEEE infinities for FIRST(REAL)
+and LAST(REAL).
+<P>
+
+<EM>Work-around:</EM><P>
+None.
+<P>
+
+<!-------------------------------------------------------------------------->
+<HR>
+<H2><A NAME="x019">Trestle crashes under OpenWindows 3.0 (SPARC)</A></H2>
+<P>
+<ADDRESS> From: goldberg@parc.xerox.com (David Goldberg) </ADDRESS>
+<P>
+
+Trestle works fine on Openwin-2.0.  There is a bug in the xnews openwin 3.0
+server.  If you are using 3.0, trestle will work if you make the following
+change to XClient.m3:
+<PRE>
+        (* XXX: Workaround for bug in openwin-3.0 server *)
+
+        (*
+        X.XGrabKey(trsl.dpy, X.AnyKey, X.AnyModifier, ur.w, X.True,
+          X.GrabModeAsync, X.GrabModeAsync);
+        *)
+
+        VAR min, max: Ctypes.int;
+        BEGIN
+          X.XDisplayKeycodes(trsl.dpy, LOOPHOLE (ADR(min), Ctypes.int_star),
+                                       LOOPHOLE (ADR(max), Ctypes.int_star));
+          FOR i := min TO max DO
+            X.XGrabKey(trsl.dpy, i, X.AnyModifier, ur.w, X.True,
+                       X.GrabModeAsync, X.GrabModeAsync);
+          END;
+        END;
+
+</PRE>
+
+<!-------------------------------------------------------------------------->
+<HR>
+<H2><A NAME="x031">GC failure on SunOS 4.1.1 (SPARC)</A></H2>
+<P>
+<ADDRESS> From: chase@centerline.com (David Chase) </ADDRESS>
+<P>
+
+"The VM-synchronized garbage collector does not work on SunOS 4.1.1
+because of an OS bug.  Install a newer version of SunOS (e.g.,
+4.1.3_U1) if you want to fix this (and many other bugs)."
+<P>
+
+<!-------------------------------------------------------------------------->
+<HR>
+<A HREF="home.html">[Modula-3 home page]</A>
+<P>
+<A HREF="mailto:m3-request@src.dec.com">
+<ADDRESS>m3-request@src.dec.com</ADDRESS></A>
+<PRE>
+Last modified on Thu Jan 25 13:48:31 PST 1996 by heydon
+     modified on Wed Jan 11 16:14:26 PST 1995 by kalsow
+</PRE>
+Copyright (C) 1992, 1996, Digital Equipment Corporation. All rights reserved.<BR>
+See the <A HREF="http://www.research.digital.com/SRC/m3sources/html/COPYRIGHT.html">COPYRIGHT</A> for a full description.
+</BODY>
+</HTML>

@@ -1,0 +1,55 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: uid/src/WIN32/WinRPC.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>uid/src/WIN32/WinRPC.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM>                                                             </EM></BLOCKQUOTE><PRE>
+
+UNSAFE INTERFACE <interface>WinRPC</interface>;
+</PRE> Subset of WNT rpc.h interface needed by TimeStampWin32.m3. 
+
+<P><PRE>TYPE
+  UUID = RECORD
+           Data1       : BITS 32 FOR INTEGER;
+           Data2, Data3: BITS 16 FOR [0 .. 16_FFFF];
+           Data4       : ARRAY [0 .. 7] OF BITS 8 FOR [0 .. 255];
+         END;
+
+TYPE
+&lt;*EXTERNAL UuidCreate:MSCWIN*&gt;
+  PROCEDURE UuidCreate (uuid: UNTRACED REF UUID);
+
+END WinRPC.
+</PRE>
+</inInterface>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

@@ -1,0 +1,67 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: etext/src/KeyTrans.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>etext/src/KeyTrans.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM>                                                                           </EM></BLOCKQUOTE><PRE>
+
+INTERFACE <interface><A HREF="KeyTrans.m3.html">KeyTrans</A></interface>;
+</PRE> <CODE>KeyTrans</CODE> is a utility interface that provides some standard
+   mapping between keyboard keys and ASCII characters. 
+
+<P><PRE>IMPORT <A HREF="../../ui/src/vbt/VBT.i3.html">VBT</A>;
+
+CONST
+  NullKey = '\000';
+
+PROCEDURE <A HREF="KeyTrans.m3.html#Latin1">Latin1</A> (key: VBT.KeySym): CHAR;
+</PRE><BLOCKQUOTE><EM> Return the ISO-Latin-1 character corresponding to <CODE>key</CODE>.
+<P>
+   \medskip\bulletitem If <CODE>32 &lt;= key &lt;= 255</CODE>, then return
+   <CODE>VAL(key, CHAR)</CODE>.
+<P>
+   \medskip\bulletitem If <CODE>key</CODE> is <CODE>Key.Backspace</CODE>, <CODE>Key.Tab</CODE>,
+   <CODE>Key.Return</CODE>, <CODE>Key.Escape</CODE>, or <CODE>Key.Delete</CODE>, then return the
+   corresponding character.
+<P>
+   \medskip\bulletitem Otherwise return <CODE>NullKey</CODE> </EM></BLOCKQUOTE><PRE>
+
+PROCEDURE <A HREF="KeyTrans.m3.html#TTY">TTY</A> (READONLY cd: VBT.KeyRec): CHAR;
+</PRE><BLOCKQUOTE><EM> Similar to <CODE>Latin1</CODE>, but if this is a control key, then clear
+   the ``high-order bits'' from the character code.  For example,
+   for both control-a and control-A, we return <CODE>VAL(1, CHAR)</CODE>. </EM></BLOCKQUOTE><PRE>
+
+END KeyTrans.
+</PRE>
+</inInterface>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

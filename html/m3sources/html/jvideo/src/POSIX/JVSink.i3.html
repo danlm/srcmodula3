@@ -1,0 +1,92 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: jvideo/src/POSIX/JVSink.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>jvideo/src/POSIX/JVSink.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE> a remote client for a JVideo server.  These are immutable.  If you want
+   different paramters, close this one and open a new one 
+
+<P><PRE>INTERFACE <interface><A HREF="#x1">JVSink</A></interface>;
+
+IMPORT <A HREF="../../../atom/src/Atom.i3.html">Atom</A>, <A HREF="JVBuffer.i3.html">JVBuffer</A>, <A HREF="jvprotocol.i3.html">jvprotocol</A>, <A HREF="JVConverter.i3.html">JVConverter</A>, <A HREF="JVFromSource.i3.html">JVFromSource</A>, <A HREF="../../../os/src/Common/OSError.i3.html">OSError</A>,
+       <A HREF="../../../thread/src/Common/Thread.i3.html">Thread</A>;
+
+TYPE Quality = [0 .. NUMBER(jvprotocol.ClientQualityVal) - 1];
+CONST DefaultQuality = 8;
+</PRE> range of acceptable values for image quality 
+
+<P> error atoms which may be returned in an OSError.E 
+<PRE>VAR
+  hostNotFound: Atom.T;          (* may be raised by init or start *)
+  sinkError   : Atom.T;          (* error comes from this module *)
+
+TYPE
+  <A HREF="#x2">T</A> &lt;: Public;
+  Public = JVConverter.T OBJECT
+           METHODS
+             (* all methods are LL &lt; self *)
+             init (hostname: TEXT;   (* where is the server? *)
+                   quality : Quality := DefaultQuality;
+                   maxBuffers: CARDINAL := 2; (* max buffers allowed in the
+                                                 associated buffer pool *)
+                   factory: JVBuffer.Factory;
+                   delay: CARDINAL := 0): T
+                   RAISES {OSError.E, Thread.Alerted};
+             (* initial setup.  establish a connection with the local and
+                remote JV servers and create a buffer pool.  &quot;factory&quot; is
+                used to create new buffers *)
+
+             getInfo (VAR info: JVFromSource.StreamInfo): BOOLEAN;
+             (* if the data in &quot;info&quot; is older than the info in the &quot;T&quot;, as
+                determined by the serial, set the values in info and return
+                TRUE.  Otherwise, just return FALSE *)
+           END;
+
+END JVSink.
+</PRE>
+</inInterface>
+<HR>
+<A NAME="x1">JVSink's implementation  is in:
+</A><UL>
+<LI><A HREF="decunix/JVSink.m3.html#0TOP0">jvideo/src/POSIX/decunix/JVSink.m3</A>
+<LI><A HREF="generic/JVSink.m3.html#0TOP0">jvideo/src/POSIX/generic/JVSink.m3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x2">opaque type JVSink.T is in:
+</A><UL>
+<LI><A HREF="decunix/JVSink.m3.html#T">jvideo/src/POSIX/decunix/JVSink.m3</A>
+<LI><A HREF="generic/JVSink.m3.html#T">jvideo/src/POSIX/generic/JVSink.m3</A>
+</UL>
+<P>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

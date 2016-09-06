@@ -1,0 +1,173 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: runtime/src/LINUX/RTSignal.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>runtime/src/LINUX/RTSignal.m3</H2></A><HR>
+<inModule>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM>                                                            </EM></BLOCKQUOTE><PRE>
+
+UNSAFE MODULE <module><implements><A HREF="../common/RTSignal.i3.html">RTSignal</A></implements></module>;
+
+IMPORT <A HREF="../common/RTMisc.i3.html">RTMisc</A>, <A HREF="../common/RTProcess.i3.html">RTProcess</A>, <A HREF="#x1">Csignal</A>, <A HREF="#x2">Usignal</A>, <A HREF="#x3">Uprocess</A>;
+FROM <A HREF="../../../C/src/Common/Ctypes.i3.html">Ctypes</A> IMPORT int;
+
+VAR
+  DefaultHandler   : Csignal.Handler;
+  IgnoreSignal     : Csignal.Handler;
+  initial_handlers : ARRAY [0..5] OF Csignal.Handler;
+
+PROCEDURE <A NAME="InstallHandlers"><procedure>InstallHandlers</procedure></A> () =
+  BEGIN
+    DefaultHandler := LOOPHOLE (0, Csignal.Handler);
+    IgnoreSignal   := LOOPHOLE (1, Csignal.Handler);
+
+    SetHandler (0, Usignal.SIGHUP,  Shutdown);
+    SetHandler (1, Usignal.SIGINT,  Interrupt);
+    SetHandler (2, Usignal.SIGQUIT, Quit);
+    SetHandler (3, Usignal.SIGSEGV, SegV);
+    SetHandler (4, Usignal.SIGPIPE, IgnoreSignal);
+    SetHandler (5, Usignal.SIGTERM, Shutdown);
+  END InstallHandlers;
+
+PROCEDURE <A NAME="SetHandler"><procedure>SetHandler</procedure></A> (id: INTEGER; sig: int;  handler: Csignal.Handler) =
+  VAR old := Csignal.signal (sig, handler);
+  BEGIN
+    initial_handlers[id] := old;
+    IF (old # DefaultHandler) THEN
+      (* don't override inherited, non-default handlers *)
+      EVAL Csignal.signal (sig, old);
+    END;
+  END SetHandler;
+
+PROCEDURE <A NAME="RestoreHandlers"><procedure>RestoreHandlers</procedure></A> () =
+  BEGIN
+    RestoreHandler (0, Usignal.SIGHUP);
+    RestoreHandler (1, Usignal.SIGINT);
+    RestoreHandler (2, Usignal.SIGQUIT);
+    RestoreHandler (3, Usignal.SIGSEGV);
+    RestoreHandler (4, Usignal.SIGPIPE);
+    RestoreHandler (5, Usignal.SIGTERM);
+  END RestoreHandlers;
+
+PROCEDURE <A NAME="RestoreHandler"><procedure>RestoreHandler</procedure></A> (id: INTEGER;  sig: int) =
+  BEGIN
+    EVAL Csignal.signal (sig, initial_handlers[id]);
+  END RestoreHandler;
+
+PROCEDURE <A NAME="Shutdown"><procedure>Shutdown</procedure></A> (sig: int) =
+  BEGIN
+    RTProcess.InvokeExitors ();                   (* flush stdio... *)
+    EVAL Csignal.signal (sig, DefaultHandler);    (* restore default handler *)
+    EVAL Usignal.kill (Uprocess.getpid (), sig);  (* and resend the signal *)
+  END Shutdown;
+
+PROCEDURE <A NAME="Interrupt"><procedure>Interrupt</procedure></A> (sig: int) =
+  VAR h := RTProcess.OnInterrupt (NIL);
+  BEGIN
+    IF (h = NIL) THEN
+      Shutdown (sig);
+    ELSE
+      EVAL RTProcess.OnInterrupt (h); (* reinstall the handler *)
+      h ();
+    END;
+  END Interrupt;
+
+PROCEDURE <A NAME="Quit"><procedure>Quit</procedure></A> (&lt;*UNUSED*&gt; sig: int) =
+  BEGIN
+    RTMisc.FatalErrorI (&quot;aborted&quot;, 0);
+  END Quit;
+
+PROCEDURE <A NAME="SegV"><procedure>SegV</procedure></A> (&lt;*UNUSED*&gt; sig: int) =
+  BEGIN
+    RTMisc.FatalErrorI (
+      &quot;Segmentation violation - possible attempt to dereference NIL&quot;, 0);
+  END SegV;
+
+BEGIN
+END RTSignal.
+</PRE>
+</inModule>
+<HR>
+<A NAME="x1">interface Csignal is in:
+</A><UL>
+<LI><A HREF="../../../C/src/FreeBSD/Csignal.i3.html#0TOP0">C/src/FreeBSD/Csignal.i3</A>
+<LI><A HREF="../../../C/src/FreeBSD2/Csignal.i3.html#0TOP0">C/src/FreeBSD2/Csignal.i3</A>
+<LI><A HREF="../../../C/src/LINUX/Csignal.i3.html#0TOP0">C/src/LINUX/Csignal.i3</A>
+<LI><A HREF="../../../C/src/LINUXELF/Csignal.i3.html#0TOP0">C/src/LINUXELF/Csignal.i3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x2">interface Usignal is in:
+</A><UL>
+<LI><A HREF="../../../unix/src/aix-3-2/Usignal.i3.html#0TOP0">unix/src/aix-3-2/Usignal.i3</A>
+<LI><A HREF="../../../unix/src/aix-ps2-1-2/Usignal.i3.html#0TOP0">unix/src/aix-ps2-1-2/Usignal.i3</A>
+<LI><A HREF="../../../unix/src/freebsd-1/Usignal.i3.html#0TOP0">unix/src/freebsd-1/Usignal.i3</A>
+<LI><A HREF="../../../unix/src/freebsd-2/Usignal.i3.html#0TOP0">unix/src/freebsd-2/Usignal.i3</A>
+<LI><A HREF="../../../unix/src/hpux-7-0/Usignal.i3.html#0TOP0">unix/src/hpux-7-0/Usignal.i3</A>
+<LI><A HREF="../../../unix/src/ibm-4-3/Usignal.i3.html#0TOP0">unix/src/ibm-4-3/Usignal.i3</A>
+<LI><A HREF="../../../unix/src/irix-5.2/Usignal.i3.html#0TOP0">unix/src/irix-5.2/Usignal.i3</A>
+<LI><A HREF="../../../unix/src/linux/Usignal.i3.html#0TOP0">unix/src/linux/Usignal.i3</A>
+<LI><A HREF="../../../unix/src/osf-1.ALPHA_OSF/Usignal.i3.html#0TOP0">unix/src/osf-1.ALPHA_OSF/Usignal.i3</A>
+<LI><A HREF="../../../unix/src/osf-1.DS3100/Usignal.i3.html#0TOP0">unix/src/osf-1.DS3100/Usignal.i3</A>
+<LI><A HREF="../../../unix/src/solaris-2-x/Usignal.i3.html#0TOP0">unix/src/solaris-2-x/Usignal.i3</A>
+<LI><A HREF="../../../unix/src/sunos-4-x/Usignal.i3.html#0TOP0">unix/src/sunos-4-x/Usignal.i3</A>
+<LI><A HREF="../../../unix/src/sysv-4.0/Usignal.i3.html#0TOP0">unix/src/sysv-4.0/Usignal.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.AP3000/Usignal.i3.html#0TOP0">unix/src/ultrix-3-1.AP3000/Usignal.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.ARM/Usignal.i3.html#0TOP0">unix/src/ultrix-3-1.ARM/Usignal.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.DS3100/Usignal.i3.html#0TOP0">unix/src/ultrix-3-1.DS3100/Usignal.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.NEXT/Usignal.i3.html#0TOP0">unix/src/ultrix-3-1.NEXT/Usignal.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.SEQUENT/Usignal.i3.html#0TOP0">unix/src/ultrix-3-1.SEQUENT/Usignal.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.SUN3/Usignal.i3.html#0TOP0">unix/src/ultrix-3-1.SUN3/Usignal.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.SUN386/Usignal.i3.html#0TOP0">unix/src/ultrix-3-1.SUN386/Usignal.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.UMAX/Usignal.i3.html#0TOP0">unix/src/ultrix-3-1.UMAX/Usignal.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.VAX/Usignal.i3.html#0TOP0">unix/src/ultrix-3-1.VAX/Usignal.i3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x3">interface Uprocess is in:
+</A><UL>
+<LI><A HREF="../../../unix/src/aix-3-2/Uprocess.i3.html#0TOP0">unix/src/aix-3-2/Uprocess.i3</A>
+<LI><A HREF="../../../unix/src/aix-ps2-1-2/Uprocess.i3.html#0TOP0">unix/src/aix-ps2-1-2/Uprocess.i3</A>
+<LI><A HREF="../../../unix/src/freebsd-1/Uprocess.i3.html#0TOP0">unix/src/freebsd-1/Uprocess.i3</A>
+<LI><A HREF="../../../unix/src/freebsd-2/Uprocess.i3.html#0TOP0">unix/src/freebsd-2/Uprocess.i3</A>
+<LI><A HREF="../../../unix/src/hpux-7-0/Uprocess.i3.html#0TOP0">unix/src/hpux-7-0/Uprocess.i3</A>
+<LI><A HREF="../../../unix/src/ibm-4-3/Uprocess.i3.html#0TOP0">unix/src/ibm-4-3/Uprocess.i3</A>
+<LI><A HREF="../../../unix/src/irix-5.2/Uprocess.i3.html#0TOP0">unix/src/irix-5.2/Uprocess.i3</A>
+<LI><A HREF="../../../unix/src/linux/Uprocess.i3.html#0TOP0">unix/src/linux/Uprocess.i3</A>
+<LI><A HREF="../../../unix/src/osf-1.generic/Uprocess.i3.html#0TOP0">unix/src/osf-1.generic/Uprocess.i3</A>
+<LI><A HREF="../../../unix/src/solaris-2-x/Uprocess.i3.html#0TOP0">unix/src/solaris-2-x/Uprocess.i3</A>
+<LI><A HREF="../../../unix/src/sunos-4-x/Uprocess.i3.html#0TOP0">unix/src/sunos-4-x/Uprocess.i3</A>
+<LI><A HREF="../../../unix/src/sysv-4.0/Uprocess.i3.html#0TOP0">unix/src/sysv-4.0/Uprocess.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.generic/Uprocess.i3.html#0TOP0">unix/src/ultrix-3-1.generic/Uprocess.i3</A>
+</UL>
+<P>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

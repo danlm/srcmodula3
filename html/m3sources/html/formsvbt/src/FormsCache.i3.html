@@ -1,0 +1,107 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: formsvbt/src/FormsCache.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>formsvbt/src/FormsCache.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM>                                                             </EM></BLOCKQUOTE><PRE>
+&lt;* PRAGMA LL *&gt;
+</PRE> This interface maintains a cache of <CODE>FormsVBT</CODE>s. The client
+   can register which <CODE>.fv</CODE> files will be in the cache, and a
+   background thread will parse the files into runtime objects.
+   When the client needs a form, it is removed from the cache
+   and given to the client.  If the form isn't in the cache,
+   it is generated synchronously.  When the client no longer
+   needs the form, it can return the form to the cache.
+
+
+<P><PRE>INTERFACE <interface><A HREF="FormsCache.m3.html">FormsCache</A></interface>;
+
+IMPORT <A HREF="FormsVBT.i3.html">FormsVBT</A>;
+
+EXCEPTION BadForm;
+
+CONST DefaultNumberOfWorkers = 2;
+</PRE><BLOCKQUOTE><EM> No threads are actually forked until the first call to
+   <CODE>ActiveThreads</CODE> or <CODE>Prepare</CODE>. </EM></BLOCKQUOTE><PRE>
+
+PROCEDURE <A HREF="FormsCache.m3.html#ActiveThreads">ActiveThreads</A> (n: CARDINAL); &lt;* LL = 0 *&gt;
+</PRE><BLOCKQUOTE><EM> Change the number of worker threads for generating forms.
+   Initially, there are no worker threads.  The first call to
+   <CODE>Prepare</CODE> will cause <CODE>DefaultNumberOfWorkers</CODE> to be forked.  If
+   <CODE>ActiveThreads</CODE> is called before <CODE>Prepare</CODE>, then <CODE>n</CODE> threads are
+   started initially rather than <CODE>DefaultNumberOfWorkers</CODE>.
+   Naturally, setting <CODE>n=0</CODE> causes there to be no background
+   threads. </EM></BLOCKQUOTE><PRE>
+
+PROCEDURE <A HREF="FormsCache.m3.html#Prepare">Prepare</A> (name: TEXT; copies: CARDINAL := 1); &lt;* LL = 0 *&gt;
+</PRE><BLOCKQUOTE><EM> Schedule the specified number of copies of the specified file
+   to be parsed and cached.  The file is opened using
+   <CODE>FormsVBT.NewFromFile</CODE>, thereby making use of the <CODE>Rsrc</CODE>
+   search path machinery.  If any exceptions are raised when
+   <CODE>name</CODE> is parsed, nothing is added to the cache; a subsequent
+   <CODE>Get</CODE> of this form will cause <CODE>FormsVBT</CODE> to reparse the file,
+   thus raising the exception for the client to handle.  The
+   first time that this is called, <CODE>DefaultNumberOfWorkers</CODE> will
+   be started, unless <CODE>ActiveThreads</CODE> has been previously
+   called. </EM></BLOCKQUOTE><PRE>
+
+PROCEDURE <A HREF="FormsCache.m3.html#Get">Get</A> (name: TEXT; restock := FALSE):
+  FormsVBT.T RAISES {FormsVBT.Error}; &lt;* LL = 0 *&gt;
+</PRE><BLOCKQUOTE><EM> Look for <CODE>name</CODE> in the cache.  If it's there, return the runtime
+   version of name.  Otherwise, parse name into a runtime object
+   and return it.  (Parsing <CODE>name</CODE> may cause the exception to be
+   raised.) However, in either case, if <CODE>restock</CODE> is <CODE>TRUE</CODE>
+   and if there are no more cached or scheduled copies of name,
+   call <CODE>Prepare(name)</CODE> just before returning. </EM></BLOCKQUOTE><PRE>
+
+PROCEDURE <A HREF="FormsCache.m3.html#Assoc">Assoc</A> (name: TEXT; body: TEXT); &lt;* LL = 0 *&gt;
+</PRE><BLOCKQUOTE><EM> Use this procedure if <CODE>name</CODE> should refer to some text rather
+   than to a file.  Thus, <CODE>FormsVBT.T.init(name)</CODE>, rather than
+   <CODE>FormsVBT.InitFromFile(name)</CODE>, will be used to parse <CODE>body</CODE> in
+   <CODE>Prepare</CODE> and <CODE>Get</CODE>.  This must be called before passing
+   <CODE>name</CODE> to <CODE>Prepare</CODE> or <CODE>Get</CODE>. </EM></BLOCKQUOTE><PRE>
+
+PROCEDURE <A HREF="FormsCache.m3.html#Return">Return</A> (fv: FormsVBT.T) RAISES {BadForm}; &lt;* LL = 0 *&gt;
+</PRE><BLOCKQUOTE><EM> A client can return a form that it had gotten by calling <CODE>Get</CODE>.
+   The form must be uninstalled in the <CODE>VBT</CODE> tree.  The exception
+   is raised if <CODE>fv</CODE> was not created by a call to <CODE>Get</CODE>. </EM></BLOCKQUOTE><PRE>
+
+PROCEDURE <A HREF="FormsCache.m3.html#Flush">Flush</A> (name := &quot;&quot;); &lt;* LL = 0 *&gt;
+</PRE><BLOCKQUOTE><EM> Delete all cached forms for <CODE>name</CODE>, as well as any in the
+   waiting list.  If <CODE>name</CODE> is the empty string, then all entries
+   in the cache and waiting list are deleted. </EM></BLOCKQUOTE><PRE>
+
+END FormsCache.
+</PRE>
+</inInterface>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

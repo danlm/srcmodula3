@@ -1,0 +1,58 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: os/src/WIN32/PipeWin32.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>os/src/WIN32/PipeWin32.m3</H2></A><HR>
+<inModule>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+
+UNSAFE MODULE <module>PipeWin32</module> EXPORTS <A HREF="../Common/Pipe.i3.html"><implements>Pipe</A></implements>;
+
+IMPORT <A HREF="FileWin32.i3.html">FileWin32</A>, <A HREF="../Common/OSError.i3.html">OSError</A>, <A HREF="OSErrorWin32.i3.html">OSErrorWin32</A>, <A HREF="../../../win32/src/WinBase.i3.html">WinBase</A>, <A HREF="../../../win32/src/WinNT.i3.html">WinNT</A>;
+
+PROCEDURE <A NAME="Open"><procedure>Open</procedure></A>(VAR hr, hw: T) RAISES {OSError.E} =
+  VAR handleRead, handleWrite: WinNT.HANDLE;
+  BEGIN
+    IF WinBase.CreatePipe(
+      hReadPipe := ADR(handleRead),
+      hWritePipe := ADR(handleWrite),
+      lpPipeAttributes := NIL,
+      nSize := 0 (* use default *)) = 0 THEN OSErrorWin32.Raise()
+    END;
+    hr := FileWin32.New(handleRead, FileWin32.Read);
+    hw := FileWin32.New(handleWrite, FileWin32.Write)
+  END Open;
+
+BEGIN
+END PipeWin32.
+</PRE>
+</inModule>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

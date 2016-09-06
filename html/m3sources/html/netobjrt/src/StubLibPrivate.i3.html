@@ -1,0 +1,76 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: netobjrt/src/StubLibPrivate.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>netobjrt/src/StubLibPrivate.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM> StubLibPrivate.i3 </EM></BLOCKQUOTE><PRE>
+
+INTERFACE <interface><A HREF="StubProt.m3.html">StubLibPrivate</A></interface>;
+
+IMPORT <A HREF="NetObj.i3.html">NetObj</A>, <A HREF="../../rw/src/Common/Rd.i3.html">Rd</A>, <A HREF="../../rw/src/Common/Wr.i3.html">Wr</A>, <A HREF="../../thread/src/Common/Thread.i3.html">Thread</A>;
+FROM <A HREF="StubLib.i3.html">StubLib</A> IMPORT Conn, DataRep, Int32;
+
+PROCEDURE <A HREF="StubProt.m3.html#OutObject">OutObject</A>(c: Conn; o: NetObj.T)
+    RAISES {Wr.Failure, Thread.Alerted};
+
+PROCEDURE <A HREF="StubProt.m3.html#InObject">InObject</A>(c: Conn; tc := -1): NetObj.T
+    RAISES {NetObj.Error, Rd.Failure, Thread.Alerted};
+
+PROCEDURE OutText(c: Conn; text: TEXT)
+    RAISES {Wr.Failure, Thread.Alerted};
+</PRE><BLOCKQUOTE><EM> Marshal a <CODE>TEXT</CODE> in native format. </EM></BLOCKQUOTE><PRE>
+
+PROCEDURE OutTexts(c: Conn; texts: REF ARRAY OF TEXT)
+    RAISES {Wr.Failure, Thread.Alerted};
+</PRE><BLOCKQUOTE><EM> Marshal a <CODE>REF ARRAY OF TEXT</CODE> in native format. </EM></BLOCKQUOTE><PRE>
+
+PROCEDURE InText(c: Conn; rep: DataRep): TEXT
+    RAISES {NetObj.Error, Rd.Failure,
+            Thread.Alerted};
+</PRE><BLOCKQUOTE><EM> Unmarshal a <CODE>TEXT</CODE>. </EM></BLOCKQUOTE><PRE>
+
+PROCEDURE InTexts(
+    c: Conn; rep: DataRep): REF ARRAY OF TEXT
+    RAISES {NetObj.Error, Rd.Failure,
+            Thread.Alerted};
+</PRE><BLOCKQUOTE><EM> Unmarshal a <CODE>REF ARRAY OF TEXT</CODE>. </EM></BLOCKQUOTE><PRE>
+</PRE> byte-swap support 
+
+<P><PRE>PROCEDURE NativeEndian(rep: DataRep): BOOLEAN;
+
+PROCEDURE Swap32(i: Int32) : Int32;
+
+END StubLibPrivate.
+</PRE>
+</inInterface>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

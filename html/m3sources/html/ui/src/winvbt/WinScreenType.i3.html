@@ -1,0 +1,59 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: ui/src/winvbt/WinScreenType.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>ui/src/winvbt/WinScreenType.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM> Digital Internal Use Only                                                 </EM></BLOCKQUOTE><PRE>
+</PRE>                                                                           
+       Created on Tue Jan 17 11:20:23 PST 1995 by najork                   
+
+<P>
+<P><PRE>INTERFACE <interface><A HREF="WinScreenType.m3.html">WinScreenType</A></interface>;
+
+IMPORT <A HREF="../../../geometry/src/Rect.i3.html">Rect</A>, <A HREF="../vbt/VBT.i3.html">VBT</A>, <A HREF="WinTrestle.i3.html">WinTrestle</A>;
+
+TYPE
+  <A HREF="WinScreenType.m3.html#T">T</A> &lt;: Public;
+  Public = VBT.ScreenType OBJECT
+    trsl: WinTrestle.T;
+    (* Remaining fields protected by the .trsl field. *)
+    rootDom: Rect.T;
+  END;
+
+PROCEDURE <A HREF="WinScreenType.m3.html#New">New</A>(trsl: WinTrestle.T): T;
+</PRE><BLOCKQUOTE><EM> Create a screentype for trsl.  LL &lt;= VBT.mu. </EM></BLOCKQUOTE><PRE>
+
+END WinScreenType.
+</PRE>
+</inInterface>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

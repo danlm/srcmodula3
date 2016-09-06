@@ -1,0 +1,3142 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: Bugs and patches</TITLE>
+</HEAD>
+<BODY BGCOLOR="#ffffff" VLINK="#006633">
+
+<H2>Bugs and patches: version 3.5.3</H2>
+<P>
+
+Listed below are the known bugs and patches or workarounds for
+version 3.5.3 of SRC Modula-3. Many of these patches and workarounds
+apply to the more recent ``test'' releases as well (i.e. test-3.5.4,
+test-3.5.4-A, and test-3.5.4-B). You may also want to consult the bugs
+and patches from the <A HREF="patches35.html">previous release,
+version 3.5</A>.
+
+<H3>Contents</H3>
+
+<UL>
+<LI>All platforms - non-compiler bugs
+  <UL>
+  <LI> <A HREF="#PEX">problems building PEX package</A>
+       (25-Oct-95)
+  <LI> <A HREF="#getdirentries"><CODE>getdirentries</CODE> undefined when
+       building postcard package</A>
+       (26-Oct-95)
+  <LI> <A HREF="#visualobliq">buggy visualobliq m3makefile</A>
+       (05-Dec-95)
+  <LI> <A HREF="#multibrowser">FormsVBT MultiBrowser bug</A>
+       (18-Dec-95)
+  <LI> <A HREF="#postcard">Postcard build problem (versions 3.5.4+ only)</A>
+       (16-Jan-96)
+  <LI> <A HREF="#vbtkit">VBTkit ReactivityVBT bug</A>
+       (25-Jan-96)
+  <LI> <A HREF="#viewport">FormsVBT Viewport bug</A>
+       (01-Mar-96)
+  <LI> <A HREF="#ppflex">bug in m3pp when built with flex</A>
+       (13-Mar-96)
+  <LI> <A HREF="#m3pp">bug in m3pp grammar</A>
+       (15-Mar-96)
+  <LI> <A HREF="#mathsigs">bugs in signatures of <CODE>modf</CODE> and
+       <CODE>yn</CODE> math functions</A>
+       (20-Mar-96)
+  <LI> <A HREF="#os-m3makefile">bug in os/Common/m3makefile</A>
+       (26-Mar-96)
+  <LI> <A HREF="#dotm3ship">problems shipping libraries</A>
+       (01-Apr-96)
+  <LI> <A HREF="#m3browser">m3browser bugs</A>
+       (02-Apr-96)
+  <LI> <A HREF="#mentor">bugs in mentor m3makefiles</A>
+       (20-Jun-96)
+  <LI> <A HREF="#netobjtcp">bug in Network Object runtime</A>
+       (15-Jul-96)
+  <LI> <A HREF="#floatIsNaN">floating point <CODE>IsNaN</CODE> bugs</A>
+       (16-Jul-96)
+  <LI> <A HREF="#fastClose"><CODE>Wr.FastClose</CODE> bug</A>
+       (16-Aug-96) <IMG SRC="yelnew.gif" ALT="NEW">
+  <LI> <A HREF="#fileWrLen"><CODE>FileWr.Length</CODE> bug</A>
+       (04-Sep-96) <IMG SRC="yelnew.gif" ALT="NEW">
+  </UL>
+<P>
+<LI>All platforms - compiler/runtime/quake bugs
+  <UL>
+  <LI> <A HREF="#unaligned-longreal">INTERNAL CG ERROR, unaligned LONGREAL</A>
+       (29-Jun-95)
+  <LI> <A HREF="#badconst">fingerprint of a non-constant expression</A>
+       (09-Nov-95)
+  <LI> <A HREF="#external"><CODE>&lt;*EXTERNAL*&gt; INTERFACE</CODE></A>
+       (10-Nov-95)
+  <LI> <A HREF="#readonlyproc"><CODE>READONLY</CODE>
+       <CODE>PROCEDURE</CODE> crash</A>
+       (22-Jan-96)
+  <LI> <A HREF="#newbug"><CODE>NEW(NULL)</CODE>,
+       <CODE>NEW(REFANY)</CODE>, <CODE>NEW(ADDRESS)</CODE> allowed</A>
+       (23-Jan-96)
+  <LI> <A HREF="#divmod"><CODE>DIV</CODE>, <CODE>MOD</CODE> bugs</A>
+       (01-Feb-96)
+  <LI> <A HREF="#common">bug in COMMON template</A>
+       (08-Feb-96)
+  <LI> <A HREF="#mod">constant <CODE>MOD</CODE> expression bug</A>
+       (16-Feb-96)
+  <LI> <A HREF="#m3middle"><CODE>M3File.IsEqual</CODE> compiler bug</A>
+       (03-Mar-96)
+  <LI> <A HREF="#subarray"><CODE>SUBARRAY</CODE> compiler bug</A>
+       (23-Mar-96)
+  <LI> <A HREF="#trywarning">new <CODE>TRY-EXCEPT-ELSE</CODE> warning</A>
+       (20-Apr-96)
+  <LI> <A HREF="#m3quake">bugs in m3quake</A>
+       (24-May-96)
+  <LI> <A HREF="#cgerror">code generation error related to set types</A>
+       (03-Jun-96)
+  <LI> <A HREF="#rttype">bug in <CODE>RTType.CheckBrands</CODE></A>
+       (03-Jun-96)
+  <LI> <A HREF="#packedsets">bug in packed sets</A>
+       (27-Jun-96)
+  <LI> <A HREF="#rttipe">bug in <CODE>RTTipe.GetInt</CODE></A>
+       (23-Jul-96)
+  <LI> <A HREF="#trace">bug in <CODE>TRACE</CODE> pragma</A>
+       (27-Aug-96) <IMG SRC="yelnew.gif" ALT="NEW">
+  <LI> <A HREF="#array-init">bug initializing arrays</A>
+       (27-Aug-96) <IMG SRC="yelnew.gif" ALT="NEW">
+  </UL>
+<P>
+<LI>All POSIX platforms
+  <UL>
+  <LI> <A HREF="#stackdump">better stack overflow handling</A>
+       (11-June-96)
+  </UL>
+<P>
+<LI>All platforms using gcc-based back-end
+  <UL>
+  <LI> <A HREF="#picgen">bug generating position-independent code</A>
+       (05-Feb-96)
+  <LI> <A HREF="#wordcomp">bug generating Word comparison code</A>
+       (22-Mar-96)
+  </UL>
+<P>
+<LI>All platforms using integrated Intel back-end (NT386, LINUX, LINUXELF)
+  <UL>
+  <LI> <A HREF="#stackloc">bug in <CODE>Stackx86.m3</CODE></A>
+       (24-May-96)
+  <LI> <A HREF="#m3x86">bug in <CODE>M3x86.m3</CODE></A>
+       (19-Aug-96) <IMG SRC="yelnew.gif" ALT="NEW">
+  </UL>
+<P>
+<LI>DS3100, FreeBSD, FreeBSD2, SPARC
+  <UL>
+  <LI> <A HREF="#rtheapdepc">bug in <CODE>RTHeapDepC.c</CODE></A>
+       (23-Mar-96)
+  </UL>
+<P>
+<LI>FreeBSD2
+  <UL>
+  <LI> <A HREF="#quotactl">bug in <CODE>quotactl</CODE> signature</A>
+       (23-Mar-96)
+  <LI> <A HREF="#Usignal">bad Unix signal constants</A>
+       (12-Aug-96)
+  </UL>
+<P>
+<LI>IBMR2
+  <UL>
+  <LI> <A HREF="#m3nonblock">bad <CODE>M3_NONBLOCK</CODE> constant</A>
+       (12-Jun-96)
+  <LI> <A HREF="#noXshmem">no X11 support for shared memory</A>
+       (20-Jun-96)
+  </UL>
+<P>
+<LI>LINUX, LINUXELF
+  <UL>
+  <LI> <A HREF="#fstat"><CODE>fstat</CODE>, <CODE>stat</CODE> undefined</A>
+       (08-Nov-96)
+  <LI> <A HREF="#writev">stack overflow due to bad <CODE>writev</CODE></A>
+       (03-Jun-96)
+  <LI> <A HREF="#incGC">incremental garbage collector</A>
+       (21-Jun-96)
+  <LI> <A HREF="#linuxTimezone">timezone support</A>
+       (21-Jun-96)
+  <LI> <A HREF="#readv-writev">incremental GC readv/writev fix</A>
+       (13-Aug-96)
+  </UL>
+<P>
+<LI>NT386
+  <UL>
+  <LI> <A HREF="#win32thread">race condition in thread runtime</A>
+       (05-Apr-96)
+  <LI> <A HREF="#win32gc">bugs in Windows garbage collector</A>
+       (26-Apr-96)
+  <LI> <A HREF="#fsrename"><CODE>FS.Rename</CODE> bug on Windows 95</A>
+       (26-Apr-96)
+  <LI> <A HREF="#win32os">OS improvements for Win32</A>
+       (02-May-96)
+  <LI> <A HREF="#win32rtargs">command-line argument separation bug</A>
+       (20-Jun-96)
+  <LI> <A HREF="#win32terminal">terminal reading bug</A>
+       (27-Jun-96)
+  <LI> <A HREF="#win32terminal2">terminal reading bug (again)</A>
+       (16-Jul-96)
+  <LI> <A HREF="#winTrestleRace">startup race in Trestle</A>
+       (16-Jul-96)
+  <LI> <A HREF="#win32TCP">TCP timeout bug</A>
+       (16-Jul-96)
+  <LI> <A HREF="#obliqPathSep">Obliq path separator on Win32</A>
+       (17-Jul-96)
+  <LI> <A HREF="#winioctl">New <CODE>WinIoctl</CODE> interface</A>
+       (19-Aug-96) <IMG SRC="yelnew.gif" ALT="NEW">
+  <LI> <A HREF="#winTrestleRace2">startup race in Trestle (again)</A>
+       (23-Aug-96) <IMG SRC="yelnew.gif" ALT="NEW">
+  </UL>
+<P>
+<LI>SOLgnu
+  <UL>
+  <LI> <A HREF="#libaio">library <CODE>libaio.a</CODE> not found</A>
+       (12-Dec-95)
+  </UL>
+<P>
+<LI>SOLsun
+  <UL>
+  <LI> <A HREF="#ztext">link failing due to "-ztext" link option</A>
+       (16-Feb-96)
+  </UL>
+<P>
+<LI>SPARC
+  <UL>
+  <LI> <A HREF="#xtinherit">undefined X-related symbols at link-time</A>
+       (06-Feb-96)
+  </UL>
+</UL>
+
+<P> There is a natural tension between the frequency of new releases
+and the number of patches that must be applied to an old release. We
+try to make the right choice. If you have any wisdom or advice on how
+this tradeoff should be made, please send e-mail to
+<A HREF="mailto:m3-request@src.dec.com">m3-request@src.dec.com</A>.
+<P>
+
+<!-------------------------------------------------------------------------->
+<HR>
+<H3><A NAME="PEX">problems building PEX package</A></H3>
+
+<P> This problem applies to all platforms.
+
+<P> When building the "PEX" package, you may get a link-time error
+indicating that the appropriate PEX library could not be found. You
+output may look something like this:<P>
+
+<PRE>
+---------------------- building PEX ----------------------
+
+--- building in IRIX5 ---
+m3 -w1 -why -g -a libPEX.a -F/var/tmp/qkAAAa000Xh
+ld -shared -ignore_unresolved -o libPEX.so -all libPEX.a -none
+-L/usr/local/lib/m3/pkg/X11R4/IRIX5 -lm3X11R4
+-L/usr/local/lib/m3/pkg/libm3/IRIX5 -lm3 -L/usr/local/lib/m3/pkg/m3core/IRIX5
+-lm3core -L/usr/lib -lpex -L/usr/lib -lXaw -L/usr/lib -lXmu -L/usr/lib -lXext
+-L/usr/lib -lXt -L/usr/lib -lX11 -lm -lc
+/usr/lib/ld:
+Can't locate file for: -lpex
+[ many more quake error messages follow ]
+</PRE>
+
+<P> The version of PEX we are using differs from MIT PEX, and is supported
+only on Digital machines. So unfortunately, there is no point in
+building the PEX package on non-Digital platforms.
+
+<P> On Digital Unix, PEX is part of an optional kit called OPEN3D.
+OPEN3D is a software kit that lets you run 3D applications.  It supports 
+both PEX and OpenGL.  OPEN3D adds a number of "extensions" to the 
+X server (the two interesting ones are X3D-PEX and GLX), and also 
+includes a set of libraries for building PEX and OpenGL programs. Even
+on Digital Unix platforms, you must have the OPEN3D kit installed in
+order to build the Modula-3 PEX package.
+
+<P> You can check if your X server has the right extensions by running 
+xdpyinfo(1) and looking for the X3D-PEX and GLX extensions. You can
+check if you have the right libraries by looking for "libdecpex.a",
+"libGL.a", "libGLU.a", and "libGLw.a" (probably in /usr/lib). If you
+can't find those libraries, presumably you don't have OPEN3D installed
+(you can ask your system administrator, who can run a program called
+lmf(8) to find out for sure).
+
+<P> The "anim3d", "obliqlib3D", and "obliqbin3D" packages all use the
+"PEX" package. If you don't have the PEX library, the easiest thing to
+do is to edit your main m3makefile, commenting out the "BuildChunks"
+for "PEX", "anim3D", "obliqlib3D", and "obliqbin3D".
+
+<P> Here is another option. The newest version of the obliq-3D system uses
+OpenGL as well as Digital PEX. You may be able to buy commercial
+versions of OpenGL for your platform. For example, the companies
+Portable Graphics and Template Graphics both sell OpenGL for Linux.
+You may want to use a web search engine like
+<A HREF="http://altavista.digital.com">Alta Vista</A>
+to find more companies selling OpenGL.
+
+<P> Thanks to Allen Delaney, Brian Genewich, Huw Evans, Alex Kiskachi, and
+Boris Gjenero for reporting this problem.<P>
+
+<!-------------------------------------------------------------------------->
+<HR>
+<H3><A NAME="getdirentries"><CODE>getdirentries</CODE> undefined when
+building postcard package</A></H3>
+
+<P> This problem applies to all platforms.
+
+<P> When compiling the "OSUtils.m3" source file of the "postcard" package,
+you may get the error message that the "getdirentries" function is
+undefined. The output you see will look something like this:<P>
+
+<PRE>
+new source -&gt; compiling ../src/OSUtils.m3
+"../src/OSUtils.m3", line 190: unknown qualification '.' (getdirentries)
+"../src/OSUtils.m3", line 190: types are not assignable
+2 errors encountered
+</PRE>
+
+<P> This is an easy problem to fix. Simply edit the file
+"<B><CODE>postcard/src/OSUtils.m3</CODE></B>" and remove the following:
+
+<UL>
+<LI> The line "<CODE>FROM Utypes IMPORT u_short, ino_t;</CODE>"
+<LI> The declaration of the <CODE>CONST MaxDirNameLen</CODE>
+<LI> The declaration of the <CODE>TYPE DirEntry</CODE>
+<LI> The entire definition of the <CODE>PROCEDURE OldEnumerate</CODE>
+</UL>
+
+<P> Thanks to Allen Delaney, Brian Genewich, and Boris Gjenero for
+reporting this problem. The bug has been fixed in all releases of SRC
+Modula-3 after 3.5.3.<P>
+
+<!-------------------------------------------------------------------------->
+<HR>
+<H3><A NAME="visualobliq">buggy visualobliq m3makefile</A></H3>
+
+<P> This problem applies to all platforms, but only for the
+test-3.5.4* releases.
+
+<P> When compiling the "visualobliq" package, you may get an error like
+the following:
+
+<PRE>
+---------------------- building visualobliq ----------------------
+--- building in IRIX5 ---
+m3 -w1 -why -g -o visobliq -F/var/tmp/qkAAAa002hF 
+"/net/puma/u3/s/kiskachi/modula3/m3/visualobliq/src/m3makefile", line 38: 
+expecting 2 args for procedure "ManPage": found 1
+</PRE>
+
+<P> The fix is simple. In
+"<B><CODE>m3/visualobliq/src/m3makefile</CODE></B>", the line
+
+<PRE>
+ManPage("visualobliq")
+</PRE>
+
+<P> should be changed to
+
+<PRE>
+ManPage("visualobliq", 1)
+</PRE>
+
+<P> Thanks to Farshad Nayeri, Alex Kiskachi, and Spencer Allain for
+reporting this problem. It has been fixed in all releases of SRC
+Modula-3 after 3.5.4-B.<P>
+
+<!-------------------------------------------------------------------------->
+<HR>
+<H3><A NAME="multibrowser">FormsVBT MultiBrowser bug</A></H3>
+
+<P> This problem applies to all platforms.
+
+<P> There is a bug in the implementation of MultiBrowsers. If you
+press the mouse button over the first list item, then drag the mouse
+down a little bit past the last item and release the mouse, no event
+is generated.
+
+<P> The bug is in the source file
+"<B><CODE>m3/formsvbt/src/FVRuntime.m3</CODE></B>". In that file, the
+definition of the type "<CODE>MultiSelector</CODE>" needs to have its
+"<CODE>outsideClick</CODE>" method overridden, like this:
+
+<PRE>
+REVEAL
+  MultiSelector = PrivateMultiSelector BRANDED OBJECT
+  OVERRIDES
+    insideClick := MultiInsideClick;
+    outsideClick := MultiOutsideClick
+  END;
+</PRE>
+
+<P>Then, the "<CODE>MultiOutsideClick</CODE>" needs to be defined:
+
+<PRE>
+PROCEDURE MultiOutsideClick(v: MultiSelector; READONLY cd: VBT.MouseRec) =
+  BEGIN
+    ListVBT.MultiSelector.outsideClick (v, cd);
+    IF cd.clickType = VBT.ClickType.LastUp
+       AND (v.quick OR cd.clickCount = 3) THEN
+      MouseProc (v.browser, cd)
+    END
+  END MultiOutsideClick;
+</PRE>
+
+<P> Thanks to John Polstra for noticing the bug and for supplying the
+necessary correction! This bug has been fixed in all releases of SRC
+Modula-3 after 3.5.3.<P>
+
+<!-------------------------------------------------------------------------->
+<HR>
+<H3><A NAME="postcard">Postcard build problem</A></H3>
+
+<P> This problem applies to all platforms.
+
+<P> The following bug in Postcard seems to have slipped into the 3.5.4
+release. The file "<B><CODE>m3/postcard/src/PostcardMain.m3</CODE></B>"
+in the "postcard" package will fail to compile with an error message like
+this:
+
+<PRE>
+new source -&gt; compiling ../src/PostcardMain.m3
+"../src/PostcardMain.m3", line 2886: incompatible types (halign)
+"../src/PostcardMain.m3", line 2886: incompatible types (valign)
+2 errors encountered
+compilation failed =&gt; not building program "Postcard"
+</PRE>
+
+<P> The lines in question should be changed to:
+
+<PRE>
+    initImage := NEW(InitImage).init(logo,
+      op := PaintOp.Pair(bg, decFg), bg := bg);
+</PRE>
+
+<P> Thanks to Spencer Allain for reporting the problem. This bug has
+been fixed in all releases of SRC Modula-3 after 3.5.4-B.<P>
+
+<!-------------------------------------------------------------------------->
+<HR>
+<H3><A NAME="vbtkit">VBTkit ReactivityVBT bug</A></H3>
+
+<P> This problem applies to all platforms.
+
+<P> If you change the state of a "<CODE>ReactivityVBT.T</CODE>", and then
+immediately read the state using the "<CODE>ReactivityVBT.Get</CODE>"
+procedure, you may receive the old state.
+"<CODE>ReactivityVBT.Get</CODE>" doesn't return the correct state
+until some time later, after the display has been updated.
+
+<P> The fix is simple: in the file
+"<B><CODE>m3/vbtkit/src/lego/ReactivityVBT.m3</CODE></B>", change the
+implementation of "<CODE>ReactivityVBT.Get</CODE>" to return
+"<CODE>v.newState</CODE>" instead of "<CODE>v.state</CODE>".
+
+<P> Thanks to John Polstra for noticing the bug and for supplying the
+necessary correction! The bug has been fixed in all releases of SRC
+Modula-3 after 3.5.4-B.<P>
+
+<!-------------------------------------------------------------------------->
+<HR>
+<H3><A NAME="viewport">FormsVBT Viewport bug</A></H3>
+
+<P> This problem applies to all platforms.
+
+<P> There is a bug with <CODE>ViewPort</CODE> widgets that causes their
+horizontal scroll bars not to work when instantiated in the
+<CODE>HorAndVer</CODE> mode (the default). The bug is with the way the
+FormsVBT system instantiates the <CODE>ViewPortVBT.T</CODE> object
+used to represent the <CODE>ViewPort</CODE> widget.
+
+<P> In the source file
+"<B><CODE>m3/formsvbt/src/FormsVBT.m3</CODE></B>", <I>replace</I> the
+"<CODE>pViewport</CODE>" procedure with the following version:
+
+<PRE>
+PROCEDURE pViewport (         cl  : ParseClosure;
+                     VAR      list: RefList.T;
+                     READONLY s   : State         ): VBT.T RAISES {Error} =
+  VAR
+    state     := s;
+    name      := NamePP();
+    step      := NEW(CardinalPP, name := "Step", val := 10);
+    horandver := NEW(BooleanPP, name := "HorAndVer");
+    horonly   := NEW(BooleanPP, name := "HorOnly");
+    veronly   := NEW(BooleanPP, name := "VerOnly");
+    enum      := NEW(EnumPP).init(KP3{horandver, horonly, veronly}, 0);
+    res       : FVViewport;
+    ch        : VBT.T;
+    axis      : Axis.T;
+    shapeStyle: ViewportVBT.ShapeStyle;
+  BEGIN
+    ParseProps(cl, list, state, PP2{name, step}, enums := EP1{enum});
+    ch := OneChild(cl, list, state);
+    IF horandver.val OR horonly.val
+      THEN axis := Axis.T.Ver
+      ELSE axis := Axis.T.Hor
+    END;
+    IF horandver.val
+      THEN shapeStyle := ViewportVBT.ShapeStyle.Unrelated
+      ELSE shapeStyle := ViewportVBT.ShapeStyle.Related
+    END;
+    res := cl.fv.realize("Viewport", name.valname);
+    res :=
+      res.init(ch := ch, axis := axis, shadow := state.shadow,
+               step := step.val, shapeStyle := shapeStyle,
+               scrollStyle := VAL(enum.chosen, ViewportVBT.ScrollStyle));
+    AddNameProp(cl, res, name, state);
+    RETURN res
+  END pViewport;
+</PRE>
+
+<P> This implementation is not backward-compatible with the existing
+one. In particular, the following boolean attributes are no longer
+recognized: <CODE>Fixed</CODE>, <CODE>UnrelatedShape</CODE>,
+<CODE>Vertical</CODE>, <CODE>Horizontal</CODE>,
+<CODE>AlaViewport</CODE>, <CODE>Auto</CODE>, and
+<CODE>NoScroll</CODE>. In the new implementation, a Viewport component
+has only the following two orthogonal attributes:
+
+<DL>
+<DT> <CODE>Step</CODE> (an integer, defaults to 10)
+<DD> This integer specifies how much the Viewport scrolls when
+the user is auto-scrolling by pressing the mouse in a
+scrollbar.
+<P>
+<DT> <CODE>HorAndVer</CODE>, <CODE>HorOnly</CODE>,
+<CODE>VerOnly</CODE> (an enumeration, defaults to <CODE>HorAndVer</CODE>)
+<DD> This attribute specifies whether the viewport has both horizontal
+and vertical scrollbars, a horizontal scrollbar only, or a vertical
+scrollbar only.
+</DL>
+
+<P> Both these properties existed in the old implementation as well,
+but the second one now automatically determines a set of
+attributes that could previously be specified by the now defunct
+attributes.
+
+<P> One last caveat: There is still a known bug in the implementation
+of the underlying <CODE>ViewportVBT.T</CODE> type, namely, that
+meta-clicking on a horizontal scrollbar doesn't split the window
+horizontally as it should.
+
+<P> Thanks to Patrick Ziemeck for noticing the bug, and to Marc Brown
+for supplying the fix! This bug has been fixed in all releases of SRC
+Modula-3 after 3.5.4-B.<P>
+
+<!-------------------------------------------------------------------------->
+<HR>
+<H3><A NAME="ppflex">bug in m3pp when built with flex</A></H3>
+
+<P> This problem applies to all platforms such as LINUXELF that use
+flex instead of lex.
+
+<P> The current sources for the Modula-3 pretty-printer m3pp in the "pp"
+package do not work correctly when the parser is built with flex
+instead of lex. The problem is that the lex "input" function returns
+0 on end-of-file, whereas the flex "input" function returns -1 on
+end-of-file.
+
+<P> The solution to the problem is simple: several equality tests
+against 0 need to be changed into inequalities. Two source files are
+effected: "<B><CODE>m3/pp/src/Parse.yacc</CODE></B>" and
+"<B><CODE>m3/pp/src/lex_help.h</CODE></B>". Here are the diffs for
+version 3.5.3 of SRC Modula-3:
+
+<PRE>
+$ diff -uNr m3.orig/pp/src/Parse.yacc m3/pp/src/Parse.yacc
+--- m3.orig/pp/src/Parse.yacc	Fri May 26 11:36:01 1995
++++ m3/pp/src/Parse.yacc	Sat Feb  3 23:08:03 1996
+@@ -1438,7 +1438,7 @@
+   temp2 = input();   /* input comes from the lex library. */
+   if ((calledFromEmacs && (temp2 == '\001')) || (temp2 == 0)) return;
+   temp = input();
+-  while ((temp != 0) && (!calledFromEmacs || (temp != '\001')))
++  while ((temp &gt; 0) && (!calledFromEmacs || (temp != '\001')))
+     {P (temp2); temp2 = temp; temp = input();}
+-  if ((temp2 != '\n') || (temp != 0)) P(temp2);
++  if ((temp2 != '\n') || (temp &gt; 0)) P(temp2);
+ }
+</PRE>
+
+<PRE>
+$ diff -uNr m3.orig/pp/src/lex_help.h m3/pp/src/lex_help.h
+--- m3.orig/pp/src/lex_help.h	Thu Feb 23 17:08:31 1995
++++ m3/pp/src/lex_help.h	Sat Feb  3 23:08:21 1996
+@@ -273,6 +273,6 @@
+ 		    unput(c2);
+ 	    }
+ 	}
+-    } while ((c = input()) != 0 /* EOF */);
++    } while ((c = input()) &gt; 0 /* EOF */);
+     return WHITESPACE;
+ }
+</PRE>
+
+<P> Thanks to Reuben Sumner and Michel Dagenais for pointing out the
+problem and supplying the fix! These changes have been made in all
+releases of SRC Modula-3 after release 3.5.4-B.<P>
+
+<!-------------------------------------------------------------------------->
+<HR>
+<H3><A NAME="m3pp">bug in m3pp grammar</A></H3>
+
+<P> This problem applies to all platforms.
+
+<P> The Modula-3 pretty printer has a bug that causes it to choke on
+a series of alternating identifiers and periods containing more than
+two identifiers. This occurs when naming an enumerated value in some
+other interface (I.EnumType.Val) or when accessing fields of several
+nested records.
+
+<P> The fix is simple. In the file
+"<B><CODE>m3/pp/src/Parse.yacc</CODE></B>" around line 881, the rule
+for "<CODE>selector_t</CODE>" should contain the additional rule
+"<CODE>Dot Ident</CODE>", like this:
+
+<PRE>
+selector_t:
+      Dot Ident
+    | Uparrow
+	/* Removed SP from front of each of these. -DN */
+	/* Added break before lists. -DN */
+    | QSP Lbracket AX B0 expr_list           E Z Rbracket
+    | QSP Lparen   AX B0 actual_list         E Z Rparen
+    | QSP Lparen                               Z Rparen
+    | QSP Lbrace   AX B0 elem_list elem_tail E Z Rbrace
+    | QSP Lbrace                               Z Rbrace
+    ;
+</PRE>
+
+<P> Thanks to Derek Beatty and Reuben Sumner for pointing out the bug.
+This bug is known to exist in SRC Modula-3 version 3.5.3. It may also
+exists in some of the test-3.5.4* releases, but it has certainly been
+fixed in all versions of SRC Modula-3 after 3.5.4-B.<P>
+
+<!-------------------------------------------------------------------------->
+<HR>
+<H3><A NAME="mathsigs">bugs in signatures of <CODE>modf</CODE> and
+<CODE>yn</CODE> math functions</A></H3>
+
+<P> This problem applies to all platforms.
+
+<P> There are bugs in the signatures of the <CODE>modf</CODE> and
+<CODE>yn</CODE> EXTERNAL functions in
+"<B><CODE>m3/libm3/src/arith/Math.i3</CODE></B>" (in the test-3.5.4-B
+release, there are two versions of the interface stored in
+"<B><CODE>m3/libm3/src/arith/{POSIX,WIN32}/Math.i3</CODE></B>"). The
+old signatures and comments for these procedures are:
+
+<PRE>
+&lt*EXTERNAL*&gt; PROCEDURE modf (x: LONGREAL; VAR exp: INTEGER): LONGREAL;
+(* returns the positive fractional part of x and sets exp to
+   the remaining integer part. *)
+
+&lt*EXTERNAL*&gt; PROCEDURE yn (n, x: LONGREAL): LONGREAL;
+(* returns the n th-order Bessel function of second kind on x. *)
+</PRE>
+
+<P> The new signatures and comments are:
+
+<PRE>
+&lt*EXTERNAL*&gt; PROCEDURE modf (x: LONGREAL; VAR (*OUT*) i: LONGREAL): LONGREAL;
+(* splits the argument "x" into an integer part "i" and a fractional part "f"
+   such that "f + i = x" and such that "f" and "i" both have the same sign as
+   "x", and returns "f". Although "i" is a LONGREAL, it is set to an integral
+   value. *)
+
+&lt*EXTERNAL*&gt; PROCEDURE yn (n: INTEGER; x: LONGREAL): LONGREAL;
+(* returns the n th-order Bessel function of second kind on x. *)
+</PRE>
+
+<P> In releases where there is a separate WIN32 version of "Math.i3",
+the <CODE>&lt*EXTERNAL*&gt;</CODE> pragmas for the Bessel functions
+"y0", "y1", and "yn" need to include the name of the function
+preceded by an underscore, as in <CODE>&lt*EXTERNAL "_yn"*&gt;</CODE>.
+
+<P> You may also want to add the following signatures for full
+compatibility with the C math library, although the functionality
+provided by these functions is available directly using the Modula-3
+MOD and ROUND operators:
+
+<PRE>
+(*---- Modulo functions ----*)
+
+&lt*EXTERNAL*&gt; PROCEDURE fmod (x, y: LONGREAL): LONGREAL;
+(* returns the remainder of dividing x by y.
+   Note: use the built-in Modula-3 function MOD. *)
+
+&lt*EXTERNAL*&gt; PROCEDURE drem (x, y: LONGREAL): LONGREAL;
+&lt*EXTERNAL*&gt; PROCEDURE remainder (x, y: LONGREAL): LONGREAL;
+(* returns the remainder "r = x - n * y", where "n = ROUND(x/y)".
+   Note: the Modula-3 functions MOD and ROUND may be appropriate. *)
+</PRE>
+
+<P> Thanks to Charlie Garrett for pointing out the mistakes and for
+supplying the proper signatures. These bugs have been fixed in all
+releases of SRC Modula-3 after 3.5.4-B.<P>
+
+<!-------------------------------------------------------------------------->
+<HR>
+<H3><A NAME="os-m3makefile">bug in os/Common/m3makefile</A></H3>
+
+<P> This problem applies to all platforms.
+
+<P> The file "<B><CODE>m3/libm3/src/os/Common/m3makefile</CODE></B>"
+does not include a declaration for the "<CODE>FS.m3</CODE>" module.
+Add the following line to the file, then rebuild and reship libm3.
+
+<PRE>
+  implementation("FS")
+</PRE>
+
+<P> Without this line, the "<CODE>FS.m3</CODE>" file is not compiled
+and included in the libm3 library. All this module does is to define
+the value for the global variable "<CODE>FS.DirectoryFileType</CODE>".
+If this file is not included in libm3, that global variable will have
+the value NIL, so accessing it -- say by passing it as an argument to
+<CODE>Atom.ToText</CODE> -- will result in a NIL-dereference.
+
+<P> Thanks to Paul Kominek for reporting this problem and to the folks at
+<A HREF="http://www.cmass.com">Critical Mass</A> for providing the fix!
+This bug has been fixed in all releases of SRC Modula-3 after 3.5.4-B.<P>
+
+<!-------------------------------------------------------------------------->
+<HR>
+<H3><A NAME="dotm3ship">problems shipping libraries</A></H3>
+
+<P> This problem applies to all platforms.
+
+<P> If you have an existing SRC Modula-3 installation and you download a
+new implementation, you may have problems shipping the libraries from
+the new implementation after you build them.
+
+<P> The problem is due to typing "<TT>m3ship</TT>" to ship the
+libraries. This invokes the already-installed "m3ship" program.
+Instead, you have to type "<TT>./m3ship</TT>" to run the version of
+"m3ship" in the "<TT>boot-</TT><I>architecture</I>" directory.
+
+<P> The correct instructions are described on the SRC Modula-3
+<A HREF="http://www.research.digital.com/SRC/modula-3/html/install.html">installation page</A>.
+
+<P> Thanks to Farshad Nayeri for figuring out how to solve this problem!<P>
+
+<!-------------------------------------------------------------------------->
+<HR>
+<H3><A NAME="m3browser">m3browser bugs</A></H3>
+
+<P> This problem applies to all platforms.
+
+<P> The <I>m3browser</I> package has four bugs that are easily
+corrected. The first three of these patches should be applied to the file
+"<B><CODE>m3/m3browser/src/Main.m3</CODE></B>". The fourth one should
+be applied to "<B><CODE>m3/m3browser/src/M3MarkUp.m3</CODE></B>".
+<OL>
+<LI>
+The application uses the deprecated "<CODE>OS.GetHostName</CODE>"
+procedure, which returns the NIS domain name, rather than the IP
+domain name.
+
+<P> The fix in this case is simple. In "<CODE>Main.m3</CODE>", first
+add "<CODE>IP</CODE>" to the list of imports. Then, change the line:
+
+<PRE>
+  server_machine   := OS.GetHostName ();
+</PRE>
+
+to read
+
+<PRE>
+  server_machine   :  TEXT; (* initialized in "ParseOptions" *)
+</PRE>
+
+<P> Then, in the "<CODE>ParseOptions</CODE>" procedure, also in
+"<CODE>Main.m3</CODE>", just <I>before</I> the existing lines:
+
+<PRE>
+  IF (server_machine = NIL) THEN
+    ErrLog.Msg ("unable to get host machine's name");
+    Abort ();
+  END;
+</PRE>
+
+add the following lines to initialize the
+"<CODE>server_machine</CODE>" global variable:
+
+<PRE>
+  TRY server_machine := IP.GetCanonicalByAddr(IP.GetHostAddr()) EXCEPT
+    IP.Error =&gt; server_machine := NIL
+  END;
+</PRE>
+
+<P> Thanks to Nils Jungclaus and Spencer Allain for noticing the
+problem and supplying a fix!
+<P>
+<LI>
+There is a bug that causes m3browser to crash if you view a type that
+declares any of its methods to be initialized to NIL. The fix in this
+case is to replace the existing "<CODE>GenProcRef</CODE>" procedure in
+the "<CODE>Main.m3</CODE>" file by the following code:
+
+<PRE>
+PROCEDURE GenProcRef(fmt: XFormat.T; t: TEXT) =
+  VAR dotIndex := Text.FindChar(t, '.'); BEGIN
+    fmt.group();
+    IF dotIndex = -1 THEN
+      fmt.putMarkup(t)
+    ELSE
+      WITH
+    	unit = Text.Sub(t, 0, dotIndex),
+    	proc = Text.Sub(t, dotIndex + 1) DO
+    	fmt.putMarkup("&lt;A HREF=\"/S" & unit & ".i3." & proc & "#"
+    	       & proc & "\"&gt;" & t & "&lt;/A&gt;");
+      END
+    END;
+    fmt.end();
+  END GenProcRef;
+</PRE>
+
+<P> This bug was noticed and corrected by Allan Heydon.
+<P>
+<LI>
+When viewing an implementation module, you can click on the name of
+the program in which that module is contained. However, there is a bug
+that causes such links to return a page containing "*Unknown*". The
+"<CODE>GenOneUnitSet</CODE>" procedure in the file
+"<CODE>Main.m3</CODE>" contains the following code:
+
+<PRE>
+    IF (pgm)
+      THEN tbl := db.pgms;  tag := "program";  cmd0 := "I";
+      ELSE tbl := db.libs;  tag := "library";  cmd0 := "8";
+    END;
+    ...
+    IF NOT db.libs.get (nm, ref) THEN
+    ...
+</PRE>
+
+<P> Change the second <CODE>IF</CODE> line above to instead read:
+
+<PRE>
+    IF NOT tbl.get (nm, ref) THEN
+</PRE>
+
+<P> Thanks to Farshad Nayeri for noticing the bug and suggesting the fix!
+<P>
+<LI>
+<P> The last bug is in the "<CODE>M3MarkUp.m3</CODE>" module. The
+bug causes the browser to run into an infinite loop when a method in
+an object declaration has a NIL default. The fix is to change the
+second line of the "<CODE>MarkUpProc</CODE>" procedure from:
+
+<PRE>
+  IF Text.Equal (id, "NIL") THEN RETURN; END;
+</PRE>
+
+<P> to read:
+
+<PRE>
+  IF Text.Equal (id, "NIL") THEN lex.next(); RETURN; END;
+</PRE>
+
+<P> Thanks to Peter Klein for noticing the bug and reporting the fix!
+</OL>
+
+<P> All four of these bugs have been fixed in all releases of SRC
+Modula-3 after 3.5.4-B.<P>
+
+<!-------------------------------------------------------------------------->
+<HR>
+<H3><A NAME="mentor">bugs in mentor m3makefiles</A></H3>
+
+<P> This problem applies to all platforms.
+
+<P> There are bugs in the m3makefiles in the <CODE>mentor</CODE>
+package:
+
+<OL>
+<LI>
+First, in the file "<B><CODE>m3/mentor/src/m3makefile</CODE></B>", the
+line:
+
+<PRE>
+    include_dir (c)
+</PRE>
+
+should be:
+
+<PRE>
+    include_dir (one_chunk)
+</PRE>
+<P>
+<LI>
+Second, in the m3makefiles associated with each of the different
+animation subdirectories, lines like the following appear at the end
+of the file:
+
+<PRE>
+  if not defined ("MENTOR_UMBRELLA")
+    implementation (Main)
+    bundle         (BinpackBundle)
+    program        (binpack)
+  end
+</PRE>
+
+Each of the arguments should be changed to have double-quotes around
+it, like this:
+
+<PRE>
+  if not defined ("MENTOR_UMBRELLA")
+    implementation ("Main")
+    bundle         ("BinpackBundle")
+    program        ("binpack")
+  end
+</PRE>
+</OL>
+
+<P> Thanks to John Kominek for noticing these problems and suggesting
+the fixes! These patches have been made in all releases of SRC
+Modula-3 after 3.5.4-B.<P>
+
+<!-------------------------------------------------------------------------->
+<HR>
+<H3><A NAME="netobjtcp">bug in Network Object runtime</A></H3>
+
+<P> This patch applies to all platforms.
+
+<P> On Windows platforms, the Network Object runtime can crash with an
+address fault during normal termination. This patch fixes the bug that
+caused this problem.
+
+<P> To apply the patch, edit the file
+"<B><CODE>m3/netobj/src/tcpnetobj/TCPNetObj.m3</CODE></B>". Edit the
+procedure "<CODE>TCPNetObj.Listener</CODE>". Change the handler for
+"<CODE>IP.Error</CODE>" in the loop to read:
+
+<PRE>
+      LOOP
+        TRY
+          conn := TCP.Accept(l.c);
+          EXIT;
+        EXCEPT
+        | IP.Error(x) =&gt;
+            IF x.head # IP.NoResources THEN
+              RAISE IP.Error(x);
+            END;
+        END;
+        (* pause and retry on IP.Error(NoResources) *)
+        Thread.Pause(1.0D0);
+      END;
+</PRE>
+
+Then, add "<CODE>IP.Error</CODE>" to the list of exceptions caught by
+the outer "<CODE>TRY..EXCEPT</CODE>" command, like this:
+
+<PRE>
+  BEGIN
+    TRY
+      LOOP
+        ...
+      END;
+      ...
+    EXCEPT
+    | ConnFD.TimedOut, IP.Error =&gt; (* SKIP *)
+    | Thread.Alerted, Rd.Failure, Wr.Failure =&gt; (* SKIP *)
+    END;
+    ...
+  END Listener;
+</PRE>
+
+<P> Thanks to Michel Dagenais for reporting the problem and to Ted
+Wobber for supplying the fix. This fix has been made in all releases
+of SRC Modula-3 after 3.5.4-B.<P>
+
+<!-------------------------------------------------------------------------->
+<HR>
+<H3><A NAME="floatIsNaN">floating point <CODE>IsNaN</CODE> bugs</A></H3>
+
+<P> This patch applies to all platforms.
+
+<P> There are bugs in the "<CODE>IsNaN</CODE>" procedures for all
+three Modula-3 floating-point types.
+
+<P> To apply the patch, edit the files "<B><CODE>RealFloat.m3</CODE></B>"
+and "<B><CODE>LongFloat.m3</CODE></B>" in the directory
+"<B><CODE>m3core/src/float/IEEE/</CODE></B>". In
+"<CODE>RealFloat.m3</CODE>", change the "<CODE>IsNaN</CODE>" procedure
+to read:
+
+<PRE>
+PROCEDURE IsNaN (x: T): BOOLEAN =
+  VAR xx := LOOPHOLE (x, Rep.T);
+  BEGIN
+    RETURN xx.exponent = 16_ff AND xx.significand # 0;
+  END IsNaN;
+</PRE>
+
+<P> In "<CODE>LongFloat.m3</CODE>", change the "<CODE>IsNaN</CODE>"
+procedure to read:
+
+<PRE>
+PROCEDURE IsNaN (x: T): BOOLEAN =
+  VAR xx := LOOPHOLE (x, Rep.T);
+  BEGIN
+    RETURN xx.exponent = 16_7ff 
+       AND (xx.significand0 # 0 OR xx.significand1 # 0);
+  END IsNaN;
+</PRE>
+
+<P> Then rebuild and ship the "<CODE>m3core</CODE>" library.
+
+<P> Thanks to Spencer Allain for reporting the bug and to the folks at
+<A HREF="http://www.cmass.com">Critical Mass</A> for supplying the
+fix. This patch has been applied in all releases of SRC Modula-3 after
+3.5.4-B.<P>
+
+<!-------------------------------------------------------------------------->
+<HR>
+<H3><A NAME="fastClose"><CODE>Wr.FastClose</CODE> bug</A></H3>
+
+<P> This patch applies to all platforms.
+
+<P> The implementation of the "<CODE>Wr</CODE>" interface contains a
+bug in which closing a writer may not cause its "<CODE>close</CODE>"
+method to be invoked. This can happen if the writer's
+"<CODE>flush</CODE>" method fails.
+
+<P> The fix is simple. In the file
+"<B><CODE>m3/libm3/src/rw/Common/WrMove.m3</CODE></B>",
+locate the "<CODE>FastClose</CODE>" procedure. In that procedure,
+change the lines:
+
+<PRE>
+        wr.flush();
+        wr.close()
+</PRE>
+
+<P> to instead read:
+
+<PRE>
+        TRY wr.flush() FINALLY wr.close() END
+</PRE>
+
+<P> The use of <CODE>TRY..FINALLY</CODE> guarantees that the
+"<CODE>close</CODE>" method will be invoked even if the
+"<CODE>flush</CODE>" method raises an exception.
+
+<P> Thanks to John Polstra for pointing out the bug and suggesting
+the fix! This patch has been applied in all releases of SRC Modula-3
+after 3.5.4-B.<P>
+
+<!-------------------------------------------------------------------------->
+<HR>
+<H3><A NAME="fileWrLen"><CODE>FileWr.Length</CODE> bug</A></H3>
+
+<P> This patch applies to all platforms.
+
+<P> There is a bug in the implementation of the "<CODE>length</CODE>"
+method of seekable file writers (i.e., objects of type
+"<CODE>FileWr.T</CODE>"). The implementation does not meet the
+"<CODE>length</CODE>" method specification as described in the
+"<CODE>Wr</CODE>" interface: it gets the length of the file by reading
+the size of the underlying file on disk, but that number can be too
+small if some writes to the file haven't (yet) been flushed.
+
+<P> The fix is to report the length of a seekable file writer as the
+<I>maximum</I> of the writer's current position and the size of the
+underlying file. To fix the bug, edit the file
+"<B><CODE>m3/libm3/src/rw/Common/FileWr.m3</CODE></B>".
+Change the line in the "<CODE>Length</CODE>" procedure that reads:
+
+<PRE>
+    RETURN wr.targetH.status().size;
+</PRE>
+
+<P> to instead read:
+
+<PRE>
+    RETURN MAX(wr.cur, wr.targetH.status().size);
+</PRE>
+
+<P> Then rebuild and ship the "<CODE>libm3</CODE>" library.
+
+<P> Thanks to Allan Heydon for finding the bug and to Ted Wobber for
+supplying the fix! This patch has been applied in all releases of SRC
+Modula-3 after 3.5.4-B.<P>
+
+<!-------------------------------------------------------------------------->
+<HR>
+<H3><A NAME="unaligned-longreal">INTERNAL CG ERROR, unaligned
+LONGREAL</A></H3>
+
+<P> This problem applies to all platforms.
+
+<P> On platforms in which LONGREALs must be aligned to 64-bit boundaries,
+if you compare two arrays of LONGREALs for equality or inequality,
+you will get an "INTERNAL CG (code generator) ERROR" from the
+compiler, like this:
+
+<PRE>
+m3c ../src/DataPoint.m3 -w1
+"../src/Mod.m3", line 23: ** INTERNAL CG ERROR *** unaligned load_indirect  type=4  s/a=64/32
+"../src/Mod.m3", line 23: ** INTERNAL CG ERROR *** unaligned load_indirect  type=4  s/a=64/32
+</PRE>
+
+<P> This is known to occur on at least the SOLgnu and IRIX5 platforms. The
+workaround is to write a loop to compare the arrays element by
+element. The patch for this bug is unavailable at this time.
+
+<P> Thanks to Jorge Stolfi and Warren Smith for reporting the bug, and to
+Bill Kalsow for making the fix! This compiler bug has been fixed in
+all releases of SRC Modula-3 after 3.5.3.<P>
+
+<!-------------------------------------------------------------------------->
+<HR>
+<H3><A NAME="badconst">fingerprint of a non-constant expression</A></H3>
+
+<P> This problem applies to all platforms.
+
+<P> A declaration like:
+
+<PRE>
+CONST Bad = INTEGER;
+</PRE>
+
+<P> will crash the Modula-3 compiler with the message "INTERNAL ERROR:
+fingerprint of a non-constant expression". This is a buggy program,
+since INTEGER is a type, not a value. However, a buggy program should
+not crash the compiler. The details of the fix are not available at
+this time.
+
+<P> Thanks to Farshad Nayeri and Christopher Wang for pointing out the
+problem, and to Bill Kalsow for supplying the fix. This bug has been
+fixed in all releases of SRC Modula-3 after 3.5.4-B.<P>
+
+<!-------------------------------------------------------------------------->
+<HR>
+<H3><A NAME="external"><CODE>&lt;*EXTERNAL*&gt; INTERFACE</CODE></A></H3>
+
+<P> This problem applies to all platforms.
+
+<P> The SRC Modula-3 reference manual says:
+
+<BLOCKQUOTE>
+Beginning an interface with <CODE>&lt;*EXTERNAL*&gt;</CODE> declares
+all of the procedures and variables in that interface external.
+</BLOCKQUOTE>
+
+<P> However, if you include a <CODE>CONSTANT</CODE> definition in such an
+&lt;*EXTERNAL*&gt; INTERFACE, you will get the compilation error
+"a constant cannot be external". This is a bug.
+
+<P> To fix the bug, edit the file
+"<B><CODE>m3/m3front/src/values/Decl.m3</CODE></B>". In the
+"<CODE>Decl.Parse</CODE> procedure around line 57 in the
+"<CODE>TK.tCONST</CODE>" arm of the CASE statement, change the line:
+
+<PRE>
+        att.isExternal := att.isExternal OR Module.IsExternal ();
+</PRE>
+
+<P> to read:
+
+<PRE>
+        att.isExternal := att.isExternal;
+</PRE>
+
+<P> Thanks to Farshad Nayeri for pointing out the problem, and to Bill
+Kalsow for supplying the fix. This bug has been fixed in all versions
+of SRC Modula-3 after 3.5.4-B.<P>
+
+<!-------------------------------------------------------------------------->
+<HR>
+<H3><A NAME="readonlyproc"><CODE>READONLY</CODE>
+<CODE>PROCEDURE</CODE> crash</A></H3>
+
+<P> This problem applies to all platforms.
+
+<P> If you declare a procedure argument to be of type
+<CODE>PROCEDURE</CODE> and to have mode <CODE>READONLY</CODE>, the
+compiler will produce code that crashes your program when the
+procedure is invoked. For example, consider this program:
+
+<PRE>
+MODULE Main;
+IMPORT IO;
+
+TYPE P = PROCEDURE();
+
+PROCEDURE Q(READONLY p: P) =
+  BEGIN p() END Q;
+
+PROCEDURE R() =
+  PROCEDURE LocalProc() =
+    BEGIN IO.Put("OK\n") END LocalProc;
+  BEGIN Q(LocalProc) END R;
+
+BEGIN R() END Main.
+</PRE>
+
+<P> In this program, the invocation of "Q" will cause a crash, since the
+<CODE>PROCEDURE</CODE> argument "p" is declared with mode
+<CODE>READONLY</CODE>. The temporary workaround is to declare the
+procedure argument with mode "<CODE>VALUE</CODE>" (or with no mode at
+all, which is equivalent).
+
+<P> The patch for this bug is easy. In the source file
+"<B><CODE>m3/m3front/src/values/Formal.m3</CODE></B>" in the procedure
+"Formal.HasClosure" around line 139, change the line:
+
+<PRE>
+   | T(t) =&gt; RETURN (t.mode = Mode.mVALUE)
+</PRE>
+
+<P> to read:
+
+<PRE>
+   | T(t) =&gt; RETURN (t.mode # Mode.mVAR)
+</PRE>
+
+<P> Thanks to Paul Menage and Peter Robinson for reporting the bug and to
+Bill Kalsow for supplying the fix. This compiler bug has been fixed in
+all releases of SRC Modula-3 after 3.5.4-B.<P>
+
+<!-------------------------------------------------------------------------->
+<HR>
+<H3><A NAME="newbug"><CODE>NEW(NULL)</CODE>, <CODE>NEW(REFANY)</CODE>,
+<CODE>NEW(ADDRESS)</CODE> allowed</A></H3>
+
+<P> This problem applies to all platforms.
+
+<P> According to the language definition, NEW cannot be applied to NULL, 
+REFANY or ADDRESS. However, the compiler will compile such allocations
+without complaint. This is a bug in the compiler. The obvious
+workaround is not to write such invocations of NEW.
+
+<P> The patch in this case is to change the
+"<CODE>New.CheckRef</CODE>" procedure in the file
+"<B><CODE>m3/m3front/src/builtinOps/New.m3</CODE></B>". Change the
+first part of the procedure from:
+
+<PRE>
+PROCEDURE CheckRef (r: Type.T;  ce: CallExpr.T;  VAR cs: Expr.CheckState) =
+  VAR
+    base: Type.T;
+    fields: Value.T;
+    info : Type.Info;
+  BEGIN
+    r := Type.CheckInfo (r, info);
+    base := Type.Base (r);
+    IF (r = NIL) THEN
+     Error.Msg("cannot NEW a variable of type REFANY, ADDRESS, or NULL");
+    ELSIF (info.isEmpty) THEN
+      Error.Msg ("cannot allocate variables of empty types");
+</PRE>
+
+<P> to read:
+
+<PRE>
+PROCEDURE CheckRef (r: Type.T;  ce: CallExpr.T;  VAR cs: Expr.CheckState) =
+  VAR
+    base: Type.T;
+    fields: Value.T;
+    info : Type.Info;
+  BEGIN
+    IF (r = NIL) THEN
+      Error.Msg("cannot NEW a variable of type REFANY, ADDRESS, or NULL");
+      RETURN;
+    END;
+    r := Type.CheckInfo (r, info);
+    base := Type.Base (r);
+    IF (info.isEmpty) THEN
+      Error.Msg ("cannot allocate variables of empty types");
+</PRE>
+
+<P> Thanks to Paul Menage for pointing out the problem and suggesting a
+fix. The actual fix was supplied by Bill Kalsow. This compiler bug has
+been fixed in all versions of SRC Modula-3 after version 3.5.4-B.<P>
+
+<!-------------------------------------------------------------------------->
+<HR>
+<H3><A NAME="divmod"><CODE>DIV</CODE>, <CODE>MOD</CODE> bugs</A></H3>
+
+<P> This problem applies to all platforms.
+
+<P> The expressions "<CODE>0 DIV 0</CODE>" and "<CODE>0 MOD 0</CODE>"
+both produce 0, rather than producing a division-by-zero error.
+
+<P> The fix is simple. In the file
+"<B><CODE>m3/m3core/src/Csupport/Common/hand.c</CODE></B>", the
+"<CODE>m3_div</CODE>" and "<CODE>m3_mod</CODE>" functions are coded as
+follows:
+
+<PRE>
+long m3_div (b, a)
+long a, b;
+{
+  register long c;
+  if (a == 0L)        {  c = 0L;
+  } else if (a &gt; 0L)  {  c = (b &gt;= 0L) ? (a) / (b) : -1L - (a-1L) / (-b);
+  } else /* a &lt; 0L */ {  c = (b &gt;= 0L) ? -1L - (-1L-a) / (b) : (-a) / (-b);
+  }
+  return c;
+}
+
+long m3_mod (b, a)
+long a, b;
+{
+  register long c;
+  if (a == 0L)        {  c = 0L;
+  } else if (a &gt; 0L)  {  c = (b &gt;= 0L) ? a % b : b + 1L + (a-1L) % (-b);
+  } else /* a &lt; 0L */ {  c = (b &gt;= 0L) ? b - 1L - (-1L-a) % (b) : - ((-a) % (-b) );
+  }
+  return c;
+}
+</PRE>
+
+<P> The fix is to change the first test in both functions to read:
+
+<PRE>
+  if ((a == 0L) && (b != 0L)) ...
+</PRE>
+
+<P> Thanks to Joseph Manning for reporting the problem, and thanks to Bill
+Kalsow for supplying the fix. This bug has been fixed in all releases
+of SRC Modula-3 after 3.5.4-B.<P>
+
+<!-------------------------------------------------------------------------->
+<HR>
+<H3><A NAME="common">bug in COMMON template</A></H3>
+
+<P> This problem applies to all platforms.
+
+<P> If you configure your system so that the INSTALL directories are
+different from the USE directories, then the current version of the
+COMMON template will mistakenly create symbolic links that point to
+libraries in the INSTALL directory rather than the USE directory.
+
+<P> The fix is simple. In the file
+"<B><CODE>m3/m3build/templates/COMMON</CODE></B>", locate the
+procedure named "<CODE>install_link_to_derived</CODE>", which
+appears near line 977. Within this procedure, change the lines:
+
+<PRE>
+    local target = format ("%s%s%s%s%s%s%s", PKG_INSTALL, SL, BUILD_PACKAGE,
+                                             SL, BUILD_DIR, SL, src)
+</PRE>
+
+<P> to read:
+
+<PRE>
+    local target = format ("%s%s%s%s%s%s%s", PKG_USE, SL, BUILD_PACKAGE,
+                                             SL, BUILD_DIR, SL, src)
+</PRE>
+
+<P> That is, change the occurrence of "<CODE>PKG_INSTALL</CODE>" to
+"<CODE>PKG_USE</CODE>".
+
+<P> Thanks to Olly Stephens for pointing out the bug and supplying the
+fix. This change will appear in all versions of SRC Modula-3 after
+3.5.4-B.<P>
+
+<!-------------------------------------------------------------------------->
+<HR>
+<H3><A NAME="mod">constant <CODE>MOD</CODE> expression bug</A></H3>
+
+<P> This problem applies to all platforms.
+
+<P> The compiler has a bug that causes it to report errors for
+constant MOD expressions in certain circumstances. For example, the
+code
+
+<PRE>
+  VAR even: BOOLEAN := (23 MOD 2 = 0);
+</PRE>
+
+<P> is okay, but the statement
+
+<PRE>
+  IF 23 MOD 2 = 0 THEN ... END
+</PRE>
+
+<P> produces compilation errors.
+
+<P> The fix is quite simple. In the file
+"<B><CODE>m3/m3front/src/exprs/ModExpr.m3</CODE></B>", lines 118-119
+in the <CODE>Compile</CODE> procedure are:
+
+<PRE>
+  IF (e1 # NIL) AND (e2 # NIL) AND IntegerExpr.Mod (e1, e2, e3) THEN
+  ELSIF (e2 # NIL)
+</PRE>
+
+<P> There is a line missing between these lines; they should read:
+
+<PRE>
+  IF (e1 # NIL) AND (e2 # NIL) AND IntegerExpr.Mod (e1, e2, e3) THEN
+    Expr.Compile (e3);
+  ELSIF (e2 # NIL)
+</PRE>
+
+<P> Thanks to Viggo Kann for reporting the bug, and to Bill Kalsow for
+supplying the fix! This compiler bug has been fixed in all versions
+after 3.5.4-B. <P>
+
+<!-------------------------------------------------------------------------->
+<HR>
+<H3><A NAME="m3middle"><CODE>M3File.IsEqual</CODE> compiler bug</A></H3>
+
+<P> This problem applies to all platforms.
+
+<P> The compiler's "<CODE>M3File.IsEqual</CODE>" procedure will crash
+if one of its arguments names a file that does not exist or for some
+reason cannot be opened. The fix is simple. In the file
+"<B><CODE>m3/m3middle/src/M3File.m3</CODE></B>", the last few lines of
+the "<CODE>IsEqual</CODE>" procedure should be changed from:
+
+<PRE>
+    FINALLY
+      f1.close ();
+      f2.close ();
+    END;
+  END IsEqual;
+</PRE>
+
+<P> to
+
+<PRE>
+    FINALLY
+      IF f1 # NIL THEN f1.close () END;
+      IF f2 # NIL THEN f2.close () END;
+    END;
+  END IsEqual;
+</PRE>
+
+<P> Thanks to Louis-Dominique Dubeau for pointing out the bug and
+suggesting the fix! This bug has been fixed in all releases of SRC
+Modula-3 after 3.5.4-B.<P>
+
+<!-------------------------------------------------------------------------->
+<HR>
+<H3><A NAME="subarray"><CODE>SUBARRAY</CODE> compiler bug</A></H3>
+
+<P> This problem applies to all platforms.
+
+<P> If you invoke the built-in <CODE>SUBARRAY</CODE> operator with too
+few arguments, the compiler will print a correct error message of the
+form:
+
+<PRE>
+"../src/Main.m3", line 5: too few arguments: M3_BUILTIN.SUBARRAY
+</PRE>
+
+<P> and then proceed to crash. Although it prints a useful error
+message, the compiler should not crash.
+
+<P> The fix is simple. In the file
+"<B><CODE>m3/m3front/src/builtinOps/Subarray.m3</CODE></B>", add the
+following line at the beginning of the
+"<CODE>Subarray.CheckPositive</CODE>" procedure:
+
+<PRE>
+    IF e = NIL THEN RETURN NIL END;
+</PRE>
+
+<P> Thanks to Rustan Leino for noticing the bug and providing the fix!
+This compiler bug has been fixed in all releases of SRC Modula-3 after
+3.5.4-B.<P>
+
+<!-------------------------------------------------------------------------->
+<HR>
+<H3><A NAME="trywarning">new <CODE>TRY-EXCEPT-ELSE</CODE> warning</A></H3>
+
+<P> This improvement applies to all platforms.
+
+<P> The semantics of <CODE>RETURN</CODE> and <CODE>EXIT</CODE>
+statements are defined by exceptions. Hence, if these statements
+appear inside the body of a <CODE>TRY-EXCEPT</CODE> statement with an
+<CODE>ELSE</CODE> clause, control will be transferred to the
+<CODE>ELSE</CODE> handler.
+
+<P> You should <I>almost never</I> use an <CODE>ELSE</CODE> handler to
+a <CODE>TRY-EXCEPT</CODE> statement. If you find that you're using
+them often, there is probably something wrong with the design of your
+program. However, for those rare cases where they are necessary, you
+probably do not expect the execution of <CODE>RETURN</CODE> and
+<CODE>EXIT</CODE> statements to transfer control to the
+<CODE>ELSE</CODE> handler. Hence, a new warning has been added to the
+compiler to point out such situations. If you actually intend for the
+<CODE>ELSE</CODE> clause to catch the <CODE>RETURN</CODE> or
+<CODE>EXIT</CODE>, you can add a <CODE>&lt;*NOWARN*&gt;</CODE> pragma
+on the line containing the <CODE>RETURN</CODE> or <CODE>EXIT</CODE>
+statement.
+
+<P> To add the new warning to the compiler, edit the source file
+"<B><CODE>m3/m3front/src/misc/Marker.m3</CODE></B>". Replace the
+existing procedures around lines 265-290 by the following:
+
+<PRE>
+PROCEDURE ExitOK (): BOOLEAN =
+  BEGIN
+    FOR i := tos - 1 TO 0 BY -1 DO
+      WITH z = stack[i] DO
+        IF (z.kind = Kind.zTRYELSE) THEN
+          Error.Warn (1, "EXIT will be caught by TRY EXCEPT ELSE clause");
+        END;
+        IF (z.kind = Kind.zEXIT) THEN RETURN TRUE END;
+        IF (z.kind = Kind.zPROC) THEN RETURN FALSE END;
+      END;
+    END;
+    RETURN FALSE;
+  END ExitOK;
+
+PROCEDURE ReturnOK (): BOOLEAN =
+  BEGIN
+    FOR i := tos - 1 TO 0 BY -1 DO
+      WITH z = stack[i] DO
+        IF (z.kind = Kind.zTRYELSE) THEN
+          Error.Warn (1, "RETURN will be caught by TRY EXCEPT ELSE clause");
+        END;
+        IF (z.kind = Kind.zPROC) THEN RETURN TRUE END;
+      END;
+    END;
+    RETURN FALSE;
+  END ReturnOK;
+</PRE>
+
+<P> Thanks to Randy Coleburn for pointing out the problem, and to the
+folks at <A HREF="http://www.cmass.com">Critical Mass</A> for
+supplying the fix. These warning messages have been added in all
+releases of SRC Modula-3 after 3.5.4-B.<P>
+
+<!-------------------------------------------------------------------------->
+<HR>
+<H3><A NAME="m3quake">bugs in m3quake</A></H3>
+
+<P> This problem applies to all platforms.
+
+<P> There are three known bugs in m3quake, the version of quake
+implemented in Modula-3 and integrated into m3build2 (the original
+version of quake is written in C and called by m3build). All three bugs are
+in the file "<B><CODE>m3/m3quake/src/QMachine.m3</CODE></B>". Here are
+the bugs and patches to the source code required to fix them:
+
+<UL>
+<LI>
+Subscripting an array does not work; the current implementation always
+returns the first element of the array! The procedure
+"<CODE>QMachine.Eval</CODE>" contains the following line under the
+"<CODE>Op.SubscriptArray</CODE>" arm of the main <CODE>CASE</CODE>
+statement:
+
+<PRE>
+  Push (t, arr.get(arg));
+</PRE>
+
+This line should be changed to:
+
+<PRE>
+  Push (t, arr.get(int));
+</PRE>
+
+<LI>
+The procedure "<CODE>QMachine.DoCopyIfNew</CODE>" fails if the
+destination file does not already exist. Within that procedure,
+the final <CODE>TRY...EXCEPT...END</CODE> statement should be changed
+from:
+
+<PRE>
+  TRY
+    IF NOT M3File.IsEqual (src, dest) THEN
+      M3File.Copy (src, dest);
+    END;
+  EXCEPT OSError.E(ec) =&gt;
+    Err (t, "unable to copy \""& src &"\" to \""& dest &"\""& OSErr (ec));
+  END;
+</PRE>
+
+to
+
+<PRE>
+  VAR equal := FALSE; BEGIN
+    TRY equal := M3File.IsEqual (src, dest) EXCEPT
+      OSError.E =&gt; (* SKIP *)
+    END;
+    TRY
+      IF NOT equal THEN M3File.Copy (src, dest) END;
+    EXCEPT OSError.E (ec) =&gt;
+      Err (t, "unable to copy \""& src &"\" to \""& dest &"\""& OSErr (ec));
+    END;
+  END
+</PRE>
+
+<LI>
+There is a bug in the "<CODE>Op.AssignArray</CODE>" case of the
+"<CODE>Eval</CODE>" procedure. Around line 342, the call to
+"<CODE>QVal.ToID</CODE>" should be changed to call
+"<CODE>QVal.ToInt</CODE>".
+</UL>
+
+<P> As opposed to the original version of quake, the version written
+in Modula-3 does not allow hyphens and periods in identifier names.
+The m3makefile "<B><CODE>m3/m3core/src/float/m3makefile</CODE></B>"
+includes several identifiers containing hyphens. However, these
+``identifiers'' should really be quoted strings. For the new version
+of quake to read this makefile, you will have to quote these
+identifiers. Here are the diffs:
+
+<PRE>
+$ diff m3makefile.orig m3makefile
+9,10c10,11
+&lt; readonly _float_le = [ IEEE, IEEE-le, IEEE-default ]
+&lt; readonly _float_be = [ IEEE, IEEE-be, IEEE-default ]
+---
+&gt; readonly _float_le = [ "IEEE", "IEEE-le", "IEEE-default" ]
+&gt; readonly _float_be = [ "IEEE", "IEEE-be", "IEEE-default" ]
+17,18c18,19
+&lt;   "DS3100"     : [ IEEE, IEEE-le, DS3100 ],
+&lt;   "DS3100_OSF" : [ IEEE, IEEE-le, DS3100 ],
+---
+&gt;   "DS3100"     : [ "IEEE", "IEEE-le", "DS3100" ],
+&gt;   "DS3100_OSF" : [ "IEEE", "IEEE-le", "DS3100" ],
+25c26
+&lt;   "IRIX5"      : [ IEEE, IEEE-be, IRIX5 ],
+---
+&gt;   "IRIX5"      : [ "IEEE", "IEEE-be", "IRIX5" ],
+33,34c34,35
+&lt;   "SOLsun"     : [ IEEE, IEEE-be, SOLsun ],
+&lt;   "SPARC"      : [ IEEE, IEEE-be, SPARC ],
+---
+&gt;   "SOLsun"     : [ "IEEE", "IEEE-be", "SOLsun" ],
+&gt;   "SPARC"      : [ "IEEE", "IEEE-be", "SPARC" ],
+36c37
+&lt;   "SUN386"     : [ IEEE, IEEE-le, SUN386 ],
+---
+&gt;   "SUN386"     : [ "IEEE", "IEEE-le", "SUN386" ],
+38c39
+&lt;   "VAX"        : [ VAX ]
+---
+&gt;   "VAX"        : [ "VAX" ]
+42c43
+&lt;   include_dir (Common)
+---
+&gt;   include_dir ("Common")
+</PRE>
+
+<P> Thanks to Louis-Dominique Dubeau and Jerome Collin for pointing
+out the bugs and suggesting the fixes! These bugs have been fixed in
+all releases of SRC Modula-3 after 3.5.4-B.<P>
+
+<!-------------------------------------------------------------------------->
+<HR>
+<H3><A NAME="cgerror">code generation error related to set types</A></H3>
+
+<P> This problem applies to all platforms.
+
+<P> There is a bug in the implementation of set types that can lead to
+code generation errors in the front end of the compiler. The fix
+requires changes to two modules in the <CODE>m3front</CODE> package:
+
+<UL>
+<LI>
+In "<B><CODE>m3front/src/misc/CG.m3</CODE></B>", replace the
+<CODE>Set_range</CODE> procedure in its entirety by the following
+code:
+
+<PRE>
+PROCEDURE Set_range (s: Size) =
+  BEGIN
+    EVAL Force_pair (commute := FALSE);
+    IF (s &lt;= Target.Integer.size) THEN
+      (* given x, a, b:  compute  x || {a..b} *)
+
+      cg.load_integer (TInt.MOne);      (* -1 = 16_ffffff = {0..N} *)
+      cg.swap (Type.Int, Type.Int);
+      Push_int (Target.Integer.size-1);
+      cg.swap (Type.Int, Type.Int);
+      cg.subtract (Type.Int);
+      cg.shift_right ();                (*  x, a, {0..b} *)
+
+      cg.swap (Type.Int, Type.Int);     (*  x, {0..b}, a *)
+
+      cg.load_integer (TInt.MOne);
+      cg.swap (Type.Int, Type.Int);
+      cg.shift_left ();                 (*  x, {0..b}, {a..N} *)
+
+      cg.and ();                        (*  x, {a..b} *)
+      cg.or ();                         (*  x || {a..b} *)
+      SPop (3, "Set_range-a");
+      SPush (Type.Int);
+    ELSE
+      cg.set_range (AsBytes (s));
+      SPop (3, "Set_range-b");
+    END;
+  END Set_range;
+</PRE>
+<P>
+<LI>
+In "<B><CODE>m3front/src/exprs/SetExpr.m3</CODE></B>", in the body of
+the procedure <CODE>CompileSmall</CODE> around line 688, add a call to
+<CODE>CG.Force()</CODE> just after the call to
+<CODE>CG.Load_integer</CODE>; the new snippet of code should look like
+this:
+<PRE>
+      n := n.next;
+    END; (* while *)
+
+    (* push the mask *)
+    CG.Load_integer (curMask);
+    CG.Force ();
+
+    (* finally, add the non-constant elements *)
+    FOR i := 0 TO p.nOthers-1 DO
+</PRE>
+</UL>
+
+<P> Thanks to Carsten Weich for reporting the problem and to the folks
+at <A HREF="http://www.cmass.com">Critical Mass</A> for supplying the
+fix! This bug has been fixed in all releases of SRC Modula-3 after
+3.5.4-B.<P>
+
+<!-------------------------------------------------------------------------->
+<HR>
+<H3><A NAME="rttype">bug in <CODE>RTType.CheckBrands</CODE></A></H3>
+
+<P> This bug applies to all platforms.
+
+<P> There is a bug in the <CODE>RTType.CheckBrands</CODE> procedure in
+the file "<B><CODE>m3core/src/runtime/common/RTType.m3</CODE></B>".
+The bug is that the "<CODE>buckets</CODE>" array is not being
+initialized to contain all <CODE>NIL</CODE> pointers. The fix is
+simple. Change the declaration:
+
+<PRE>
+    buckets : ARRAY [0..292] OF RT0.TypeDefn;
+</PRE>
+
+to the initializaiton:
+
+<PRE>
+    buckets := ARRAY [0..292] OF RT0.TypeDefn {NIL, ..};
+</PRE>
+
+<P> Thanks to the folks at <A HREF="http://www.cmass.com">Critical
+Mass</A> for discovering this problem and for supplying the fix! This
+bug has been fixed in all versions of SRC Modula-3 after 3.5.4-B.<P>
+
+<!-------------------------------------------------------------------------->
+<HR>
+<H3><A NAME="packedsets">bug in packed sets</A></H3>
+
+<P> This bug applies to all platforms.
+
+<P> The compiler crashes for some values of <I>n</I> in a <CODE>BITS n
+FOR SET OF T</CODE> type declaration. The simplest workaround is not
+to use <CODE>BITS FOR</CODE> as a modifier of a <CODE>SET</CODE> type,
+since its use in SRC Modula-3 cannot reduce the natural size of a set.
+
+<P> However, the compiler should not crash, so here is a patch that
+can be applied to prevent it. In the file
+"<B><CODE>m3/m3front/src/exprs/InExpr.m3</CODE></B>", locate the
+"<CODE>Prep</CODE>" and "<CODE>Compile</CODE> procedures. In each of
+those procedures, change the line:
+
+<PRE>
+    set := Type.CheckInfo (Expr.TypeOf (p.b), info);
+</PRE>
+
+to instead read
+
+<PRE>
+    set := Type.Base (Type.CheckInfo (Expr.TypeOf (p.b), info));
+</PRE>
+
+<P> Then, you'll have to recompile and ship the compiler from sources.
+(On Unix platforms, that means rebuilding the packages
+<I>m3middle</I>, <I>m3linker</I>, <I>m3front</I>, and <I>m3</I>).
+
+<P> Thanks to Peter McKinna for discovering this problem and to the
+folks at <A HREF="http://www.cmass.com">Critical Mass</A> for
+supplying the fix! This bug has been fixed in all versions of SRC
+Modula-3 after 3.5.4-B.<P>
+
+<!-------------------------------------------------------------------------->
+<HR>
+<H3><A NAME="rttipe">bug in <CODE>RTTipe.GetInt</CODE></A></H3>
+
+<P> This patch applies to all platforms.
+
+<P> The procedure <CODE>RTTipe.GetInt</CODE> has a bug that was
+causing the pickling of some types (such as <CODE>SET</CODE> types) to
+fail.
+
+<P> The patch is simple. In the file
+"<B><CODE>m3core/src/runtime/common/RTTipe.m3</CODE></B>",
+there is code at the end of the <CODE>GetInt</CODE> procedure around
+line 251 that says:
+
+<PRE>
+      VAR res := 0; BEGIN
+        FOR i := 1 TO val DO
+          res := Word.Or (Word.LeftShift (res, 8), ptr^);
+          INC (ptr, ADRSIZE (ptr^));
+        END;
+        RETURN sign * res;
+      END;
+</PRE>
+
+<P> Those lines should be changed to read:
+
+<PRE>
+      VAR res := 0;  shift := 0;  BEGIN
+        FOR i := 1 TO val DO
+          res := Word.Or (res, Word.LeftShift (ptr^, shift));
+          INC (shift, 8);
+          INC (ptr, ADRSIZE (ptr^));
+        END;
+        RETURN sign * res;
+      END;
+</PRE>
+
+<P> The bad code was reading variable-length integer values in
+big-endian order, but the compiler writes them in little-endian order.
+
+<P> Thanks to Randy Coleburn for pointing out the problem and to Blair
+MacIntyre and the folks at <A HREF="http://www.cmass.com">Critical
+Mass</A> for supplying the fix! This bug has been fixed in all
+versions of SRC Modula-3 after 3.5.4-B.<P>
+
+<!-------------------------------------------------------------------------->
+<HR>
+<H3><A NAME="trace">bug in <CODE>TRACE</CODE> pragma</A></H3>
+
+<P> This patch applies to all platforms.
+
+<P> When the <CODE>TRACE</CODE> pragma is used to monitor changes to a
+variable declared in a procedure that contains a nested procedure, the
+compiler generates code that sometimes logs changes to the variable
+too often, and sometimes logs changes to the variable too
+infrequently.
+
+<P> The patch is simple. Simply edit the file
+"<B><CODE>m3/m3front/src/values/Procedure.m3</CODE></B>", and make the
+following changes:
+
+<OL>
+<LI>
+Add "<CODE>Tracer</CODE>" to the list of IMPORTs.
+<P>
+<LI>
+Add the following code to the very beginning of the body of the
+"<CODE>GenBody</CODE>" procedure (just after the first
+<CODE>BEGIN</CODE>):
+
+<PRE>
+    IF (Host.inline_nested_procs)
+      AND (p.body # NIL) AND (p.body.level &gt; 0) THEN
+      (* make sure outer-level variable initializations are traced
+         in the outer procedure, before we enter the nested one.*)
+      Tracer.EmitPending ();
+    END;
+</PRE>
+<P>
+<LI>
+Rebuild and ship the <CODE>m3front</CODE> package. Once
+you've rebuilt the <CODE>m3front</CODE> library, you'll also have to
+rebuild and ship the <CODE>m3</CODE> package to rebuild the compiler
+with the new front-end.
+</OL>
+
+<P> Thanks to Randy Coleburn for reporting the problem and
+to the folks at <A HREF="http://www.cmass.com">Critical
+Mass</A> for supplying the fix! This bug has been fixed in all
+versions of SRC Modula-3 after 3.5.4-B.<P>
+
+<!-------------------------------------------------------------------------->
+<HR>
+<H3><A NAME="array-init">bug initializing arrays</A></H3>
+
+<P> This patch applies to all platforms.
+
+<P> Certain array initializations can produce code generation errors.
+The problem is that the compiler mistakenly attempts to initialize
+the array multiple times.
+
+<P> The fix is simple. In the file
+"<B><CODE>m3/m3front/src/exprs/ArrayExpr.m3</CODE></B>", locate the
+"<CODE>PrepLiteral</CODE>" procedure. Change that procedure by
+moving the last statement (the call to "<CODE>GenOpenLiteral</CODE>")
+up so it is inside the immediately preceding <CODE>IF</CODE>
+statement. The end of the procedure should then read:
+
+<PRE>
+    IF (p.offset = 0) THEN
+      EVAL Type.CheckInfo (p.solidType, info);
+      p.offset := Module.Allocate (info.size, info.alignment,
+                                   "*open array literal*");
+      CG.Declare_global_field (M3ID.Add ("_array"), p.offset, info.size,
+                               Type.GlobalUID(p.solidType));
+      EVAL GenOpenLiteral (p, p.offset,
+    			   OpenArrayType.OpenDepth (p.tipe),
+    			   OpenArrayType.OpenType (p.tipe),
+    			   OpenArrayType.EltPack (p.type));
+    END;
+  END PrepLiteral;
+</PRE>
+
+<P> Then rebuild and ship the <CODE>m3front</CODE> package. Once
+you've rebuilt the <CODE>m3front</CODE> library, you'll also have to
+rebuild and ship the <CODE>m3</CODE> package to rebuild the compiler
+with the new front-end.
+
+<P> Thanks to Carsten Weich for reporting the problem and
+to the folks at <A HREF="http://www.cmass.com">Critical
+Mass</A> for supplying the fix! This bug has been fixed in all
+versions of SRC Modula-3 after 3.5.4-B.<P>
+
+<!-------------------------------------------------------------------------->
+<HR>
+<H3><A NAME="stackdump">better stack overflow handling</A></H3>
+
+<P> This problem applies to all POSIX platforms.
+
+<P> In the current thread implementation on POSIX platforms, an
+assertion failure occurs if a forked thread overflows its stack.
+Since many users find this confusing, this patch adds code to print a
+more helpful message whenever an assertion failure would have occured
+in the existing code. The new code is triggered when a forked thread
+writes over the ``seals'' on its stack and control is then transfered
+to a different thread.
+
+<P> To add the patch, copy the patch file
+"<A HREF="../patches/POSIX/ThreadPosix.m3"><CODE>ThreadPosix.m3</CODE></A>"
+to "<B><CODE>m3/m3core/src/thread/POSIX/ThreadPosix.m3</CODE></B>".
+Then rebuild and reship m3core.
+
+<P> Thanks to the folks at <A HREF="http://www.cmass.com">Critical
+Mass</A> for supplying this patch! This patch has been applied in all
+releases of SRC Modula-3 after 3.5.4-B.<P>
+
+<!-------------------------------------------------------------------------->
+<HR>
+<H3><A NAME="picgen">bug generating position-independent code</A></H3>
+
+<P> This problem applies to all platforms using the gcc-based back-end.
+
+<P> There is a bug in the gcc-based code generator. One manifestation
+of this bug is that it causes PIC code generated for the i386
+architecture to be incorrectly. However, it should be applied to all
+platforms that use the gcc-based back-end. In the file 
+"<B><CODE>m3cc/gcc/m3.c</CODE></B>", the code around line 2330 reads:
+
+<PRE>
+    case M3_DECLARE_SEGMENT: {
+      STRING (n);
+      TYPEID (id);
+      RETURN_VAR (v, VAR_DECL);
+      
+      DECL_NAME (v) = DECL_ASSEMBLER_NAME (v) = fix_name (n, id);
+      DECL_EXTERNAL (v) = 0;
+      /* we really don't have an idea of what the type of this var is; 
+         let's try to put something that will be good enough for all
+         the uses of this var we are going to see before  
+         we have a bind_segment */
+      fix_type (v, T_struct, BIGGEST_ALIGNMENT, BIGGEST_ALIGNMENT);
+      TREE_UNSIGNED (TREE_TYPE (v)) = 1;
+      TREE_STATIC (v) = 1;
+</PRE>
+
+<P> Just after the line "<CODE>DECL_EXTERNAL (v) = 0;</CODE>" and
+before the long comment, add the following line:
+
+<PRE>
+      TREE_PUBLIC (v) = 1;
+</PRE>
+
+<P> Thanks to John Polstra for reporting the bug and supplying the fix.
+This bug has been fixed in all releases of SRC Modula-3 after 3.5.4-B.<P>
+
+<!-------------------------------------------------------------------------->
+<HR>
+<H3><A NAME="wordcomp">bug generating Word comparison code</A></H3>
+
+<P> This problem applies to all platforms using the gcc-based back-end.
+
+<P> The current gcc-based back-end generates bad code for the
+comparison procedures "LT", "LE", "GT", and "GE" in the "Word"
+interface. Although values of type "Word.T" are unsigned, the
+generated code treats the arguments as signed values.
+
+<P> The fix is simple. In the "<B><CODE>m3cc/gcc/m3.c</CODE></B>"
+source file, add the following function just before the
+"<CODE>condop</CODE>" function around line 1523:
+
+<PRE>
+static void compareop (o, t)
+   enum tree_code o;
+   tree t;
+{
+  tree t1 = m3_cast (t, stack [tos-1]);
+  tree t2 = m3_cast (t, stack [tos-2]);
+  TREE_UNSIGNED (t1) = TREE_UNSIGNED (t);
+  TREE_UNSIGNED (t2) = TREE_UNSIGNED (t);
+  stack [tos-2] = m3_build2 (o, t_int, t2, t1);
+  tos --;
+}
+</PRE>
+
+<P> Then, around line 2905, change the lines for the six comparison
+functions to use the new "<CODE>compareop</CODE>" function instead of
+the "<CODE>binaryop</CODE>" function, and change each of their second
+arguments from "<CODE>t_int</CODE>" to "<CODE>t</CODE>", like this:
+
+<PRE>
+    case M3_EQ:       { MTYPE (t); compareop (EQ_EXPR, 	   t); break; }
+    case M3_NE:       { MTYPE (t); compareop (NE_EXPR, 	   t); break; }
+    case M3_GT:       { MTYPE (t); compareop (GT_EXPR, 	   t); break; }
+    case M3_GE:       { MTYPE (t); compareop (GE_EXPR, 	   t); break; }
+    case M3_LT:       { MTYPE (t); compareop (LT_EXPR, 	   t); break; }
+    case M3_LE:       { MTYPE (t); compareop (LE_EXPR, 	   t); break; }
+</PRE>
+
+<P> Thanks to Charles Garrett for pointing out the bug and to the
+folks at <A HREF="http://www.cmass.com">Critical Mass</A> for
+supplying the fix! This bug has been fixed in all releases of SRC
+Modula-3 after 3.5.4-B.<P>
+
+<!-------------------------------------------------------------------------->
+<HR>
+<H3><A NAME="stackloc">bug in <CODE>Stackx86.m3</CODE></A></H3>
+
+<P> This problem applies to all platforms using the integrated Intel
+back-end.
+
+<P> There is a bug in the "<CODE>push</CODE>" procedure of the file
+"<B><CODE>m3/m3back/src/Stackx86.m3</CODE></B>". The description of
+the bug is rather complicated, but the fix is simple. The assignment
+statement:
+
+<PRE>
+          stack0.loc := OLoc.fstack;
+</PRE>
+
+on or around line 653 must be moved to just before the immediately
+preceding <CODE>IF</CODE>, so the final snippet of code looks like
+this:
+
+<PRE>
+      IF mvar.t &gt;= Type.Reel AND mvar.t &lt;= Type.XReel THEN
+        stack0.loc := OLoc.fstack;      (* &lt;-- MOVE HERE *)
+        IF mvar.var.loc = VLoc.temp AND mvar.var.parent # t.current_proc THEN
+          unlock(t);
+          indreg := pickreg(t, RegSet {}, TRUE);
+          corrupt(t, indreg);
+
+          t.cg.get_frame(indreg, mvar.var.parent, t.current_proc);
+          t.cg.f_loadind(t.cg.reg[indreg], mvar.o + mvar.var.offset, mvar.t);
+
+        ELSE
+                                        (* &lt;-- WAS HERE *)
+          t.cg.fstack_push(mvar);
+        END
+      ELSE
+</PRE>
+
+<P> Thanks to Jerome Collin for noticing this bug and supplying the
+fix! This bug has been fixed in all versions of SRC Modula-3 after
+3.5.4-B.<P>
+
+<!-------------------------------------------------------------------------->
+<HR>
+<H3><A NAME="m3x86">bug in <CODE>M3x86.m3</CODE></A></H3>
+
+<P> This problem applies to all platforms using the integrated Intel
+back-end.
+
+<P> Some updates have been made to the Intel code generator. Among
+other things, the code generator now handles both direct and indirect
+procedure calls. To apply the patch, simply copy the file
+"<A HREF="../patches/common/M3x86.m3"><CODE>M3x86.m3</CODE></A>"
+to "<B><CODE>m3/m3back/src/M3x86.m3</CODE></B>". Then rebuild and ship
+the <CODE>m3back</CODE> package.
+
+<P> Thanks to the folks at <A HREF="http://www.cmass.com">Critical
+Mass</A> for supplying this fix! This bug has been fixed in all
+versions of SRC Modula-3 after 3.5.4-B.<P>
+
+<!-------------------------------------------------------------------------->
+<HR>
+<H3><A NAME="rtheapdepc">bug in <CODE>RTHeapDepC.c</CODE></A></H3>
+
+<P> This problem applies to the DS3100, FreeBSD, FreeBSD2, and SPARC
+platforms.
+
+<P> In the file
+"<B><CODE>m3/runtime/src/</CODE>&lt;architecture&gt;<CODE>/RTHeapDepC.c</CODE></B>",
+the lines:
+
+<PRE>
+      { char **a; for (a = argv; *a; a++) MAKE_READABLE(**a); }
+      { char **e; for (e = envp; *e; e++) MAKE_READABLE(**e); }
+</PRE>
+
+<P> should be:
+
+<PRE>
+      { char **a; for (a = argv; *a; a++) MAKE_READABLE(*a); }
+      { char **e; for (e = envp; *e; e++) MAKE_READABLE(*e); }
+</PRE>
+
+<P> Thanks to Jorge Stolfi for reporting this bug. Bill Kalsow provided
+the fix. This bug has been fixed in all releases of SRC Modula-3 after
+3.5.3.<P>
+
+<!-------------------------------------------------------------------------->
+<HR>
+<H3><A NAME="quotactl">bug in <CODE>quotactl</CODE> signature</A></H3>
+
+<P> This problem applies only to the FreeBSD2 platform.
+
+<P> FreeBSD now has a prototype for the library function "quotactl"
+in its header files, and that prototype disagrees with the function
+definition in "<CODE>RTHeapDepC.c</CODE>". That causes the compilation
+of "<CODE>RTHeapDepC.c</CODE>" to fail.
+
+<P> To fix the bug, edit the file
+"<B><CODE>m3/m3core/src/runtime/FreeBSD2/RTHeapDepC.c</CODE></B>". In
+the "<CODE>quotactl</CODE>" function, change the type of the
+"<CODE>addr</CODE>" formal argument from "<CODE>void *</CODE>" to
+"<CODE>char *</CODE>", like this:
+
+<PRE>
+int quotactl(path, cmd, uid, addr)   /* ok */
+const char *path;
+int cmd, uid;
+char *addr;
+{ int result;
+</PRE>
+
+<P> Thanks to John Polstra for noticing the problem and suggesting the
+fix! This bug has been fixed in all releases of SRC Modula-3 after
+3.5.4-B.<P>
+
+<!-------------------------------------------------------------------------->
+<HR>
+<H3><A NAME="Usignal">bad Unix signal constants</A></H3>
+
+<P> This problem applies only to the FreeBSD2 platform.
+
+<P> Certain constants related to Unix signals are incorrect.
+To get the correct contants, simply copy the file
+"<A HREF="../patches/FreeBSD2/Usignal.i3"><CODE>Usignal.i3</CODE></A>" to
+"<B><CODE>m3core/src/unix/freebsd-2/Usignal.i3</CODE></B>".
+
+<P> Thanks to John Polstra for noticing the problem and providing the
+fix! This bug has been fixed in all releases of SRC Modula-3 after
+3.5.4-B.<P>
+
+<!-------------------------------------------------------------------------->
+<HR>
+<H3><A NAME="m3nonblock">bad <CODE>M3_NONBLOCK</CODE> constant</A></H3>
+
+<P> This problem applies only to the IBMR2 platform.
+
+<P> On this platform, there is a bad definition of the unix constant
+<CODE>M3_NONBLOCK</CODE> in the file
+"<B><CODE>m3/m3core/src/unix/aix-3-2/Unix.i3</CODE></B>". The correct
+definition (around line 771 of that file) is:
+
+<PRE>
+  M3_NONBLOCK = O_NDELAY;       (* -1 =&gt; would block, 0 =&gt; EOF *)
+</PRE>
+
+<P> Thanks to Joe Morrison for detecting the bug and for providing the
+fix! This change has been made in all releases of SRC Modula-3 after
+3.5.4-B.<P>
+
+<!-------------------------------------------------------------------------->
+<HR>
+<H3><A NAME="noXshmem">no X11 shared memory extension</A></H3>
+
+<P> This problem applies to the IBMR2 platform and to all other platforms
+whose X11 servers do not include the shared memory extension.
+
+<P> The symptom of the problem is that linking any program against the
+Trestle "ui" library produces the following undefined symbols:
+<BLOCKQUOTE>
+.XShmQueryExtension, .XShmGetEventBase, .XShmAttach,
+.XShmDetach, .XShmPutImage, .XShmCreateImage
+</BLOCKQUOTE>
+
+<P> The solution to the problem is to provide a ``null'' implemention
+of Trestle's <CODE>XSharedMem</CODE> interface. There are two steps to
+the patch:
+
+<OL>
+<LI>
+First, copy the file
+<A HREF="../patches/IBMR2/XNoSharedMem.m3"><CODE>XNoSharedMem.m3</CODE></A> to
+the new file "<B><CODE>m3/ui/src/xvbt/XNoSharedMem.m3</CODE></B>".
+<LI>
+Then, edit the file "<B><CODE>m3/ui/src/xvbt/m3makefile</CODE></B>" as
+follows. Replace the line:
+<PRE>
+  Module ("XSharedMem")
+</PRE>
+by the lines:
+<PRE>
+  Interface ("XSharedMem")
+  implementation ("XNoSharedMem")
+</PRE>
+</OL>
+Then rebuild and ship the "ui" package.
+
+<P> Thanks to Pedo Giffuni, Paul McJones, and Mike Douglass for
+noticing the problem, and to Mike Douglass for providing the fix!
+This bug has been fixed in all releases of SRC Modula-3 after 3.5.4-B.
+
+<P> In releases of SRC Modula-3 after 3.5.4-B, the problem has
+actually been fixed in a more general way. Each platform
+specific-template defines a new readonly variable, like this:
+
+<PRE>
+  % Does your X11 server have the shared memory extension?
+  readonly X11_WITH_SHARED_MEM = "TRUE"
+</PRE>
+
+For those platforms like IBMR2 that don't have the shared memory
+extension, the variable is defined to be "" (the empty string). Then,
+the relevant lines in the file
+"<B><CODE>m3/ui/src/xvbt/XNoSharedMem.m3</CODE></B>" become:
+<PRE>
+  Interface ("XSharedMem")
+  if X11_WITH_SHARED_MEM
+    implementation ("XSharedMem")
+  else
+    implementation ("XNoSharedMem")
+  end
+</PRE>
+
+<P> Thanks to the folks at <A HREF="http://www.cmass.com">Critical
+Mass</A> for suggesting this solution.<P>
+
+<!-------------------------------------------------------------------------->
+<HR>
+<H3><A NAME="fstat"><CODE>fstat</CODE>, <CODE>stat</CODE> undefined</A></H3>
+
+<P> This problem applies only to the LINUX platform.
+
+<P> While building the Modula-3 compiler, you may see error messages like
+the following:
+
+<PRE>
+middle/LINUXELF/libm3middle.a ../../libm3/LINUXELF/libm3.a ../../m3core/LINUXELF/libm3core.a -lm
+FilePosix_m.o(.text+0x129): undefined reference to `fstat'
+FilePosix_m.o(.text+0x30a): undefined reference to `fstat'
+FilePosix_m.o(.text+0xa82): undefined reference to `fstat'
+FSPosix_m.o(.text+0x69f): undefined reference to `fstat'
+FSPosix_m.o(.text+0xdb0): undefined reference to `stat'
+ProcessPosix_m.o(.text+0x451): undefined reference to `stat'
+ProcessPosix_m.o(.text+0x697): undefined reference to `stat'
+*** error code 1
+"/boot-LINUXELF/m3build/templates/COMMON.BOOT", line 58: command execute failed
+*** call stack ***
+"/boot-LINUXELF/m3build/templates/COMMON.BOOT", line 58: call to built-in exec
+"./make.boot", line 28: call to procedure boot_prog
+</PRE>
+
+This is a known problem with V 1.2x of the LINUX ELF distribution.
+<A HREF="mailto:Geoff.Wyant@east.sun.com">Geoff Wyant</A> says:<P>
+
+<BLOCKQUOTE>
+The standard include file <CODE>/usr/include/sys/stat.h</CODE>
+declares '<CODE>fstat</CODE>' and '<CODE>stat</CODE>' as being inline
+functions. A simple workaround is to make a local library named
+'<CODE>libstat.a</CODE>' that implements <CODE>fstat</CODE> and
+<CODE>stat</CODE> (just copy the functions from <CODE>stat.h</CODE>)
+and link this with the generated compiler (you'll have to add it to
+<CODE>boot-LINUXELF/m3/make.boot</CODE>) and specify it as one of the
+libraries that always gets linked with an M3 program (such as -lm).
+Yes, it's a hack, but it's quicker than fixing libm3 to do the write
+thing on V1.2 of Linux, especially since this problem is fixed in
+Linux 1.3 (or so the rumor goes...) 
+</BLOCKQUOTE>
+
+As another solution in the same vein, Carsten Weich suggests adding
+the following C file to the <CODE>m3core</CODE> library:
+
+<BLOCKQUOTE>
+<PRE>
+/* Carsten Weich, June 1995
+ *
+ * "stat" and "fstat" are declared as "__inline__" in
+ * "/usr/include/sys/stat.h". These inline calls are not
+ * accessible to the linker, so Modula-3 routines cannot
+ * call them.
+ *
+ * This hack replicates the inline calls as regular functions.
+ */
+
+int stat (p1, p2)
+char *p1, *p2;
+{
+    return _xstat(1, p1, p2);
+}
+
+int fstat (f, p)
+int f;
+char *p;
+{
+    return _fxstat(1, f, p);
+}
+</PRE>
+</BLOCKQUOTE>
+
+<P> Thanks to Michael Nonweiler and Matt Henley for reporting the
+problem. The problem has not been fixed in the Modula-3 sources,
+since it is really a problem with the Linux ELF distribution, and is
+supposed to be corrected in future Linux ELF releases.<P>
+
+<!-------------------------------------------------------------------------->
+<HR>
+<H3><A NAME="writev">stack overflow due to bad <CODE>writev</CODE></A></H3>
+
+<P> This problem applies only to the LINUX/LINUXELF platform. As of
+13-Aug-96, this patch has been superceded by a
+<A HREF="#readv-writev">later patch</A>.
+
+<P> Modula-3 thread stacks on Linux are not dynamically expandable.
+Most of the versions of Linux in use today have a version of the
+<CODE>writev</CODE> function that copies all of it's data to the stack
+before calling <CODE>write</CODE>. This can cause stack overflows,
+since the Trestle graphics system passes pixmaps to X via the X
+library, which uses <CODE>writev</CODE> to pass the actual data.
+
+<P> One solution to this problem is to use a version of Linux with
+kernel support for <CODE>writev</CODE>. Linux kernels since version
+1.3.40 have native (kernel) <CODE>readv/writev</CODE> functions; in
+particular, versions of the Linux libc library since version 5.2.12 do
+not supply implementations of these functions in the library.
+
+<P> If you are not using one of these newer libraries, you can work
+around the problem by substituting your own version of
+<CODE>writev</CODE>. We've written two different implementations that
+you can try:
+
+<DL>
+<DT>
+<A HREF="../patches/LINUXELF/writev_slow.c"><CODE>writev_slow.c</CODE></A>
+<DD> This version is like the default implementation, but it allocates
+its buffer on the heap instead of the stack. Like the default
+implementation, this version is fairly slow because it has to copy the
+bytes in the argument vector into the buffer.
+<P>
+<DT>
+<A HREF="../patches/LINUXELF/writev_sleazy.c"><CODE>writev_sleazy.c</CODE></A>
+<DD> This version does not copy the bytes from the argument vector
+into a separate buffer, but instead writes them directly using
+<CODE>write</CODE>. This version is faster than the slow version
+because it doesn't do an extra copy. The problem with this version is
+that it does multiple writes. This works fine when passing large
+arguments to an X server, but it may not work when writing to file
+descriptors associated with low-level ``devices'' like UDP sockets
+where making multiple <CODE>write</CODE> calls violates the
+<CODE>writev</CODE> semantics.
+</DL>
+
+<P> To use either of these alternative implementations, just copy one
+or both of the above files to the directory
+"<B><CODE>m3core/src/Csupport/LINUXELF</CODE></B>", edit the
+<CODE>m3makefile</CODE> in that directory to include a
+<CODE>c_source</CODE> line for the new source file, and then rebuild
+and reship <CODE>m3core</CODE>.
+
+<P> Thanks to Paul McJones and the folks at <A
+HREF="http://www.cmass.com">Critical Mass</A> for diagnosing the
+problem and providing the fix! Both alternative versions of
+<CODE>writev</CODE> have been included in all releases of SRC Modula-3
+after 3.5.4-B, but the lines that include them in the
+<CODE>m3makefile</CODE> are commented out.<P>
+
+<!-------------------------------------------------------------------------->
+<HR>
+<H3><A NAME="incGC">incremental garbage collector</A></H3>
+
+<P> This patch applies only to the LINUXELF platform.
+
+<P> Michel Dagenais has managed to get the incremental virtual-memory
+based garbage collector working on the LINUXELF platform! To install
+the new collector, follow these steps:
+
+<OL>
+<LI>
+Copy the following files to the directory
+"<B><CODE>m3/m3core/src/runtime/LINUXELF/</CODE></B>":
+<UL>
+<LI> "<A HREF="../patches/LINUXELF/RTHeapDep.m3"><CODE>RTHeapDep.m3</CODE></A>"
+<LI> "<A HREF="../patches/LINUXELF/RTThread.m3"><CODE>RTThread.m3</CODE></A>"
+<LI> "<A HREF="../patches/LINUXELF/RTHeapDepC.c"><CODE>RTHeapDepC.c</CODE></A>"
+(this is a new file)
+</UL>
+<P>
+<LI>
+Edit the existing file 
+"<B><CODE>m3/m3core/src/runtime/LINUXELF/m3makefile</CODE></B>"
+to include the new line:
+<PRE>
+c_source       ("RTHeapDepC")
+</PRE>
+<P>
+<LI>
+Edit the existing file
+"<B><CODE>m3/m3core/src/runtime/LINUXELF/RTMachine.i3</CODE></B>"
+to initialize "<CODE>VMHeap</CODE>" to "<CODE>TRUE</CODE>", and add
+the following two lines immediately after that definition:
+<PRE>
+&lt;*EXTERNAL*&gt; VAR RTHeapRep_Fault: ADDRESS;  (* =&gt; RTHeapRep.Fault *)
+&lt;*EXTERNAL*&gt; VAR RTCSRC_FinishVM: ADDRESS;  (* =&gt; RTCollectorSRC.FinishVM *)
+</PRE>
+<P>
+<LI>Copy the following four existing files to the directory
+"<B><CODE>m3/m3core/src/unix/linux/</CODE></B>":
+<UL>
+<LI> <A HREF="../patches/LINUXELF/Umman.i3"><CODE>Umman.i3</CODE></A>
+<LI> <A HREF="../patches/LINUXELF/Usignal.i3"><CODE>Usignal.i3</CODE></A>
+<LI> <A HREF="../patches/LINUXELF/Usignal.m3"><CODE>Usignal.m3</CODE></A>
+<LI> <A HREF="../patches/LINUXELF/Utime.i3"><CODE>Utime.i3</CODE></A>
+</UL>
+</OL>
+
+<P> Thanks to Michel Dagenais for supplying this patch! This patch has
+been installed on all versions of SRC Modula-3 after 3.5.4-B.<P>
+
+<!-------------------------------------------------------------------------->
+<HR>
+<H3><A NAME="linuxTimezone">timezone support</A></H3>
+
+<P> This patch applies only to the LINUX/LINUXELF platform.
+
+<P> The current release does not include timezone support on the Linux
+platforms. This patch provides that support. To apply the patch,
+follow these steps:
+
+<OL>
+<LI>
+Edit the file
+"<B><CODE>m3/m3core/src/time/POSIX/DateLinux.m3</CODE></B>".
+First, add "<CODE>M3toC</CODE>" to the list of imports. Then,
+change the lines
+
+<PRE>
+       date.offset  := 0; (* Linux doesn't support time zones yet... *)
+       date.zone    := Unknown;
+</PRE>
+
+to read
+
+<PRE>
+       IF tm.tm_isdst = 0 THEN
+         date.offset := Utime.timezone;
+         date.zone   := M3toC.CopyStoT (Utime.tzname[0]);
+       ELSIF tm.tm_isdst &gt; 0 AND Utime.daylight # 0 THEN
+         date.offset := Utime.altzone;
+         date.zone   := M3toC.CopyStoT (Utime.tzname[1]);
+       ELSE
+         date.offset := 0;
+         date.zone   := Unknown;
+       END;
+</PRE>
+<LI>
+Copy the existing file
+<A HREF="../patches/LINUXELF/Utime.i3"><CODE>Utime.i3</CODE></A>
+to the directory "<B><CODE>m3/m3core/src/unix/linux/</CODE></B>".
+This is the same version of the file supplied in step 4 of the
+<A HREF="#incGC">previous patch</A>, so you don't need to re-copy the
+file if you've already installed that patch.
+</OL>
+
+<P> After making these changes, you'll have to rebuild and reship the
+m3core library.
+
+<P> Thanks to Michel Dagenais for supplying this patch! This patch has
+been installed on all versions of SRC Modula-3 after 3.5.4-B.<P>
+
+<!-------------------------------------------------------------------------->
+<HR>
+<H3><A NAME="readv-writev">incremental GC readv/writev fix</A></H3>
+
+<P> This patch applies only to the LINUXELF platform. It assumes you
+have already applied the <A HREF="#incGC">incremental garbage
+collector</A> patch. This patch also supercedes an <A
+HREF="#writev">earlier patch</A> to the implementation of the
+<CODE>writev</CODE> system call. This patch uses the user-level
+implementation referred to as "<CODE>writev_sleazy</CODE>" in that
+previous patch.
+
+<P> On some LINUXELF systems, the readv() and writev() system calls
+are not implemented as kernel calls. The <A HREF="#incGC">initial
+incremental GC patch</A> got the writev() system call correct, but not
+the readv() system call. This patch makes the two cases symmetric.
+
+<P> This patch also includes a change to the writev() implementation
+on systems where writev() is not implemented as a kernel call. The
+change is necessary because the user-level implementation of writev()
+included with some LINUXELF systems would allocate huge buffers on the
+stack, leading to thread stack overflows. Since the X window system
+library uses writev() to paint large pixmaps, many people were
+experiencing thread stack overflows. This version tests if your system
+has a user-level version of writev(), and if so, provides an alternate
+implementation that does not consume large amounts of stack space.
+
+<P> To install the patch, simply copy
+"<A HREF="../patches/LINUXELF/RTHeapDepC.c"><CODE>RTHeapDepC.c</CODE></A>"
+to the file 
+"<B><CODE>m3/m3core/src/runtime/LINUXELF/RTHeapDepC.c</CODE></B>".
+
+<P> Thanks to the folks at <A HREF="http://www.cmass.com">Critical
+Mass</A> for discovering this problem and for supplying the fix! This
+bug has been fixed in all versions of SRC Modula-3 after 3.5.4-B.<P>
+
+<!-------------------------------------------------------------------------->
+<HR>
+<H3><A NAME="win32thread">race condition in thread runtime</A></H3>
+
+<P> This problem applies only to the NT386 platform.
+
+<P> There is a race condition between the thread runtime and the
+garbage collector. A window of time exists between the time a new
+<CODE>Thread.T</CODE> is allocated and the time when the Win95/NT
+thread actually starts running. During that interval, the collector
+can move the <CODE>Thread.T</CODE>. When the new threads starts
+executing in this case, it is confused!
+
+<P> The fix requires replacing the module
+"<B><CODE>m3core/src/thread/WIN32/ThreadWin32.m3</CODE></B>". 
+However, this fix has been superseded by a
+<A HREF="#win32gc">more extensive fix</A> to the NT386 runtime
+described below, in which both "<CODE>ThreadWin32.m3</CODE>" and
+another file in the runtime need to be replaced.
+
+<P>Thanks to the folks at <A HREF="http://www.cmass.com">Critical
+Mass</A> for supplying the initial version of this fix!<P>
+
+<!-------------------------------------------------------------------------->
+<HR>
+<H3><A NAME="win32gc">bugs in Windows garbage collector</A></H3>
+
+<P> This problem applies only to the NT386 platform. It supercedes the
+<A HREF="#win32thread">thread runtime patch</A> described above.
+
+<P> There were two bugs in the garbage collector on Windows platforms.
+One was that the collector could be moving data around in the heap
+while other threads were running. The other was a bug in Windows that
+reports bogus stack pointer values for suspended threads.
+
+<P> To get the two fixes, you need to install the following two files:
+
+<UL>
+<LI> <A HREF="../patches/common/RTCollector.m3">
+"<B><CODE>m3core/src/runtime/common/RTCollector.m3</CODE></B>"</A>
+<LI> <A HREF="../patches/NT386/ThreadWin32.m3">
+"<B><CODE>m3core/src/thread/WIN32/ThreadWin32.m3</CODE></B>"</A>
+</UL>
+
+<P> Thanks to the folks at <A HREF="http://www.cmass.com">Critical
+Mass</A> for supplying these fixes! These bugs have been fixed in all
+releases of SRC Modula-3 after 3.5.4-B.<P>
+
+<!-------------------------------------------------------------------------->
+<HR>
+<H3><A NAME="fsrename"><CODE>FS.Rename</CODE> bug on Windows 95</A></H3>
+
+<P> This problem applies only to the NT386 platform, and to Windows 95
+platforms in particular. This patch is subsumed by the more general
+<A HREF="#win32os">OS patches</A> described below.
+
+<P> The Windows/NT function <CODE>WinBase.MoveFileEx</CODE> used by
+the <CODE>FS.Rename</CODE> procedure is not implemented on Windows 95.
+Here is a different definition of that procedure for Windows 95 that
+also works on Windows/NT. This version replaces the <CODE>Rename</CODE>
+procedure in "<B><CODE>m3/libm3/src/os/WIN32/FSWin32.m3</CODE></B>":
+
+<PRE>
+PROCEDURE Rename(p0, p1: Pathname.T) RAISES {OSError.E} =
+  VAR err: INTEGER;
+  BEGIN 
+    IF WinBase.MoveFileEx(M3toC.TtoS(p0), M3toC.TtoS(p1),
+                          WinBase.MOVEFILE_REPLACE_EXISTING) = 0 THEN
+      err := WinBase.GetLastError();
+      IF (err = WinError.ERROR_CALL_NOT_IMPLEMENTED) THEN
+        (* MoveFileEx is not implemented on Win95. *)
+        IF WinBase.MoveFile(M3toC.TtoS(p0), M3toC.TtoS(p1)) = 0 THEN
+          OSErrorWin32.Raise();
+        END;
+        RETURN;
+      END;
+      OSErrorWin32.Raise0(err)
+    END
+  END Rename;
+</PRE>
+
+<P> Thanks to the folks at <A HREF="http://www.cmass.com">Critical
+Mass</A> for noticing this problem and for supplying the fix! This
+problem has been fixed in all releases of SRC Modula-3 after
+3.5.4-B.<P>
+
+<!-------------------------------------------------------------------------->
+<HR>
+<H3><A NAME="win32os">OS improvements for Win32</A></H3>
+
+<P> This problem applies only to the NT386 platform, and to Windows 95
+platforms in particular. This patch subsumes the
+<A HREF="#fsrename"><CODE>FS.Rename</CODE> patch</A> described above.
+
+<P> Bill Kalsow has made several improvements to the operating system
+(OS) implementations on the NT386 platform. To get the improvements,
+you need to install the following three files:
+
+<UL>
+<LI> <A HREF="../patches/NT386/FileWin32.m3.old1">
+"<B><CODE>libm3/src/os/WIN32/FileWin32.m3</CODE></B>"</A>
+<LI> <A HREF="../patches/NT386/FSWin32.m3">
+"<B><CODE>libm3/src/os/WIN32/FSWin32.m3</CODE></B>"</A>
+<LI> <A HREF="../patches/NT386/ProcessWin32.m3">
+"<B><CODE>libm3/src/os/WIN32/ProcessWin32.m3</CODE></B>"</A>
+</UL>
+
+<P> Thanks to the folks at <A HREF="http://www.cmass.com">Critical
+Mass</A> for supplying these patches! They have been
+applied in all releases of SRC Modula-3 after 3.5.4-B.<P>
+
+<!-------------------------------------------------------------------------->
+<HR>
+<H3><A NAME="win32rtargs">command-line argument separation bug</A></H3>
+
+<P> This problem applies only to the NT386 platform.
+
+<P> There is a bug in the code that separates command-line arguments
+on Win32 platforms. On these platforms, the command-line is given to
+the Modula-3 run-time as a single string; the run-time must separate
+this string into words. The existing code uses spaces to delimit the
+words. The fix is to also use other whitespace characters like tabs
+and newlines to separate the words.
+
+<P> To apply the patch, copy the file <A
+HREF="../patches/NT386/RTArgs.m3"><CODE>RTArgs.m3</CODE></A> to the file
+"<B><CODE>m3/m3core/src/runtime/WIN32/RTArgs.m3</CODE></B>".
+
+<P> Thanks to Paul McJones for pointing out the problem,
+and to the folks at <A HREF="http://www.cmass.com">Critical
+Mass</A> for supplying the fix! This patch has been
+applied in all releases of SRC Modula-3 after 3.5.4-B.<P>
+
+<!-------------------------------------------------------------------------->
+<HR>
+<H3><A NAME="win32terminal">terminal reading bug</A></H3>
+
+<P> This problem applies only to the NT386 platform.
+
+<P> The code for reading from a terminal is broken: it is implemented
+by the same code for reading from a regular file, which ignores its
+"<CODE>mayBlock</CODE>" argument. Hence, the code for reading from a
+terminal always blocks. This was causing higher-level code, such as
+"<CODE>Rd.CharsReady</CODE>" not to work.
+
+<P> The patch is to copy the file
+<A HREF="../patches/NT386/FileWin32.m3.old2"><CODE>FileWin32.m3</CODE></A>
+to the directory "<B><CODE>m3/libm3/src/os/WIN32/</CODE></B>". You will
+then have to rebuild and ship the libm3 library. This patch supercedes
+the <A HREF="#win32os">previous patch</A> to
+<CODE>FileWin32.m3</CODE>.
+
+<P> Thanks to Blair MacIntyre for pointing out the bug and to the
+folks at <A HREF="http://www.cmass.com">Critical Mass</A> for
+supplying the fix! This patch has been applied in all releases of SRC
+Modula-3 after 3.5.4-B.<P>
+
+<!-------------------------------------------------------------------------->
+<HR>
+<H3><A NAME="win32terminal2">terminal reading bug (again)</A></H3>
+
+<P> This problem applies only to the NT386 platform.
+
+<P> The <A HREF="#win32terminal">previous patch</A> to
+"<CODE>FileWin32.m3</CODE>" did not work for all kinds of terminals. In
+particular, the previous version of read would never return any data
+for "comN" files. This patch fixes that problem. It supercedes both
+previous versions of "<CODE>FileWin32.m3</CODE>".
+
+<P> To apply the patch, simply copy the patch file
+<A HREF="../patches/NT386/FileWin32.m3.old2"><CODE>FileWin32.m3</CODE></A>
+to the directory "<B><CODE>m3/libm3/src/os/WIN32/</CODE></B>". You will
+then have to rebuild and ship the libm3 library.
+
+<P> Thanks to Blair MacIntyre for noticing the bug and supplying the
+fix! This patch has been applied in all releases of SRC
+Modula-3 after 3.5.4-B.<P>
+
+<!-------------------------------------------------------------------------->
+<HR>
+<H3><A NAME="winTrestleRace">startup race in Trestle</A></H3>
+
+<P> This problem applies only to the NT386 platform.
+
+<P> There is a race condition in Trestle startup on the NT386
+platform. The bug is a classic one: a condition was being signalled
+without an associated variable. The end of the
+"<CODE>CreateTrestle</CODE>" procedure in the file
+"<CODE>WinTrestle.m3</CODE>" contains:
+
+<PRE>
+    LOCK mu DO
+      Thread.Wait (cond, mu);
+    END;
+</PRE>
+
+<P> The problem is that without an explicit variable to test, the
+condition variable can be signalled before the above statement is
+executed. Hence, the signal is never received, and the thread that
+executes this statement deadlocks.
+
+<P> The initial version of this patch was relative to a more recent
+source file than the one distributed with the latest release. Hence,
+it didn't work when applied to the latest publicly available software.
+See this <A HREF="#winTrestleRace2">later version</A> for a correct patch.
+
+<P> Thanks to John Huntley for pointing out that the initial patch
+didn't work!<P>
+
+<!-------------------------------------------------------------------------->
+<HR>
+<H3><A NAME="win32TCP">TCP timeout bug</A></H3>
+
+<P> This problem applies only to the NT386 platform.
+
+<P> The implementation of TCP on the NT386 platform can lead to very
+long timeouts at connection time if the other end is not available
+(for example, when calling "<CODE>NetObj.Export</CODE>" when no
+Network Object daemon is running).
+
+<P> To apply the patch, copy the file
+<A HREF="../patches/NT386/TCP.m3"><CODE>TCP.m3</CODE></A>
+to the existing file "<B><CODE>m3/tcp/src/WIN32/TCP.m3</CODE></B>".
+Then rebuild and ship the "<CODE>tcp</CODE>" package.
+
+<P> Thanks to Blair MacIntyre for noticing the problem and supplying
+the fix! This patch has been applied in all releases of SRC Modula-3
+after 3.5.4-B.<P>
+
+<!-------------------------------------------------------------------------->
+<HR>
+<H3><A NAME="obliqPathSep">Obliq path separator on Win32</A></H3>
+
+<P> This problem applies only to the NT386 platform.
+
+<P> The Obliq parser has the colon character hard-wired into it as the
+character that separates directory names in a search path. But on
+Win32 platforms, the semicolon character is used instead (go figure). This
+patch describes how to change the Obliq parser to provide support for
+both POSIX and Win32 platforms. Follow these steps, all in the
+directory "<B><CODE>m3/obliqparse/src/</CODE></B>"
+:
+
+<OL>
+<LI>
+Edit the file "<B><CODE>ObFrame.i3</CODE></B>".
+Change the constant declaration
+
+<PRE>
+CONST 
+  SearchPathSeparator = ':';
+</PRE>
+
+to instead read:
+
+<PRE>
+VAR (* READONLY after initialization *) 
+  SearchPathSeparator: CHAR;
+</PRE>
+<P>
+<LI>
+Edit the "<B><CODE>m3makefile</CODE></B>". Add
+the following lines just after the declarations of all the modules:
+
+<PRE>
+if equal (OS_TYPE, "WIN32")
+  implementation("ObPathSepWin32")
+else if equal (OS_TYPE, "POSIX")
+  implementation("ObPathSepPosix")
+else
+  error ("obliqparse: unrecognized OS: " & OS_TYPE & CR)
+end end
+</PRE>
+<P>
+<LI>
+Copy the new files
+<A HREF="../patches/NT386/ObPathSepWin32.m3"><CODE>ObPathSepWin32.m3</CODE></A>
+and
+<A HREF="../patches/NT386/ObPathSepPosix.m3"><CODE>ObPathSepPosix.m3</CODE></A>
+to the source directory.
+<P>
+<LI>
+Rebuild and ship the "<CODE>obliqparse</CODE>" package. You'll
+probably also have to relink some of the other Obliq packages that
+import "<CODE>obliqparse</CODE>".
+</OL>
+
+<P> Thanks to Blair MacIntyre for noticing the problem and supplying
+the fix! This patch has been applied in all releases of SRC Modula-3
+after 3.5.4-B.<P>
+
+<!-------------------------------------------------------------------------->
+<HR>
+<H3><A NAME="winioctl">New <CODE>WinIoctl</CODE> interface</A></H3>
+
+<P> This addition applies only to the NT386 platform.
+
+<P> Roumen Roupski has supplied us with a Modula-3 version
+of the windows "<CODE>winioctl.h</CODE>" interface. To install
+the new interface and its implementaiton, follow these simple
+steps:
+
+<OL>
+<LI>
+Copy the files
+"<A HREF="../patches/NT386/WinIoctl.i3"><CODE>WinIoctl.i3</CODE></A>" and
+"<A HREF="../patches/NT386/WinIoctl.m3"><CODE>WinIoctl.m3</CODE></A>"
+to the directory "<B><CODE>m3core/src/win32/</CODE></B>".
+<P>
+<LI>
+Add the line
+
+<PRE>
+Module     ("WinIoctl")
+</PRE>
+
+to the file "<B><CODE>m3core/src/win32/m3makefile</CODE></B>".
+<P>
+<LI>
+Rebuild and ship the "<CODE>m3core</CODE>" package.
+</OL>
+
+<P> Thanks to Roumen Roupski for supplying the new interface 
+and to the folks at <A HREF="http://www.cmass.com">Critical
+Mass</A> for supplying the implementation! This patch has been
+applied in all releases of SRC Modula-3 after 3.5.4-B.<P>
+
+<!-------------------------------------------------------------------------->
+<HR>
+<H3><A NAME="winTrestleRace2">startup race in Trestle (again)</A></H3>
+
+<P> This patch applies only to the NT386 platform. It is a (hopefully)
+correct patch for a <A HREF="#winTrestleRace">previously described
+problem</A>.
+
+<P> To apply the patch, edit the file
+"<B><CODE>m3/ui/src/winvbt/WinTrestle.m3</CODE></B>".
+Toward the very end of the file, replace the declaration of the global
+variable "<CODE>cond</CODE>" and of the procedures
+"<CODE>CreateTrestle</CODE>" and "<CODE>MessengerApply</CODE>" by the
+following code:
+
+<PRE>
+VAR
+  messenger_started := FALSE;
+  cond := NEW (Thread.Condition);
+  (* used to signal the main thread that "trsl.hwnd" has been created. *)
+
+PROCEDURE CreateTrestle () =
+  VAR mu := NEW (MUTEX);
+  BEGIN
+    trsl := NEW(T);
+    DoHackInit(trsl);
+
+    trsl.st := NEW(VBT.ScreenType);
+    (* The st is irrelevant except that it must be non-NIL so that
+       marking the trsl for redisplay is not a noop. *)
+
+    LOCK trsl DO
+      trsl.vbts := NEW(AddrRefTbl.Default).init();
+    END;
+
+    trsl.screen := WinScreenType.New(trsl);
+
+    trslThread := Thread.Fork (NEW (Thread.Closure, apply := MessengerApply));
+    LOCK mu DO
+      WHILE NOT messenger_started DO Thread.Wait (mu, cond); END;
+    END;
+  END CreateTrestle;
+
+PROCEDURE MessengerApply (&lt;*UNUSED*&gt; cl: Thread.Closure): REFANY =
+  VAR
+    wc    : WinUser.WNDCLASS;
+    status: WinDef.BOOL;
+    cs    : WinUser.CREATESTRUCT;
+    class := M3toC.CopyTtoS("Trestle Desktop");
+    msg   : WinUser.MSG;
+  BEGIN
+    (* First, we have to register a window class for the "null window". *)
+    hInst := RTLinker.info.instance;
+
+    wc.style := WinUser.CS_HREDRAW + WinUser.CS_VREDRAW;
+      (* other styles to consider: 
+         CS_GLOBALCLASS, CS_OWNDC, CS_PARENTDC, CS_SAVEBITS *)
+    wc.lpfnWndProc := WindowProc;
+    wc.cbClsExtra := 0;
+    wc.cbWndExtra := 0;
+    wc.hInstance := hInst;
+    wc.hIcon := WinUser.LoadIcon (NIL, WinUser.IDI_APPLICATION);
+    wc.hCursor := WinUser.LoadCursor (NIL, WinUser.IDC_ARROW);
+    wc.hbrBackground := NIL;
+    wc.lpszMenuName := NIL;
+    wc.lpszClassName := class;
+
+    status := WinUser.RegisterClass (ADR(wc));
+    &lt;* ASSERT status # 0 *&gt;
+
+    (* Now, we can actually create the "null window" *)
+    trsl.hwnd := WinUser.CreateWindow(
+                    class, NIL, WinUser.WS_DISABLED,
+                    WinUser.CW_USEDEFAULT, WinUser.CW_USEDEFAULT,
+                    WinUser.CW_USEDEFAULT, WinUser.CW_USEDEFAULT, 
+                    NIL, NIL, hInst, ADR(cs));
+    &lt;* ASSERT trsl.hwnd # NIL *&gt;
+
+    (* Signal "CreateTrestle" that the null window is created. *)
+    messenger_started := TRUE;
+    Thread.Signal (cond);
+
+    (* Start a Windows Timer with 0.1 sec clicks *)
+    trsl.timerId := WinUser.SetTimer (trsl.hwnd, 1, 100, NIL);
+
+    (* start the message loop for all windows belonging to this Trestle *)
+    WHILE WinUser.GetMessage (ADR(msg), NIL, 0, 0) = True DO
+      EVAL WinUser.TranslateMessage (ADR(msg));
+      EVAL WinUser.DispatchMessage (ADR(msg));
+    END;
+
+    (* received WM_QUIT message -- exiting *)
+    RETURN NIL;
+  END MessengerApply;
+</PRE>
+
+<P> Then rebuild and ship the "<CODE>ui</CODE>" library.
+
+<P> Thanks to the folks at <A HREF="http://www.cmass.com">Critical
+Mass</A> for noticing the problem and for providing the fix! This bug
+has been fixed in all releases of SRC Modula-3 after 3.5.4-B.<P>
+
+<!-------------------------------------------------------------------------->
+<HR> <H3><A NAME="libaio">library <CODE>libaio.a</CODE> not
+found</A></H3>
+
+<P> This problem applies only to the SOLgnu platform.
+
+<P> When you install SRC Modula-3 on the SOLgnu platform (that is, a Sun
+machine running the Solaris operating system using GCC as the C
+compiler), you will most likely get the following error message when
+building the <TT>m3build</TT> package:<P>
+
+<PRE>
+---- building m3build ---- 
+creating m3build... 
+gcc -compat-bsd -c m3build.c 
+../../m3-gcc -compat-bsd -Xlinker -dy -Xlinker -Bstatic-Xlinker -dy -Xlinker 
+-Bstatic -o m3build m3build.o  
+ld: fatal: library -laio: not found 
+...
+</PRE>
+
+<P> Most likely, you will have a shared version (<TT>libaio.so</TT>) of
+the <TT>libaio</TT> library installed in <TT>/usr/lib</TT>, but no
+static <TT>libaio.a</TT> version.
+<A HREF="mailto:Geoff.Wyant@east.sun.com">Geoff Wyant</A> says:<P>
+
+<BLOCKQUOTE>
+The problem is an unfortunate interaction between Solaris-2, GCC, and
+the way the GCC compiler and Modula-3 driver get built. GCC by default
+specifies "-laio" as one of the libraries to always build with. This
+library is provided only as a shared library for Solaris-2 (it's there
+for compatibility with SunOS 4.x). When the bootstrap M3 driver is
+built, it wants only static libraries; and as you have seen there is
+no static version of the <TT>libaio</TT> library.<P>
+
+Providing you can rebuild GCC, there is an easy workaround: take
+'-laio' out of the GCC Solaris configuration file, namely,
+<TT>config/sparc/sol2.h</TT>. GCC doesn't seem to use or need the
+<TT>libaio</TT> library, and will build successfully without it.
+</BLOCKQUOTE>
+
+<P> Jerry Leichter suggests another alternative:
+<OL>
+<LI>
+Copy <I>any</I> valid library to a file named <CODE>libaio.a</CODE>
+in some directory.  (I used <CODE>libc.a</CODE>; it makes
+no difference, since nothing will actually be
+taken from the library.  You could also use a
+link, I suppose.)
+<LI>
+If you put the libaio.a file in a directory the
+linker would not normally search, make sure
+<CODE>LD_LIBRARY_PATH</CODE> includes a reference to it.
+<LI>
+Once the boot is complete, you can delete the fake
+<CODE>libaio.a</CODE> file; it won't be needed any more.
+</OL>
+
+<P>Tim Mann suggests that an easier solution might be possible: simply
+supply your own empty library named "<CODE>libaio.a</CODE>". Tim says:
+``The exact details of this (whether an empty file is good enough, or
+if it has to be created by ar, and exactly what directory to put in)
+remain to be worked out by someone who's in a position to try it.''
+Jerry reports that he tried this approach, but that he couldn't get it
+to work.
+
+<P> Thanks to Jack Greenbaum, Huw Evans, and Basab Maulik for
+reporting the problem.<P>
+
+<!-------------------------------------------------------------------------->
+<HR>
+<H3><A NAME="ztext">link failing due to "-ztext" link option</A></H3>
+
+<P> This problem applies only to the SOLsun platform.
+
+<P> When building the <CODE>libm3core.so</CODE> library,
+the link line looks something like this (ellipses have been
+added to shorten the list):
+
+<PRE>
+/usr/ccs/bin/ld -G -ztext -o libm3core.so hand.o dtoa.o RTBuiltin.o
+RTHooks.io RTHooks.mo RT0.io RT0.mo RTAllocator.io RTAllocator.mo
+RTAllocStats.io RTAllocStats.mo ... TextConv.io TextConv.mo
+Fingerprint.io Fingerprint.mo Poly.io Poly.mo PolyBasis.io
+PolyBasis.mo Main.io WeakRef.io WeakRef.mo Word.io Word.mo
+</PRE>
+
+<P> However, due to the "-ztext" option passed to the linker, you will
+get link errors like this:
+
+<PRE>
+Text relocation remains                       referenced
+    against symbol                  offset      in file
+.div                                0x6c        hand.o
+.div                                0x9c        hand.o
+.div                                0xec        hand.o
+.div                                0x124       hand.o
+.rem                                0x1cc       hand.o
+.rem                                0x200       hand.o
+.rem                                0x258       hand.o
+.rem                                0x28c       hand.o
+tables_built                        0xb20       hand.o
+tables_built                        0xb24       hand.o
+ 
+...
+
+_setjmp                             0x24        RTThreadC.o
+_longjmp                            0x4c        RTThreadC.o
+abort                               0x20        RTStackC.o
+abort                               0x50        RTStackC.o
+abort                               0x84        RTStackC.o
+abort                               0xb8        RTStackC.o
+</PRE>
+
+<P> Geoff Wyant says:
+<BLOCKQUOTE>
+This problem is easily fixed. Remove the "-ztext" option from the
+SOLsun template where shared libraries are built. This option
+doesn't need to be there, and its only use seems to be to complain
+about normal situations.
+</BLOCKQUOTE>
+
+<P> In particular, in the file
+"<B><CODE>m3/m3build/templates/SOLsun</CODE></B>" the line (around
+line number 272) containing "ztext" should be changed from:
+
+<PRE>
+        exec ("/usr/ccs/bin/ld -G -ztext -o", lib_so, COMPILE_OBJECTS)
+</PRE>
+
+<P> to read:
+
+<PRE>
+        exec ("/usr/ccs/bin/ld -G -o", lib_so, COMPILE_OBJECTS)
+</PRE>
+
+<P> Thanks to David Cole for reporting the problem, and to Geoff Wyant
+for providing the fix. This problem has been corrected in all versions
+of SRC Modula-3 after 3.5.4-B.<P>
+
+<!-------------------------------------------------------------------------->
+<HR>
+<H3><A NAME="xtinherit">undefined X-related symbols at link-time</A></H3>
+
+<P> This problem applies only to the SPARC platform.
+
+<P> On the SPARC platform (SunOS 4.1.x), some people have reported getting
+undefined symbols at link-time. The symbols should be defined by the
+X window system. Here is a typical error message:
+
+<PRE>
+  ld: Undefined symbol
+     __XtInherit
+     _get_wmShellWidgetClass
+     _get_applicationShellWidgetClass
+     _XtToolkitInitialize
+</PRE>
+
+<P> Spencer Allain writes:
+<BLOCKQUOTE>
+<P> Ok, this should probably be placed in the beware of SunOS 4.1.x README
+even though it's has nothing to do with Modula-3  ;-)
+
+<P> There are a couple of solutions.  The "easiest" can be implemented if
+you have X11 installed.  The problems you see above are related to the
+OpenWindows implementation of X11.  If you have the real X11, simply
+put this first in your LD_LIBRARY_PATH environment variable and things
+should work great.
+
+<P> If you only have OpenWindows installed, well.... here's an excerpt
+from the X FAQ.  I believe the libXt Jumbo patch will also remedy your
+__XtInherit problem:
+
+<BLOCKQUOTE>
+<P> Subject: 112)  What is this "_get_wmShellWidgetClass undefined" error?
+
+<P> In SunOS 4.1.2 Sun fixed a shared-library bug in ld which conflicts
+with the way X builds the shared Xmu library, causing these symbols, notably, 
+to be undefined when building some X11 clients on SunOS 4.1.[23]:
+
+<PRE>
+_get_wmShellWidgetClass
+_get_applicationShellWidgetClass
+</PRE>
+
+<P> Compiling "-Bstatic -lXmu -Bdynamic" is overkill; be sure to set
+OSTeenyVersion correctly in the config/sun.cf file and rebuild X11R5.
+
+<P> To solve the problem if you are using OpenWindows 3.0 (X11R4-based
+Xt), please contact your local Sun office and request the following patches:
+
+<PRE>
+Patch i.d.  Description
+100512-02   4.1.x OpenWindows 3.0 libXt Jumbo patch
+100573-03   4.1.x OpenWindows 3.0 undefined symbols when using
+                  shared libXmu
+</PRE>
+
+[Greg Earle, earle@Sun.COM; 7/92] 
+</BLOCKQUOTE>
+</BLOCKQUOTE>
+
+<P> Thanks to Spencer for suggesting the fix!<P>
+
+<!-------------------------------------------------------------------------->
+<HR>
+<A HREF="home.html">[Modula-3 home page]</A>
+<P>
+<A HREF="mailto:m3-request@src.dec.com">
+<ADDRESS>m3-request@src.dec.com</ADDRESS></A>
+<PRE>
+Last modified on Wed Sep  4 09:44:11 PDT 1996 by heydon
+</PRE>
+Copyright (C) 1992, 1996, Digital Equipment Corporation. All rights reserved.<BR>
+See the <A HREF="http://www.research.digital.com/SRC/m3sources/html/COPYRIGHT.html">COPYRIGHT</A> for a full description.
+</BODY>
+</HTML>

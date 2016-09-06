@@ -1,0 +1,140 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: unix/src/aix-ps2-1-2/Udir.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>unix/src/aix-ps2-1-2/Udir.i3</H2></A><HR>
+<inInterface>
+<PRE></PRE>   Copyright (C) by IBM Corporation, 1990-91.                              
+
+<P>
+<P><PRE>INTERFACE <interface><A HREF="#x1">Udir</A></interface>;     (* For AIX386. *)
+
+IMPORT <A HREF="#x2">Utypes</A>;
+FROM <A HREF="../../../C/src/Common/Ctypes.i3.html">Ctypes</A> IMPORT char_star, int, long, unsigned_long, unsigned_short;
+
+&lt;*UNUSED*&gt; CONST
+  UdirCopyright = &quot;Copyright (C) by IBM Corporation, 1990-91.&quot;;
+  UdirRCSHeader = &quot;$Header: /mnt1/muller/m3/dev/src/libs/aix-ps2-1-2/os/RCS/Udir.i3,v 1.3 1991/03/18 22:38:18 muller Exp $&quot;;
+  UdirDate = &quot;$Date: 1991/03/18 22:38:18 $&quot;;
+  UdirRevision = &quot;$Revision: 1.3 $&quot;;
+</PRE> For documentation of this interface (except NameToText) see Calls and Subroutines Reference: Base Operating System, Volume 1, IBM Form number SC23-2198-00, pp 1-522 to 1-524. 
+
+<P><PRE>CONST
+  MAXNAMELEN = 255;     (* Maximum length of component of file path name. *)
+  MAXPATHLEN = 1024;    (* Maximum length of file path name. *)
+
+TYPE
+  D_name = ARRAY [0..MAXNAMELEN] OF CHAR;
+  DIR = RECORD
+    dd_fd: int;
+    dd_blksize: int;
+    dd_buf: char_star;
+    dd_size: long;
+    dd_flag: long;
+    dd_loc: long;
+    dd_curoff: long
+  END;
+  DIR_star = UNTRACED REF DIR;
+
+  struct_dirent = RECORD
+    d_offset: unsigned_long;
+    d_ino: Utypes.ino_t;
+    d_reclen: unsigned_short;
+    d_namelen: unsigned_short;
+    d_name: D_name;
+  END;
+
+  struct_dirent_star = UNTRACED REF struct_dirent;
+
+&lt;*EXTERNAL*&gt; PROCEDURE opendir (dir: char_star): DIR_star;
+&lt;*EXTERNAL*&gt; PROCEDURE <A HREF="../solaris-2-x/Udir.m3.html#readdir">readdir</A> (dirPtr: DIR_star): struct_dirent_star;
+&lt;*EXTERNAL*&gt; PROCEDURE telldir (dirPtr: DIR_star): long;
+&lt;*EXTERNAL*&gt; PROCEDURE seekdir (dirPtr: DIR_star; location: long);
+&lt;*EXTERNAL*&gt; PROCEDURE rewinddir (dirPtr: DIR_star);
+&lt;*EXTERNAL*&gt; PROCEDURE closedir (dirPtr: DIR_star): int;
+
+PROCEDURE <A HREF="#x3">NameToText</A> (READONLY name: D_name): TEXT RAISES {};
+</PRE><BLOCKQUOTE><EM> Converts the d_name field of a struct_dirent to a TEXT and returns it.  </EM></BLOCKQUOTE><PRE>
+
+END Udir.
+</PRE> Change Log
+<P>
+  $Log: Udir.i3,v $
+Revision 1.3  1991/03/18  22:38:18  muller
+*** empty log message ***
+<P>
+<P>
+
+
+</inInterface>
+<HR>
+<A NAME="x1">Udir's implementation  is in:
+</A><UL>
+<LI><A HREF="../aix-3-2/Udir.m3.html#0TOP0">unix/src/aix-3-2/Udir.m3</A>
+<LI><A HREF="Udir.m3.html#0TOP0">unix/src/aix-ps2-1-2/Udir.m3</A>
+<LI><A HREF="../solaris-2-x/Udir.m3.html#0TOP0">unix/src/solaris-2-x/Udir.m3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x2">interface Utypes is in:
+</A><UL>
+<LI><A HREF="../aix-3-2/Utypes.i3.html#0TOP0">unix/src/aix-3-2/Utypes.i3</A>
+<LI><A HREF="Utypes.i3.html#0TOP0">unix/src/aix-ps2-1-2/Utypes.i3</A>
+<LI><A HREF="../freebsd-1/Utypes.i3.html#0TOP0">unix/src/freebsd-1/Utypes.i3</A>
+<LI><A HREF="../freebsd-2/Utypes.i3.html#0TOP0">unix/src/freebsd-2/Utypes.i3</A>
+<LI><A HREF="../hpux-7-0/Utypes.i3.html#0TOP0">unix/src/hpux-7-0/Utypes.i3</A>
+<LI><A HREF="../ibm-4-3/Utypes.i3.html#0TOP0">unix/src/ibm-4-3/Utypes.i3</A>
+<LI><A HREF="../irix-5.2/Utypes.i3.html#0TOP0">unix/src/irix-5.2/Utypes.i3</A>
+<LI><A HREF="../linux/Utypes.i3.html#0TOP0">unix/src/linux/Utypes.i3</A>
+<LI><A HREF="../osf-1.ALPHA_OSF/Utypes.i3.html#0TOP0">unix/src/osf-1.ALPHA_OSF/Utypes.i3</A>
+<LI><A HREF="../osf-1.DS3100/Utypes.i3.html#0TOP0">unix/src/osf-1.DS3100/Utypes.i3</A>
+<LI><A HREF="../solaris-2-x/Utypes.i3.html#0TOP0">unix/src/solaris-2-x/Utypes.i3</A>
+<LI><A HREF="../sunos-4-x/Utypes.i3.html#0TOP0">unix/src/sunos-4-x/Utypes.i3</A>
+<LI><A HREF="../sysv-4.0/Utypes.i3.html#0TOP0">unix/src/sysv-4.0/Utypes.i3</A>
+<LI><A HREF="../ultrix-3-1.AP3000/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.AP3000/Utypes.i3</A>
+<LI><A HREF="../ultrix-3-1.ARM/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.ARM/Utypes.i3</A>
+<LI><A HREF="../ultrix-3-1.DS3100/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.DS3100/Utypes.i3</A>
+<LI><A HREF="../ultrix-3-1.NEXT/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.NEXT/Utypes.i3</A>
+<LI><A HREF="../ultrix-3-1.SEQUENT/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.SEQUENT/Utypes.i3</A>
+<LI><A HREF="../ultrix-3-1.SUN3/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.SUN3/Utypes.i3</A>
+<LI><A HREF="../ultrix-3-1.SUN386/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.SUN386/Utypes.i3</A>
+<LI><A HREF="../ultrix-3-1.UMAX/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.UMAX/Utypes.i3</A>
+<LI><A HREF="../ultrix-3-1.VAX/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.VAX/Utypes.i3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x3">procedure Udir.NameToText is in:
+</A><UL>
+<LI><A HREF="../aix-3-2/Udir.m3.html#NameToText">unix/src/aix-3-2/Udir.m3</A>
+<LI><A HREF="Udir.m3.html#NameToText">unix/src/aix-ps2-1-2/Udir.m3</A>
+</UL>
+<P>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

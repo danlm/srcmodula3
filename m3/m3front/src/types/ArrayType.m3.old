@@ -1,0 +1,368 @@
+(* Copyright (C) 1989, Digital Equipment Corporation           *)
+(* All rights reserved.                                        *)
+(* See the file COPYRIGHT for a full description.              *)
+
+(* File: ArrayType.m3                                          *)
+(* Last modified on Mon Jun 17 22:38:57 1991 by kalsow         *)
+(*      modified on Sun Feb 24 04:39:01 1991 by muller         *)
+
+MODULE ArrayType;
+
+IMPORT Type, TypeRep, Error, Emit, Expr, Token, Target, Void, OpenArray;
+IMPORT RefType, SubrangeType, Int, Wr, String, Fmt, CHar, Word;
+FROM Scanner IMPORT Match, GetToken, cur;
+
+CONST
+  MAXSIZE = LAST (INTEGER);
+
+TYPE
+  P = Type.T BRANDED "ArrayType.P" OBJECT
+        index      : Type.T;
+        element    : Type.T;
+        openCousin : P;      (* == ARRAY OF element *)
+        openImpl   : Type.T; (* == OpenArray.New (OpenDepth (self)) *)
+        numElts    : INTEGER;
+        totalSize  : INTEGER;
+        eltSize    : INTEGER;
+      METHODS
+        check      := Check;
+        base       := TypeRep.SelfBase;
+        isEqual    := EqualChk;
+        isSubtype  := Subtyper;
+        count      := TypeRep.NotOrdinal;
+        bounds     := TypeRep.NotBounded;
+        size       := Sizer;
+        minSize    := Sizer;
+        alignment  := Aligner;
+	isEmpty    := IsEmpty;
+        dependsOn  := DependsOn;
+        compile    := Compiler;
+        initCost   := InitCoster;
+        initValue  := GenInit;
+        mapper     := GenMap;
+        fprint     := FPrinter;
+      END;
+
+PROCEDURE Parse (READONLY fail: Token.Set): Type.T =
+  TYPE TK = Token.T;
+  VAR p, p0: P;
+  BEGIN
+    p0 := New (NIL, NIL);  p := p0;
+    Match (TK.tARRAY, fail, Token.Set {TK.tOF} + Token.TypeStart);
+    IF (cur.token IN Token.TypeStart) THEN
+      LOOP
+        p.index := Type.Parse (fail + Token.Set{TK.tOF} + Token.TypeStart);
+        IF (cur.token # TK.tCOMMA) THEN EXIT END;
+        GetToken (); (* , *)
+	p.element := New (NIL, NIL);
+        p := p.element;
+      END;
+    END;
+    Match (TK.tOF, fail, Token.TypeStart);
+    p.element := Type.Parse (fail);
+    RETURN p0;
+  END Parse;
+
+PROCEDURE New (index, element: Type.T): Type.T =
+  VAR p: P;
+  BEGIN
+    p := NEW (P);
+    TypeRep.Init (p);
+    p.index      := index;
+    p.element    := element;
+    p.openCousin := NIL;
+    p.openImpl   := NIL;
+    p.numElts    := 0;
+    p.totalSize  := 0;
+    p.eltSize    := 0;
+    RETURN p;
+  END New;
+
+PROCEDURE Split (t: Type.T;  VAR index, element: Type.T): BOOLEAN =
+  VAR p: P;
+  BEGIN
+    IF NOT Reduce (t, p) THEN RETURN FALSE END;
+    index := p.index;  element := p.element;
+    RETURN TRUE;
+  END Split;
+
+PROCEDURE OpenSplit (t: Type.T;  VAR element: Type.T): BOOLEAN =
+  VAR p: P;
+  BEGIN
+    IF NOT Reduce (t, p) THEN RETURN FALSE END;
+    IF (p.index # NIL) THEN RETURN FALSE END;
+    element := p.element;
+    RETURN TRUE;
+  END OpenSplit;
+
+PROCEDURE OpenCousin (t: Type.T): Type.T =
+  VAR p: P;
+  BEGIN
+    IF NOT Reduce (t, p) THEN RETURN t END;
+    RETURN p.openCousin;
+  END OpenCousin;
+
+PROCEDURE OpenImpl (t: Type.T): Type.T =
+  VAR p: P;
+  BEGIN
+    IF NOT Reduce (t, p) THEN RETURN t END;
+    RETURN p.openImpl;
+  END OpenImpl;
+
+PROCEDURE OpenDepth (t: Type.T): INTEGER =
+  VAR p: P;  depth: INTEGER;
+  BEGIN
+    (* compute the "depth" of t *)
+    depth := 0;
+    LOOP
+      t := Type.Base (t);
+      IF NOT Reduce (t, p) THEN EXIT END;
+      IF (p.index # NIL) THEN EXIT END;
+      t := p.element;
+      INC (depth);
+    END;
+    RETURN depth;
+  END OpenDepth;
+
+PROCEDURE OpenType (t: Type.T): Type.T =
+  VAR p: P;
+  BEGIN
+    LOOP
+      IF NOT Reduce (Type.Base (t), p) THEN EXIT END;
+      IF (p.index # NIL) THEN EXIT END;
+      t := p.element;
+    END;
+    RETURN t;
+  END OpenType;
+
+PROCEDURE Check (p: P) =
+  VAR e, n: INTEGER;  eltIndex, eltelt: Type.T;
+  BEGIN
+    Type.Check (p.index);
+    Type.Check (p.element);
+    p.eltSize  := Type.Size (p.element);
+    IF (p.index = NIL) THEN
+      (* an open array *)
+      p.numElts    := -1;
+      p.totalSize  := -1;
+      p.openCousin := p;
+      p.openImpl   := OpenArray.New (OpenDepth (p.element) + 1,
+                                                       OpenType (p.element));
+      Type.Check (p.openImpl);
+    ELSE
+      p.openCousin := New (NIL, p.element);
+      p.openImpl   := NIL;
+      Type.Check (p.openCousin);
+      e := p.eltSize;
+      n := Type.Number (p.index);
+      IF (n < 0) THEN
+        Error.Msg ("array index type must be an ordinal type");
+      END;
+      IF Split (p.element, eltIndex, eltelt) AND (eltIndex = NIL) THEN
+        Error.Msg ("array element type cannot be an open array");
+      END;
+      IF (n > 0) AND (e > 0) AND (n > MAXSIZE DIV e) THEN
+        Error.Msg ("array type too large");
+        e := 0;
+      END;
+      p.numElts := n;
+      p.totalSize := (e * n);
+    END;
+    p.isTraced := Type.IsTraced (p.element);
+    p.hasUntraced := Type.HasUntraced (p.element);
+    p.hash := Word.Plus (Word.Times(23,p.numElts), Word.Times(29,p.eltSize));
+  END Check;
+
+PROCEDURE Compiler (p: P) =
+  BEGIN
+    Type.Compile (p.index);
+    Type.Compile (p.element);
+    IF TypeRep.IsCompiled (p) THEN RETURN END;
+
+    IF (p.index # NIL)
+      THEN Type.Compile (p.openCousin);
+      ELSE Type.Compile (p.openImpl);
+    END;
+    GenDecl (p);
+
+    IF (p.imported) THEN RETURN END;
+
+    TypeRep.StartLinkInfo (p);
+    IF (p.index # NIL)
+      THEN Emit.OpF ("d@\n", p.element);
+      ELSE Emit.OpF ("d@\n", p.openImpl);
+    END;
+    Emit.Op  ("C\n");
+    GenDecl (p);
+    Emit.Op  ("*\n");
+    
+  END Compiler;
+
+PROCEDURE GenDecl (p: P) =
+  BEGIN
+    IF (p.index # NIL) THEN
+      Emit.OpFF ("struct _array@ { @ ", p, p.element);
+      Emit.OpI  ("elts[@]; };\n", MAX (p.numElts, 1));
+      Emit.OpFF ("typedef struct _array@ @;\n", p, p);
+    ELSE (* open array *)
+      IF (Type.Name (p) # Type.Name (p.openImpl)) THEN
+        Emit.OpFF ("\003#define @ @\n", p, p.openImpl);
+      END;
+    END;
+  END GenDecl;
+
+PROCEDURE EqualChk (a: P;  t: Type.T;  x: Type.Assumption): BOOLEAN =
+  VAR b: P;
+  BEGIN
+    RETURN Reduce (t, b)
+       AND Type.IsEqual (a.element, b.element, x)
+       AND Type.IsEqual (a.index, b.index, x);
+  END EqualChk;
+
+PROCEDURE Subtyper (a: P;  tb: Type.T): BOOLEAN =
+  VAR ta: Type.T;  b: P;
+  BEGIN
+    IF NOT Reduce (tb, b) THEN RETURN FALSE END;
+
+    (* strip off common leading open array dimensions *)
+    WHILE (a.index = NIL) AND (b.index = NIL) DO
+      ta := Type.Strip (a.element);
+      tb := Type.Strip (b.element);
+      IF NOT (Reduce (ta, a) AND Reduce (tb, b)) THEN
+        RETURN Type.IsEqual (ta, tb, NIL);
+      END;
+    END;
+
+    (* strip off more open array dimensions from b *)
+    WHILE (b.index = NIL) DO
+      ta := Type.Strip (a.element);
+      tb := Type.Strip (b.element);
+      IF NOT (Reduce (ta, a) AND Reduce (tb, b)) THEN
+        RETURN Type.IsEqual (ta, tb, NIL);
+      END;
+    END;
+
+    (* strip off fixed array dimensions from a and b *)
+    WHILE (a.index # NIL) AND (b.index # NIL)
+      AND (Type.Number (a.index) = Type.Number (b.index)) DO
+      ta := Type.Strip (a.element);
+      tb := Type.Strip (b.element);
+      IF NOT (Reduce (ta, a) AND Reduce (tb, b)) THEN
+        RETURN Type.IsEqual (ta, tb, NIL);
+      END;
+    END;
+
+    RETURN FALSE;
+  END Subtyper;
+
+<*INLINE*> PROCEDURE Reduce (t: Type.T;  VAR p: P): BOOLEAN =
+  BEGIN
+    TYPECASE Type.Strip (t) OF
+    | NULL => RETURN FALSE;
+    | P(x) => p := x;  RETURN TRUE;
+    ELSE      RETURN FALSE;
+    END;
+  END Reduce;
+
+PROCEDURE Sizer (p: P): INTEGER =
+  BEGIN
+    IF (p.checked) THEN RETURN p.totalSize END;
+    IF (p.index = NIL) THEN RETURN  -1 END;
+    RETURN Type.Number (p.index) * Type.Size (p.element);
+  END Sizer;
+
+PROCEDURE Aligner (p: P): INTEGER =
+  BEGIN
+    RETURN Type.Alignment (p.element);
+  END Aligner;
+
+PROCEDURE IsEmpty (p: P): BOOLEAN =
+  BEGIN
+    RETURN (p.index # NIL AND Type.IsEmpty (p.index)) 
+           OR Type.IsEmpty (p.element);
+  END IsEmpty;
+
+PROCEDURE DependsOn (p: P;  t: Type.T): BOOLEAN =
+  BEGIN
+    RETURN Type.DependsOn (p.index, t)
+        OR Type.DependsOn (p.element, t)
+        OR ((p.index # NIL) AND Type.DependsOn (p.openCousin, t))
+        OR ((p.index = NIL) AND Type.DependsOn (p.openImpl, t));
+  END DependsOn;
+
+PROCEDURE InitCoster (p: P; zeroed: BOOLEAN): INTEGER =
+  VAR n, m: INTEGER;
+  BEGIN
+    m := Type.InitCost (p.element, zeroed);
+    IF (p.index = NIL)
+      THEN  n := 20; (* open array *)
+      ELSE  n := Type.Number (p.index);
+    END;
+    IF (n > 0) THEN m := MIN (Target.MAXINT DIV n, m);  END;
+    RETURN n * m;
+  END InitCoster;
+
+PROCEDURE GenInit (<*UNUSED*> p: P) =
+  BEGIN
+    <* ASSERT FALSE *>
+  END GenInit;
+
+VAR aptr, bptr, cptr: String.T := NIL;
+
+PROCEDURE GenMap (p: P;  VAR prefix: String.Stack) =
+  VAR nDims: INTEGER;  newPrefix: String.Stack;  eltType: Type.T;
+  BEGIN
+    IF Type.IsTraced (p.element) OR Type.HasUntraced (p.element) THEN
+      IF (p.index # NIL) THEN
+        Emit.OpI ("{\001\nint _i@;\n", prefix.top);
+        Emit.OpI ("for (_i@ = 0; ", prefix.top);
+        Emit.OpI ("_i@ < ", prefix.top);
+        Emit.OpI ("@; ", p.numElts);
+        Emit.OpI ("_i@++) {\001\n", prefix.top);
+        IF (aptr = NIL) THEN aptr := String.Add (".elts[_i"); END;
+        IF (bptr = NIL) THEN bptr := String.Add ("]"); END;
+        prefix.stk [prefix.top]   := aptr;
+        prefix.stk [prefix.top+1] := String.AddInt (prefix.top);
+        prefix.stk [prefix.top+2] := bptr;
+        INC (prefix.top, 3);
+        Type.GenMap (p.element, prefix);
+        DEC (prefix.top, 3);
+        Emit.Op ("\002};\n\002};\n");
+      ELSE
+        IF (cptr = NIL) THEN cptr := String.Add ("_aptr[_i") END;
+        IF (bptr = NIL) THEN bptr := String.Add ("]"); END;
+        eltType := OpenType (p);
+	nDims := OpenDepth (p);
+        Emit.OpI ("{\001\nint _i@, _j;\n", prefix.top);
+	Emit.OpF ("@* _zz;\n", p.openImpl);
+	Emit.OpF ("@* _aptr;\n", eltType);
+	Emit.OpZ ("_zz = & (@);\n", prefix);
+	Emit.Op  ("_j = ");
+	FOR i := 0 TO nDims-1 DO
+	  IF (i # 0) THEN Emit.Op (" * ") END;
+	  Emit.OpI ("_zz->size[@]", i);
+	END;
+	Emit.Op (";\n");
+	Emit.OpF ("_aptr = (@*) _zz->elts;\n", eltType);
+        Emit.OpI ("for (_i@ = 0; ", prefix.top);
+        Emit.OpI ("_i@ < _j; ", prefix.top);
+        Emit.OpI ("_i@++) {\001\n", prefix.top);
+	newPrefix.stk [0] := cptr;
+        newPrefix.stk [1] := String.AddInt (prefix.top);
+        newPrefix.stk [2] := bptr;
+        newPrefix.top := 3;
+	Type.GenMap (eltType, newPrefix);
+        Emit.Op ("\002};\n\002};\n");
+      END;
+    END;
+  END GenMap;
+
+PROCEDURE FPrinter (p: P;  map: Type.FPMap;  wr: Wr.T) =
+  BEGIN
+    Wr.PutText (wr, "ARRAY ");
+    Type.Fingerprint (p.index, map, wr);
+    Type.Fingerprint (p.element, map, wr);
+  END FPrinter;
+
+BEGIN
+END ArrayType.

@@ -1,0 +1,63 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: trestle_by_example/src/text/Main.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>trestle_by_example/src/text/Main.m3</H2></A><HR>
+<inModule>
+<PRE>MODULE <module><implements><A HREF="../../../main/src/Main.i3.html">Main</A></implements></module>;
+IMPORT <A HREF="../../../ui/src/vbt/Trestle.i3.html">Trestle</A>, <A HREF="../../../ui/src/split/TextVBT.i3.html">TextVBT</A>, <A HREF="../../../ui/src/split/RigidVBT.i3.html">RigidVBT</A>, <A HREF="../../../ui/src/vbt/Font.i3.html">Font</A>, <A HREF="../../../ui/src/vbt/PaintOp.i3.html">PaintOp</A>;
+IMPORT <A HREF="../../../ui/src/vbt/Latin1Key.i3.html">Latin1Key</A>, <A HREF="../../../text/src/Text.i3.html">Text</A>;          (* Standard Modula-3 library modules. *)
+
+CONST
+  ha = 0.0;                      (* horizonal alignment; left justified *)
+  va = 0.4;                      (* vertical alignment; 4/10 toward the
+                                    bottom *)
+  hm = 3.0;                      (* horizonal margin (millimeters) *)
+  vm = 5.0;                      (* vertical margin (millimeters) *)
+  courier18 = &quot;-*-courier-bold-r-*-*-18-*-*-*-*-*-*-*&quot;;
+VAR
+  white := PaintOp.FromRGB(1.0, 1.0, 1.0);
+  blue  := PaintOp.FromRGB(0.0, 0.0, 0.8);
+  quad  := PaintOp.MakeColorQuad(bg := blue, fg := white);
+  qd    := Text.FromChar(VAL(Latin1Key.questiondown, CHAR));
+  ea    := Text.FromChar(VAL(Latin1Key.eacute, CHAR));
+  text  := qd &amp; &quot;Qu&quot; &amp; ea &amp; &quot; pasa?&quot;;
+  font  := Font.FromName(ARRAY OF TEXT{courier18});
+  main := TextVBT.New(
+            txt := text, halign := ha, valign := va, hmargin := hm,
+            vmargin := vm, fnt := font, bgFg := quad);
+BEGIN
+  Trestle.Install(main);
+  Trestle.AwaitDelete(main);
+END Main.
+</PRE>
+</inModule>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

@@ -1,0 +1,882 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: motif/src/Xmw.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>motif/src/Xmw.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM>                                                           </EM></BLOCKQUOTE><PRE>
+</PRE>                                                           
+ Contributed by Harry George (hgeorge@eskimo.com), 5/16/95 
+
+<P><PRE>UNSAFE INTERFACE <interface><A HREF="Xmw.m3.html">Xmw</A></interface>;
+</PRE><BLOCKQUOTE><EM><P>
+Abstract:  X Motif widgets.  For each, we provide:
+              a) its class id as a VAR
+              b) opaque treatment of class and widget types
+                 (you have to do your own <CODE>Private</CODE> defs as needed)
+              c) Is&lt;classname&gt; ftn, which is a macro in C
+                 but done as a true ftn here.
+              d) external refs to Create ftn and
+                 assorted other ftns as needed
+<P>
+8/3/94     H. George
+           Initial version
+</EM></BLOCKQUOTE><PRE>
+
+IMPORT <A HREF="../../X11R4/src/Common/X.i3.html">X</A>, <A HREF="../../X11R4/src/Common/Xt.i3.html">Xt</A>, <A HREF="Xm.i3.html">Xm</A>;
+FROM <A HREF="../../C/src/Common/Ctypes.i3.html">Ctypes</A> IMPORT char_star, int, int_star, int_star_star;
+</PRE>=========================
+   Template:
+   Copy the template to correct spot in the
+   list (alpha order).  Then do str replace
+   XXX --&gt; &lt;widget name&gt;.  Then add additional
+   ftns as needed.
+<P>
+(*-------------------
+ XXX       
+-------------------
+<PRE>&lt;*EXTERNAL*&gt;
+VAR xmXXXWidgetClass:Xt.WidgetClass;
+
+TYPE XXXWidgetClass = UNTRACED ROOT;
+TYPE XXXWidget      = UNTRACED ROOT;
+
+PROCEDURE IsXXX(w:Xt.Widget):Xt.Boolean;
+
+&lt;*EXTERNAL &quot;XmCreateXXX&quot;:C *&gt;
+PROCEDURE CreateXXX( parent:Xt.Widget;
+	                 name: char_star;
+			 args: UNTRACED REF Xt.ArgList;
+			 argCount:Xt.Cardinal): Xt.Widget;
+
+==========================*)
+</PRE>-------------------
+ ArrowButton       
+-------------------
+<PRE>&lt;*EXTERNAL*&gt;
+VAR xmArrowButtonWidgetClass:Xt.WidgetClass;
+
+TYPE ArrowButtonWidgetClass = UNTRACED ROOT;
+TYPE ArrowButtonWidget      = UNTRACED ROOT;
+
+PROCEDURE <A HREF="Xmw.m3.html#IsArrowButton">IsArrowButton</A>(w:Xt.Widget):Xt.Boolean;
+
+&lt;*EXTERNAL &quot;XmCreateArrowButton&quot;:C *&gt;
+PROCEDURE CreateArrowButton( parent:Xt.Widget;
+	                 name: char_star;
+			 args: UNTRACED REF Xt.ArgList;
+			 argCount:Xt.Cardinal): Xt.Widget;
+</PRE>-------------------
+ BulletinBoard       
+-------------------
+<PRE>&lt;*EXTERNAL*&gt;
+VAR xmBulletinBoardWidgetClass:Xt.WidgetClass;
+
+TYPE BulletinBoardWidgetClass = UNTRACED ROOT;
+TYPE BulletinBoardWidget      = UNTRACED ROOT;
+
+PROCEDURE <A HREF="Xmw.m3.html#IsBulletinBoard">IsBulletinBoard</A>(w:Xt.Widget):Xt.Boolean;
+
+&lt;*EXTERNAL &quot;XmCreateBulletinBoard&quot;:C *&gt;
+PROCEDURE CreateBulletinBoard( parent:Xt.Widget;
+	                 name: char_star;
+			 args: UNTRACED REF Xt.ArgList;
+			 argCount:Xt.Cardinal): Xt.Widget;
+
+&lt;*EXTERNAL &quot;XmCreateBulletinBoardDialog&quot;:C *&gt;
+PROCEDURE CreateBulletinBoardDialog( parent:Xt.Widget;
+	                 name: char_star;
+			 args: UNTRACED REF Xt.ArgList;
+			 argCount:Xt.Cardinal): Xt.Widget;
+</PRE>-------------------
+ CascadeButton       
+-------------------
+<PRE>&lt;*EXTERNAL*&gt;
+VAR xmCascadeButtonWidgetClass:Xt.WidgetClass;
+
+&lt;*EXTERNAL*&gt;
+VAR xmCascadeButtonGadgetClass:Xt.WidgetClass;
+
+TYPE CascadeButtonWidgetClass = UNTRACED ROOT;
+TYPE CascadeButtonWidget      = UNTRACED ROOT;
+
+TYPE CascadeButtonGadgetClass = UNTRACED ROOT;
+TYPE CascadeButtonGadget      = UNTRACED ROOT;
+
+PROCEDURE <A HREF="Xmw.m3.html#IsCascadeButton">IsCascadeButton</A>(w:Xt.Widget):Xt.Boolean;
+
+&lt;*EXTERNAL &quot;XmCreateCascadeButton&quot;:C *&gt;
+PROCEDURE CreateCascadeButton( parent:Xt.Widget;
+	                 name: char_star;
+			 args: UNTRACED REF Xt.ArgList;
+			 argCount:Xt.Cardinal): Xt.Widget;
+
+&lt;*EXTERNAL &quot;XmCascadeButtonHighlight&quot;:C*&gt;
+PROCEDURE CascadeButtonHighlight(w:Xt.Widget;
+	                           highlight:Xt.Boolean);
+</PRE>-------------------
+ DialogShell       
+-------------------
+<PRE>&lt;*EXTERNAL*&gt;
+VAR xmDialogShellWidgetClass:Xt.WidgetClass;
+
+TYPE DialogShellWidgetClass = UNTRACED ROOT;
+TYPE DialogShellWidget      = UNTRACED ROOT;
+
+PROCEDURE <A HREF="Xmw.m3.html#IsDialogShell">IsDialogShell</A>(w:Xt.Widget):Xt.Boolean;
+
+&lt;*EXTERNAL &quot;XmCreateDialogShell&quot;:C *&gt;
+PROCEDURE CreateDialogShell( parent:Xt.Widget;
+	                 name: char_star;
+			 args: UNTRACED REF Xt.ArgList;
+			 argCount:Xt.Cardinal): Xt.Widget;
+</PRE>-------------------
+ DrawingArea       
+-------------------
+<PRE>&lt;*EXTERNAL*&gt;
+VAR xmDrawingAreaWidgetClass:Xt.WidgetClass;
+
+TYPE DrawingAreaWidgetClass = UNTRACED ROOT;
+TYPE DrawingAreaWidget      = UNTRACED ROOT;
+
+PROCEDURE <A HREF="Xmw.m3.html#IsDrawingArea">IsDrawingArea</A>(w:Xt.Widget):Xt.Boolean;
+
+&lt;*EXTERNAL &quot;XmCreateDrawingArea&quot;:C *&gt;
+PROCEDURE CreateDrawingArea( parent:Xt.Widget;
+	                 name: char_star;
+			 args: UNTRACED REF Xt.ArgList;
+			 argCount:Xt.Cardinal): Xt.Widget;
+</PRE>-------------------
+ DrawnButton       
+-------------------
+<PRE>&lt;*EXTERNAL*&gt;
+VAR xmDrawnButtonWidgetClass:Xt.WidgetClass;
+
+TYPE DrawnButtonWidgetClass = UNTRACED ROOT;
+TYPE DrawnButtonWidget      = UNTRACED ROOT;
+
+PROCEDURE <A HREF="Xmw.m3.html#IsDrawnButton">IsDrawnButton</A>(w:Xt.Widget):Xt.Boolean;
+
+&lt;*EXTERNAL &quot;XmCreateDrawnButton&quot;:C *&gt;
+PROCEDURE CreateDrawnButton( parent:Xt.Widget;
+	                 name: char_star;
+			 args: UNTRACED REF Xt.ArgList;
+			 argCount:Xt.Cardinal): Xt.Widget;
+</PRE>-------------------
+ Form              
+-------------------
+<PRE>&lt;*EXTERNAL*&gt;
+VAR xmFormWidgetClass:Xt.WidgetClass;
+
+TYPE FormWidgetClass = UNTRACED ROOT;
+TYPE FormWidget      = UNTRACED ROOT;
+
+PROCEDURE <A HREF="Xmw.m3.html#IsForm">IsForm</A>(w:Xt.Widget):Xt.Boolean;
+
+&lt;*EXTERNAL &quot;XmCreateForm&quot;:C *&gt;
+PROCEDURE CreateForm( parent:Xt.Widget;
+	                 name: char_star;
+			 args: UNTRACED REF Xt.ArgList;
+			 argCount:Xt.Cardinal): Xt.Widget;
+
+&lt;*EXTERNAL &quot;XmCreateFormDialog&quot;:C *&gt;
+PROCEDURE CreateFormDialog( parent:Xt.Widget;
+	                 name: char_star;
+			 args: UNTRACED REF Xt.ArgList;
+			 argCount:Xt.Cardinal): Xt.Widget;
+</PRE>-------------------
+ Frame             
+-------------------
+<PRE>&lt;*EXTERNAL*&gt;
+VAR xmFrameWidgetClass:Xt.WidgetClass;
+
+TYPE FrameWidgetClass = UNTRACED ROOT;
+TYPE FrameWidget      = UNTRACED ROOT;
+
+PROCEDURE <A HREF="Xmw.m3.html#IsFrame">IsFrame</A>(w:Xt.Widget):Xt.Boolean;
+
+&lt;*EXTERNAL &quot;XmCreateFrame&quot;:C *&gt;
+PROCEDURE CreateFrame( parent:Xt.Widget;
+	                 name: char_star;
+			 args: UNTRACED REF Xt.ArgList;
+			 argCount:Xt.Cardinal): Xt.Widget;
+</PRE>-------------------
+ Label             
+-------------------
+<PRE>&lt;*EXTERNAL*&gt;
+VAR xmLabelWidgetClass:Xt.WidgetClass;
+
+TYPE LabelWidgetClass = UNTRACED ROOT;
+TYPE LabelWidget      = UNTRACED ROOT;
+
+PROCEDURE <A HREF="Xmw.m3.html#IsLabel">IsLabel</A>(w:Xt.Widget):Xt.Boolean;
+
+&lt;*EXTERNAL &quot;XmCreateLabel&quot;:C *&gt;
+PROCEDURE CreateLabel( parent:Xt.Widget;
+	                 name: char_star;
+			 args: UNTRACED REF Xt.ArgList;
+			 argCount:Xt.Cardinal): Xt.Widget;
+</PRE>-------------------
+ List              
+-------------------
+<PRE>&lt;*EXTERNAL*&gt;
+VAR xmListWidgetClass:Xt.WidgetClass;
+
+CONST
+  INITIAL       = 0;
+  ADDITION      = 1;
+  MODIFICATION  = 2;
+
+TYPE ListWidgetClass = UNTRACED ROOT;
+TYPE ListWidget      = UNTRACED ROOT;
+
+PROCEDURE <A HREF="Xmw.m3.html#IsList">IsList</A>(w:Xt.Widget):Xt.Boolean;
+
+&lt;*EXTERNAL &quot;XmCreateList&quot;:C *&gt;
+PROCEDURE CreateList( parent:Xt.Widget;
+	                 name: char_star;
+			 args: UNTRACED REF Xt.ArgList;
+			 argCount:Xt.Cardinal): Xt.Widget;
+
+&lt;*EXTERNAL &quot;XmCreateScrolledList&quot;:C *&gt;
+PROCEDURE CreateScrolledList( parent:Xt.Widget;
+	                 name: char_star;
+			 args: UNTRACED REF Xt.ArgList;
+			 argCount:Xt.Cardinal): Xt.Widget;
+
+&lt;*EXTERNAL &quot;XmListAddItem&quot;*&gt;
+PROCEDURE ListAddItem(w: Xt.Widget;
+	                item: Xm.String;
+			pos: int);
+
+&lt;*EXTERNAL &quot;XmListAddItems&quot;*&gt;
+PROCEDURE ListAddItems(w: Xt.Widget;
+	                items: Xt.StringStar;
+			item_count, pos: int);
+
+&lt;*EXTERNAL &quot;XmListAddItemUnselected&quot;*&gt;
+PROCEDURE ListAddItemUnselected(w: Xt.Widget;
+	                item: Xm.String;
+			pos: int);
+
+&lt;*EXTERNAL &quot;XmListDeleteItem&quot;*&gt;
+PROCEDURE ListDeleteItem(w: Xt.Widget;
+	                item: Xm.String);
+
+&lt;*EXTERNAL &quot;XmListDeleteItems&quot;*&gt;
+PROCEDURE ListDeleteItems(w: Xt.Widget;
+	                items: Xt.StringStar;
+			item_count: int);
+
+&lt;*EXTERNAL &quot;XmListDeletePos&quot;*&gt;
+PROCEDURE ListDeletePos(w: Xt.Widget;
+			pos: int);
+
+&lt;*EXTERNAL &quot;XmListDeleteItemsPos&quot;*&gt;
+PROCEDURE ListDeleteItemsPos(w: Xt.Widget;
+			item_count,pos: int);
+
+&lt;*EXTERNAL &quot;XmListDeleteAllItems&quot;*&gt;
+PROCEDURE ListDeleteAllItems(w: Xt.Widget);
+
+&lt;*EXTERNAL &quot;XmListReplaceItems&quot;*&gt;
+PROCEDURE ListReplaceItems(w: Xt.Widget;
+	                old_items: Xt.StringStar;
+			item_count:int;
+			new_items: Xt.StringStar);
+
+&lt;*EXTERNAL &quot;XmListReplaceItemsPos&quot;*&gt;
+PROCEDURE ListReplaceItemsPos(w: Xt.Widget;
+	                new_items: Xt.StringStar;
+			item_count,pos:int);
+
+&lt;*EXTERNAL &quot;XmListSelectItem&quot;*&gt;
+PROCEDURE ListSelectItem(w: Xt.Widget;
+	                item: Xm.String;
+			notify:Xt.Boolean);
+
+&lt;*EXTERNAL &quot;XmListDeselectItem&quot;*&gt;
+PROCEDURE ListDeselectItem(w: Xt.Widget;
+	                item: Xm.String);
+
+&lt;*EXTERNAL &quot;XmListDeselectPos&quot;*&gt;
+PROCEDURE ListDeselectPos(w: Xt.Widget;
+	                pos:int);
+
+&lt;*EXTERNAL &quot;XmListDeselectAllItems&quot;*&gt;
+PROCEDURE ListDeselectAllItems(w: Xt.Widget);
+
+&lt;*EXTERNAL &quot;XmListSetPos&quot;*&gt;
+PROCEDURE ListSetPos(w: Xt.Widget;
+	                pos:int);
+
+&lt;*EXTERNAL &quot;XmListSetBottomPos&quot;*&gt;
+PROCEDURE ListSetBottomPos(w: Xt.Widget;
+	                pos:int);
+
+&lt;*EXTERNAL &quot;XmListSetItem&quot;*&gt;
+PROCEDURE ListSetItem(w: Xt.Widget;
+	                item: Xm.String);
+
+&lt;*EXTERNAL &quot;XmListSetBottomItem&quot;*&gt;
+PROCEDURE ListSetBottomItem(w: Xt.Widget;
+	                item: Xm.String);
+
+&lt;*EXTERNAL &quot;XmListSetAddMode&quot;*&gt;
+PROCEDURE ListSetAddMode(w: Xt.Widget;
+	                add_mode: Xt.Boolean);
+
+&lt;*EXTERNAL &quot;XmListItemExists&quot;*&gt;
+PROCEDURE ListItemExists(w: Xt.Widget;
+	                item: Xm.String): Xt.Boolean;
+
+&lt;*EXTERNAL &quot;XmListItemPos&quot;*&gt;
+PROCEDURE ListItemPos(w: Xt.Widget;
+	                item: Xm.String):int;
+
+&lt;*EXTERNAL &quot;XmListGetMatchPos&quot;*&gt;
+PROCEDURE ListGetMatchPos(w: Xt.Widget;
+	                item: Xm.String;
+			pos_list: int_star_star;
+			pos_count: int_star);
+
+&lt;*EXTERNAL &quot;XmListGetSelectedPos&quot;*&gt;
+PROCEDURE ListGetSelectedPos(w: Xt.Widget;
+			pos_list: int_star_star;
+			pos_count: int_star);
+
+&lt;*EXTERNAL &quot;XmListSetHorizPos&quot;*&gt;
+PROCEDURE ListSetHorizPos(w: Xt.Widget;
+			pos: int);
+</PRE>-------------------
+ MainWindow        
+-------------------
+<PRE>&lt;*EXTERNAL*&gt;
+VAR xmMainWindowWidgetClass:Xt.WidgetClass;
+
+TYPE MainWindowWidgetClass = UNTRACED ROOT;
+TYPE MainWindowWidget      = UNTRACED ROOT;
+
+PROCEDURE <A HREF="Xmw.m3.html#IsMainWindow">IsMainWindow</A>(w:Xt.Widget):Xt.Boolean;
+
+&lt;*EXTERNAL &quot;XmCreateMainWindow&quot;:C *&gt;
+PROCEDURE CreateMainWindow( parent:Xt.Widget;
+	                 name: char_star;
+			 args: UNTRACED REF Xt.ArgList;
+			 argCount:Xt.Cardinal): Xt.Widget;
+
+&lt;*EXTERNAL &quot;XmMainWindowSetAreas&quot;:C *&gt;
+PROCEDURE MainWindowSetAreas (w, menu, command, hscroll, vscroll, wregion:Xt.Widget);
+
+&lt;*EXTERNAL &quot;XmMainWindowSep1&quot;*&gt;
+PROCEDURE MainWindowSep1(w: Xt.Widget): Xt.Widget;
+
+&lt;*EXTERNAL &quot;XmMainWindowSep2&quot;*&gt;
+PROCEDURE MainWindowSep2(w: Xt.Widget): Xt.Widget;
+
+&lt;*EXTERNAL &quot;XmMainWindowSep3&quot;*&gt;
+PROCEDURE MainWindowSep3(w: Xt.Widget): Xt.Widget;
+</PRE>-------------------
+ MenuShell       
+-------------------
+<PRE>&lt;*EXTERNAL*&gt;
+VAR xmMenuShellWidgetClass:Xt.WidgetClass;
+
+TYPE MenuShellWidgetClass = UNTRACED ROOT;
+TYPE MenuShellWidget      = UNTRACED ROOT;
+
+PROCEDURE <A HREF="Xmw.m3.html#IsMenuShell">IsMenuShell</A>(w:Xt.Widget):Xt.Boolean;
+
+&lt;*EXTERNAL &quot;XmCreateMenuShell&quot;:C *&gt;
+PROCEDURE CreateMenuShell( parent:Xt.Widget;
+	                 name: char_star;
+			 args: UNTRACED REF Xt.ArgList;
+			 argCount:Xt.Cardinal): Xt.Widget;
+</PRE>-------------------
+ MessageBox       
+-------------------
+<PRE>&lt;*EXTERNAL*&gt;
+VAR xmMessageBoxWidgetClass:Xt.WidgetClass;
+
+TYPE MessageBoxWidgetClass = UNTRACED ROOT;
+TYPE MessageBoxWidget      = UNTRACED ROOT;
+
+PROCEDURE <A HREF="Xmw.m3.html#IsMessageBox">IsMessageBox</A>(w:Xt.Widget):Xt.Boolean;
+
+&lt;*EXTERNAL &quot;XmCreateMessageBox&quot;:C *&gt;
+PROCEDURE CreateMessageBox( parent:Xt.Widget;
+	                 name: char_star;
+			 args: UNTRACED REF Xt.ArgList;
+			 argCount:Xt.Cardinal): Xt.Widget;
+
+&lt;*EXTERNAL &quot;XmCreateMessageDialog&quot;:C *&gt;
+PROCEDURE CreateMessageDialog( parent:Xt.Widget;
+	                 name: char_star;
+			 args: UNTRACED REF Xt.ArgList;
+			 argCount:Xt.Cardinal): Xt.Widget;
+
+&lt;*EXTERNAL &quot;XmCreateErrorDialog&quot;:C *&gt;
+PROCEDURE CreateErrorDialog( parent:Xt.Widget;
+	                 name: char_star;
+			 args: UNTRACED REF Xt.ArgList;
+			 argCount:Xt.Cardinal): Xt.Widget;
+
+&lt;*EXTERNAL &quot;XmCreateInformationDialog&quot;:C *&gt;
+PROCEDURE CreateInformationDialog( parent:Xt.Widget;
+	                 name: char_star;
+			 args: UNTRACED REF Xt.ArgList;
+			 argCount:Xt.Cardinal): Xt.Widget;
+
+&lt;*EXTERNAL &quot;XmCreateQuestionDialog&quot;:C *&gt;
+PROCEDURE CreateQuestionDialog( parent:Xt.Widget;
+	                 name: char_star;
+			 args: UNTRACED REF Xt.ArgList;
+			 argCount:Xt.Cardinal): Xt.Widget;
+
+&lt;*EXTERNAL &quot;XmCreateWarningDialog&quot;:C *&gt;
+PROCEDURE CreateWarningDialog( parent:Xt.Widget;
+	                 name: char_star;
+			 args: UNTRACED REF Xt.ArgList;
+			 argCount:Xt.Cardinal): Xt.Widget;
+
+&lt;*EXTERNAL &quot;XmCreateWorkingDialog&quot;:C *&gt;
+PROCEDURE CreateWorkingDialog( parent:Xt.Widget;
+	                 name: char_star;
+			 args: UNTRACED REF Xt.ArgList;
+			 argCount:Xt.Cardinal): Xt.Widget;
+
+&lt;*EXTERNAL &quot;XmMessageBoxGetChild&quot;:C *&gt;
+PROCEDURE MessageBoxGetChild( parent:Xt.Widget;
+	                 child: int): Xt.Widget;
+</PRE>-------------------
+ PanedWindow       
+-------------------
+<PRE>&lt;*EXTERNAL*&gt;
+VAR xmPanedWindowWidgetClass:Xt.WidgetClass;
+
+TYPE PanedWindowWidgetClass = UNTRACED ROOT;
+TYPE PanedWindowWidget      = UNTRACED ROOT;
+
+PROCEDURE <A HREF="Xmw.m3.html#IsPanedWindow">IsPanedWindow</A>(w:Xt.Widget):Xt.Boolean;
+
+&lt;*EXTERNAL &quot;XmCreatePanedWindow&quot;:C *&gt;
+PROCEDURE CreatePanedWindow( parent:Xt.Widget;
+	                 name: char_star;
+			 args: UNTRACED REF Xt.ArgList;
+			 argCount:Xt.Cardinal): Xt.Widget;
+</PRE><BLOCKQUOTE><EM>-------------------</EM></BLOCKQUOTE><PRE>
+</PRE> PushButton       
+-------------------
+<PRE>&lt;*EXTERNAL*&gt;
+VAR xmPushButtonWidgetClass:Xt.WidgetClass;
+
+&lt;*EXTERNAL*&gt;
+VAR xmPushButtonGadgetClass:Xt.WidgetClass;
+
+TYPE PushButtonWidgetClass = UNTRACED ROOT;
+TYPE PushButtonWidget      = UNTRACED ROOT;
+
+TYPE PushButtonGadgetClass = UNTRACED ROOT;
+TYPE PushButtonGadget      = UNTRACED ROOT;
+
+PROCEDURE <A HREF="Xmw.m3.html#IsPushButton">IsPushButton</A>(w:Xt.Widget):Xt.Boolean;
+
+&lt;*EXTERNAL &quot;XmCreatePushButton&quot;:C *&gt;
+PROCEDURE CreatePushButton( parent:Xt.Widget;
+	                 name: char_star;
+			 args: UNTRACED REF Xt.ArgList;
+			 argCount:Xt.Cardinal): Xt.Widget;
+</PRE>-------------------
+ RowColumn       
+-------------------
+<PRE>&lt;*EXTERNAL*&gt;
+VAR xmRowColumnWidgetClass:Xt.WidgetClass;
+
+TYPE RowColumnWidgetClass = UNTRACED ROOT;
+TYPE RowColumnWidget      = UNTRACED ROOT;
+
+PROCEDURE <A HREF="Xmw.m3.html#IsRowColumn">IsRowColumn</A>(w:Xt.Widget):Xt.Boolean;
+
+&lt;*EXTERNAL &quot;XmCreateRowColumn&quot;:C *&gt;
+PROCEDURE CreateRowColumn( parent:Xt.Widget;
+	                 name: char_star;
+			 args: UNTRACED REF Xt.ArgList;
+			 argCount:Xt.Cardinal): Xt.Widget;
+
+&lt;*EXTERNAL &quot;XmCreateRadioBox&quot;:C *&gt;
+PROCEDURE CreateRadioBoxn( parent:Xt.Widget;
+	                 name: char_star;
+			 args: UNTRACED REF Xt.ArgList;
+			 argCount:Xt.Cardinal): Xt.Widget;
+
+&lt;*EXTERNAL &quot;XmCreateWorkArea&quot;:C *&gt;
+PROCEDURE CreateWorkArea( parent:Xt.Widget;
+	                 name: char_star;
+			 args: UNTRACED REF Xt.ArgList;
+			 argCount:Xt.Cardinal): Xt.Widget;
+
+&lt;*EXTERNAL &quot;XmCreatePopupMenu&quot;:C *&gt;
+PROCEDURE CreatePopupMenu( parent:Xt.Widget;
+	                 name: char_star;
+			 args: UNTRACED REF Xt.ArgList;
+			 argCount:Xt.Cardinal): Xt.Widget;
+
+&lt;*EXTERNAL &quot;XmCreatePulldownMenu&quot;:C *&gt;
+PROCEDURE CreatePulldownMenu( parent:Xt.Widget;
+	                 name: char_star;
+			 args: UNTRACED REF Xt.ArgList;
+			 argCount:Xt.Cardinal): Xt.Widget;
+
+&lt;*EXTERNAL &quot;XmCreateOptionMenu&quot;:C *&gt;
+PROCEDURE CreateOptionMenu( parent:Xt.Widget;
+	                 name: char_star;
+			 args: UNTRACED REF Xt.ArgList;
+			 argCount:Xt.Cardinal): Xt.Widget;
+
+&lt;*EXTERNAL &quot;XmCreateMenuBar&quot;:C *&gt;
+PROCEDURE CreateMenuBar( parent:Xt.Widget;
+	                 name: char_star;
+			 args: UNTRACED REF Xt.ArgList;
+			 argCount:Xt.Cardinal): Xt.Widget;
+
+&lt;*EXTERNAL &quot;XmMenuPosition&quot;:C *&gt;
+PROCEDURE MenuPosition(w:Xt.Widget;
+	                 event: X.XButtonPressedEventStar);
+
+&lt;*EXTERNAL &quot;XmOptionLabelGadget&quot;:C *&gt;
+PROCEDURE OptionLabelGadget(w:Xt.Widget):Xt.Widget;
+
+&lt;*EXTERNAL &quot;XmOptionButtonGadget&quot;:C *&gt;
+PROCEDURE OptionButtonGadget(w:Xt.Widget):Xt.Widget;
+
+&lt;*EXTERNAL &quot;XmGetPostedFromWidget&quot;:C *&gt;
+PROCEDURE GetPostedFromWidget(w:Xt.Widget):Xt.Widget;
+</PRE>-------------------
+ Scale       
+-------------------
+<PRE>&lt;*EXTERNAL*&gt;
+VAR xmScaleWidgetClass:Xt.WidgetClass;
+
+TYPE ScaleWidgetClass = UNTRACED ROOT;
+TYPE ScaleWidget      = UNTRACED ROOT;
+
+PROCEDURE <A HREF="Xmw.m3.html#IsScale">IsScale</A>(w:Xt.Widget):Xt.Boolean;
+
+&lt;*EXTERNAL &quot;XmCreateScale&quot;:C *&gt;
+PROCEDURE CreateScale( parent:Xt.Widget;
+	                 name: char_star;
+			 args: UNTRACED REF Xt.ArgList;
+			 argCount:Xt.Cardinal): Xt.Widget;
+
+&lt;*EXTERNAL &quot;XmScaleGetValue&quot;:C*&gt;
+PROCEDURE ScaleGetValue(w: Xt.Widget;
+	                 value: int_star);
+
+&lt;*EXTERNAL &quot;XmScaleSetValue&quot;:C*&gt;
+PROCEDURE ScaleSetValue(w: Xt.Widget;
+	                 value: int);
+</PRE>-------------------
+ ScrollBar       
+-------------------
+<PRE>&lt;*EXTERNAL*&gt;
+VAR xmScrollBarWidgetClass:Xt.WidgetClass;
+
+TYPE ScrollBarWidgetClass = UNTRACED ROOT;
+TYPE ScrollBarWidget      = UNTRACED ROOT;
+
+PROCEDURE <A HREF="Xmw.m3.html#IsScrollBar">IsScrollBar</A>(w:Xt.Widget):Xt.Boolean;
+
+&lt;*EXTERNAL &quot;XmCreateScrollBar&quot;:C *&gt;
+PROCEDURE CreateScrollBar( parent:Xt.Widget;
+	                 name: char_star;
+			 args: UNTRACED REF Xt.ArgList;
+			 argCount:Xt.Cardinal): Xt.Widget;
+
+&lt;*EXTERNAL &quot;XmScrollBarGetValues&quot;:C*&gt;
+PROCEDURE ScrollBarGetValues(w: Xt.Widget;
+	                 value: int_star;
+			 slider_size: int_star;
+			 increment: int_star;
+			 page_increment: int_star);
+
+&lt;*EXTERNAL &quot;XmScrollBarSetValues&quot;:C*&gt;
+PROCEDURE ScrollBarSetValues(w: Xt.Widget;
+	                 value: int;
+			 slider_size: int;
+			 increment: int;
+			 page_increment: int;
+			 notify: Xt.Boolean);
+
+&lt;*EXTERNAL &quot;_XmSetEtchedSlider&quot;:C *&gt;
+PROCEDURE SetEtchedSlider(w:ScrollBarWidget);
+</PRE>-------------------
+ ScrolledWindow       
+-------------------
+<PRE>&lt;*EXTERNAL*&gt;
+VAR xmScrolledWindowWidgetClass:Xt.WidgetClass;
+
+TYPE ScrolledWindowWidgetClass = UNTRACED ROOT;
+TYPE ScrolledWindowWidget      = UNTRACED ROOT;
+
+PROCEDURE <A HREF="Xmw.m3.html#IsScrolledWindow">IsScrolledWindow</A>(w:Xt.Widget):Xt.Boolean;
+
+&lt;*EXTERNAL &quot;XmCreateScrolledWindow&quot;:C *&gt;
+PROCEDURE CreateScrolledWindow( parent:Xt.Widget;
+	                 name: char_star;
+			 args: UNTRACED REF Xt.ArgList;
+			 argCount:Xt.Cardinal): Xt.Widget;
+
+&lt;*EXTERNAL &quot;InitializeScrollBars&quot;*&gt;
+PROCEDURE InitializeScrollBars(w: Xt.Widget);
+
+&lt;*EXTERNAL &quot;XmScrolledWindowSetAreas&quot;*&gt;
+PROCEDURE ScrolledWindowSetAreas(w: Xt.Widget;
+                         hscroll: Xt.Widget;
+			 vscroll: Xt.Widget;
+			 wregion: Xt.Widget);
+</PRE>-------------------
+ SelectionBox       
+-------------------
+<PRE>&lt;*EXTERNAL*&gt;
+VAR xmSelectionBoxWidgetClass:Xt.WidgetClass;
+
+TYPE SelectionBoxWidgetClass = UNTRACED ROOT;
+TYPE SelectionBoxWidget      = UNTRACED ROOT;
+
+PROCEDURE <A HREF="Xmw.m3.html#IsSelectionBox">IsSelectionBox</A>(w:Xt.Widget):Xt.Boolean;
+
+&lt;*EXTERNAL &quot;XmCreateSelectionBox&quot;:C *&gt;
+PROCEDURE CreateSelectionBox( parent:Xt.Widget;
+	                 name: char_star;
+			 args: UNTRACED REF Xt.ArgList;
+			 argCount:Xt.Cardinal): Xt.Widget;
+
+&lt;*EXTERNAL &quot;XmCreateSelectionDialog&quot;:C *&gt;
+PROCEDURE CreateSelectionDialog( parent:Xt.Widget;
+	                 name: char_star;
+			 args: UNTRACED REF Xt.ArgList;
+			 argCount:Xt.Cardinal): Xt.Widget;
+
+&lt;*EXTERNAL &quot;XmCreatePromptDialog&quot;:C *&gt;
+PROCEDURE CreatePromptDialog( parent:Xt.Widget;
+	                 name: char_star;
+			 args: UNTRACED REF Xt.ArgList;
+			 argCount:Xt.Cardinal): Xt.Widget;
+
+&lt;*EXTERNAL &quot;XmSelectionBoxGetChild&quot;:C *&gt;
+PROCEDURE SelectionBoxGetChild(w:Xt.Widget;
+	                 child: int);
+</PRE>-------------------
+ Separator       
+-------------------
+<PRE>&lt;*EXTERNAL*&gt;
+VAR xmSeparatorWidgetClass:Xt.WidgetClass;
+
+&lt;*EXTERNAL*&gt;
+VAR xmSeparatorGadgetClass:Xt.WidgetClass;
+
+TYPE SeparatorWidgetClass = UNTRACED ROOT;
+TYPE SeparatorWidget      = UNTRACED ROOT;
+
+TYPE SeparatorGadgetClass = UNTRACED ROOT;
+TYPE SeparatorGadget      = UNTRACED ROOT;
+
+PROCEDURE <A HREF="Xmw.m3.html#IsSeparator">IsSeparator</A>(w:Xt.Widget):Xt.Boolean;
+
+&lt;*EXTERNAL &quot;XmCreateSeparator&quot;:C *&gt;
+PROCEDURE CreateSeparator( parent:Xt.Widget;
+	                 name: char_star;
+			 args: UNTRACED REF Xt.ArgList;
+			 argCount:Xt.Cardinal): Xt.Widget;
+</PRE>-------------------
+ Text ???? Incomplete???      
+-------------------
+<PRE>&lt;*EXTERNAL*&gt;
+VAR xmTextWidgetClass:Xt.WidgetClass;
+
+TYPE TextWidgetClass = UNTRACED ROOT;
+TYPE TextWidget      = UNTRACED ROOT;
+TYPE TextSource      = UNTRACED ROOT;
+
+PROCEDURE <A HREF="Xmw.m3.html#IsText">IsText</A>(w:Xt.Widget):Xt.Boolean;
+
+&lt;*EXTERNAL &quot;XmCreateText&quot;:C *&gt;
+PROCEDURE CreateText( parent:Xt.Widget;
+	                 name: char_star;
+			 args: UNTRACED REF Xt.ArgList;
+			 argCount:Xt.Cardinal): Xt.Widget;
+</PRE>-------------------
+ TextField         
+-------------------
+<PRE>&lt;*EXTERNAL*&gt;
+VAR xmTextFieldWidgetClass:Xt.WidgetClass;
+
+TYPE TextFieldWidgetClass = UNTRACED ROOT;
+TYPE TextFieldWidget      = UNTRACED ROOT;
+
+PROCEDURE <A HREF="Xmw.m3.html#IsTextField">IsTextField</A>(w:Xt.Widget):Xt.Boolean;
+
+&lt;*EXTERNAL &quot;XmCreateTextField&quot;:C *&gt;
+PROCEDURE CreateTextField( parent:Xt.Widget;
+	                 name: char_star;
+			 args: UNTRACED REF Xt.ArgList;
+			 argCount:Xt.Cardinal): Xt.Widget;
+
+&lt;*EXTERNAL &quot;XmTextFieldGetString&quot;:C *&gt;
+PROCEDURE TextFieldGetString(w:Xt.Widget): char_star;
+	
+&lt;*EXTERNAL &quot;XmTextFieldGetLastPosition&quot;:C *&gt;
+PROCEDURE TextFieldGetLastPosition(w:Xt.Widget): Xm.TextPosition;
+
+&lt;*EXTERNAL &quot;XmTextFieldSetString&quot;:C *&gt;
+PROCEDURE TextFieldSetString(w:Xt.Widget;
+	                 value: char_star);
+
+&lt;*EXTERNAL &quot;XmTextFieldReplace&quot;:C *&gt;
+PROCEDURE TextFieldReplace(w:Xt.Widget;
+	                 from_pos,to_pos: Xm.TextPosition;
+			 value: char_star);
+
+&lt;*EXTERNAL &quot;XmTextFieldInsert&quot;:C *&gt;
+PROCEDURE TextFieldInsert(w:Xt.Widget;
+	                 pos: Xm.TextPosition;
+			 value: char_star);
+
+&lt;*EXTERNAL &quot;XmTextFieldSetAddMode&quot;:C *&gt;
+PROCEDURE TextFieldSetAddMode(w:Xt.Widget;
+	                 state: Xt.Boolean);
+
+&lt;*EXTERNAL &quot;XmTextFieldGetAddMode&quot;:C *&gt;
+PROCEDURE TextFieldGetAddMode(w:Xt.Widget):Xt.Boolean;
+
+&lt;*EXTERNAL &quot;XmTextFieldGetEditable&quot;:C *&gt;
+PROCEDURE TextFieldGetEditable(w:Xt.Widget):Xt.Boolean;
+
+&lt;*EXTERNAL &quot;XmTextFieldSetEditable&quot;:C *&gt;
+PROCEDURE TextFieldSetEditable(w:Xt.Widget;
+	                 state: Xt.Boolean);
+
+&lt;*EXTERNAL &quot;XmTextFieldGetMaxLength&quot;:C *&gt;
+PROCEDURE TextFieldGetMaxLength(w:Xt.Widget):int;
+
+&lt;*EXTERNAL &quot;XmTextFieldSetMaxLength&quot;:C *&gt;
+PROCEDURE TextFieldSetMaxLength(w:Xt.Widget;
+	                 max_length:int);
+
+&lt;*EXTERNAL &quot;XmTextFieldGetCursorPosition&quot;:C *&gt;
+PROCEDURE TextFieldGetCursorPosition(w:Xt.Widget):Xm.TextPosition;
+
+&lt;*EXTERNAL &quot;XmTextFieldSetCursorPosition&quot;:C *&gt;
+PROCEDURE TextFieldSetCursorPosition(w:Xt.Widget;
+	                 position: Xm.TextPosition);
+
+&lt;*EXTERNAL &quot;XmTextFieldGetInsertionPosition&quot;:C *&gt;
+PROCEDURE TextFieldGetInsertionPosition(w:Xt.Widget):Xm.TextPosition;
+
+&lt;*EXTERNAL &quot;XmTextFieldSetInsertionPosition&quot;:C *&gt;
+PROCEDURE TextFieldSetInsertionPosition(w:Xt.Widget;
+	                 position: Xm.TextPosition);
+
+&lt;*EXTERNAL &quot;XmTextFieldGetSelectionPosition&quot;:C *&gt;
+PROCEDURE TextFieldGetSelectionPosition(w:Xt.Widget):Xm.TextPosition;
+
+&lt;*EXTERNAL &quot;XmTextFieldSetSelectionPosition&quot;:C *&gt;
+PROCEDURE TextFieldSetSelectionPosition(w:Xt.Widget;
+			 left,right: UNTRACED REF Xm.TextPosition): Xt.Boolean;
+
+&lt;*EXTERNAL &quot;XmTextFieldGetSelection&quot;:C *&gt;
+PROCEDURE TextFieldGetSelection(w:Xt.Widget):char_star;
+
+&lt;*EXTERNAL &quot;XmTextFieldRemove&quot;:C *&gt;
+PROCEDURE TextFieldRemove(w:Xt.Widget):Xt.Boolean;
+
+&lt;*EXTERNAL &quot;XmTextFieldCopy&quot;:C *&gt;
+PROCEDURE TextFieldCopy(w:Xt.Widget;
+                          clip_time: X.Time):Xt.Boolean;
+
+&lt;*EXTERNAL &quot;XmTextFieldPaste&quot;:C *&gt;
+PROCEDURE TextFieldPaste(w:Xt.Widget):Xt.Boolean;
+
+&lt;*EXTERNAL &quot;XmTextFieldClearSelection&quot;:C *&gt;
+PROCEDURE TextFieldClearSelection(w:Xt.Widget;
+                          sel_time: X.Time);
+
+&lt;*EXTERNAL &quot;XmTextFieldSetSelection&quot;:C *&gt;
+PROCEDURE TextFieldSetSelection(w:Xt.Widget;
+                          first,last: Xm.TextPosition;
+                          sel_time: X.Time);
+
+&lt;*EXTERNAL &quot;XmTextFieldXYToPos&quot;:C *&gt;
+PROCEDURE TextFieldXYToPos(w:Xt.Widget;
+                          position: Xm.TextPosition;
+			  x,y: Xt.Position): Xm.TextPosition;
+
+&lt;*EXTERNAL &quot;XmTextFieldPosToXY&quot;:C *&gt;
+PROCEDURE TextFieldPosToXY(w:Xt.Widget;
+                          position: Xm.TextPosition;
+			  x,y: Xt.PositionStar): Xt.Boolean;
+
+&lt;*EXTERNAL &quot;XmTextFieldShowPosition&quot;:C *&gt;
+PROCEDURE TextFieldShowPosition(w:Xt.Widget;
+                          position: Xm.TextPosition);
+
+&lt;*EXTERNAL &quot;XmTextFieldSetHighlight&quot;:C *&gt;
+PROCEDURE TextFieldSetHighlight(w:Xt.Widget;
+                          left,right: Xm.TextPosition;
+			  mode: Xm.XmHighlightMode);
+
+&lt;*EXTERNAL &quot;XmTextFieldGetBaseLine&quot;:C *&gt;
+PROCEDURE TextFieldGetBaseLine(w:Xt.Widget): int;
+
+&lt;*EXTERNAL &quot;XmTextFieldGetBaseline&quot;:C *&gt;
+PROCEDURE TextFieldGetBaseline(w:Xt.Widget): int;
+</PRE>-------------------
+ ToggleButton       
+-------------------
+<PRE>&lt;*EXTERNAL*&gt;
+VAR xmToggleButtonWidgetClass:Xt.WidgetClass;
+
+TYPE ToggleButtonWidgetClass = UNTRACED ROOT;
+TYPE ToggleButtonWidget      = UNTRACED ROOT;
+
+PROCEDURE <A HREF="Xmw.m3.html#IsToggleButton">IsToggleButton</A>(w:Xt.Widget):Xt.Boolean;
+
+&lt;*EXTERNAL &quot;XmCreateToggleButton&quot;:C *&gt;
+PROCEDURE CreateToggleButton( parent:Xt.Widget;
+	                 name: char_star;
+			 args: UNTRACED REF Xt.ArgList;
+			 argCount:Xt.Cardinal): Xt.Widget;
+</PRE>-----------------
+<PRE>END Xmw.
+</PRE>
+</inInterface>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

@@ -1,0 +1,71 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: lego/src/TrillSwitchVBT.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>lego/src/TrillSwitchVBT.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM>                                                                           </EM></BLOCKQUOTE><PRE>
+&lt;* PRAGMA LL *&gt;
+&lt;* PRAGMA SUBTYPE *&gt;
+</PRE> A <CODE>TrillSwitchVBT.T</CODE> is a switch version of Trestle's
+   <CODE>TrillBtnVBT</CODE>.
+<P>
+   Actually, a <CODE>TrillBtnVBT</CODE> does not exist.  If it existed, it
+   would be a button that generates events repeatedly while the
+   mouse is down and in its domain.  When the mouse leaves the
+   domain, events generation is suspended until the mouse
+   returns.
+<P>
+   The implementation uses the <CODE>AutoRepeat</CODE> interface for
+   repeatedly generating events.  That interface defines the
+   parameters that control how frequently events are generated,
+   and how long to wait before starting to auto-repeat. 
+
+<P><PRE>INTERFACE <interface><A HREF="TrillSwitchVBT.m3.html">TrillSwitchVBT</A></interface>;
+
+IMPORT <A HREF="../../ui/src/split/ButtonVBT.i3.html">ButtonVBT</A>, <A HREF="FeedbackVBT.i3.html">FeedbackVBT</A>, <A HREF="../../ui/src/vbt/VBT.i3.html">VBT</A>;
+
+TYPE
+  &lt;* SUBTYPE T &lt;: MultiFilter.T *&gt;
+  <A HREF="TrillSwitchVBT.m3.html#T">T</A> &lt;: Public;
+  Public = ButtonVBT.T OBJECT
+           METHODS
+             &lt;* LL.sup &lt;= VBT.mu *&gt;
+             init (f: FeedbackVBT.T): T;
+             &lt;* LL.sup = VBT.mu *&gt;
+             callback (READONLY cd: VBT.MouseRec);
+           END;
+
+END TrillSwitchVBT.
+</PRE>
+</inInterface>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

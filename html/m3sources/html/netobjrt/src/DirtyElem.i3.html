@@ -1,0 +1,54 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: netobjrt/src/DirtyElem.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>netobjrt/src/DirtyElem.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+
+INTERFACE <interface>DirtyElem</interface>;
+
+IMPORT <A HREF="StubLib.i3.html">StubLib</A>;
+
+CONST Brand = &quot;DirtyElem&quot;;
+
+TYPE
+  T = RECORD
+    dirty: BOOLEAN;
+    keep:  BOOLEAN;
+    ts: ARRAY [0..1] OF StubLib.Int32; (* lsw..msw *)
+         (* really a SpecialObj.EventID *)
+  END;
+
+END DirtyElem.
+</PRE>
+</inInterface>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

@@ -1,0 +1,546 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: gef/src/GEFView.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>gef/src/GEFView.m3</H2></A><HR>
+<inModule>
+<PRE><A HREF="../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+
+MODULE <module>GEFView</module> EXPORTS <A HREF="GEFView.i3.html"><implements>GEFView</A></implements>, <A HREF="GEFViewClass.i3.html"><implements>GEFViewClass</A></implements>;
+
+IMPORT <A HREF="../../zeus/src/Algorithm.i3.html">Algorithm</A>, <A HREF="../../bundleintf/src/Bundle.i3.html">Bundle</A>, <A HREF="#x1">CodeView</A>, <A HREF="#x2">Filename</A>, <A HREF="../../rw/src/Common/FileRd.i3.html">FileRd</A>, <A HREF="../../ui/src/split/Filter.i3.html">Filter</A>, <A HREF="../../fmtlex/src/Fmt.i3.html">Fmt</A>,
+       <A HREF="../../formsvbt/src/FormsVBT.i3.html">FormsVBT</A>, <A HREF="../DS/gefBundle.i3.html">gefBundle</A>, <A HREF="../DS/gefeventAlgClass.i3.html">gefeventAlgClass</A>, <A HREF="../DS/gefeventViewClass.i3.html">gefeventViewClass</A>,
+       <A HREF="../DS/gefeventTranscriptView.i3.html">gefeventTranscriptView</A>, <A HREF="../DS/gefeventIE.i3.html">gefeventIE</A>, <A HREF="GEF.i3.html">GEF</A>, <A HREF="GEFAlg.i3.html">GEFAlg</A>,
+       <A HREF="GEFClass.i3.html">GEFClass</A>, <A HREF="GEFError.i3.html">GEFError</A>, <A HREF="GEFLisp.i3.html">GEFLisp</A>, <A HREF="../../mgkit/src/GraphVBTExtras.i3.html">GraphVBTExtras</A>,
+       <A HREF="../../os/src/Common/OSError.i3.html">OSError</A>, <A HREF="../../libm3/DS/RefList.i3.html">RefList</A>, <A HREF="../../rw/src/Common/Rd.i3.html">Rd</A>, <A HREF="../../libm3/DS/IntRefTbl.i3.html">IntRefTbl</A>, <A HREF="../../geometry/src/Rect.i3.html">Rect</A>, <A HREF="../../vbtkitutils/src/Rsrc.i3.html">Rsrc</A>,
+       <A HREF="../../slisp/src/SLisp.i3.html">SLisp</A>, <A HREF="../../slisp/src/SLispClass.i3.html">SLispClass</A>, <A HREF="../../sx/src/Sx.i3.html">Sx</A>, <A HREF="../../text/src/Text.i3.html">Text</A>, <A HREF="../../rw/src/Common/TextRd.i3.html">TextRd</A>, <A HREF="../../thread/src/Common/Thread.i3.html">Thread</A>, <A HREF="../../ui/src/vbt/VBT.i3.html">VBT</A>, <A HREF="../../zeus/src/View.i3.html">View</A> AS ZeusView,
+       <A HREF="../../zeus/src/ZeusClass.i3.html">ZeusClass</A>, <A HREF="../../zeus/src/ZeusCodeView.i3.html">ZeusCodeView</A>, <A HREF="../../zeus/src/ZeusPanel.i3.html">ZeusPanel</A>, <A HREF="../../zeus/src/ZeusPanelFriends.i3.html">ZeusPanelFriends</A>;
+</PRE> --------------------------- Interpreter ----------------------- 
+
+<P><PRE>REVEAL
+  <A NAME="Interp">Interp</A> = SLisp.T BRANDED OBJECT
+    rd: Rd.T;
+    intervals: IntRefTbl.T;
+    view: ZeusView.T;
+  OVERRIDES
+    init := InitInterp;
+    error := ParseError;
+  END;
+
+PROCEDURE <A NAME="InitInterp"><procedure>InitInterp</procedure></A> (interp: SLisp.T): SLisp.T =
+  BEGIN
+    EVAL SLisp.T.init(interp);
+    interp.defineFun(NEW(SLisp.Builtin, name := &quot;Feedback&quot;, minArgs := 1,
+                         maxArgs := LAST(INTEGER), apply := SLispFeedback));
+    RETURN interp;
+  END InitInterp;
+
+PROCEDURE <A NAME="SLispFeedback"><procedure>SLispFeedback</procedure></A> (&lt;*UNUSED*&gt; self: SLisp.Builtin; i: SLisp.T; args: RefList.T):
+  REFANY RAISES {SLisp.Error} =
+  VAR
+    interp: Interp := i;
+    name           := interp.eval(args.head);
+    &lt;* FATAL Sx.PrintError *&gt;
+  BEGIN
+    TRY
+      TYPECASE name OF
+      | NULL =&gt; RETURN interp.error(&quot;No name given for feedback event&quot;);
+      | TEXT (nm) =&gt;
+          gefeventIE.Feedback(
+            interp.view, nm, GEFLisp.QuoteList(GEFLisp.EvalList(interp, args.tail)));
+      ELSE
+        RETURN interp.error(Fmt.F(&quot;Bad value given for feedback event name: %s&quot;,
+                                  SLispClass.SxToText(name)));
+      END;
+    EXCEPT
+    | Thread.Alerted =&gt; RAISE SLisp.Error
+    END;
+    RETURN NIL;
+  END SLispFeedback;
+
+TYPE
+  ErrorClosure = Thread.Closure OBJECT
+                   msg      : TEXT;
+                   interp   : Interp;
+                   evalStack: RefList.T;
+                 OVERRIDES
+                   apply := ErrorApply;
+                 END;
+
+PROCEDURE <A NAME="FindSx"><procedure>FindSx</procedure></A> (t: IntRefTbl.T; form: SLisp.Sexp): SLispClass.Range =
+  VAR
+    iter: IntRefTbl.Iterator;
+    start: INTEGER;
+    ref  : REFANY;
+    r    : SLispClass.Range;
+  BEGIN
+    IF t = NIL THEN RETURN NIL END;
+    iter                    := t.iterate();
+    WHILE iter.next(start, ref) DO
+      r := ref;
+      IF r.form = form THEN RETURN r END
+    END;
+    RETURN NIL
+  END FindSx;
+
+PROCEDURE <A NAME="ErrorApply"><procedure>ErrorApply</procedure></A> (cl: ErrorClosure): REFANY =
+  &lt;* FATAL Rd.Failure, Thread.Alerted, SLisp.Error *&gt;
+  BEGIN
+    LOCK VBT.mu DO
+      ZeusPanel.ReportError(cl.msg);
+      VAR
+        evalStack                   := cl.evalStack;
+        range    : SLispClass.Range;
+      BEGIN
+        WHILE evalStack # NIL DO
+          range := FindSx(cl.interp.intervals, evalStack.head);
+          IF range # NIL THEN
+            Rd.Seek(cl.interp.rd, range.start);
+            ZeusPanel.ReportError(
+              Fmt.F(&quot;  at char %s: %s&quot;, Fmt.Int(range.start),
+                    Rd.GetText(cl.interp.rd, range.end - range.start + 1)));
+            EXIT
+          END;
+          evalStack := evalStack.tail;
+        END;
+      END;
+      ZeusPanel.ReportError(&quot;Backtrace&quot;);
+      EVAL cl.interp.sEval(&quot;(backtrace)&quot;);
+      ZeusPanel.Abort();
+    END;
+    RETURN NIL
+  END ErrorApply;
+
+PROCEDURE <A NAME="ParseError"><procedure>ParseError</procedure></A> (t: Interp; msg: TEXT): REFANY RAISES {SLisp.Error} =
+  BEGIN
+    EVAL Thread.Fork(NEW(ErrorClosure, interp := t,
+                         evalStack := t.evalStack, msg := msg));
+    RAISE SLisp.Error;
+  END ParseError;
+</PRE> --------------------------- View ------------------------------- 
+
+<P><PRE>REVEAL
+  <A NAME="ViewClass">ViewClass</A> = gefeventViewClass.T BRANDED OBJECT END;
+  <A NAME="View">View</A> = ViewPublic BRANDED OBJECT
+           name: TEXT;
+         OVERRIDES
+           init    := InitView;
+           oeInit  := OEInit;
+           oeEvent := OEEvent;
+           ueUpdate := UEUpdate;
+         END;
+
+TYPE MouseGEF = GEF.T OBJECT OVERRIDES mouse := Mouse END;
+
+PROCEDURE <A NAME="Mouse"><procedure>Mouse</procedure></A> (graph: MouseGEF; READONLY cd: VBT.MouseRec) =
+  BEGIN
+    IF cd.clickType = VBT.ClickType.LastUp AND cd.clickCount = 1
+         AND NOT cd.cp.gone THEN
+      VAR
+        rect       := Rect.FromPoint(cd.cp.pt);
+        vertices   := graph.verticesAt(rect);
+        edges      := graph.edgesAt(rect);
+        highlights := graph.vertexHighlightsAt(rect);
+        polygons   := graph.polygonsAt(rect);
+        worldPt    := GraphVBTExtras.ScreenPtToWorldPos(graph, cd.cp.pt);
+      &lt;* FATAL GEFError.T *&gt;
+      BEGIN
+        TRY
+          GEF.InvokeEvent(
+            graph, &quot;MouseFeedback&quot;,
+            GEFLisp.QuoteList(
+              RefList.FromArray(
+                ARRAY [0 .. 4] OF
+                  REFANY{RefList.List2(Sx.FromReal(worldPt[0]),
+                                       Sx.FromReal(worldPt[1])), vertices,
+                         highlights, edges, polygons})));
+        EXCEPT
+          Thread.Alerted =&gt;
+        END;
+      END;
+    END;
+  END Mouse;
+
+PROCEDURE <A NAME="InitView"><procedure>InitView</procedure></A> (v: View): View =
+  &lt;* FATAL SLisp.Error *&gt;
+  VAR
+    interp := NEW(Interp, view := v).init();
+    gef    := NEW(MouseGEF).init(interp);
+  BEGIN
+    RETURN gefeventViewClass.T.init(v, gef);
+  END InitView;
+
+PROCEDURE <A NAME="ReportError"><procedure>ReportError</procedure></A>(msg: TEXT) =
+  BEGIN
+    ZeusPanel.ReportError(msg);
+    ZeusPanel.Abort();
+  END ReportError;
+
+PROCEDURE <A NAME="OEInit"><procedure>OEInit</procedure></A> (v: View; files: RefList.T) =
+  VAR file := MatchName(files, v.name);
+  BEGIN
+    TRY
+      GEF.InitFromRsrc(Filter.Child(v), file, ZeusPanel.GetPath());
+    EXCEPT
+    | Thread.Alerted =&gt;
+    | Rsrc.NotFound =&gt;
+        ReportError(
+          Fmt.F(&quot;GEF View error: Could not find file: %s&quot;, file));
+    | Rd.Failure =&gt;
+        ReportError(
+          Fmt.F(&quot;GEF View error finding or parsing file: %s&quot;, file));
+    | GEFError.T (msg) =&gt;
+        ReportError(
+          Fmt.F(&quot;GEF View error (%s) parsing file: %s&quot;, msg, file));
+    END;
+  END OEInit;
+
+PROCEDURE <A NAME="OEEvent"><procedure>OEEvent</procedure></A> (v: View; name: TEXT; data: RefList.T) =
+  &lt;* FATAL GEFError.T *&gt;
+  VAR gef: GEF.T := Filter.Child(v);
+  BEGIN
+    TRY
+      GEF.InvokeEvent(gef, name, data, FALSE);
+      gef.redisplay();
+      gef.animate(0.0, 1.0);
+    EXCEPT
+    | Thread.Alerted =&gt;
+    END;
+  END OEEvent;
+
+PROCEDURE <A NAME="UEUpdate"><procedure>UEUpdate</procedure></A> (v: View; name: TEXT; data: RefList.T) =
+  &lt;* FATAL GEFError.T *&gt;
+  VAR gef: GEF.T := Filter.Child(v);
+  BEGIN
+    TRY
+      GEF.InvokeEvent(gef, name, data, FALSE);
+      gef.redisplay();
+      gef.animate(0.0, 1.0);
+    EXCEPT
+    | Thread.Alerted =&gt;
+    END;
+  END UEUpdate;
+
+PROCEDURE <A NAME="NewView"><procedure>NewView</procedure></A>(): ZeusView.T =
+  BEGIN
+    RETURN NEW(View, name := ZeusPanelFriends.whichView).init();
+  END NewView;
+</PRE> ------------------- Algorithm ------------------------- 
+
+<P><PRE>REVEAL
+  <A NAME="AlgClass">AlgClass</A> = gefeventAlgClass.T BRANDED OBJECT
+               interp: GEFAlg.Interp;
+             OVERRIDES
+               feFeedback := FeedbackAlg;
+             END;
+
+  <A NAME="Alg">Alg</A> = AlgPublic BRANDED OBJECT
+          sx       : REFANY;
+          viewFiles: RefList.T;
+        OVERRIDES
+          init := InitAlg;
+          run  := RunAlg;
+        END;
+
+PROCEDURE <A NAME="InitAlg"><procedure>InitAlg</procedure></A> (alg: Alg; algFile: TEXT; viewFiles: RefList.T): Alg =
+  (* If it doesn't work, it should crash *)
+  BEGIN
+    TRY
+      alg.viewFiles := viewFiles;
+      alg.interp := NEW(GEFAlg.Interp).init(alg);
+      alg.sx := SLisp.Read(Rsrc.Open(algFile, ZeusPanel.GetPath()));
+      RETURN gefeventAlgClass.T.init(alg);
+    EXCEPT
+    | Rsrc.NotFound =&gt;
+        ReportError(
+          Fmt.F(&quot;GEF Alg error: Could not find file: %s&quot;, algFile));
+    | Rd.EndOfFile, Rd.Failure, Sx.ReadError =&gt;
+        ReportError(
+          Fmt.F(&quot;GEF Alg error: Problem reading file: %s&quot;, algFile));
+    END;
+    RETURN NIL; (* will crash *)
+  END InitAlg;
+
+PROCEDURE <A NAME="MatchName"><procedure>MatchName</procedure></A> (list: RefList.T; name: TEXT): TEXT =
+  VAR assoc: RefList.T;
+  BEGIN
+    WHILE list # NIL DO
+      assoc := list.head;
+      IF Text.Equal(assoc.head, name) THEN
+        RETURN assoc.tail.head
+      END;
+      list := list.tail;
+    END;
+    RETURN NIL
+  END MatchName;
+
+PROCEDURE <A NAME="NewAlg"><procedure>NewAlg</procedure></A> (): Algorithm.T =
+  VAR algFile := MatchName(algsGlobal, ZeusPanelFriends.whichAlg);
+  BEGIN
+    IF algFile = NIL THEN
+      ReportError(Fmt.F(&quot;No algorithm file given for algorithm: %s&quot;,
+                        ZeusPanelFriends.whichAlg));
+      RETURN NIL
+    ELSE
+      RETURN
+        NEW(Alg, codeViews := codeViewsGlobal).init(algFile, viewsGlobal)
+    END;
+  END NewAlg;
+
+PROCEDURE <A NAME="RunAlg"><procedure>RunAlg</procedure></A>(alg: Alg) RAISES {Thread.Alerted} =
+  BEGIN
+    TRY
+      gefeventIE.Init(alg, alg.viewFiles);
+      EVAL alg.interp.eval(alg.sx)
+    EXCEPT
+    | SLisp.Error =&gt; RAISE Thread.Alerted
+    END;
+  END RunAlg;
+
+PROCEDURE <A NAME="FeedbackAlg"><procedure>FeedbackAlg</procedure></A>(alg: AlgClass; function: TEXT; args: RefList.T) =
+  BEGIN
+    GEFAlg.Feedback(alg.interp, function, args);
+  END FeedbackAlg;
+</PRE> --------------------- generic procs ----------------------- 
+
+<P><PRE>VAR
+  algsGlobal, viewsGlobal, codeViewsGlobal: RefList.T;
+
+PROCEDURE <A NAME="Create"><procedure>Create</procedure></A> (sessionName: TEXT; views, algs, codeViews: RefList.T) =
+  BEGIN
+    algsGlobal := algs;
+    viewsGlobal := views;
+    codeViewsGlobal := codeViews;
+    WHILE algs # NIL DO
+      ZeusPanel.RegisterAlg(NewAlg, NARROW(algs.head, RefList.T).head, sessionName);
+      algs := algs.tail;
+    END;
+    WHILE views # NIL DO
+      ZeusPanel.RegisterView(NewView, NARROW(views.head, RefList.T).head, sessionName);
+      views := views.tail;
+    END;
+    ZeusPanel.RegisterView(
+      NewTranscriptView, sessionName &amp; &quot; Transcript View&quot;, sessionName);
+  END Create;
+
+PROCEDURE <A NAME="Event"><procedure>Event</procedure></A> (alg: AlgClass; event: TEXT; data: RefList.T)
+  RAISES {Thread.Alerted} =
+  BEGIN
+    gefeventIE.Event(alg, event, data);
+  END Event;
+
+PROCEDURE <A NAME="Update"><procedure>Update</procedure></A> (alg: AlgClass; event: TEXT; data: RefList.T)
+  RAISES {Thread.Alerted} =
+  BEGIN
+    gefeventIE.Update(alg, event, data);
+  END Update;
+
+PROCEDURE <A NAME="Pause"><procedure>Pause</procedure></A>(alg: AlgClass) RAISES {Thread.Alerted} =
+  BEGIN
+    gefeventIE.Pause(alg);
+  END Pause;
+
+PROCEDURE <A NAME="Init"><procedure>Init</procedure></A>(alg: AlgClass; file: TEXT) RAISES {Thread.Alerted} =
+  BEGIN
+    gefeventIE.Init(alg, RefList.List1(RefList.List2(&quot;Test view&quot;, file)));
+  END Init;
+
+PROCEDURE <A NAME="NewTranscriptView"><procedure>NewTranscriptView</procedure></A>(): ZeusView.T =
+  BEGIN
+    RETURN NEW(gefeventTranscriptView.T).init();
+  END NewTranscriptView;
+</PRE> ------------------------- Testing alg and view -------------------------- 
+
+<P><PRE>TYPE
+  TestAlg = AlgClass OBJECT
+  OVERRIDES
+    run := TestAlgRun;
+  END;
+
+PROCEDURE <A NAME="NewTestAlg"><procedure>NewTestAlg</procedure></A> (): Algorithm.T =
+  VAR
+    fv  := ZeusPanel.NewForm(&quot;geftest.fv&quot;);
+    alg := NEW(TestAlg, data := fv).init();
+  BEGIN
+    RETURN alg;
+  END NewTestAlg;
+
+PROCEDURE <A NAME="TestAlgRun"><procedure>TestAlgRun</procedure></A> (alg: TestAlg) RAISES {Thread.Alerted} =
+  VAR
+    algFile, viewFile, codeviewFile: TEXT;
+    interp                                := NEW(GEFAlg.Interp).init(alg);
+    sx: REFANY;
+    cv: CodeView.T;
+  &lt;* FATAL FormsVBT.Error, FormsVBT.Unimplemented *&gt;
+  BEGIN
+    alg.interp := interp;
+    LOCK VBT.mu DO
+      algFile := FormsVBT.GetText(alg.data, &quot;algFile&quot;);
+      viewFile := FormsVBT.GetText(alg.data, &quot;viewFile&quot;);
+      codeviewFile := FormsVBT.GetText(alg.data, &quot;codeviewFile&quot;);
+    END;
+
+    IF Text.Length(algFile) = 0 THEN
+      ReportError(&quot;Need file name for algorithm file.&quot;);
+      RETURN
+    END;
+    IF Text.Length(viewFile) = 0 THEN
+      ReportError(&quot;Need file name for view file.&quot;);
+      RETURN
+    END;
+
+    IF testCodeview # NIL AND Text.Length(codeviewFile) # 0 THEN
+      TRY
+        cv := NEW(CodeView.T).init(
+                FileRd.Open(Filename.ExpandTilde(codeviewFile)));
+        EVAL Filter.Replace(testCodeview, cv);
+        testCodeview.cv := cv;
+      EXCEPT
+      | Rd.EndOfFile =&gt;
+          ReportError(
+            &quot;Unexpected end of file in codeview file: &quot; &amp; codeviewFile);
+      | Rd.Failure, Filename.Error, OSError.E =&gt;
+          ReportError(
+            &quot;Could not open codeview file: &quot; &amp; codeviewFile);
+      END;
+    END;
+    Init(alg, viewFile);
+    TRY
+      sx := SLisp.Read(FileRd.Open(Filename.ExpandTilde(algFile)));
+      EVAL interp.eval(sx)
+    EXCEPT
+    | Sx.ReadError (msg) =&gt;
+        ReportError(&quot;Error reading algorithm file: &quot; &amp; msg);
+    | Rd.EndOfFile =&gt;
+        ReportError(
+          &quot;Unexpected end of file in algorithm file: &quot; &amp; algFile);
+    | Rd.Failure, Filename.Error, OSError.E =&gt;
+        ReportError(&quot;Could not open algorithm file: &quot; &amp; algFile);
+    | SLisp.Error =&gt;
+    END;
+  END TestAlgRun;
+
+TYPE
+  TestView = View OBJECT
+    OVERRIDES
+      oeInit := TestOEInit;
+    END;
+
+PROCEDURE <A NAME="NewTestView"><procedure>NewTestView</procedure></A>(): ZeusView.T =
+  BEGIN
+    RETURN NEW(TestView).init();
+  END NewTestView;
+
+VAR
+  testCodeview: ZeusCodeView.T;
+
+TYPE
+  ZCV = ZeusCodeView.T OBJECT
+  OVERRIDES
+    isCompat:= CodeViewCompat;
+  END;
+
+PROCEDURE <A NAME="CodeViewCompat"><procedure>CodeViewCompat</procedure></A>(&lt;* UNUSED *&gt; v: ZCV; alg: ZeusClass.T): BOOLEAN =
+  BEGIN
+    RETURN ISTYPE(alg, TestAlg)
+  END CodeViewCompat;
+
+PROCEDURE <A NAME="NewTestCodeView"><procedure>NewTestCodeView</procedure></A> (): ZeusView.T =
+  VAR cv := NEW(CodeView.T).init(TextRd.New(&quot;&quot;));
+  BEGIN
+    testCodeview := NEW(ZCV, cv := cv).init(cv);
+    RETURN testCodeview;
+  END NewTestCodeView;
+
+PROCEDURE <A NAME="TestOEInit"><procedure>TestOEInit</procedure></A> (v: View; files: RefList.T) RAISES {Thread.Alerted} =
+  VAR
+    gef      : GEF.T  := Filter.Child(v);
+    interp   : Interp := gef.interp;
+    intervals         := NEW(IntRefTbl.Default).init();
+    file     : TEXT   := NARROW(files.head, RefList.T).tail.head;
+  BEGIN
+    interp.intervals := intervals;
+    TRY
+      interp.rd := FileRd.Open(Filename.ExpandTilde(file));
+      GEF.InitFromRd(gef, interp.rd, intervals);
+    EXCEPT
+    | OSError.E, Filename.Error =&gt;
+        ReportError(&quot;TextView error opening file: &quot; &amp; file)
+    | Rd.Failure =&gt;
+        ReportError(
+          Fmt.F(&quot;TestView error finding or parsing file: %s&quot;, file));
+    | GEFError.T (msg) =&gt;
+        ReportError(
+          Fmt.F(&quot;TestView error (%s) parsing file: %s&quot;, msg, file));
+    END;
+  END TestOEInit;
+
+VAR
+  inited := FALSE;
+  mu := NEW(MUTEX);
+
+PROCEDURE <A NAME="RegisterSession"><procedure>RegisterSession</procedure></A> () =
+  VAR init: BOOLEAN;
+  BEGIN
+    LOCK mu DO init := NOT inited; inited := TRUE; END;
+    IF init THEN
+      ZeusPanel.SetSessTitle(&quot;gefevent&quot;, &quot;GEF Testing&quot;);
+      ZeusPanel.RegisterAlg(NewTestAlg, &quot;Test algorithm&quot;, &quot;gefevent&quot;);
+      ZeusPanel.RegisterView(
+        NewTestCodeView, &quot;Test Codeview&quot;, &quot;gefevent&quot;, TRUE);
+      ZeusPanel.RegisterView(NewTestView, &quot;Test view&quot;, &quot;gefevent&quot;);
+    END;
+  END RegisterSession;
+
+PROCEDURE <A NAME="GetBundle"><procedure>GetBundle</procedure></A> (): Bundle.T =
+  BEGIN
+    RETURN gefBundle.Get();
+  END GetBundle;
+
+BEGIN
+END GEFView.
+</PRE>
+</inModule>
+<HR>
+<A NAME="x1">interface CodeView is in:
+</A><UL>
+<LI><A HREF="../../codeview/src/CodeView.i3.html#0TOP0">codeview/src/CodeView.i3</A>
+<LI><A HREF="../../codeview/src/oldCodeView.i3.html#0TOP0">codeview/src/oldCodeView.i3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x2">interface Filename is in:
+</A><UL>
+<LI><A HREF="../../filename/src/POSIX/Filename.i3.html#0TOP0">filename/src/POSIX/Filename.i3</A>
+<LI><A HREF="../../filename/src/WINNT/Filename.i3.html#0TOP0">filename/src/WINNT/Filename.i3</A>
+</UL>
+<P>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

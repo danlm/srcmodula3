@@ -1,0 +1,37 @@
+%
+% m3makefile for the net-balance server 
+% 
+
+import ("libm3")
+import ("tcp")
+import ("netobj")
+import ("ui")
+import ("formsvbt")
+
+%
+% First call "interface" on the interface file.
+% Then call netobj on each type that you want to marshall.
+%
+% In a real system, the shared interfaces should probably
+% go in their own package. 
+%
+
+interface ("Bank")
+netobj ("Bank", "T")
+netobj ("Bank", "Account")
+
+% We have a couple of FormsVBT files which we will
+% bundle in resource B. 
+
+resource_named ("macro", "bankmacro.fv")
+resource_named ("background", "bank-background.fv")
+bundle ("B")
+
+% The Main module is called Server
+
+implementation ("Server")
+
+% just build a program
+
+program ("server")
+

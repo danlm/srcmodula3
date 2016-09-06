@@ -1,0 +1,88 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: uid/src/Common/MachineID.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>uid/src/Common/MachineID.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+
+INTERFACE <interface><A HREF="#x1">MachineID</A></interface>;
+
+TYPE T = RECORD r: ARRAY [0..5] OF BITS 8 FOR [0..255] END;
+
+PROCEDURE <A HREF="#x2">Get</A>(): T;
+  (* Returns an ID that is intended to be unique for the machine running
+     this process until the next time this machine reboots.  Thus
+     this value is unique for this machine during the life of the calling
+     process.
+
+     Typically this value is the hardware Ethernet ID of this machine's
+     network adaptor.  On a machine without a network adaptor we
+     return this machine's IP address which is padded with
+     leading zero bytes.  If neither is available this routine generates
+     a checked runtime error.
+
+     Consider using TimeStamp.T to generate true unique IDs, or if shorter
+     IDs are needed and probabilistic guarantees are enough, consider
+     using the fingerprint of a TimeStamp.T.
+
+  *)
+
+PROCEDURE <A HREF="#x3">CanGet</A> (VAR(*OUT*) t: T): BOOLEAN;
+</PRE><BLOCKQUOTE><EM> Returns <CODE>TRUE</CODE> and sets <CODE>t</CODE> if the machine ID can be determined.
+   Otherwise sets <CODE>t</CODE> to zeroes and returns <CODE>FALSE</CODE>.   Machines that
+   don't have network configurations will not have Machine IDs. </EM></BLOCKQUOTE><PRE>
+
+END MachineID.
+</PRE>
+</inInterface>
+<HR>
+<A NAME="x1">MachineID's implementation  is in:
+</A><UL>
+<LI><A HREF="../POSIX/MachineIDPosix.m3.html#0TOP0">uid/src/POSIX/MachineIDPosix.m3</A>
+<LI><A HREF="../WIN32/MachineIDWin32.m3.html#0TOP0">uid/src/WIN32/MachineIDWin32.m3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x2">procedure MachineID.Get is in:
+</A><UL>
+<LI><A HREF="../POSIX/MachineIDPosix.m3.html#Get">uid/src/POSIX/MachineIDPosix.m3</A>
+<LI><A HREF="../WIN32/MachineIDWin32.m3.html#Get">uid/src/WIN32/MachineIDWin32.m3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x3">procedure MachineID.CanGet is in:
+</A><UL>
+<LI><A HREF="../POSIX/MachineIDPosix.m3.html#CanGet">uid/src/POSIX/MachineIDPosix.m3</A>
+<LI><A HREF="../WIN32/MachineIDWin32.m3.html#CanGet">uid/src/WIN32/MachineIDWin32.m3</A>
+</UL>
+<P>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

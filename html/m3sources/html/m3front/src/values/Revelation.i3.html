@@ -1,0 +1,75 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: m3front/src/values/Revelation.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>m3front/src/values/Revelation.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE> File: Revelation.def                                        
+
+<P>
+<P><PRE>INTERFACE <interface><A HREF="Revelation.m3.html">Revelation</A></interface>;
+
+IMPORT <A HREF="../types/Type.i3.html">Type</A>, <A HREF="Value.i3.html">Value</A>, <A HREF="Decl.i3.html">Decl</A>;
+
+TYPE
+  <A HREF="Revelation.m3.html#Set">Set</A> &lt;: REFANY;
+
+TYPE
+  TypeList = REF RECORD  next: TypeList;  type: Type.T   END;
+  TypeSet = RECORD
+    cnt    : CARDINAL;
+    types  : ARRAY [0..9] OF Type.T;
+    others : TypeList;
+   END;
+
+PROCEDURE <A HREF="Revelation.m3.html#NewSet">NewSet</A>  (module: Value.T): Set;
+PROCEDURE <A HREF="Revelation.m3.html#Push">Push</A>    (s: Set): Set;
+PROCEDURE <A HREF="Revelation.m3.html#Pop">Pop</A>     (s: Set);
+
+PROCEDURE <A HREF="Revelation.m3.html#Parse">Parse</A>   (READONLY att: Decl.Attributes);
+
+PROCEDURE <A HREF="Revelation.m3.html#Inherit">Inherit</A> (s: Set;  import: Value.T);
+
+PROCEDURE <A HREF="Revelation.m3.html#TypeCheck">TypeCheck</A>  (s: Set);
+
+PROCEDURE <A HREF="Revelation.m3.html#Declare">Declare</A> (s: Set;  VAR full_info, partial_info: INTEGER);
+
+PROCEDURE <A HREF="Revelation.m3.html#LookUp">LookUp</A> (key: Type.T): Type.T;
+
+PROCEDURE <A HREF="Revelation.m3.html#LookUpAll">LookUpAll</A> (key: Type.T;  VAR(*OUT*) x: TypeSet);
+
+PROCEDURE <A HREF="Revelation.m3.html#Reuse">Reuse</A> (s: Set);
+
+END Revelation.
+</PRE>
+</inInterface>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

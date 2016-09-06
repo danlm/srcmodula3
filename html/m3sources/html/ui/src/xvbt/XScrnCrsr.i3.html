@@ -1,0 +1,59 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: ui/src/xvbt/XScrnCrsr.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>ui/src/xvbt/XScrnCrsr.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM> </EM></BLOCKQUOTE><PRE>
+</PRE> by Steve Glassman, Mark Manasse and Greg Nelson 
+<PRE>&lt;*PRAGMA LL*&gt;
+
+UNSAFE INTERFACE <interface><A HREF="XScrnCrsr.m3.html">XScrnCrsr</A></interface>;
+
+IMPORT <A HREF="../vbt/ScrnCursor.i3.html">ScrnCursor</A>, <A HREF="../vbt/TrestleComm.i3.html">TrestleComm</A>, <A HREF="../../../X11R4/src/Common/X.i3.html">X</A>, <A HREF="XScreenType.i3.html">XScreenType</A>, <A HREF="XScrnPxmp.i3.html">XScrnPxmp</A>;
+
+REVEAL XScreenType.T &lt;: T;
+
+TYPE
+  T_Pub = XScrnPxmp.T OBJECT END;
+  <A HREF="XScrnCrsr.m3.html#T">T</A> &lt;: T_Pub;
+
+PROCEDURE <A HREF="XScrnCrsr.m3.html#NullCursor">NullCursor</A>(dpy: X.DisplayStar; w: X.Drawable): X.Cursor
+  RAISES {TrestleComm.Failure};
+
+PROCEDURE <A HREF="XScrnCrsr.m3.html#NewOracle">NewOracle</A> (scrn: XScreenType.T): ScrnCursor.Oracle
+  RAISES {TrestleComm.Failure};
+
+END XScrnCrsr.
+</PRE>
+</inInterface>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

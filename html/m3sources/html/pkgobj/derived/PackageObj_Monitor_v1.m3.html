@@ -1,0 +1,116 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: pkgobj/derived/PackageObj_Monitor_v1.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>pkgobj/derived/PackageObj_Monitor_v1.m3</H2></A><HR>
+<inModule>
+<PRE>MODULE <module>PackageObj_Monitor_v1</module> EXPORTS <A HREF="../src/Common/PackageObj.i3.html"><implements>PackageObj</A></implements>, <A HREF="PackageObj_Monitor_v1.i3.html"><implements>PackageObj_Monitor_v1</A></implements>;
+
+IMPORT <A HREF="../../thread/src/Common/Thread.i3.html">Thread</A>, <A HREF="../../netobjrt/src/NetObj.i3.html">NetObj</A>, <A HREF="../../netobjrt/src/StubLib.i3.html">StubLib</A>, <A HREF="../../rw/src/Common/Rd.i3.html">Rd</A>, <A HREF="../../rw/src/Common/Wr.i3.html">Wr</A>, <A HREF="../src/Common/PackageObj.i3.html">PackageObj</A>;
+CONST Protocol: StubLib.StubProtocol = 1;
+
+TYPE
+      Methods = {report};
+      ReturnCodes = {OK};
+
+  PROCEDURE <A NAME="Surrogate_report"><procedure>Surrogate_report</procedure></A>(self: PackageObj.Monitor; arg_arg: REFANY)
+       RAISES {NetObj.Error, Thread.Alerted} =
+
+    VAR reuse := FALSE;
+        rep: StubLib.DataRep;
+        c: StubLib.Conn;
+        dataPresent: BOOLEAN; &lt;* NOWARN *&gt;
+
+    BEGIN
+      TRY
+        c := StubLib.StartCall(self, Protocol);
+        TRY
+          StubLib.OutInt32(c, ORD(Methods.report));
+          StubLib.OutRef(c, arg_arg);
+          rep := StubLib.AwaitResult(c);
+          CASE StubLib.InInt32(c, rep) OF
+          | ORD(ReturnCodes.OK) =&gt;
+            reuse := TRUE;
+          ELSE
+            StubLib.RaiseUnmarshalFailure();
+          END
+        FINALLY
+          StubLib.EndCall(c, reuse);
+        END;
+
+      EXCEPT
+      | Rd.Failure(ec) =&gt; StubLib.RaiseCommFailure(ec);
+      | Wr.Failure(ec) =&gt; StubLib.RaiseCommFailure(ec);
+      END;
+    END Surrogate_report;
+
+PROCEDURE <A NAME="Invoke"><procedure>Invoke</procedure></A>(
+    c: StubLib.Conn;
+    obj: NetObj.T;
+    rep: StubLib.DataRep;
+    stubProt: StubLib.StubProtocol)
+    RAISES {NetObj.Error, Rd.Failure,
+            Wr.Failure, Thread.Alerted} =
+  VAR t := NARROW(obj, PackageObj.Monitor);
+  BEGIN
+    IF stubProt # Protocol THEN StubLib.RaiseUnmarshalFailure() END;
+    TRY
+      CASE StubLib.InInt32(c, rep) OF
+      | ORD(Methods.report) =&gt; Stub_report(t, c, rep);
+      ELSE
+        StubLib.RaiseUnmarshalFailure();
+      END;
+    EXCEPT
+    END;
+  END Invoke;
+
+PROCEDURE <A NAME="Stub_report"><procedure>Stub_report</procedure></A>(
+    self: PackageObj.Monitor;
+    c: StubLib.Conn;
+    &lt;* NOWARN *&gt; rep: StubLib.DataRep) RAISES {NetObj.Error, Rd.Failure,
+    Wr.Failure, Thread.Alerted}=
+  VAR arg_arg: REFANY;
+      dataPresent: BOOLEAN &lt;* NOWARN *&gt;;
+
+  BEGIN
+    arg_arg := StubLib.InRef(c, rep, -1);
+    self.report(arg_arg);
+    StubLib.StartResult(c);
+    StubLib.OutInt32(c, ORD(ReturnCodes.OK));
+
+  END Stub_report;
+
+BEGIN
+  StubLib.Register(TYPECODE(PackageObj.Monitor), 1, TYPECODE(Surrogate_PackageObj_Monitor), Invoke);
+END PackageObj_Monitor_v1.
+</PRE>
+</inModule>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

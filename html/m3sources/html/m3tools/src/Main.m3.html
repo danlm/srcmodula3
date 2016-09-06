@@ -1,0 +1,124 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: m3tools/src/Main.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>m3tools/src/Main.m3</H2></A><HR>
+<inModule>
+<PRE><A HREF="../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE> File: Main.m3                                               
+
+<P><PRE>MODULE <module><implements><A HREF="../../main/src/Main.i3.html">Main</A></implements></module>;
+
+IMPORT <A HREF="../../rw/src/Common/Stdio.i3.html">Stdio</A>, <A HREF="../../rw/src/Common/Wr.i3.html">Wr</A>, <A HREF="../../params/src/Params.i3.html">Params</A>, <A HREF="../../text/src/Text.i3.html">Text</A>, <A HREF="../../convert/src/Convert.i3.html">Convert</A>;
+IMPORT <A HREF="M3Token.i3.html">M3Token</A>, <A HREF="M3Scanner.i3.html">M3Scanner</A>;
+
+TYPE TK = M3Token.T;
+
+PROCEDURE <A NAME="DoIt"><procedure>DoIt</procedure></A> () =
+  VAR parm   : TEXT;
+  VAR output := TRUE;
+  VAR cmt    := TRUE;
+  VAR prag   := FALSE;
+  VAR scan   : M3Scanner.T;
+  BEGIN
+    FOR i := 1 TO Params.Count-1 DO
+      parm := Params.Get (i);
+      IF    Text.Equal (parm, &quot;-comments&quot;) THEN cmt := FALSE;
+      ELSIF Text.Equal (parm, &quot;-pragmas&quot;)  THEN prag := TRUE;
+      ELSIF Text.Equal (parm, &quot;-quiet&quot;)    THEN output := FALSE;
+      END;
+    END;
+
+    scan := NEW (M3Scanner.Default).init (Stdio.stdin, cmt, prag);
+    IF (scan.token = TK.Comment) THEN scan.next () END;
+
+    LOOP
+      IF (output) THEN PrintToken (scan); END;
+      IF (scan.token = TK.EOF) THEN EXIT END;
+      scan.next ();
+    END;
+  END DoIt;
+
+PROCEDURE <A NAME="PrintToken"><procedure>PrintToken</procedure></A> (t: M3Scanner.T) =
+  VAR tag := M3Token.name [t.token];
+  BEGIN
+    Out  (tag); Pad (11 - Text.Length (tag));
+    OutI (t.offset, 6);
+    OutI (t.line, 6);
+    OutI (t.column, 6);
+    Out  (&quot;  |&quot;);
+    OutS (SUBARRAY (t.buffer^, t.start, t.length));
+    Out  (&quot;|\n&quot;);
+    IF (t.token = TK.Error) THEN
+      Out (&quot;  !!!  &quot;);
+      Out (t.msg);
+      Out(&quot;  !!!\n&quot;);
+    END;
+  END PrintToken;
+
+PROCEDURE <A NAME="Out"><procedure>Out</procedure></A> (t: TEXT) =
+  &lt;*FATAL ANY*&gt;
+  BEGIN
+    Wr.PutText (Stdio.stdout, t);
+  END Out;
+
+PROCEDURE <A NAME="OutI"><procedure>OutI</procedure></A> (i, width: INTEGER) =
+  &lt;*FATAL ANY*&gt;
+  VAR buf: ARRAY [0..30] OF CHAR;  len := Convert.FromInt (buf, i);
+  BEGIN
+    Pad (width - len);
+    Wr.PutString (Stdio.stdout, SUBARRAY (buf, 0, len));
+  END OutI;
+
+PROCEDURE <A NAME="OutS"><procedure>OutS</procedure></A> (READONLY x: ARRAY OF CHAR) =
+  &lt;*FATAL ANY*&gt;
+  BEGIN
+    IF NUMBER (x) &gt; 35 THEN
+      Wr.PutString (Stdio.stdout, SUBARRAY (x, 0, 30));
+      Wr.PutText   (Stdio.stdout, &quot; ... &quot;);
+      Wr.PutString (Stdio.stdout, SUBARRAY (x, NUMBER (x)-5, 5));
+    ELSE
+      Wr.PutString (Stdio.stdout, x);
+    END;
+  END OutS;
+
+PROCEDURE <A NAME="Pad"><procedure>Pad</procedure></A> (n: INTEGER) =
+  &lt;*FATAL ANY*&gt;
+  BEGIN
+    WHILE (n &gt; 0) DO Wr.PutChar (Stdio.stdout, ' ');  DEC (n) END;
+  END Pad;
+
+BEGIN
+  DoIt ();
+END Main.
+</PRE>
+</inModule>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

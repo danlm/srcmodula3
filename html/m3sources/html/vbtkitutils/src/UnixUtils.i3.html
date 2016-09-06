@@ -1,0 +1,117 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: vbtkitutils/src/UnixUtils.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>vbtkitutils/src/UnixUtils.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM>                                                                           </EM></BLOCKQUOTE><PRE>
+</PRE> The <CODE>UnixUtils</CODE> interface contain assorted procedures that
+   access the Unix file system.  These calls should eventually
+   be subsumed by the Modula-3 core libraries. 
+
+<P><PRE>INTERFACE <interface><A HREF="UnixUtils.m3.html">UnixUtils</A></interface>;
+
+IMPORT <A HREF="../../libm3/DS/TextList.i3.html">TextList</A>, <A HREF="../../C/src/Common/Ctypes.i3.html">Ctypes</A>, <A HREF="#x1">Utypes</A>;
+
+PROCEDURE <A HREF="UnixUtils.m3.html#Directory">Directory</A> (dirname: TEXT): TextList.T RAISES {Error};
+</PRE><BLOCKQUOTE><EM> Return a list of all the files in the named directory.
+   Raise an exception if <CODE>opendir(3)</CODE> returns <CODE>NULL</CODE>, which
+   happens ``if the specified filename can not be accessed, or if
+   insufficient memory is available to open the directory
+   file.'' </EM></BLOCKQUOTE><PRE>
+
+EXCEPTION Error(TEXT);
+</PRE><BLOCKQUOTE><EM> The argument to the <CODE>Error</CODE> exception is <CODE>strerror(errno)</CODE>
+   converted to <CODE>TEXT</CODE>. </EM></BLOCKQUOTE><PRE>
+
+PROCEDURE <A HREF="UnixUtils.m3.html#IsDirectory">IsDirectory</A> (pathname: TEXT): BOOLEAN;
+</PRE><BLOCKQUOTE><EM> Does <CODE>pathname</CODE> specify a directory? </EM></BLOCKQUOTE><PRE>
+
+PROCEDURE <A HREF="UnixUtils.m3.html#ProbeFile">ProbeFile</A> (file: TEXT; error: BOOLEAN): BOOLEAN
+  RAISES {Error};
+</PRE><BLOCKQUOTE><EM> If <CODE>file</CODE> exists, return TRUE.  Otherwise, if <CODE>error</CODE> is TRUE, raise
+   an exception.  Otherwise return FALSE.  </EM></BLOCKQUOTE><PRE>
+
+TYPE Seconds = Utypes.time_t;
+</PRE><BLOCKQUOTE><EM> This is an <CODE>INTEGER</CODE> representing the number of seconds since
+   January 1, 1970 GMT. </EM></BLOCKQUOTE><PRE>
+
+PROCEDURE <A HREF="UnixUtils.m3.html#FileModifyTime">FileModifyTime</A> (file: TEXT): Seconds;
+</PRE><BLOCKQUOTE><EM> When was <CODE>file</CODE> last modified?  Return the <CODE>st_mtime</CODE> from the
+   call to <CODE>stat(2)</CODE>. </EM></BLOCKQUOTE><PRE>
+
+PROCEDURE <A HREF="UnixUtils.m3.html#GetWD">GetWD</A> (): TEXT RAISES {Error};
+</PRE><BLOCKQUOTE><EM> Return the value of calling <CODE>getwd(3)</CODE>, raising the exception
+   if <CODE>getwd</CODE> reports any problems. </EM></BLOCKQUOTE><PRE>
+
+TYPE AccessMode = {Execute, Write, Read};
+
+PROCEDURE <A HREF="UnixUtils.m3.html#Accessible">Accessible</A> (file: TEXT; modes := SET OF AccessMode {}): BOOLEAN;
+</PRE><BLOCKQUOTE><EM> Test whether <CODE>file</CODE> can be accessed according to <CODE>modes</CODE>. For
+   details, see the manpage for <CODE>access(2)</CODE>.  The default value
+   of <CODE>modes</CODE> will test whether the directories leading to the file
+   can be searched and whether the file exists. </EM></BLOCKQUOTE><PRE>
+
+&lt;* EXTERNAL *&gt; PROCEDURE access (path: Ctypes.char_star; mode: Ctypes.int):
+  Ctypes.int;
+
+END UnixUtils.
+</PRE>
+</inInterface>
+<HR>
+<A NAME="x1">interface Utypes is in:
+</A><UL>
+<LI><A HREF="../../unix/src/aix-3-2/Utypes.i3.html#0TOP0">unix/src/aix-3-2/Utypes.i3</A>
+<LI><A HREF="../../unix/src/aix-ps2-1-2/Utypes.i3.html#0TOP0">unix/src/aix-ps2-1-2/Utypes.i3</A>
+<LI><A HREF="../../unix/src/freebsd-1/Utypes.i3.html#0TOP0">unix/src/freebsd-1/Utypes.i3</A>
+<LI><A HREF="../../unix/src/freebsd-2/Utypes.i3.html#0TOP0">unix/src/freebsd-2/Utypes.i3</A>
+<LI><A HREF="../../unix/src/hpux-7-0/Utypes.i3.html#0TOP0">unix/src/hpux-7-0/Utypes.i3</A>
+<LI><A HREF="../../unix/src/ibm-4-3/Utypes.i3.html#0TOP0">unix/src/ibm-4-3/Utypes.i3</A>
+<LI><A HREF="../../unix/src/irix-5.2/Utypes.i3.html#0TOP0">unix/src/irix-5.2/Utypes.i3</A>
+<LI><A HREF="../../unix/src/linux/Utypes.i3.html#0TOP0">unix/src/linux/Utypes.i3</A>
+<LI><A HREF="../../unix/src/osf-1.ALPHA_OSF/Utypes.i3.html#0TOP0">unix/src/osf-1.ALPHA_OSF/Utypes.i3</A>
+<LI><A HREF="../../unix/src/osf-1.DS3100/Utypes.i3.html#0TOP0">unix/src/osf-1.DS3100/Utypes.i3</A>
+<LI><A HREF="../../unix/src/solaris-2-x/Utypes.i3.html#0TOP0">unix/src/solaris-2-x/Utypes.i3</A>
+<LI><A HREF="../../unix/src/sunos-4-x/Utypes.i3.html#0TOP0">unix/src/sunos-4-x/Utypes.i3</A>
+<LI><A HREF="../../unix/src/sysv-4.0/Utypes.i3.html#0TOP0">unix/src/sysv-4.0/Utypes.i3</A>
+<LI><A HREF="../../unix/src/ultrix-3-1.AP3000/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.AP3000/Utypes.i3</A>
+<LI><A HREF="../../unix/src/ultrix-3-1.ARM/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.ARM/Utypes.i3</A>
+<LI><A HREF="../../unix/src/ultrix-3-1.DS3100/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.DS3100/Utypes.i3</A>
+<LI><A HREF="../../unix/src/ultrix-3-1.NEXT/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.NEXT/Utypes.i3</A>
+<LI><A HREF="../../unix/src/ultrix-3-1.SEQUENT/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.SEQUENT/Utypes.i3</A>
+<LI><A HREF="../../unix/src/ultrix-3-1.SUN3/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.SUN3/Utypes.i3</A>
+<LI><A HREF="../../unix/src/ultrix-3-1.SUN386/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.SUN386/Utypes.i3</A>
+<LI><A HREF="../../unix/src/ultrix-3-1.UMAX/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.UMAX/Utypes.i3</A>
+<LI><A HREF="../../unix/src/ultrix-3-1.VAX/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.VAX/Utypes.i3</A>
+</UL>
+<P>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

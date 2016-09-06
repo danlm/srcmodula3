@@ -1,0 +1,52 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: trestle_by_example/src/hello/Hello.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>trestle_by_example/src/hello/Hello.m3</H2></A><HR>
+<inModule>
+<PRE>MODULE <module>Hello</module> EXPORTS <A HREF="../../../main/src/Main.i3.html"><implements>Main</A></implements>;
+
+IMPORT <A HREF="../../../ui/src/vbt/Trestle.i3.html">Trestle</A>, <A HREF="../../../ui/src/split/TextVBT.i3.html">TextVBT</A>;
+
+VAR
+  (* construct a VBT to be installed as the top level window *)
+  main := TextVBT.New(&quot;Hello World&quot;);
+
+BEGIN
+  (* Install it as a top level window *)
+  Trestle.Install(main);
+
+  (* Wait until the installed VBT is deleted *)
+  Trestle.AwaitDelete(main)
+END Hello.
+</PRE>
+</inModule>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

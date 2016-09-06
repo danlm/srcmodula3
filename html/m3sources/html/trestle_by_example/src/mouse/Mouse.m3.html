@@ -1,0 +1,122 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: trestle_by_example/src/mouse/Mouse.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>trestle_by_example/src/mouse/Mouse.m3</H2></A><HR>
+<inModule>
+<PRE>MODULE <module>Mouse</module> EXPORTS <A HREF="../../../main/src/Main.i3.html"><implements>Main</A></implements>;
+IMPORT <A HREF="../../../ui/src/vbt/Trestle.i3.html">Trestle</A>, <A HREF="../../../ui/src/vbt/VBT.i3.html">VBT</A>, <A HREF="../../../ui/src/split/TextVBT.i3.html">TextVBT</A>, <A HREF="../../../ui/src/split/RigidVBT.i3.html">RigidVBT</A>, <A HREF="../../../ui/src/split/HVSplit.i3.html">HVSplit</A>, BorderedVBTASBdVBT;
+IMPORT <A HREF="../../../geometry/src/Axis.i3.html">Axis</A>, <A HREF="../../../geometry/src/Region.i3.html">Region</A>, <A HREF="../../../ui/src/vbt/PaintOp.i3.html">PaintOp</A>, <A HREF="../../../fmtlex/src/Fmt.i3.html">Fmt</A>;
+FROM <A HREF="../../../ui/src/vbt/VBT.i3.html">VBT</A> IMPORT Modifier, ClickType; (* used in MouseEvent *)
+
+TYPE
+  MouseVBT =
+    VBT.Leaf OBJECT
+      whatChanged, time, cp, modifiers, clickType, clickCount: TextVBT.T;
+    METHODS
+      init (): MouseVBT := Init;
+    OVERRIDES
+      mouse   := MouseEvent;
+      repaint := Repaint;        (* Leaf repaint does nothing *)
+    END;
+
+PROCEDURE <A NAME="Init"><procedure>Init</procedure></A> (v: MouseVBT): MouseVBT =
+  BEGIN
+    v.whatChanged := TextVBT.New(&quot; &quot;);
+    v.time := TextVBT.New(&quot; &quot;);
+    v.cp := TextVBT.New(&quot; &quot;);    (* cursor postion *)
+    v.modifiers := TextVBT.New(&quot; &quot;);
+    v.clickType := TextVBT.New(&quot; &quot;);
+    v.clickCount := TextVBT.New(&quot; &quot;); (* &quot;double click&quot;, etc *)
+    RETURN v;
+  END Init;
+
+PROCEDURE <A NAME="MouseEvent"><procedure>MouseEvent</procedure></A> (v: MouseVBT; READONLY cd: VBT.MouseRec) =
+  VAR
+    point := cd.cp.pt;
+    mods  := cd.modifiers;
+    text  := &quot;&quot;;
+  BEGIN
+    CASE cd.whatChanged OF
+    | Modifier.MouseL =&gt; TextVBT.Put(v.whatChanged, &quot;Left Button&quot;);
+    | Modifier.MouseM =&gt; TextVBT.Put(v.whatChanged, &quot;Middle Button&quot;);
+    | Modifier.MouseR =&gt; TextVBT.Put(v.whatChanged, &quot;Right Button&quot;);
+    END;
+    TextVBT.Put(v.time, Fmt.Unsigned(cd.time)); (* really Word.T *)
+    TextVBT.Put(
+      v.cp, &quot;(&quot; &amp; Fmt.Int(point.h) &amp; &quot;,&quot; &amp; Fmt.Int(point.v) &amp; &quot;)&quot;);
+    IF (Modifier.Shift IN mods) THEN text := text &amp; &quot;+Shift&quot;; END;
+    IF (Modifier.Lock IN mods) THEN text := text &amp; &quot;+Lock&quot;; END;
+    IF (Modifier.Control IN mods) THEN text := text &amp; &quot;+Control&quot;; END;
+    IF (Modifier.Option IN mods) THEN text := text &amp; &quot;+Option&quot;; END;
+    TextVBT.Put(v.modifiers, text);
+    CASE cd.clickType OF
+    | ClickType.FirstDown =&gt; TextVBT.Put(v.clickType, &quot;FirstDown&quot;);
+    | ClickType.OtherDown =&gt; TextVBT.Put(v.clickType, &quot;OtherDown&quot;);
+    | ClickType.OtherUp =&gt; TextVBT.Put(v.clickType, &quot;OtherUp&quot;);
+    | ClickType.LastUp =&gt; TextVBT.Put(v.clickType, &quot;LastUp&quot;);
+    END;
+    TextVBT.Put(v.clickCount, Fmt.Int(cd.clickCount));
+  END MouseEvent;
+
+PROCEDURE <A NAME="Repaint"><procedure>Repaint</procedure></A> (v: MouseVBT; READONLY rgn: Region.T) =
+  BEGIN
+    VBT.PaintRegion(v, rgn, PaintOp.Bg);
+  END Repaint;
+
+CONST
+  height = 35.0;                 (* Height of vbt1, vbt2, vbt3 (in
+                                    millimeters). *)
+VAR
+  mousevbt := NEW(MouseVBT).init();
+  vbt1     := RigidVBT.FromHV(mousevbt, 20.0, 35.0);
+  split1 := HVSplit.Cons(
+              Axis.T.Ver, BdVBT.New(TextVBT.New(&quot;what changed&quot;)),
+              BdVBT.New(TextVBT.New(&quot;time&quot;)),
+              BdVBT.New(TextVBT.New(&quot;position&quot;)),
+              BdVBT.New(TextVBT.New(&quot;modifiers&quot;)),
+              BdVBT.New(TextVBT.New(&quot;click type&quot;)),
+              BdVBT.New(TextVBT.New(&quot;click count&quot;)));
+  vbt2 := RigidVBT.FromHV(split1, 20.0, 35.0);
+  split2 := HVSplit.Cons(
+              Axis.T.Ver, BdVBT.New(mousevbt.whatChanged),
+              BdVBT.New(mousevbt.time), BdVBT.New(mousevbt.cp),
+              BdVBT.New(mousevbt.modifiers), BdVBT.New(mousevbt.clickType),
+              BdVBT.New(mousevbt.clickCount));
+  vbt3 := RigidVBT.FromHV(split2, 35.0, 35.0);
+  main := HVSplit.Cons(Axis.T.Hor, vbt1, vbt2, vbt3);
+BEGIN
+  Trestle.Install(main);
+  Trestle.AwaitDelete(main);
+END Mouse.
+</PRE>
+</inModule>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

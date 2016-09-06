@@ -1,0 +1,115 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: runtime/src/common/RTStack.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>runtime/src/common/RTStack.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM>                                                             </EM></BLOCKQUOTE><PRE>
+
+UNSAFE INTERFACE <interface>RTStack</interface>;
+
+IMPORT <A HREF="#x1">RTMachine</A>;
+</PRE> This interface defines the low-level routines used to traverse
+   the runtime stack.  Not all platforms support these routines.
+
+
+<P><PRE>CONST Has_walker = RTMachine.Has_stack_walker;
+</PRE><BLOCKQUOTE><EM> Indicates whether this platform has a stack walker.  If <CODE>Has_walker</CODE>
+   is <CODE>FALSE</CODE>, it is a checked runtime error to call any of the routines
+   described below. </EM></BLOCKQUOTE><PRE>
+
+TYPE Frame = RTMachine.FrameInfo;
+</PRE><BLOCKQUOTE><EM> A machine-dependent type that minimally includes fields named <CODE>pc</CODE>
+   and <CODE>sp</CODE>. </EM></BLOCKQUOTE><PRE>
+
+&lt;*EXTERNAL &quot;RTStack__GetThreadFrame&quot; *&gt;
+PROCEDURE GetThreadFrame (VAR(*OUT*) f: Frame;  start: ADDRESS;  len: INTEGER);
+</PRE><BLOCKQUOTE><EM> Return in <CODE>f</CODE> the frame of the thread whose machine state is in bytes
+   [start .. start+len).  Returns with f.pc=NIL on failure. </EM></BLOCKQUOTE><PRE>
+
+&lt;*EXTERNAL &quot;RTStack__CurFrame&quot; *&gt;
+PROCEDURE CurrentFrame (VAR(*OUT*) f: Frame);
+</PRE><BLOCKQUOTE><EM> Return in <CODE>f</CODE> the frame of its caller.  Returns with f.pc=NIL on failure.</EM></BLOCKQUOTE><PRE>
+
+&lt;*EXTERNAL &quot;RTStack__PrevFrame&quot; *&gt;
+PROCEDURE PreviousFrame (READONLY callee: Frame;  VAR(*OUT*)caller: Frame);
+</PRE><BLOCKQUOTE><EM> Return in <CODE>caller</CODE> the stack frame that called <CODE>callee</CODE>.
+   Returns with pc = NIL if  <CODE>callee</CODE> is the first frame on
+   the stack or its predecessor is ill-formed. </EM></BLOCKQUOTE><PRE>
+
+&lt;*EXTERNAL &quot;RTStack__Unwind&quot; *&gt;
+PROCEDURE Unwind (READONLY f: Frame);
+</PRE><BLOCKQUOTE><EM> Restore the machine state back to the frame <CODE>f</CODE>.  All callee-saved
+   registers must be restored to the state they were in when frame <CODE>f</CODE>
+   made its last call.  Note that if the unwind operation encounters a
+   signal handler frame, it must also restore the caller-saved registers. </EM></BLOCKQUOTE><PRE>
+
+&lt;*EXTERNAL &quot;RTStack__ProcName&quot; *&gt;
+PROCEDURE ProcName (READONLY f: Frame): ADDRESS;
+</PRE><BLOCKQUOTE><EM> Return the null-terminated constant string that names the procedure
+   corresponding to the stack frame <CODE>f</CODE>.  Returns NIL if no name is
+   known. </EM></BLOCKQUOTE><PRE>
+
+END RTStack.
+</PRE>
+</inInterface>
+<HR>
+<A NAME="x1">interface RTMachine is in:
+</A><UL>
+<LI><A HREF="../AIX386/RTMachine.i3.html#0TOP0">runtime/src/AIX386/RTMachine.i3</A>
+<LI><A HREF="../ALPHA_OSF/RTMachine.i3.html#0TOP0">runtime/src/ALPHA_OSF/RTMachine.i3</A>
+<LI><A HREF="../AP3000/RTMachine.i3.html#0TOP0">runtime/src/AP3000/RTMachine.i3</A>
+<LI><A HREF="../ARM/RTMachine.i3.html#0TOP0">runtime/src/ARM/RTMachine.i3</A>
+<LI><A HREF="../DS3100/RTMachine.i3.html#0TOP0">runtime/src/DS3100/RTMachine.i3</A>
+<LI><A HREF="../FreeBSD/RTMachine.i3.html#0TOP0">runtime/src/FreeBSD/RTMachine.i3</A>
+<LI><A HREF="../FreeBSD2/RTMachine.i3.html#0TOP0">runtime/src/FreeBSD2/RTMachine.i3</A>
+<LI><A HREF="../HP300/RTMachine.i3.html#0TOP0">runtime/src/HP300/RTMachine.i3</A>
+<LI><A HREF="../HPPA/RTMachine.i3.html#0TOP0">runtime/src/HPPA/RTMachine.i3</A>
+<LI><A HREF="../IBMR2/RTMachine.i3.html#0TOP0">runtime/src/IBMR2/RTMachine.i3</A>
+<LI><A HREF="../IBMRT/RTMachine.i3.html#0TOP0">runtime/src/IBMRT/RTMachine.i3</A>
+<LI><A HREF="../IRIX5/RTMachine.i3.html#0TOP0">runtime/src/IRIX5/RTMachine.i3</A>
+<LI><A HREF="../LINUX/RTMachine.i3.html#0TOP0">runtime/src/LINUX/RTMachine.i3</A>
+<LI><A HREF="../LINUXELF/RTMachine.i3.html#0TOP0">runtime/src/LINUXELF/RTMachine.i3</A>
+<LI><A HREF="../NEXT/RTMachine.i3.html#0TOP0">runtime/src/NEXT/RTMachine.i3</A>
+<LI><A HREF="../NT386/RTMachine.i3.html#0TOP0">runtime/src/NT386/RTMachine.i3</A>
+<LI><A HREF="../OKI/RTMachine.i3.html#0TOP0">runtime/src/OKI/RTMachine.i3</A>
+<LI><A HREF="../SEQUENT/RTMachine.i3.html#0TOP0">runtime/src/SEQUENT/RTMachine.i3</A>
+<LI><A HREF="../SOLgnu/RTMachine.i3.html#0TOP0">runtime/src/SOLgnu/RTMachine.i3</A>
+<LI><A HREF="../SOLsun/RTMachine.i3.html#0TOP0">runtime/src/SOLsun/RTMachine.i3</A>
+<LI><A HREF="../SPARC/RTMachine.i3.html#0TOP0">runtime/src/SPARC/RTMachine.i3</A>
+<LI><A HREF="../SUN3/RTMachine.i3.html#0TOP0">runtime/src/SUN3/RTMachine.i3</A>
+<LI><A HREF="../SUN386/RTMachine.i3.html#0TOP0">runtime/src/SUN386/RTMachine.i3</A>
+<LI><A HREF="../UMAX/RTMachine.i3.html#0TOP0">runtime/src/UMAX/RTMachine.i3</A>
+<LI><A HREF="../VAX/RTMachine.i3.html#0TOP0">runtime/src/VAX/RTMachine.i3</A>
+</UL>
+<P>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

@@ -1,0 +1,538 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: tcl/src/Tcl.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>tcl/src/Tcl.m3</H2></A><HR>
+<inModule>
+<PRE><A HREF="../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM>                                                                           </EM></BLOCKQUOTE><PRE>
+
+UNSAFE MODULE <module><implements><A HREF="Tcl.i3.html">Tcl</A></implements></module>;
+
+IMPORT <A HREF="TclC.i3.html">TclC</A>, <A HREF="../../text/src/Text.i3.html">Text</A>;
+
+FROM <A HREF="../../C/src/Common/Ctypes.i3.html">Ctypes</A> IMPORT int, char_star;
+FROM <A HREF="../../C/src/Common/M3toC.i3.html">M3toC</A> IMPORT CopyTtoS, CopyStoT, TtoS, StoT;
+
+REVEAL
+  <A NAME="T">T</A> = PublicT BRANDED OBJECT
+        interp: TclC.Interp_star;
+      OVERRIDES
+        new                 := New;
+        delete              := Delete;
+
+        addErrorInfo        := AddErrorInfo;
+        setErrorCode        := SetErrorCode;
+        unixError           := UnixError;
+
+        createCommand       := CreateCommand;
+        deleteCommand       := DeleteCommand;
+
+        createTrace         := CreateTrace;
+        deleteTrace         := DeleteTrace;
+
+        eval                := Eval;
+        varEval             := VarEval;
+        evalFile            := EvalFile;
+
+        exprInt             := ExprInt;
+        exprDouble          := ExprDouble;
+        exprBoolean         := ExprBoolean;
+        exprString          := ExprString;
+
+        getInt              := GetInt;
+        getDouble           := GetDouble;
+        getBoolean          := GetBoolean;
+
+        initHistory         := InitHistory;
+        recordAndEval       := RecordAndEval;
+
+        setResult           := SetResult;
+        getResult           := GetResult;
+        appendResult        := AppendResult;
+        appendElement       := AppendElement;
+        resetResult         := ResetResult;
+        freeResult          := FreeResult;
+
+        setVar              := SetVar;
+        setVar2             := SetVar2;
+        getVar              := GetVar;
+        getVar2             := GetVar2;
+        unsetVar            := UnsetVar;
+        unsetVar2           := UnsetVar2;
+
+        traceVar            := TraceVar;
+        traceVar2           := TraceVar2;
+        deleteTraceVar      := DeleteTraceVar; END;
+</PRE>---------------------------------------------------------------------------
+
+<P><PRE>PROCEDURE <A NAME="ConvertArgs"><procedure>ConvertArgs</procedure></A> (argc: int; argv: TclC.Argv): REF Args =
+  VAR res: REF Args;
+  BEGIN
+    res := NEW (REF Args, argc);
+    FOR i := 0 TO argc - 1 DO
+      res [i] := CopyStoT (argv[i]); END;
+    RETURN res;
+  END ConvertArgs;
+
+PROCEDURE <A NAME="RaiseError"><procedure>RaiseError</procedure></A> (res: int) RAISES {Error} =
+  BEGIN
+    CASE res OF
+      | TclC.TCL_OK        =&gt; RETURN;
+      | TclC.TCL_ERROR     =&gt; RAISE Error (ErrorCode.Error);
+      | TclC.TCL_RETURN    =&gt; RAISE Error (ErrorCode.Return);
+      | TclC.TCL_BREAK     =&gt; RAISE Error (ErrorCode.Break);
+      | TclC.TCL_CONTINUE  =&gt; RAISE Error (ErrorCode.Continue);
+      ELSE                    &lt;*ASSERT FALSE*&gt; END;
+  END RaiseError;
+</PRE>---------------------------------------------------------------------------
+
+<P><PRE>PROCEDURE <A NAME="New"><procedure>New</procedure></A> (&lt;*UNUSED*&gt; self: T): T =
+  BEGIN
+    RETURN (NEW (T, interp := TclC.CreateInterp ()));
+  END New;
+
+PROCEDURE <A NAME="Delete"><procedure>Delete</procedure></A> (self: T) =
+  BEGIN
+    TclC.DeleteInterp (self.interp);
+    self.interp := NIL;
+  END Delete;
+</PRE>---------------------------------------------------------------------------
+
+<P><PRE>PROCEDURE <A NAME="AddErrorInfo"><procedure>AddErrorInfo</procedure></A> (self: T; msg: Text.T) =
+  BEGIN
+    TclC.AddErrorInfo (self.interp, CopyTtoS (msg));
+  END AddErrorInfo;
+
+PROCEDURE <A NAME="SetErrorCode"><procedure>SetErrorCode</procedure></A> (self: T; s: ARRAY OF Text.T) =
+  BEGIN
+    CASE NUMBER (s) OF
+      | 0 =&gt; TclC.SetErrorCode (self.interp, NIL);
+      | 1 =&gt; TclC.SetErrorCode (self.interp,
+               CopyTtoS (s[0]), NIL);
+      | 2 =&gt; TclC.SetErrorCode (self.interp,
+               CopyTtoS (s[0]), CopyTtoS (s[1]), NIL);
+      | 3 =&gt; TclC.SetErrorCode (self.interp,
+               CopyTtoS (s[0]), CopyTtoS (s[1]), CopyTtoS (s[2]), NIL);
+      | 4 =&gt; TclC.SetErrorCode (self.interp,
+               CopyTtoS (s[0]), CopyTtoS (s[1]), CopyTtoS (s[2]),
+               CopyTtoS (s[3]), NIL);
+      ELSE   &lt;* ASSERT FALSE *&gt; END;
+  END SetErrorCode;
+
+PROCEDURE <A NAME="UnixError"><procedure>UnixError</procedure></A> (self:T): Text.T =
+  BEGIN
+    RETURN (CopyStoT (TclC.UnixError (self.interp)));
+  END UnixError;
+</PRE>---------------------------------------------------------------------------
+
+<P><PRE>TYPE
+  CmdClientData = REF RECORD
+                    interp: T;
+                    cl: CmdClosure; END;
+
+PROCEDURE <A NAME="InvokeCmdClosure"><procedure>InvokeCmdClosure</procedure></A> (clientData: TclC.ClientData;
+                            &lt;*UNUSED*&gt; interp: TclC.Interp_star;
+                            argc: int; argv: TclC.Argv): int =
+  VAR cd := LOOPHOLE (clientData, CmdClientData);
+  BEGIN
+    TRY
+      cd.cl.apply (cd.interp, ConvertArgs (argc, argv)^);
+      RETURN TclC.TCL_OK;
+    EXCEPT
+      | Error (code) =&gt;
+          CASE code OF
+            | ErrorCode.Error    =&gt; RETURN TclC.TCL_ERROR;
+            | ErrorCode.Return   =&gt; RETURN TclC.TCL_RETURN;
+            | ErrorCode.Break    =&gt; RETURN TclC.TCL_BREAK;
+            | ErrorCode.Continue =&gt; RETURN TclC.TCL_CONTINUE; END; END;
+  END InvokeCmdClosure;
+
+PROCEDURE <A NAME="DeleteCmdClosure"><procedure>DeleteCmdClosure</procedure></A> (clientData: TclC.ClientData) =
+  VAR cd := LOOPHOLE (clientData, CmdClientData);
+  BEGIN
+    cd.cl.delete ();
+  END DeleteCmdClosure;
+
+PROCEDURE <A NAME="CreateCommand"><procedure>CreateCommand</procedure></A> (self: T; name: Text.T; cl: CmdClosure) =
+  VAR clientData := NEW (CmdClientData, interp := self, cl := cl);
+  BEGIN
+    TclC.CreateCommand (self.interp, CopyTtoS (name),
+                        InvokeCmdClosure,
+                        LOOPHOLE (clientData, TclC.ClientData),
+                        DeleteCmdClosure);
+  END CreateCommand;
+
+PROCEDURE <A NAME="DeleteCommand"><procedure>DeleteCommand</procedure></A> (self: T; name: Text.T): BOOLEAN =
+  BEGIN
+    RETURN (TclC.DeleteCommand (self.interp, CopyTtoS (name)) = 0);
+  END DeleteCommand;
+</PRE>---------------------------------------------------------------------------
+
+<P><PRE>TYPE
+  CmdTraceClientData = REF RECORD
+                         t: T;
+                         cl: CmdTraceClosure; END;
+
+REVEAL
+  <A NAME="CmdTraceHandle">CmdTraceHandle</A> = BRANDED OBJECT
+                     trace: TclC.Trace; END;
+
+PROCEDURE <A NAME="InvokeCmdTraceClosure"><procedure>InvokeCmdTraceClosure</procedure></A> (clientData: TclC.ClientData;
+                                 &lt;*UNUSED*&gt; interp: TclC.Interp_star;
+                                 level: int;
+                                 command: char_star;
+                                 &lt;*UNUSED*&gt; cmdProc: TclC.CmdProc;
+                                 &lt;*UNUSED*&gt; cmdClientData: TclC.ClientData;
+                                 argc: int; argv: TclC.Argv) =
+  VAR cd := LOOPHOLE (clientData, CmdTraceClientData);
+  BEGIN
+    cd.cl.trace (cd.t, level, CopyStoT (command),
+                 ConvertArgs (argc, argv)^);
+  END InvokeCmdTraceClosure;
+
+PROCEDURE <A NAME="CreateTrace"><procedure>CreateTrace</procedure></A> (self: T; level: INTEGER; cl: CmdTraceClosure)
+             : CmdTraceHandle =
+  VAR clientData := NEW (CmdTraceClientData, t := self, cl := cl);
+      trace: TclC.Trace;
+  BEGIN
+    trace := TclC.CreateTrace (self.interp, level, InvokeCmdTraceClosure,
+                               LOOPHOLE (clientData, TclC.ClientData));
+    RETURN (NEW (CmdTraceHandle, trace := trace));
+  END CreateTrace;
+
+PROCEDURE <A NAME="DeleteTrace"><procedure>DeleteTrace</procedure></A> (self: T; h: CmdTraceHandle) =
+  BEGIN
+    TclC.DeleteTrace (self.interp, h.trace);
+  END DeleteTrace;
+</PRE>---------------------------------------------------------------------------
+
+<P><PRE>TYPE
+  VarTraceClientData = REF RECORD
+                         t: T;
+                         cl: VarTraceClosure; END;
+
+REVEAL
+  <A NAME="VarTraceHandle">VarTraceHandle</A> = REFANY;
+
+PROCEDURE <A NAME="InvokeVarTraceClosure"><procedure>InvokeVarTraceClosure</procedure></A> (clientData: TclC.ClientData;
+                                 &lt;*UNUSED*&gt; interp: TclC.Interp_star;
+                                 name1, name2: char_star;
+                                 flags: int): char_star =
+  VAR cd := LOOPHOLE (clientData, VarTraceClientData);
+  BEGIN
+    TRY
+      RETURN CopyTtoS (cd.cl.trace (cd.t, CopyStoT (name1),
+                                    CopyStoT (name2),
+                                    Int2VarTraceFlags (flags)));
+    EXCEPT
+      | Error (code) =&gt;
+          CASE code OF
+            | ErrorCode.Error    =&gt; RETURN CopyTtoS (&quot;Error&quot;);
+            | ErrorCode.Return   =&gt; RETURN CopyTtoS (&quot;Return&quot;);
+            | ErrorCode.Break    =&gt; RETURN CopyTtoS (&quot;Break&quot;);
+            | ErrorCode.Continue =&gt; RETURN CopyTtoS (&quot;Continue&quot;); END; END;
+  END InvokeVarTraceClosure;
+
+PROCEDURE <A NAME="TraceVar"><procedure>TraceVar</procedure></A> (self: T; name: Text.T; flags: VarTraceFlags;
+                     cl: VarTraceClosure): VarTraceHandle RAISES {Error} =
+  VAR clientData := NEW (VarTraceClientData, t := self, cl := cl);
+  BEGIN
+    RaiseError (TclC.TraceVar (self.interp, CopyTtoS (name),
+                               VarTraceFlags2Int (flags),
+                               InvokeVarTraceClosure,
+                               LOOPHOLE (clientData, TclC.ClientData)));
+  END TraceVar;
+
+PROCEDURE <A NAME="TraceVar2"><procedure>TraceVar2</procedure></A> (self: T; name1, name2: Text.T; flags: VarTraceFlags;
+                     cl: VarTraceClosure): VarTraceHandle RAISES {Error} =
+  VAR clientData := NEW (VarTraceClientData, t := self, cl := cl);
+  BEGIN
+    RaiseError (TclC.TraceVar2(self.interp, CopyTtoS (name1), CopyTtoS (name2),
+                               VarTraceFlags2Int (flags),
+                               InvokeVarTraceClosure,
+                               LOOPHOLE (clientData, TclC.ClientData)));
+  END TraceVar2;
+
+PROCEDURE <A NAME="DeleteTraceVar"><procedure>DeleteTraceVar</procedure></A> (&lt;*UNUSED*&gt; self: T; &lt;*UNUSED*&gt; h: VarTraceHandle) =
+  BEGIN
+    &lt;* ASSERT FALSE*&gt;
+  END DeleteTraceVar;
+
+PROCEDURE <A NAME="VarTraceFlags2Int"><procedure>VarTraceFlags2Int</procedure></A> (flags: VarTraceFlags): int =
+  BEGIN
+    RETURN LOOPHOLE (flags, int);
+  END VarTraceFlags2Int;
+
+PROCEDURE <A NAME="Int2VarTraceFlags"><procedure>Int2VarTraceFlags</procedure></A> (i: int): VarTraceFlags =
+  BEGIN
+    RETURN LOOPHOLE (i, VarTraceFlags);
+  END Int2VarTraceFlags;
+</PRE>---------------------------------------------------------------------------
+
+<P><PRE>PROCEDURE <A NAME="Eval"><procedure>Eval</procedure></A> (self: T; cmd: Text.T; stopOnBracket: BOOLEAN) RAISES {Error} =
+  VAR flag: int;
+  BEGIN
+    IF stopOnBracket THEN flag := TclC.BRACKET_TERM; ELSE flag := 0; END;
+    RaiseError (TclC.Eval (self.interp, CopyTtoS (cmd), flag, NIL));
+  END Eval;
+
+PROCEDURE <A NAME="VarEval"><procedure>VarEval</procedure></A> (self: T; s: ARRAY OF Text.T) RAISES {Error} =
+  VAR cmd: Text.T;
+  BEGIN
+    FOR i := FIRST (s) TO LAST (s) DO
+      cmd := cmd &amp; s [i]; END;
+    RaiseError (TclC.Eval (self.interp, CopyTtoS (cmd), 0, NIL));
+  END VarEval;
+
+PROCEDURE <A NAME="EvalFile"><procedure>EvalFile</procedure></A> (self: T; filename: Text.T) RAISES {Error} =
+  BEGIN
+    RaiseError (TclC.EvalFile (self.interp, CopyTtoS (filename)));
+  END EvalFile;
+</PRE>---------------------------------------------------------------------------
+
+<P><PRE>PROCEDURE <A NAME="ExprInt"><procedure>ExprInt</procedure></A> (self: T; string: Text.T): INTEGER RAISES {Error} =
+  VAR res: INTEGER;
+  BEGIN
+    RaiseError (TclC.ExprLong (self.interp, CopyTtoS (string), ADR (res)));
+    RETURN (res);
+  END ExprInt;
+
+PROCEDURE <A NAME="ExprDouble"><procedure>ExprDouble</procedure></A> (self: T; string: Text.T): LONGREAL RAISES {Error} =
+  VAR res: LONGREAL;
+  BEGIN
+    RaiseError (TclC.ExprDouble (self.interp, CopyTtoS (string), ADR (res)));
+    RETURN (res);
+  END ExprDouble;
+
+PROCEDURE <A NAME="ExprBoolean"><procedure>ExprBoolean</procedure></A> (self: T; string: Text.T): BOOLEAN RAISES {Error} =
+  VAR res: INTEGER;
+  BEGIN
+    RaiseError (TclC.ExprLong (self.interp, CopyTtoS (string), ADR (res)));
+    RETURN res = 1;
+  END ExprBoolean;
+
+PROCEDURE <A NAME="ExprString"><procedure>ExprString</procedure></A> (self: T; string: Text.T) RAISES {Error} =
+  BEGIN
+    RaiseError (TclC.ExprString (self.interp, CopyTtoS (string)));
+  END ExprString;
+</PRE>---------------------------------------------------------------------------
+
+<P><PRE>PROCEDURE <A NAME="GetInt"><procedure>GetInt</procedure></A> (self: T; string: Text.T): INTEGER RAISES {Error} =
+  VAR res: INTEGER;
+  BEGIN
+     RaiseError (TclC.GetInt (self.interp, CopyTtoS (string), ADR (res)));
+     RETURN res;
+  END GetInt;
+
+PROCEDURE <A NAME="GetDouble"><procedure>GetDouble</procedure></A> (self: T; string: Text.T): LONGREAL RAISES {Error} =
+  VAR res: LONGREAL;
+  BEGIN
+     RaiseError (TclC.GetDouble (self.interp, CopyTtoS (string), ADR (res)));
+     RETURN res;
+  END GetDouble;
+
+PROCEDURE <A NAME="GetBoolean"><procedure>GetBoolean</procedure></A> (self: T; string: Text.T): BOOLEAN RAISES {Error} =
+  VAR res: INTEGER;
+  BEGIN
+     RaiseError (TclC.GetBoolean (self.interp, CopyTtoS (string),
+                 LOOPHOLE (ADR (res), UNTRACED REF INTEGER)));
+     RETURN res = 1;
+  END GetBoolean;
+</PRE>---------------------------------------------------------------------------
+
+<P><PRE>PROCEDURE <A NAME="InitHistory"><procedure>InitHistory</procedure></A> (self: T) =
+  BEGIN
+    TclC.InitHistory (self.interp);
+  END InitHistory;
+
+PROCEDURE <A NAME="RecordAndEval"><procedure>RecordAndEval</procedure></A> (self: T; cmd: Text.T;
+                         stopOnBracket, recordOnly: BOOLEAN := FALSE)
+    RAISES {Error} =
+  VAR flag: int;
+  BEGIN
+    IF recordOnly THEN
+      flag := -1;
+    ELSIF stopOnBracket THEN
+      flag := TclC.BRACKET_TERM;
+    ELSE
+      flag := 0; END;
+    RaiseError (TclC.RecordAndEval (self.interp, CopyTtoS (cmd), flag));
+  END RecordAndEval;
+</PRE>---------------------------------------------------------------------------
+
+<P><PRE>PROCEDURE <A NAME="SetResult"><procedure>SetResult</procedure></A> (self: T; string: Text.T) =
+  BEGIN
+    TclC.SetResult (self.interp, CopyTtoS (string), TclC.dynamic);
+  END SetResult;
+
+PROCEDURE <A NAME="GetResult"><procedure>GetResult</procedure></A> (self: T): Text.T =
+  BEGIN
+    RETURN CopyStoT (self.interp.result);
+  END GetResult;
+
+PROCEDURE <A NAME="AppendResult"><procedure>AppendResult</procedure></A> (self: T; s: ARRAY OF Text.T) =
+  BEGIN
+    FOR i := FIRST (s) TO LAST (s) DO
+      TclC.AppendResult (self.interp, CopyTtoS (s[i])); END;
+  END AppendResult;
+
+PROCEDURE <A NAME="AppendElement"><procedure>AppendElement</procedure></A> (self: T; string: Text.T; noSep: BOOLEAN) =
+  VAR tclNoSep: INTEGER;
+  BEGIN
+    IF noSep THEN tclNoSep := 1 ELSE tclNoSep := 0; END;
+    TclC.AppendElement (self.interp, CopyTtoS (string), tclNoSep);
+  END AppendElement;
+
+PROCEDURE <A NAME="ResetResult"><procedure>ResetResult</procedure></A> (self: T; ) =
+  BEGIN
+    TclC.ResetResult (self.interp);
+  END ResetResult;
+
+PROCEDURE <A NAME="FreeResult"><procedure>FreeResult</procedure></A> (self: T; ) =
+  BEGIN
+    TclC.FreeResult (self.interp);
+  END FreeResult;
+</PRE>---------------------------------------------------------------------------
+
+<P><PRE>PROCEDURE <A NAME="SetVar"><procedure>SetVar</procedure></A> (self: T; varName, newValue: Text.T;
+                  flags: VarSetFlags) RAISES {Error} =
+  BEGIN
+    EVAL TclC.SetVar (self.interp, CopyTtoS (varName), CopyTtoS (newValue),
+                      VarSetFlagsToInt (flags));
+  END SetVar;
+
+PROCEDURE <A NAME="SetVar2"><procedure>SetVar2</procedure></A> (self: T; name1, name2, newValue: Text.T;
+                   flags: VarSetFlags) RAISES {Error} =
+  BEGIN
+    EVAL TclC.SetVar2 (self.interp, CopyTtoS (name1), CopyTtoS (name2),
+                       CopyTtoS (newValue), VarSetFlagsToInt (flags));
+  END SetVar2;
+
+PROCEDURE <A NAME="GetVar"><procedure>GetVar</procedure></A> (self: T; varName: Text.T;
+                  flags: VarSetFlags): Text.T RAISES {Error} =
+  BEGIN
+    RETURN CopyStoT (TclC.GetVar (self.interp, CopyTtoS (varName),
+                                  VarSetFlagsToInt (flags)))
+  END GetVar;
+
+PROCEDURE <A NAME="GetVar2"><procedure>GetVar2</procedure></A> (self: T; name1, name2: Text.T;
+                   flags: VarSetFlags): Text.T RAISES {Error} =
+  BEGIN
+    RETURN CopyStoT (TclC.GetVar2 (self.interp, CopyTtoS (name1),
+                                  CopyTtoS (name2), VarSetFlagsToInt (flags)));
+  END GetVar2;
+
+PROCEDURE <A NAME="UnsetVar"><procedure>UnsetVar</procedure></A> (self: T; varName: Text.T;
+                    flags: VarSetFlags) RAISES {Error} =
+  BEGIN
+    RaiseError (TclC.UnsetVar (self.interp, CopyTtoS (varName),
+                               VarSetFlagsToInt (flags)));
+  END UnsetVar;
+
+PROCEDURE <A NAME="UnsetVar2"><procedure>UnsetVar2</procedure></A> (self: T; name1, name2: Text.T;
+                     flags: VarSetFlags) RAISES {Error} =
+  BEGIN
+    RaiseError (TclC.UnsetVar2 (self.interp, CopyTtoS (name1),
+                                CopyTtoS (name2), VarSetFlagsToInt (flags)));
+  END UnsetVar2;
+
+PROCEDURE <A NAME="VarSetFlagsToInt"><procedure>VarSetFlagsToInt</procedure></A> (flags: VarSetFlags): int =
+  BEGIN
+    RETURN LOOPHOLE (flags, int);
+  END VarSetFlagsToInt;
+</PRE>---------------------------------------------------------------------------
+
+<P><PRE>REVEAL
+   <A NAME="CmdBuf">CmdBuf</A> = OBJECT METHODS
+              new (): CmdBuf;
+              delete ();
+              assemble (s: Text.T): Text.T; END
+            BRANDED OBJECT
+              cmdBuf: TclC.CmdBuf
+            OVERRIDES
+              new := NewCmdBuf;
+              delete := DeleteCmdBuf;
+              assemble := Assemble; END;
+
+PROCEDURE <A NAME="NewCmdBuf"><procedure>NewCmdBuf</procedure></A> (self: CmdBuf): CmdBuf =
+  BEGIN
+    self := NEW (CmdBuf, cmdBuf := TclC.CreateCmdBuf ());
+    RETURN self;
+  END NewCmdBuf;
+
+PROCEDURE <A NAME="DeleteCmdBuf"><procedure>DeleteCmdBuf</procedure></A> (self: CmdBuf) =
+  BEGIN
+    TclC.DeleteCmdBuf (self.cmdBuf);
+  END DeleteCmdBuf;
+
+PROCEDURE <A NAME="Assemble"><procedure>Assemble</procedure></A> (self: CmdBuf; s: Text.T): Text.T =
+  VAR t: char_star;
+
+  (* ASSERT:  s in the argument list is enough to prevent it from moving
+              as long as AssembleCmd needs it;
+              when non-NIL is returned, we need to copy it to make available
+              forever to our caller *)
+  BEGIN
+    t := TclC.AssembleCmd (self.cmdBuf, TtoS (s));
+    IF t = NIL THEN
+      RETURN NIL;
+    ELSE
+      RETURN CopyStoT (t); END;
+  END Assemble;
+</PRE>---------------------------------------------------------------------------
+
+<P><PRE>PROCEDURE <A NAME="SplitList"><procedure>SplitList</procedure></A> (self: T; list: Text.T): REF Args RAISES {Error} =
+  VAR argc: int; argv: TclC.Argv; res: REF Args;
+  BEGIN
+    RaiseError (TclC.SplitList (self.interp, CopyTtoS (list),
+                                ADR (argc), ADR (argv)));
+    res := NEW (REF Args, argc);
+    FOR i := 0 TO argc - 1 DO
+      res [i] := CopyStoT (argv [i]); END;
+    RETURN res;
+  END SplitList;
+
+PROCEDURE <A NAME="Merge"><procedure>Merge</procedure></A> (args: Args): Text.T =
+  BEGIN
+    RETURN CopyStoT (TclC.Merge (NUMBER (args), ADR (args[0])));
+  END Merge;
+</PRE>---------------------------------------------------------------------------
+
+<P><PRE>PROCEDURE <A NAME="DoNothing"><procedure>DoNothing</procedure></A> (&lt;*UNUSED*&gt; self: CmdClosure) =
+  BEGIN
+  END DoNothing;
+
+BEGIN
+END Tcl.
+</PRE>
+</inModule>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

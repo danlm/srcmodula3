@@ -1,0 +1,165 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: runtime/src/common/RTHooks.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>runtime/src/common/RTHooks.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM>                                                             </EM></BLOCKQUOTE><PRE>
+</PRE><P>
+   RTHooks defines the procedures and variables that the compiler
+   calls directly.  The parameters to most of these entry points
+   are unchecked.  Passing bad parameters will cause disaster!
+
+
+<P><PRE>UNSAFE INTERFACE <interface><A HREF="#x1">RTHooks</A></interface>;
+</PRE>------------------------------------------ linker initialized variables ---
+
+<P> these variables are read and written directly by compiler or linker
+   generated code.  Changing their names, types or values is very dangerous. 
+
+<P><PRE>VAR bottom_of_stack : ADDRESS;
+VAR top_of_stack    : ADDRESS;
+</PRE><BLOCKQUOTE><EM> the limits of the currently running thread's stack.
+   The stack grows from 'bottom' to 'top'. </EM></BLOCKQUOTE><PRE>
+</PRE>----------------------------------------------------------------- RAISE ---
+
+<P><PRE>PROCEDURE <A HREF="RTHooks.m3.html#Raise">Raise</A> (exception: ADDRESS;  arg: ADDRESS) RAISES ANY;
+</PRE><BLOCKQUOTE><EM> called by the compiler to raise 'exception(arg)'. </EM></BLOCKQUOTE><PRE>
+
+PROCEDURE <A HREF="RTHooks.m3.html#ResumeRaise">ResumeRaise</A> (info: ADDRESS) RAISES ANY;
+</PRE><BLOCKQUOTE><EM> called by the compiler to resume the raising of 'exception(arg)'. </EM></BLOCKQUOTE><PRE>
+
+PROCEDURE <A HREF="#x2">PushEFrame</A> (frame: ADDRESS);
+</PRE><BLOCKQUOTE><EM> called by the compiler to push an exception frame. </EM></BLOCKQUOTE><PRE>
+
+PROCEDURE <A HREF="#x3">PopEFrame</A> (frame: ADDRESS);
+</PRE><BLOCKQUOTE><EM> called by the compiler to pop an exception frame. </EM></BLOCKQUOTE><PRE>
+</PRE>------------------------------------------------------------ MUTEX/LOCK ---
+
+<P><PRE>PROCEDURE <A HREF="#x4">LockMutex</A>   (m: MUTEX);
+PROCEDURE <A HREF="#x5">UnlockMutex</A> (m: MUTEX);
+</PRE>----------------------------------------------- builtin TEXT operations ---
+
+<P><PRE>PROCEDURE <A HREF="RTHooks.m3.html#Concat">Concat</A> (a, b: TEXT): TEXT;
+</PRE>------------------------------------------------------------- allocator ---
+ The parameters are declared as ADDRESSs to avoid sucking in RT0
+   in every compilation.  Besides, the compiler calls these procedures
+   and is trusted to pass the right values. 
+
+<P><PRE>TYPE ArrayShape = ARRAY OF INTEGER;
+
+PROCEDURE <A HREF="RTAllocator.m3.html#Allocate">Allocate</A> (t: ADDRESS(*RT0.TypeDefn*)): REFANY;
+
+PROCEDURE <A HREF="RTAllocator.m3.html#AllocateOpenArray">AllocateOpenArray</A> (t: ADDRESS(*RT0.TypeDefn*);
+                               READONLY sizes: ArrayShape): REFANY;
+
+PROCEDURE <A HREF="RTAllocator.m3.html#AllocateUntracedObj">AllocateUntracedObj</A> (t: ADDRESS(*RT0.TypeDefn*)): UNTRACED ROOT;
+
+PROCEDURE <A HREF="RTAllocator.m3.html#AllocateUntracedRef">AllocateUntracedRef</A> (t: ADDRESS(*RT0.TypeDefn*)): ADDRESS;
+
+PROCEDURE <A HREF="RTAllocator.m3.html#AllocateUntracedOpenArray">AllocateUntracedOpenArray</A> (t: ADDRESS(*RT0.TypeDefn*);
+                                     READONLY sizes: ArrayShape): ADDRESS;
+
+PROCEDURE <A HREF="RTAllocator.m3.html#DisposeUntracedRef">DisposeUntracedRef</A> (VAR a: ADDRESS);
+
+PROCEDURE <A HREF="RTAllocator.m3.html#DisposeUntracedObj">DisposeUntracedObj</A> (VAR a: UNTRACED ROOT);
+</PRE>-------------------------------------------------------- runtime errors ---
+
+<P><PRE>PROCEDURE <A HREF="RTHooks.m3.html#ReportFault">ReportFault</A> (module: ADDRESS(*RT0.ModulePtr*);  info: INTEGER);
+</PRE><BLOCKQUOTE><EM> report the runtime fault in the specified module.  <CODE>info</CODE> encodes
+   the source line number and fault code [info = line*16 + code].
+   Where the fault codes are:
+     0 - assertion failure
+     1 - value out of range
+     2 - subscript out of range
+     3 - incompatible array shape
+     4 - attempt to dereference NIL
+     5 - NARROW failure
+     6 - missing RETURN in function
+     7 - missing CASE arm
+     8 - missing TYPECASE arm
+     9 - stack overflow
+</EM></BLOCKQUOTE><PRE>
+</PRE>----------------------------------------------------- some useful types ---
+ These types are declared here so that anonymous instances of them
+   elsewhere in the libraries will have a name and so that redundant
+   copies of their typecells are created everywhere. 
+
+<P><PRE>TYPE
+  CharBuffer = REF ARRAY OF CHAR;
+  IntBuffer  = REF ARRAY OF INTEGER;
+  RefInt     = REF INTEGER;
+  RefChar    = REF CHAR;
+  PtrInt     = UNTRACED REF INTEGER;
+  PtrChar    = UNTRACED REF CHAR;
+
+END RTHooks.
+</PRE>
+</inInterface>
+<HR>
+<A NAME="x1">RTHooks's implementation  is in:
+</A><UL>
+<LI><A HREF="RTAllocator.m3.html#0TOP0">runtime/src/common/RTAllocator.m3</A>
+<LI><A HREF="RTHooks.m3.html#0TOP0">runtime/src/common/RTHooks.m3</A>
+<LI><A HREF="../../../thread/src/POSIX/ThreadPosix.m3.html#0TOP0">thread/src/POSIX/ThreadPosix.m3</A>
+<LI><A HREF="../../../thread/src/WIN32/ThreadWin32.m3.html#0TOP0">thread/src/WIN32/ThreadWin32.m3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x2">procedure RTHooks.PushEFrame is in:
+</A><UL>
+<LI><A HREF="../../../thread/src/POSIX/ThreadPosix.m3.html#PushEFrame">thread/src/POSIX/ThreadPosix.m3</A>
+<LI><A HREF="../../../thread/src/WIN32/ThreadWin32.m3.html#PushEFrame">thread/src/WIN32/ThreadWin32.m3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x3">procedure RTHooks.PopEFrame is in:
+</A><UL>
+<LI><A HREF="../../../thread/src/POSIX/ThreadPosix.m3.html#PopEFrame">thread/src/POSIX/ThreadPosix.m3</A>
+<LI><A HREF="../../../thread/src/WIN32/ThreadWin32.m3.html#PopEFrame">thread/src/WIN32/ThreadWin32.m3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x4">procedure RTHooks.LockMutex is in:
+</A><UL>
+<LI><A HREF="../../../thread/src/POSIX/ThreadPosix.m3.html#LockMutex">thread/src/POSIX/ThreadPosix.m3</A>
+<LI><A HREF="../../../thread/src/WIN32/ThreadWin32.m3.html#LockMutex">thread/src/WIN32/ThreadWin32.m3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x5">procedure RTHooks.UnlockMutex is in:
+</A><UL>
+<LI><A HREF="../../../thread/src/POSIX/ThreadPosix.m3.html#UnlockMutex">thread/src/POSIX/ThreadPosix.m3</A>
+<LI><A HREF="../../../thread/src/WIN32/ThreadWin32.m3.html#UnlockMutex">thread/src/WIN32/ThreadWin32.m3</A>
+</UL>
+<P>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

@@ -1,0 +1,69 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: trestle_by_example/src/overlay/Overlay.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>trestle_by_example/src/overlay/Overlay.m3</H2></A><HR>
+<inModule>
+<PRE>MODULE <module>Overlay</module> EXPORTS <A HREF="../../../main/src/Main.i3.html"><implements>Main</A></implements>;
+
+IMPORT <A HREF="../../../ui/src/vbt/Trestle.i3.html">Trestle</A>, <A HREF="../../../ui/src/vbt/VBT.i3.html">VBT</A>, <A HREF="../../../ui/src/split/BorderedVBT.i3.html">BorderedVBT</A>, <A HREF="../../../ui/src/split/TextVBT.i3.html">TextVBT</A>, <A HREF="../../../ui/src/split/ButtonVBT.i3.html">ButtonVBT</A>;
+IMPORT <A HREF="../../../ui/src/split/HVSplit.i3.html">HVSplit</A>, <A HREF="../../../ui/src/split/TSplit.i3.html">TSplit</A>, <A HREF="../../../geometry/src/Axis.i3.html">Axis</A>, <A HREF="../../../ui/src/vbt/Font.i3.html">Font</A>, <A HREF="../../../ui/src/split/RigidVBT.i3.html">RigidVBT</A>;
+FROM <A HREF="../common/Pictures.i3.html">Pictures</A> IMPORT stampVBT, wind_millVBT;
+
+CONST
+  size    = 25.0;                (* millimeters *)
+  times14 = &quot;-*-times-*-r-*-*-14-*-*-*-*-*-*-*&quot;;
+
+PROCEDURE <A NAME="NextAction"><procedure>NextAction</procedure></A> (v: ButtonVBT.T; READONLY cd: VBT.MouseRec) =
+  VAR current := TSplit.GetCurrent(ts);
+  BEGIN
+    IF (current = ch1) THEN
+      TSplit.SetCurrent(ts, ch2);
+    ELSIF (current = ch2) THEN
+      TSplit.SetCurrent(ts, ch1);
+    END;
+  END NextAction;
+
+VAR
+  font := Font.FromName(ARRAY OF TEXT{times14});
+  ch1  := stampVBT;
+  ch2  := wind_millVBT;
+  ts   := TSplit.Cons(ch1, ch2);
+  bt   := ButtonVBT.New(TextVBT.New(&quot;Next&quot;, fnt := font), NextAction);
+  main := HVSplit.Cons(Axis.T.Hor, ts, BorderedVBT.New(bt));
+
+BEGIN
+  Trestle.Install(main);
+  Trestle.AwaitDelete(main);
+END Overlay.
+</PRE>
+</inModule>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

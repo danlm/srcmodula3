@@ -1,0 +1,82 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: unix/src/ultrix-3-1.SEQUENT/Usignal.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>unix/src/ultrix-3-1.SEQUENT/Usignal.m3</H2></A><HR>
+<inModule>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM>                                                            </EM></BLOCKQUOTE><PRE>
+
+UNSAFE MODULE <module><implements><A HREF="#x1">Usignal</A></implements></module>;
+
+IMPORT <A HREF="../../../word/src/Word.i3.html">Word</A>, <A HREF="../../../C/src/Common/Ctypes.i3.html">Ctypes</A>;
+
+PROCEDURE <A NAME="sigmask"><procedure>sigmask</procedure></A> (n: Ctypes.int): Ctypes.int =
+BEGIN
+  RETURN Word.Shift (1, n-1);
+END sigmask;
+
+BEGIN
+  BADSIG  := LOOPHOLE (-1, SignalHandler);
+  SIG_ERR := LOOPHOLE (-1, SignalHandler);
+  SIG_DFL := LOOPHOLE ( 0, SignalHandler);
+  SIG_IGN := LOOPHOLE ( 1, SignalHandler);
+END Usignal.
+</PRE>
+</inModule>
+<HR>
+<A NAME="x1">interface Usignal is in:
+</A><UL>
+<LI><A HREF="../aix-3-2/Usignal.i3.html#0TOP0">unix/src/aix-3-2/Usignal.i3</A>
+<LI><A HREF="../aix-ps2-1-2/Usignal.i3.html#0TOP0">unix/src/aix-ps2-1-2/Usignal.i3</A>
+<LI><A HREF="../freebsd-1/Usignal.i3.html#0TOP0">unix/src/freebsd-1/Usignal.i3</A>
+<LI><A HREF="../freebsd-2/Usignal.i3.html#0TOP0">unix/src/freebsd-2/Usignal.i3</A>
+<LI><A HREF="../hpux-7-0/Usignal.i3.html#0TOP0">unix/src/hpux-7-0/Usignal.i3</A>
+<LI><A HREF="../ibm-4-3/Usignal.i3.html#0TOP0">unix/src/ibm-4-3/Usignal.i3</A>
+<LI><A HREF="../irix-5.2/Usignal.i3.html#0TOP0">unix/src/irix-5.2/Usignal.i3</A>
+<LI><A HREF="../linux/Usignal.i3.html#0TOP0">unix/src/linux/Usignal.i3</A>
+<LI><A HREF="../osf-1.ALPHA_OSF/Usignal.i3.html#0TOP0">unix/src/osf-1.ALPHA_OSF/Usignal.i3</A>
+<LI><A HREF="../osf-1.DS3100/Usignal.i3.html#0TOP0">unix/src/osf-1.DS3100/Usignal.i3</A>
+<LI><A HREF="../solaris-2-x/Usignal.i3.html#0TOP0">unix/src/solaris-2-x/Usignal.i3</A>
+<LI><A HREF="../sunos-4-x/Usignal.i3.html#0TOP0">unix/src/sunos-4-x/Usignal.i3</A>
+<LI><A HREF="../sysv-4.0/Usignal.i3.html#0TOP0">unix/src/sysv-4.0/Usignal.i3</A>
+<LI><A HREF="../ultrix-3-1.AP3000/Usignal.i3.html#0TOP0">unix/src/ultrix-3-1.AP3000/Usignal.i3</A>
+<LI><A HREF="../ultrix-3-1.ARM/Usignal.i3.html#0TOP0">unix/src/ultrix-3-1.ARM/Usignal.i3</A>
+<LI><A HREF="../ultrix-3-1.DS3100/Usignal.i3.html#0TOP0">unix/src/ultrix-3-1.DS3100/Usignal.i3</A>
+<LI><A HREF="../ultrix-3-1.NEXT/Usignal.i3.html#0TOP0">unix/src/ultrix-3-1.NEXT/Usignal.i3</A>
+<LI><A HREF="Usignal.i3.html#0TOP0">unix/src/ultrix-3-1.SEQUENT/Usignal.i3</A>
+<LI><A HREF="../ultrix-3-1.SUN3/Usignal.i3.html#0TOP0">unix/src/ultrix-3-1.SUN3/Usignal.i3</A>
+<LI><A HREF="../ultrix-3-1.SUN386/Usignal.i3.html#0TOP0">unix/src/ultrix-3-1.SUN386/Usignal.i3</A>
+<LI><A HREF="../ultrix-3-1.UMAX/Usignal.i3.html#0TOP0">unix/src/ultrix-3-1.UMAX/Usignal.i3</A>
+<LI><A HREF="../ultrix-3-1.VAX/Usignal.i3.html#0TOP0">unix/src/ultrix-3-1.VAX/Usignal.i3</A>
+</UL>
+<P>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

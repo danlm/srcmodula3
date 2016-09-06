@@ -1,0 +1,142 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: unix/src/linux/Umman.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>unix/src/linux/Umman.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM>                                                                           </EM></BLOCKQUOTE><PRE>
+
+INTERFACE <interface>Umman</interface>;
+
+FROM <A HREF="../../../C/src/Common/Ctypes.i3.html">Ctypes</A> IMPORT int;
+FROM <A HREF="#x1">Utypes</A> IMPORT caddr_t, size_t, off_t;
+</PRE>** sys/mman.h **
+
+<P><PRE>CONST
+  PROT_NONE  = 0;
+  PROT_READ  = 16_1;
+  PROT_WRITE = 16_2;
+  PROT_EXEC  = 16_4;
+
+  MAP_SHARED  = 1;
+  MAP_PRIVATE = 2;
+  MAP_TYPE    = 16_f;
+
+  MAP_FIXED   = 16_10;
+  MAP_RENAME  = 16_20; (* Doesn't appear to be supported any more - rrw *)
+  MAP_ANONYMOUS = 16_20;
+  MAP_NORESERVE = 16_40; (* Neither does this - rrw *)
+
+  MAP_GROWSDOWN = 16_400; (* Stack-like segment *)
+  MAP_DENYWRITE = 16_800; (* ETXTBSY *)
+  MAP_EXECUTABLE = 16_1000; (* Mark it as an executable *)
+
+  (* Up to &amp; including MDV_DONTNEED appears not to be used any more *)
+  MAP_NEW  = 16_80000000;
+
+  MADV_NORMAL     = 0;
+  MADV_RANDOM     = 1;
+  MADV_SEQUENTIAL = 2;
+  MADV_WILLNEED   = 3;
+  MADV_DONTNEED   = 4;
+
+  MS_ASYNC        = 16_1;
+  MS_INVALIDATE   = 16_2;
+  MS_SYNC         = 16_4; (* Synchronous memory sync., apparently *)
+
+  (* The following appear not to exist any more either - rrw *)
+  MC_SYNC         = 1;
+  MC_LOCK         = 2;
+  MC_UNLOCK       = 3;
+  MC_ADVISE       = 4;
+  MC_LOCKAS       = 5;
+  MC_UNLOCKAS     = 6;
+
+  MCL_CURRENT     = 16_1;
+  MCL_FUTURE      = 16_2;
+
+&lt;*EXTERNAL*&gt;
+PROCEDURE mmap (addr: caddr_t; len: size_t; prot,flags,fd: int; off: off_t)
+  : caddr_t;
+
+&lt;*EXTERNAL*&gt;
+PROCEDURE munmap (addr: caddr_t; len: size_t): int;
+
+&lt;*EXTERNAL*&gt;
+PROCEDURE mprotect(addr: caddr_t; len: size_t; prot: int): int;
+
+&lt;*EXTERNAL*&gt;
+PROCEDURE msync(addr: caddr_t; len: size_t; flags: int): int;
+
+&lt;*EXTERNAL*&gt;
+PROCEDURE mlock(addr: caddr_t; len: size_t): int;
+
+&lt;*EXTERNAL*&gt;
+PROCEDURE munlock(addr: caddr_t; len: size_t): int;
+
+&lt;*EXTERNAL*&gt;
+PROCEDURE mlockall(flags: int): int;
+
+&lt;*EXTERNAL*&gt;
+PROCEDURE munlockall(): int;
+
+END Umman.
+</PRE>
+</inInterface>
+<HR>
+<A NAME="x1">interface Utypes is in:
+</A><UL>
+<LI><A HREF="../aix-3-2/Utypes.i3.html#0TOP0">unix/src/aix-3-2/Utypes.i3</A>
+<LI><A HREF="../aix-ps2-1-2/Utypes.i3.html#0TOP0">unix/src/aix-ps2-1-2/Utypes.i3</A>
+<LI><A HREF="../freebsd-1/Utypes.i3.html#0TOP0">unix/src/freebsd-1/Utypes.i3</A>
+<LI><A HREF="../freebsd-2/Utypes.i3.html#0TOP0">unix/src/freebsd-2/Utypes.i3</A>
+<LI><A HREF="../hpux-7-0/Utypes.i3.html#0TOP0">unix/src/hpux-7-0/Utypes.i3</A>
+<LI><A HREF="../ibm-4-3/Utypes.i3.html#0TOP0">unix/src/ibm-4-3/Utypes.i3</A>
+<LI><A HREF="../irix-5.2/Utypes.i3.html#0TOP0">unix/src/irix-5.2/Utypes.i3</A>
+<LI><A HREF="Utypes.i3.html#0TOP0">unix/src/linux/Utypes.i3</A>
+<LI><A HREF="../osf-1.ALPHA_OSF/Utypes.i3.html#0TOP0">unix/src/osf-1.ALPHA_OSF/Utypes.i3</A>
+<LI><A HREF="../osf-1.DS3100/Utypes.i3.html#0TOP0">unix/src/osf-1.DS3100/Utypes.i3</A>
+<LI><A HREF="../solaris-2-x/Utypes.i3.html#0TOP0">unix/src/solaris-2-x/Utypes.i3</A>
+<LI><A HREF="../sunos-4-x/Utypes.i3.html#0TOP0">unix/src/sunos-4-x/Utypes.i3</A>
+<LI><A HREF="../sysv-4.0/Utypes.i3.html#0TOP0">unix/src/sysv-4.0/Utypes.i3</A>
+<LI><A HREF="../ultrix-3-1.AP3000/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.AP3000/Utypes.i3</A>
+<LI><A HREF="../ultrix-3-1.ARM/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.ARM/Utypes.i3</A>
+<LI><A HREF="../ultrix-3-1.DS3100/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.DS3100/Utypes.i3</A>
+<LI><A HREF="../ultrix-3-1.NEXT/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.NEXT/Utypes.i3</A>
+<LI><A HREF="../ultrix-3-1.SEQUENT/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.SEQUENT/Utypes.i3</A>
+<LI><A HREF="../ultrix-3-1.SUN3/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.SUN3/Utypes.i3</A>
+<LI><A HREF="../ultrix-3-1.SUN386/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.SUN386/Utypes.i3</A>
+<LI><A HREF="../ultrix-3-1.UMAX/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.UMAX/Utypes.i3</A>
+<LI><A HREF="../ultrix-3-1.VAX/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.VAX/Utypes.i3</A>
+</UL>
+<P>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

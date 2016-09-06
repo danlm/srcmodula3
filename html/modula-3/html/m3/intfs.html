@@ -1,0 +1,43 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: Finding interfaces</TITLE>
+</HEAD>
+<BODY BGCOLOR="#ffffff" VLINK="#006633">
+
+<H2>Finding interfaces</H2>
+<P>
+
+The compiler locates the interface <I>Mumble</I> as follows: it
+looks for a file named <I>Mumble.i3</I>
+in the first directory on the search path.  If this file exists, the
+compiler expects to find the interface within.  If the file does not
+exist in the directory, the next one on the search path is examined,
+and so on.  An error is given if the search path is exhausted before
+the interface is found.
+<P>
+
+The compiler uses the same mechanism and search path to locate
+generic interfaces and modules as it does to locate interfaces.
+<P>
+
+<B>m3</B> does not have a built-in default search path.  
+The search path provided by
+<A HREF="../m3build/m3build.html">m3build</A>
+contains the standard SRC Modula-3 interfaces.
+<P>
+
+<HR>
+<A HREF="../home.html">[Modula-3 home page]</A>
+<P>
+<A HREF="mailto:m3-request@src.dec.com">
+<ADDRESS>m3-request@src.dec.com</ADDRESS></A>
+<PRE>
+Last modified on Thu Jan  4 11:09:10 PST 1996 by heydon
+     modified on Thu Apr 21 14:56:49 PDT 1994 by kalsow
+     modified on Fri Feb  7 00:38:19 PST 1992 by muller
+</PRE>
+
+Copyright (C) 1992, 1996, Digital Equipment Corporation. All rights reserved.<BR>
+See the <A HREF="http://www.research.digital.com/SRC/m3sources/html/COPYRIGHT.html">COPYRIGHT</A> for a full description.
+</BODY>
+</HTML>

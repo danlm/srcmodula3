@@ -1,0 +1,169 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: motif/src/Xm.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>motif/src/Xm.m3</H2></A><HR>
+<inModule>
+<PRE><A HREF="../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM>                                                           </EM></BLOCKQUOTE><PRE>
+</PRE>                                                           
+ Contributed by Harry George (hgeorge@eskimo.com), 5/16/95 
+
+<P><PRE>UNSAFE MODULE <module><implements><A HREF="Xm.i3.html">Xm</A></implements></module>;
+</PRE><BLOCKQUOTE><EM>Generated from Xm.h by ctom3 on 7/26/93</EM></BLOCKQUOTE><PRE>
+
+FROM <A HREF="../../C/src/Common/M3toC.i3.html">M3toC</A> IMPORT TtoS;
+
+PROCEDURE <A NAME="Version"><procedure>Version</procedure></A>():INTEGER =
+BEGIN
+  RETURN (VERSION * 1000 + REVISION);
+END Version;
+
+BEGIN
+  STRING_ISO8859_1 := TtoS(&quot;ISO8859-1&quot;);
+  STRING_OS_CHARSET := TtoS(&quot;ISO8859-1&quot;);
+  FALLBACK_CHARSET := TtoS(&quot;ISO8859-1&quot;);
+  STRING_DEFAULT_CHARSET := TtoS(&quot;&quot;);
+  RAcceleratorTable := TtoS(&quot;AcceleratorTable&quot;);
+  RAlignment := TtoS(&quot;Alignment&quot;);
+  RXmBackgroundPixmap := TtoS(&quot;XmBackgroundPixmap&quot;);
+  RBool := TtoS(&quot;Bool&quot;);
+  RBoolean := TtoS(&quot;Boolean&quot;);
+  RButtonType := TtoS(&quot;ButtonType&quot;);
+  RCallback := TtoS(&quot;Callback&quot;);
+  RCallbackProc := TtoS(&quot;CallbackProc&quot;);
+  RCallProc := TtoS(&quot;CallProc&quot;);
+  Rchar := TtoS(&quot;char&quot;);
+  RcharSetTable := TtoS(&quot;charSetTable&quot;);
+  RColor := TtoS(&quot;Color&quot;);
+  RCommandWindowLocation := TtoS(&quot;CommandWindowLocation&quot;);
+  RCompoundText := TtoS(&quot;CompoundText&quot;);
+  RCursor := TtoS(&quot;Cursor&quot;);
+  RDimension := TtoS(&quot;Dimension&quot;);
+  RDisplay := TtoS(&quot;Display&quot;);
+  REditMode := TtoS(&quot;EditMode&quot;);
+  RFile := TtoS(&quot;File&quot;);
+  RFont := TtoS(&quot;Font&quot;);
+  RFontList := TtoS(&quot;FontList&quot;);
+  RFontStruct := TtoS(&quot;FontStruct&quot;);
+  RFunction := TtoS(&quot;Function&quot;);
+  RGeometry := TtoS(&quot;Geometry&quot;);
+  RHorizontalDimension := TtoS(&quot;HorizontalDimension&quot;);
+  RHorizontalPosition := TtoS(&quot;HorizontalPosition&quot;);
+  RImmediate := TtoS(&quot;Immediate&quot;);
+  RIndicatorType := TtoS(&quot;IndicatorType&quot;);
+  Rint := TtoS(&quot;int&quot;);
+  RJustify := TtoS(&quot;Justify&quot;);
+  RKeySym := TtoS(&quot;KeySym&quot;);
+  RKeySymTable := TtoS(&quot;KeySymTable&quot;);
+  RLabelType := TtoS(&quot;LabelType&quot;);
+  RMenuWidget := TtoS(&quot;MenuWidget&quot;);
+  RMnemonic := TtoS(&quot;Mnemonic&quot;);
+  RNavigationType := TtoS(&quot;NavigationType&quot;);
+  ROrientation := TtoS(&quot;Orientation&quot;);
+  RPacking := TtoS(&quot;Packing&quot;);
+  RPixel := TtoS(&quot;Pixel&quot;);
+  RPixmap := TtoS(&quot;Pixmap&quot;);
+  RGadgetPixmap := TtoS(&quot;GadgetPixmap&quot;);
+  RPointer := TtoS(&quot;Pointer&quot;);
+  RPosition := TtoS(&quot;Position&quot;);
+  RProc := TtoS(&quot;Proc&quot;);
+  RRowColumnType := TtoS(&quot;RowColumnType&quot;);
+  Rshort := TtoS(&quot;short&quot;);
+  RString := TtoS(&quot;String&quot;);
+  RStringDirection := TtoS(&quot;StringDirection&quot;);
+  RStringTable := TtoS(&quot;StringTable&quot;);
+  RTextPosition := TtoS(&quot;TextPosition&quot;);
+  Runsigned_char := TtoS(&quot;unsigned_char&quot;);
+  RVerticalDimension := TtoS(&quot;VerticalDimension&quot;);
+  RVerticalPosition := TtoS(&quot;VerticalPosition&quot;);
+  RTranslationTable := TtoS(&quot;TranslationTable&quot;);
+  RTraversalType := TtoS(&quot;TraversalType&quot;);
+  RWhichButton := TtoS(&quot;WhichButton&quot;);
+  RWidget := TtoS(&quot;Widget&quot;);
+  RWidgetList := TtoS(&quot;WidgetList&quot;);
+  RWidgetClass := TtoS(&quot;WidgetClass&quot;);
+  RWindow := TtoS(&quot;Window&quot;);
+  RXmString := TtoS(&quot;XmString&quot;);
+  RXmStringTable := TtoS(&quot;XmStringTable&quot;);
+  RXmStringcharSet := TtoS(&quot;XmStringcharSet&quot;);
+  RPrimForegroundPixmap := TtoS(&quot;PrimForegroundPixmap&quot;);
+  RManForegroundPixmap := TtoS(&quot;ManForegroundPixmap&quot;);
+  RBackgroundPixmap := TtoS(&quot;BackgroundPixmap&quot;);
+  RSizePolicy := TtoS(&quot;SizePolicy&quot;);
+  RPrimHighlightPixmap := TtoS(&quot;HighlightPixmap&quot;);
+  RPrimTopShadowPixmap := TtoS(&quot;TopShadowPixmap&quot;);
+  RPrimBottomShadowPixmap := TtoS(&quot;BottomShadowPixmap&quot;);
+  RUnitType := TtoS(&quot;UnitType&quot;);
+  RManTopShadowPixmap := TtoS(&quot;ManTopShadowPixmap&quot;);
+  RManBottomShadowPixmap := TtoS(&quot;ManBottomShadowPixmap&quot;);
+  RManHighlightPixmap := TtoS(&quot;ManHighlightPixmap&quot;);
+  RResizePolicy := TtoS(&quot;ResizePolicy&quot;);
+  RAttachment := TtoS(&quot;Attachment&quot;);
+  RBooleanDimension := TtoS(&quot;BooleanDimension&quot;);
+  RMultiClick := TtoS(&quot;MultiClick&quot;);
+  RShadowType := TtoS(&quot;ShadowType&quot;);
+  RArrowDirection := TtoS(&quot;ArrowDirection&quot;);
+  RMargin := TtoS(&quot;Margin&quot;);
+  RSeparatorType := TtoS(&quot;SeparatorType&quot;);
+  RProcessingDirection := TtoS(&quot;ProcessingDirection&quot;);
+  RListSpacing := TtoS(&quot;ListSpacing&quot;);
+  RListMarginWidth := TtoS(&quot;ListMarginWidth&quot;);
+  RListMarginHeight := TtoS(&quot;ListMarginHeight&quot;);
+  RItems := TtoS(&quot;Items&quot;);
+  RItemCount := TtoS(&quot;ItemCount&quot;);
+  RSelectedItems := TtoS(&quot;SelectedItems&quot;);
+  RSelectedItemCount := TtoS(&quot;SelectedItemCount&quot;);
+  RVisibleItemCount := TtoS(&quot;VisibleItemCount&quot;);
+  RSelectionPolicy := TtoS(&quot;SelectionPolicy&quot;);
+  RListSizePolicy := TtoS(&quot;ListSizePolicy&quot;);
+  RDoubleClickinterval := TtoS(&quot;DoubleClickinterval&quot;);
+  RScrollingPolicy := TtoS(&quot;ScrollingPolicy&quot;);
+  RVisualPolicy := TtoS(&quot;VisualPolicy&quot;);
+  RScrollBarDisplayPolicy := TtoS(&quot;ScrollBarDisplayPolicy&quot;);
+  RScrollBarPlacement := TtoS(&quot;ScrollBarPlacement&quot;);
+  RDialogStyle := TtoS(&quot;DialogStyle&quot;);
+  RFileTypeMask := TtoS(&quot;FileTypeMask&quot;);
+  RDefaultButtonType := TtoS(&quot;DefaultButtonType&quot;);
+  RDialogType := TtoS(&quot;DialogType&quot;);
+  VaPUSHBUTTON := TtoS(&quot;pushButton&quot;);
+  VaTOGGLEBUTTON := TtoS(&quot;checkButton&quot;);
+  VaCHECKBUTTON := TtoS(&quot;checkButton&quot;);
+  VaRADIOBUTTON := TtoS(&quot;radioButton&quot;);
+  VaCASCADEBUTTON := TtoS(&quot;cascadeButton&quot;);
+  VaSEPARATOR := TtoS(&quot;separator&quot;);
+  VaSINGLE_SEPARATOR := TtoS(&quot;singleSeparator&quot;);
+  VaDOUBLE_SEPARATOR := TtoS(&quot;doubleSeparator&quot;);
+  VaTITLE := TtoS(&quot;title&quot;);
+END Xm.
+</PRE>
+</inModule>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

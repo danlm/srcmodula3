@@ -1,0 +1,78 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: zeus/derived/RemoteView_T_v1.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>zeus/derived/RemoteView_T_v1.i3</H2></A><HR>
+<inInterface>
+<PRE>INTERFACE <interface><A HREF="RemoteView_T_v1.m3.html">RemoteView_T_v1</A></interface>;
+
+IMPORT <A HREF="../../thread/src/Common/Thread.i3.html">Thread</A>, <A HREF="../../netobjrt/src/NetObj.i3.html">NetObj</A>, <A HREF="../../netobjrt/src/StubLib.i3.html">StubLib</A>, <A HREF="../../rw/src/Common/Rd.i3.html">Rd</A>, <A HREF="../../rw/src/Common/Wr.i3.html">Wr</A>, <A HREF="../src/RemoteView.i3.html">RemoteView</A>;
+TYPE Surrogate_RemoteView_T = RemoteView.T OBJECT
+      OVERRIDES
+        startrun := Surrogate_startrun;
+        endrun := Surrogate_endrun;
+        event := Surrogate_event;
+      END;
+
+PROCEDURE <A HREF="RemoteView_T_v1.m3.html#Surrogate_startrun">Surrogate_startrun</A>(self: RemoteView.T) RAISES {NetObj.Error,
+    Thread.Alerted};
+
+PROCEDURE <A HREF="RemoteView_T_v1.m3.html#Surrogate_endrun">Surrogate_endrun</A>(self: RemoteView.T) RAISES {NetObj.Error,
+    Thread.Alerted};
+
+PROCEDURE <A HREF="RemoteView_T_v1.m3.html#Surrogate_event">Surrogate_event</A>(
+    self: RemoteView.T;
+    tfactor: REAL;
+    nm: TEXT;
+    args: TEXT) RAISES {RemoteView.Error, NetObj.Error, Thread.Alerted};
+
+PROCEDURE <A HREF="RemoteView_T_v1.m3.html#Stub_startrun">Stub_startrun</A>(
+    self: RemoteView.T;
+    c: StubLib.Conn;
+    rep: StubLib.DataRep) RAISES {NetObj.Error, Rd.Failure, Wr.Failure,
+    Thread.Alerted};
+
+PROCEDURE <A HREF="RemoteView_T_v1.m3.html#Stub_endrun">Stub_endrun</A>(
+    self: RemoteView.T;
+    c: StubLib.Conn;
+    rep: StubLib.DataRep) RAISES {NetObj.Error, Rd.Failure, Wr.Failure,
+    Thread.Alerted};
+
+PROCEDURE <A HREF="RemoteView_T_v1.m3.html#Stub_event">Stub_event</A>(
+    self: RemoteView.T;
+    c: StubLib.Conn;
+    rep: StubLib.DataRep) RAISES {NetObj.Error, Rd.Failure, Wr.Failure,
+    Thread.Alerted, RemoteView.Error};
+
+END RemoteView_T_v1.
+</PRE>
+</inInterface>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

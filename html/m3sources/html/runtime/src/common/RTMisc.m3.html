@@ -1,0 +1,181 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: runtime/src/common/RTMisc.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>runtime/src/common/RTMisc.m3</H2></A><HR>
+<inModule>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+
+UNSAFE MODULE <module><implements><A HREF="RTMisc.i3.html">RTMisc</A></implements></module>;
+
+IMPORT <A HREF="#x1">Cstring</A>, <A HREF="RTHeapRep.i3.html">RTHeapRep</A>, <A HREF="RTProcedure.i3.html">RTProcedure</A>, <A HREF="RTProcedureSRC.i3.html">RTProcedureSRC</A>, <A HREF="RTProcess.i3.html">RTProcess</A>, <A HREF="RTIO.i3.html">RTIO</A>;
+</PRE>------------------------------- byte copying ------------------------------
+
+<P><PRE>PROCEDURE <A NAME="Copy"><procedure>Copy</procedure></A> (src, dest: ADDRESS;  len: INTEGER) =
+  BEGIN
+    EVAL Cstring.memcpy (dest, src, len);
+  END Copy;
+
+PROCEDURE <A NAME="Zero"><procedure>Zero</procedure></A> (dest: ADDRESS;  len: INTEGER) =
+  BEGIN
+    EVAL Cstring.memset (dest, 0, len);
+  END Zero;
+</PRE>------------------------------- rounded arithmetic ------------------------
+
+<P><PRE>PROCEDURE <A NAME="Align"><procedure>Align</procedure></A> (a: ADDRESS; y: INTEGER): ADDRESS =
+  BEGIN
+    RETURN LOOPHOLE (Upper (LOOPHOLE (a, INTEGER), y), ADDRESS);
+  END Align;
+
+PROCEDURE <A NAME="Upper"><procedure>Upper</procedure></A> (x, y: INTEGER): INTEGER =
+  BEGIN
+    RETURN ((x + y - 1) DIV y) * y;
+  END Upper;
+</PRE>------------------------------- runtime error reporting -------------------
+
+<P><PRE>PROCEDURE <A NAME="FatalError"><procedure>FatalError</procedure></A> (file            : TEXT;
+                      line            : INTEGER;
+                      msgA, msgB, msgC: TEXT      := NIL) =
+  BEGIN
+    StartError (msgA, msgB, msgC);
+    IF (file # NIL) THEN
+      RTIO.PutText (&quot;\n***    file \&quot;&quot;);
+      RTIO.PutText (file);
+      RTIO.PutText (&quot;\&quot;, line &quot;);
+      RTIO.PutInt  (line);
+    END;
+    EndError ();
+  END FatalError;
+
+PROCEDURE <A NAME="FatalErrorS"><procedure>FatalErrorS</procedure></A> (file            : ADDRESS;
+                       line            : INTEGER;
+                       msgA, msgB, msgC: TEXT      := NIL) =
+  BEGIN
+    StartError (msgA, msgB, msgC);
+    IF (file # NIL) THEN
+      RTIO.PutText   (&quot;\n***    file \&quot;&quot;);
+      RTIO.PutString (file);
+      RTIO.PutText   (&quot;\&quot;, line &quot;);
+      RTIO.PutInt    (line);
+    END;
+    EndError ();
+  END FatalErrorS;
+
+PROCEDURE <A NAME="FatalErrorI"><procedure>FatalErrorI</procedure></A> (msg: TEXT := NIL;  i: INTEGER) =
+  BEGIN
+    StartError (msg);
+    RTIO.PutInt (i);
+    EndError ();
+  END FatalErrorI;
+
+PROCEDURE <A NAME="FatalErrorPC"><procedure>FatalErrorPC</procedure></A> (pc: INTEGER; msgA, msgB, msgC: TEXT := NIL) =
+  VAR
+    proc   : RTProcedure.Proc;
+    file   : RTProcedureSRC.Name;
+    name   : RTProcedureSRC.Name;
+    offset : INTEGER;
+  BEGIN
+    StartError (msgA, msgB, msgC);
+    IF RTHeapRep.Crash () THEN
+      IF (pc # 0) THEN
+        RTIO.PutText (&quot;\n***    pc = &quot;);
+        RTIO.PutHex  (pc);
+        RTProcedureSRC.FromPC (LOOPHOLE(pc, ADDRESS), proc, file, name);
+        offset := pc - LOOPHOLE (proc, INTEGER);
+        IF (0 &lt;= offset) AND (offset &lt; 2048) THEN
+          IF (name # NIL) THEN
+            RTIO.PutText   (&quot; = &quot;);
+            RTIO.PutString (name);
+            IF (offset # 0) THEN
+              RTIO.PutText (&quot; + &quot;);
+              RTIO.PutHex  (offset);
+            END;
+          END;
+          IF (file # NIL) THEN
+            RTIO.PutText (&quot; in &quot;);
+            RTIO.PutString (file);
+          END;
+        END;
+      END;
+    END;
+    EndError ();
+  END FatalErrorPC;
+
+PROCEDURE <A NAME="StartError"><procedure>StartError</procedure></A> (msgA, msgB, msgC: TEXT := NIL) =
+  BEGIN
+    RTIO.PutText (&quot;\n\n***\n*** runtime error:\n***    &quot;);
+    IF (msgA # NIL) THEN RTIO.PutText (msgA) END;
+    IF (msgB # NIL) THEN RTIO.PutText (msgB) END;
+    IF (msgC # NIL) THEN RTIO.PutText (msgC) END;
+  END StartError;
+
+PROCEDURE <A NAME="EndError"><procedure>EndError</procedure></A> () =
+  BEGIN
+    RTIO.PutText (&quot;\n***\n\n&quot;);
+    RTIO.Flush ();
+    RTProcess.Crash (NIL);
+  END EndError;
+
+BEGIN
+END RTMisc.
+</PRE>
+</inModule>
+<HR>
+<A NAME="x1">interface Cstring is in:
+</A><UL>
+<LI><A HREF="../../../C/src/AIX386/Cstring.i3.html#0TOP0">C/src/AIX386/Cstring.i3</A>
+<LI><A HREF="../../../C/src/ALPHA_OSF/Cstring.i3.html#0TOP0">C/src/ALPHA_OSF/Cstring.i3</A>
+<LI><A HREF="../../../C/src/AP3000/Cstring.i3.html#0TOP0">C/src/AP3000/Cstring.i3</A>
+<LI><A HREF="../../../C/src/ARM/Cstring.i3.html#0TOP0">C/src/ARM/Cstring.i3</A>
+<LI><A HREF="../../../C/src/DS3100/Cstring.i3.html#0TOP0">C/src/DS3100/Cstring.i3</A>
+<LI><A HREF="../../../C/src/FreeBSD/Cstring.i3.html#0TOP0">C/src/FreeBSD/Cstring.i3</A>
+<LI><A HREF="../../../C/src/FreeBSD2/Cstring.i3.html#0TOP0">C/src/FreeBSD2/Cstring.i3</A>
+<LI><A HREF="../../../C/src/HP300/Cstring.i3.html#0TOP0">C/src/HP300/Cstring.i3</A>
+<LI><A HREF="../../../C/src/HPPA/Cstring.i3.html#0TOP0">C/src/HPPA/Cstring.i3</A>
+<LI><A HREF="../../../C/src/IBMR2/Cstring.i3.html#0TOP0">C/src/IBMR2/Cstring.i3</A>
+<LI><A HREF="../../../C/src/IBMRT/Cstring.i3.html#0TOP0">C/src/IBMRT/Cstring.i3</A>
+<LI><A HREF="../../../C/src/IRIX5/Cstring.i3.html#0TOP0">C/src/IRIX5/Cstring.i3</A>
+<LI><A HREF="../../../C/src/LINUX/Cstring.i3.html#0TOP0">C/src/LINUX/Cstring.i3</A>
+<LI><A HREF="../../../C/src/LINUXELF/Cstring.i3.html#0TOP0">C/src/LINUXELF/Cstring.i3</A>
+<LI><A HREF="../../../C/src/NEXT/Cstring.i3.html#0TOP0">C/src/NEXT/Cstring.i3</A>
+<LI><A HREF="../../../C/src/NT386/Cstring.i3.html#0TOP0">C/src/NT386/Cstring.i3</A>
+<LI><A HREF="../../../C/src/OKI/Cstring.i3.html#0TOP0">C/src/OKI/Cstring.i3</A>
+<LI><A HREF="../../../C/src/SEQUENT/Cstring.i3.html#0TOP0">C/src/SEQUENT/Cstring.i3</A>
+<LI><A HREF="../../../C/src/SOLgnu/Cstring.i3.html#0TOP0">C/src/SOLgnu/Cstring.i3</A>
+<LI><A HREF="../../../C/src/SOLsun/Cstring.i3.html#0TOP0">C/src/SOLsun/Cstring.i3</A>
+<LI><A HREF="../../../C/src/SPARC/Cstring.i3.html#0TOP0">C/src/SPARC/Cstring.i3</A>
+<LI><A HREF="../../../C/src/SUN3/Cstring.i3.html#0TOP0">C/src/SUN3/Cstring.i3</A>
+<LI><A HREF="../../../C/src/SUN386/Cstring.i3.html#0TOP0">C/src/SUN386/Cstring.i3</A>
+<LI><A HREF="../../../C/src/UMAX/Cstring.i3.html#0TOP0">C/src/UMAX/Cstring.i3</A>
+<LI><A HREF="../../../C/src/VAX/Cstring.i3.html#0TOP0">C/src/VAX/Cstring.i3</A>
+</UL>
+<P>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

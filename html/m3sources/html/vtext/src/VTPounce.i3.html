@@ -1,0 +1,79 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: vtext/src/VTPounce.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>vtext/src/VTPounce.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM>                                                                           </EM></BLOCKQUOTE><PRE>
+</PRE>      Modified On Fri Sep 11 21:16:26 1987 by jdd 
+
+<P> This file includes the VText <CODE>Pounce</CODE> operation. 
+
+<P><PRE>INTERFACE <interface><A HREF="VTPounce.m3.html">VTPounce</A></interface>;
+
+IMPORT <A HREF="../../geometry/src/Point.i3.html">Point</A>, <A HREF="../../rw/src/Common/Rd.i3.html">Rd</A>, <A HREF="../../geometry/src/Rect.i3.html">Rect</A>, <A HREF="../../thread/src/Common/Thread.i3.html">Thread</A>;
+IMPORT <A HREF="VTDef.i3.html">VTDef</A>;
+
+TYPE
+  View = VTDef.View;
+  Pixels = VTDef.Pixels;
+  I = VTDef.I;
+  LineNo = VTDef.LineNo;
+  SelectionMode = VTDef.SelectionMode;
+  WhichEnd = VTDef.WhichEnd;
+
+PROCEDURE <A HREF="VTPounce.m3.html#Locate">Locate</A> (             view  : View;
+                               p     : Point.T;
+                  VAR (* OUT*) iL, iR: I;
+                  VAR (* OUT*) lineNo: LineNo;
+                  VAR (* OUT*) c     : CHAR     )
+  RAISES {Rd.EndOfFile, Rd.Failure, Thread.Alerted};
+
+PROCEDURE <A HREF="VTPounce.m3.html#Extend">Extend</A> (               view  : View;
+                  VAR (* INOUT*) iL, iR: I;
+                                 lineNo: LineNo;
+                                 c     : CHAR;
+                                 mode  : SelectionMode)
+  RAISES {Rd.EndOfFile, Rd.Failure, Thread.Alerted};
+
+PROCEDURE <A HREF="VTPounce.m3.html#Encage">Encage</A> (             view: View;
+                               p   : Point.T;
+                               iL  : I;
+                  VAR (* OUT*) iM  : I;
+                               iR  : I;
+                  VAR (* OUT*) cage: Rect.T   ): WhichEnd
+  RAISES {Rd.EndOfFile, Rd.Failure, Thread.Alerted};
+
+END VTPounce.
+</PRE>
+</inInterface>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

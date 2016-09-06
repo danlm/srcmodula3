@@ -1,0 +1,56 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: dps/src/ScaledDLWindow.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>dps/src/ScaledDLWindow.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+
+INTERFACE <interface><A HREF="ScaledDLWindow.m3.html">ScaledDLWindow</A></interface>;
+
+IMPORT <A HREF="DLWindow.i3.html">DLWindow</A>, <A HREF="DPS.i3.html">DPS</A>;
+
+TYPE T = DLWindow.T OBJECT
+  dx, dy: REAL := 0.0;
+  scale: REAL := 1.0;
+  rotation: REAL := 0.0;
+  OVERRIDES
+  Paint := Paint;
+  END;
+
+PROCEDURE <A HREF="ScaledDLWindow.m3.html#Paint">Paint</A> (t: T; box: DPS.Box; only: REFANY := NIL);
+
+PROCEDURE <A HREF="ScaledDLWindow.m3.html#InstallButtons">InstallButtons</A> (t: T);
+
+  END ScaledDLWindow.
+</PRE>
+</inInterface>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

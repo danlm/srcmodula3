@@ -1,0 +1,65 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: ui/src/xvbt/Compl.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>ui/src/xvbt/Compl.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM>                                                           </EM></BLOCKQUOTE><PRE>
+
+INTERFACE <interface><A HREF="Compl.m3.html">Compl</A></interface>;
+
+IMPORT <A HREF="#x1">BasicCtypes</A>, <A HREF="../picture/Completion.i3.html">Completion</A>;
+</PRE> used to store info about expected replies from the X server after
+   XShmPutImage's 
+
+<P><PRE>CONST Brand = &quot;Compl&quot;;
+
+TYPE
+  T = OBJECT
+        serial    : BasicCtypes.unsigned_long_int;
+        completion: Completion.T;
+      END;
+</PRE> free list management 
+<PRE>PROCEDURE <A HREF="Compl.m3.html#Get">Get</A> (): T;
+PROCEDURE <A HREF="Compl.m3.html#Free">Free</A> (t: T);
+
+END Compl.
+</PRE>
+</inInterface>
+<HR>
+<A NAME="x1">interface BasicCtypes is in:
+</A><UL>
+<LI><A HREF="../../../C/src/32BITS/BasicCtypes.i3.html#0TOP0">C/src/32BITS/BasicCtypes.i3</A>
+<LI><A HREF="../../../C/src/64BITS/BasicCtypes.i3.html#0TOP0">C/src/64BITS/BasicCtypes.i3</A>
+</UL>
+<P>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

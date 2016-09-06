@@ -1,0 +1,117 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: lego/src/DragSwitchVBT.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>lego/src/DragSwitchVBT.m3</H2></A><HR>
+<inModule>
+<PRE><A HREF="../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM>                                                                           </EM></BLOCKQUOTE><PRE>
+
+MODULE <module><implements><A HREF="DragSwitchVBT.i3.html">DragSwitchVBT</A></implements></module>;
+
+IMPORT <A HREF="../../ui/src/split/BtnVBTClass.i3.html">BtnVBTClass</A>, <A HREF="../../ui/src/split/ButtonVBT.i3.html">ButtonVBT</A>, <A HREF="FeedbackVBT.i3.html">FeedbackVBT</A>, <A HREF="../../ui/src/split/Filter.i3.html">Filter</A>, <A HREF="MultiClass.i3.html">MultiClass</A>, <A HREF="MultiFilter.i3.html">MultiFilter</A>,
+         <A HREF="SwitchVBT.i3.html">SwitchVBT</A>, <A HREF="../../ui/src/vbt/VBT.i3.html">VBT</A>;
+
+FROM <A HREF="../../ui/src/vbt/VBT.i3.html">VBT</A> IMPORT ClickType;
+
+REVEAL
+  <A NAME="T">T</A> = Public BRANDED OBJECT
+      OVERRIDES
+        init     := Init;
+        callback := Callback;
+        during   := During;
+        mouse    := Mouse;
+        position := Position;
+        pre      := SwitchVBT.T.pre;
+        post     := SwitchVBT.T.post;
+        cancel   := SwitchVBT.T.cancel;
+      END;
+
+TYPE
+  MC = SwitchVBT.MC OBJECT END;
+
+PROCEDURE <A NAME="Init"><procedure>Init</procedure></A> (v: T; f: FeedbackVBT.T): T =
+  BEGIN
+    EVAL ButtonVBT.T.init (v, f, Action);
+    MultiClass.Be (v, NEW(MC));
+    MultiClass.BeChild (v, MultiFilter.Child (f));
+    RETURN v
+  END Init;
+
+PROCEDURE <A NAME="Callback"><procedure>Callback</procedure></A> (&lt;* UNUSED *&gt;          v : T;
+                    &lt;* UNUSED *&gt; READONLY cd: VBT.MouseRec) =
+  BEGIN
+  END Callback;
+
+PROCEDURE <A NAME="Action"><procedure>Action</procedure></A>(selfAsButtonVBT: ButtonVBT.T; READONLY cd: VBT.MouseRec) =
+  BEGIN
+    NARROW(selfAsButtonVBT, T).callback(cd)
+  END Action;
+
+PROCEDURE <A NAME="During"><procedure>During</procedure></A> ( &lt;* UNUSED *&gt; v: T;
+                   &lt;* UNUSED *&gt; READONLY cd: VBT.PositionRec) =
+  BEGIN
+  END During;
+
+PROCEDURE <A NAME="Mouse"><procedure>Mouse</procedure></A>(v: T; READONLY cd: VBT.MouseRec) =
+  BEGIN
+    Filter.T.mouse(v, cd);
+    IF cd.clickType = ClickType.FirstDown THEN
+      v.ready := TRUE;
+      v.pre();
+      VBT.SetCage(v, VBT.CageFromPosition(cd.cp, TRUE));
+    ELSIF v.ready THEN
+      v.ready := FALSE;
+      IF cd.clickType = ClickType.LastUp AND NOT cd.cp.offScreen THEN
+        v.action(v, cd);
+        v.post();
+      ELSE
+        v.cancel();
+      END;
+    END;
+  END Mouse;
+
+PROCEDURE <A NAME="Position"><procedure>Position</procedure></A> (v: T; READONLY cd: VBT.PositionRec) =
+  BEGIN
+    Filter.T.position(v, cd);
+    IF v.ready THEN
+      VBT.SetCage(v, VBT.CageFromPosition(cd.cp, TRUE));
+      IF NOT cd.cp.offScreen THEN
+        v.during(cd);
+      END;
+    END;
+  END Position;
+
+BEGIN
+END DragSwitchVBT.
+</PRE>
+</inModule>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

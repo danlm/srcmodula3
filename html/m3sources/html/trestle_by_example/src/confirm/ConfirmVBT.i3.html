@@ -1,0 +1,59 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: trestle_by_example/src/confirm/ConfirmVBT.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>trestle_by_example/src/confirm/ConfirmVBT.i3</H2></A><HR>
+<inInterface>
+<PRE>INTERFACE <interface><A HREF="ConfirmVBT.m3.html">ConfirmVBT</A></interface>;
+
+IMPORT <A HREF="../../../ui/src/vbt/Trestle.i3.html">Trestle</A>, <A HREF="../../../ui/src/vbt/VBT.i3.html">VBT</A>, <A HREF="../../../ui/src/split/HVSplit.i3.html">HVSplit</A>, <A HREF="../../../ui/src/split/ButtonVBT.i3.html">ButtonVBT</A>;
+
+TYPE
+  T = HVSplit.T OBJECT
+      METHODS
+        init (msg: TEXT; yaction := DeleteDialog; caction := DeleteDialog):
+              T := Init
+      END;
+
+PROCEDURE <A HREF="ConfirmVBT.m3.html#DeleteDialog">DeleteDialog</A> (v: ButtonVBT.T; READONLY cd: VBT.MouseRec);
+
+PROCEDURE <A HREF="ConfirmVBT.m3.html#Init">Init</A> (self   : T;
+                msg    : TEXT;
+                yaction         := DeleteDialog;
+                caction         := DeleteDialog  ): T;
+</PRE> New(...) is equivalent to NEW(T).init(...) 
+<PRE>PROCEDURE <A HREF="ConfirmVBT.m3.html#New">New</A> (msg: TEXT; yaction := DeleteDialog; caction := DeleteDialog):
+  T;
+
+END ConfirmVBT.
+</PRE>
+</inInterface>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

@@ -1,0 +1,69 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: m3build options</TITLE>
+</HEAD>
+<BODY BGCOLOR="#ffffff" VLINK="#006633">
+
+<H2>m3build command line options</H2>
+<P>
+
+If no target is specified, <B>all</B> is assumed.  It causes the
+specified program or library to be built.  The only other
+target that is supported in all
+<A HREF="m3makefile.html"><TT>m3makefiles</TT></A> is <B>clean</B>
+which removes any derived files created by <B>m3build all</B>.
+<P>
+
+The following options are interpreted by <TT>m3build</TT>.
+<PRE>
+-b dir  
+       Use the <TT>dir</TT> configuration and build in the directory
+       named <TT>dir</TT>.  The default build directory is configured
+       into <TT>m3build</TT> when it is installed.
+-d dir  
+       Change the current directory to <TT>dir</TT> before doing anything.
+       This option is most useful when you're editing in the <TT>src</TT>
+       subdirectory and compile command you need is <TT>m3build -d ..</TT>.
+-S  
+       Generate derived objects regardless of the current directory's
+       name.  Normally, if the current working directory is <TT>src</TT>,
+       <TT>m3build</TT> will refuse to build derived objects.
+-O  
+       Read the <TT>m3overrides</TT> file if present.
+-v  
+       Be verbose, i.e. echo the <TT>quake</TT> comand before executing it.
+-T dir  
+       Read templates from <TT>dir</TT> instead of the default location.  The new
+       directory must include the full set of templates (e.g. <TT>COMMON</TT>,
+       <TT>PLATFORMS</TT>, ...).
+</PRE>
+<P>
+
+And finally, any other arguments that begin with a hyphen are passed on
+to <TT>quake</TT>(5).  A couple that may be useful are:
+<PRE>
+-n  
+      Operations that invoke external programs, e.g. the Modula-3
+      compiler, are processed but the external programs are not executed.
+-V  
+      This option causes all the directories in which <TT>m3makefile</TT>s are
+      read to be echoed to the standard output. It can be helpful in
+      debugging a complex package structure.
+</PRE>
+<P>
+
+<HR>
+<A HREF="../home.html">[Modula-3 home page]</A>
+<P>
+<A HREF="mailto:m3-request@src.dec.com">
+<ADDRESS>m3-request@src.dec.com</ADDRESS></A>
+<PRE>
+Last modified on Thu Jan  4 11:07:51 PST 1996 by heydon 
+     modified on Thu Apr 21 16:46:37 PDT 1994 by kalsow 
+     modified on Thu Jan  7 18:40:57 PST 1993 by muller 
+</PRE>
+
+Copyright (C) 1992, 1996, Digital Equipment Corporation. All rights reserved.<BR>
+See the <A HREF="http://www.research.digital.com/SRC/m3sources/html/COPYRIGHT.html">COPYRIGHT</A> for a full description.
+</BODY>
+</HTML>

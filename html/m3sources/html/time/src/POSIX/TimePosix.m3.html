@@ -1,0 +1,95 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: time/src/POSIX/TimePosix.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>time/src/POSIX/TimePosix.m3</H2></A><HR>
+<inModule>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM>                                                          </EM></BLOCKQUOTE><PRE>
+
+MODULE <module>TimePosix</module> EXPORTS <A HREF="../Common/Time.i3.html"><implements>Time</A></implements>, <A HREF="TimePosix.i3.html"><implements>TimePosix</A></implements>;
+
+IMPORT <A HREF="#x1">Utime</A>;
+
+PROCEDURE <A NAME="Now"><procedure>Now</procedure></A>(): T =
+  VAR
+    tv: Utime.struct_timeval;
+    tz: Utime.struct_timezone;
+    i := Utime.gettimeofday(tv, tz);
+  BEGIN
+    &lt;* ASSERT i=0 *&gt;
+    RETURN FromUtime(tv);
+  END Now;
+
+PROCEDURE <A NAME="ToUtime"><procedure>ToUtime</procedure></A>(n: T): Utime.struct_timeval=
+  VAR tv: Utime.struct_timeval;
+  BEGIN
+    tv.tv_sec := TRUNC(n);
+    tv.tv_usec := ROUND((n - FLOAT(tv.tv_sec, LONGREAL)) * 1.0D6);
+    RETURN tv;
+  END ToUtime;
+
+PROCEDURE <A NAME="FromUtime"><procedure>FromUtime</procedure></A>(READONLY tv: Utime.struct_timeval): T=
+  BEGIN
+    RETURN FLOAT(tv.tv_sec, LONGREAL) + FLOAT(tv.tv_usec, LONGREAL) / 1.0D6
+  END FromUtime;
+
+VAR t0, t1: T;
+BEGIN
+  (* Determine value of &quot;Grain&quot; experimentally.  Note that
+     this will fail if this thread is descheduled for a tick during the
+     loop below. *)
+  t0 := Now();
+  REPEAT t1 := Now() UNTIL t1 # t0;
+  Grain := t1-t0
+END TimePosix.
+</PRE>
+</inModule>
+<HR>
+<A NAME="x1">interface Utime is in:
+</A><UL>
+<LI><A HREF="../../../unix/src/aix-3-2/Utime.i3.html#0TOP0">unix/src/aix-3-2/Utime.i3</A>
+<LI><A HREF="../../../unix/src/aix-ps2-1-2/Utime.i3.html#0TOP0">unix/src/aix-ps2-1-2/Utime.i3</A>
+<LI><A HREF="../../../unix/src/freebsd-1/Utime.i3.html#0TOP0">unix/src/freebsd-1/Utime.i3</A>
+<LI><A HREF="../../../unix/src/freebsd-2/Utime.i3.html#0TOP0">unix/src/freebsd-2/Utime.i3</A>
+<LI><A HREF="../../../unix/src/hpux-7-0/Utime.i3.html#0TOP0">unix/src/hpux-7-0/Utime.i3</A>
+<LI><A HREF="../../../unix/src/ibm-4-3/Utime.i3.html#0TOP0">unix/src/ibm-4-3/Utime.i3</A>
+<LI><A HREF="../../../unix/src/irix-5.2/Utime.i3.html#0TOP0">unix/src/irix-5.2/Utime.i3</A>
+<LI><A HREF="../../../unix/src/linux/Utime.i3.html#0TOP0">unix/src/linux/Utime.i3</A>
+<LI><A HREF="../../../unix/src/osf-1.ALPHA_OSF/Utime.i3.html#0TOP0">unix/src/osf-1.ALPHA_OSF/Utime.i3</A>
+<LI><A HREF="../../../unix/src/osf-1.DS3100/Utime.i3.html#0TOP0">unix/src/osf-1.DS3100/Utime.i3</A>
+<LI><A HREF="../../../unix/src/solaris-2-x/Utime.i3.html#0TOP0">unix/src/solaris-2-x/Utime.i3</A>
+<LI><A HREF="../../../unix/src/sunos-4-x/Utime.i3.html#0TOP0">unix/src/sunos-4-x/Utime.i3</A>
+<LI><A HREF="../../../unix/src/sysv-4.0/Utime.i3.html#0TOP0">unix/src/sysv-4.0/Utime.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.generic/Utime.i3.html#0TOP0">unix/src/ultrix-3-1.generic/Utime.i3</A>
+</UL>
+<P>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

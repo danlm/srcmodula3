@@ -1,0 +1,132 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: dps/src/TextLineDLE.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>dps/src/TextLineDLE.m3</H2></A><HR>
+<inModule>
+<PRE><A HREF="../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+
+MODULE <module><implements><A HREF="TextLineDLE.i3.html">TextLineDLE</A></implements></module>;
+
+IMPORT <A HREF="DisplayList.i3.html">DisplayList</A>, <A HREF="DPS.i3.html">DPS</A>, <A HREF="DPSWindow.i3.html">DPSWindow</A>, <A HREF="../../text/src/Text.i3.html">Text</A>, <A HREF="../../fmtlex/src/Fmt.i3.html">Fmt</A>;
+
+CONST xMargin = 5.0;
+CONST yMargin = 3.0;
+CONST fontHeight = DPS.StandardFontPoints;
+CONST fontDescender = 2.0;
+
+PROCEDURE <A NAME="Repaint"><procedure>Repaint</procedure></A> (e: E; box: DPS.Box; &lt;*UNUSED*&gt; only: REFANY := NIL): TEXT =
+ VAR data: TEXT := &quot;&quot;;
+  BEGIN
+  IF NOT DPS.BoxesIntersect (e.box, box) THEN RETURN NIL; END;
+  IF e.hasInputFocus THEN data := DPS.EdgedBoxClipAndPaint (e.box, 0.25);
+   ELSE data := DPS.EdgedBoxClipAndPaint (e.box);
+    END;
+  data := data &amp; &quot; &quot;
+    &amp; Fmt.Real(e.box.low.x + xMargin) &amp; &quot; &quot;
+    &amp; Fmt.Real(e.box.low.y + yMargin + fontDescender) &amp; &quot; moveto &quot;
+    &amp; &quot; (&quot; &amp; DPS.EscapeText(e.text) &amp; &quot;) &quot; (* If 'text' contains parens? *)
+    &amp; &quot; ButtonDLEFont setfont 0.0 setgray show &quot;;
+  RETURN &quot; gsave &quot; &amp; data &amp; &quot; grestore &quot;;
+  END Repaint;
+
+PROCEDURE <A NAME="Init"><procedure>Init</procedure></A> (e: E; window: DPSWindow.T) =
+ VAR textWidth: REAL;
+  BEGIN
+  IF e.initialized THEN RETURN; END;
+  window.SendFoundation ( &quot; /ButtonDLEFont /Times-Roman findfont &quot;
+    &amp; Fmt.Real(fontHeight) &amp; &quot; scalefont def &quot; ); (* Many times alas. *)
+  textWidth := DPS.TextWidth (e.text, window, &quot;ButtonDLEFont&quot;);
+  IF e.box.high.x &lt;= e.box.low.x THEN (* Else user supplied width. *)
+    e.box.high.x := e.box.low.x + xMargin + textWidth + xMargin;
+    END;
+  e.box.high.y := e.box.low.y + yMargin + fontHeight + yMargin;
+  e.initialized := TRUE;
+  END Init;
+
+PROCEDURE <A NAME="Mouse"><procedure>Mouse</procedure></A> (e: E; window: DPSWindow.T; event: DPS.MouseEvent): BOOLEAN =
+ VAR in: BOOLEAN;
+ VAR affected: DisplayList.E;
+  BEGIN
+  Init (e, window);
+  in := DPS.PlaceIsInBox (event.place, e.box);
+  IF in THEN
+    IF event.clickType = DPS.ClickType.LastUp THEN
+      IF e.hasInputFocus THEN RETURN TRUE; END;
+      e.GetInputFocus (NIL);
+      e.hasInputFocus := TRUE;
+      affected := e.MoveToLast();
+      IF affected=NIL THEN affected := e; END;
+      affected.Dirty (affected.box, affected);
+      END;
+    END;
+  RETURN in;
+  END Mouse;
+
+PROCEDURE <A NAME="Char"><procedure>Char</procedure></A> (e: E; window: DPSWindow.T; char: CHAR): BOOLEAN =
+  BEGIN
+  Init (e, window);
+  IF e.hasInputFocus THEN
+    IF char = '\n' THEN
+      e.Proc (window, e.text, char);
+     ELSIF char = '\010' THEN
+      IF Text.Length(e.text) &gt; 0 THEN
+        e.text := Text.Sub (e.text, 0, Text.Length(e.text) - 1);
+        e.Dirty (e.box); (* Do not assume it is on top. *)
+        END;
+     ELSE
+      e.text := e.text &amp; Text.FromChar(char);
+      e.Dirty (e.box); (* Do not assume it is on top. *)
+      END;
+    END;
+  RETURN e.hasInputFocus;
+  END Char;
+
+PROCEDURE <A NAME="LoseInputFocus"><procedure>LoseInputFocus</procedure></A> (e: E) =
+  BEGIN
+  IF e.hasInputFocus THEN
+    e.hasInputFocus := FALSE;
+    e.Dirty (e.box); (* It may not be on top now! *)
+    END;
+  END LoseInputFocus;
+
+PROCEDURE <A NAME="Proc"><procedure>Proc</procedure></A> (&lt;*UNUSED*&gt; e: E;
+                &lt;*UNUSED*&gt; window: DPSWindow.T;
+                &lt;*UNUSED*&gt; text: TEXT;
+                &lt;*UNUSED*&gt; char: CHAR) =
+  BEGIN
+  END Proc;
+
+  BEGIN
+  END TextLineDLE.
+</PRE>
+</inModule>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

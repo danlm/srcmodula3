@@ -1,0 +1,77 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: mgkit/src/MGRd.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>mgkit/src/MGRd.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM>                                                                           </EM></BLOCKQUOTE><PRE>
+</PRE> by Steve Glassman and Stephen Harrison                                    
+
+<P><PRE>INTERFACE <interface><A HREF="MGRd.m3.html">MGRd</A></interface>;
+
+IMPORT
+  <A HREF="../../ui/src/vbt/PaintOp.i3.html">PaintOp</A>, <A HREF="../../rw/src/Common/Rd.i3.html">Rd</A>, <A HREF="../../etext/src/TextPort.i3.html">TextPort</A>, <A HREF="../../vtext/src/VTDef.i3.html">VTDef</A>;
+
+TYPE
+  <A HREF="MGRd.m3.html#T">T</A> &lt;: Rd.T;
+
+TYPE
+  Style = RECORD
+            intervalStyle: VTDef.IntervalStyle;
+            bg, fg       : PaintOp.T;
+          END;
+
+CONST
+  PastStyle = Style{intervalStyle := VTDef.IntervalStyle.GrayStyle, bg :=
+                    PaintOp.Bg, fg := PaintOp.Fg};
+
+  FutureStyle = Style{intervalStyle := VTDef.IntervalStyle.NoStyle, bg :=
+                      PaintOp.Bg, fg := PaintOp.Fg};
+
+PROCEDURE <A HREF="MGRd.m3.html#FromTextPort">FromTextPort</A> (         tp     : TextPort.T;
+                        READONLY present: Style;
+                        READONLY past                  := PastStyle;
+                        READONLY future                := FutureStyle): T;
+</PRE><BLOCKQUOTE><EM> Returns a reader on <CODE>tp</CODE>.  Read actions on the reader are reflected in
+   the text port.
+<P>
+   The postion of the textport preceding the current position of the reader
+   will be displayed according to <CODE>past</CODE>.  The character after the current
+   position will be displayed in <CODE>present</CODE> and the remaining character in
+   <CODE>future</CODE>.
+<P>
+   Editing the textport while reading will have unpredictable results </EM></BLOCKQUOTE><PRE>
+
+END MGRd.
+</PRE>
+</inInterface>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

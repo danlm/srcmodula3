@@ -1,0 +1,96 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: pkgobj/src/Common/PackageObj.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>pkgobj/src/Common/PackageObj.m3</H2></A><HR>
+<inModule>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM> PackageObj.m3 </EM></BLOCKQUOTE><PRE>
+
+MODULE <module><implements><A HREF="PackageObj.i3.html">PackageObj</A></implements></module>;
+
+IMPORT <A HREF="Site.i3.html">Site</A>, <A HREF="../../../text/src/Text.i3.html">Text</A>, <A HREF="../../../thread/src/Common/Thread.i3.html">Thread</A>;
+IMPORT <A HREF="../../../tcp/src/common/IP.i3.html">IP</A>, <A HREF="../../../netobjrt/src/NetObj.i3.html">NetObj</A>, <A HREF="../../../tcpnetobj/src/TCPNetObj.i3.html">TCPNetObj</A>, <A HREF="PkgProt.i3.html">PkgProt</A>, <A HREF="PkgErr.i3.html">PkgErr</A>;
+FROM <A HREF="PkgErr.i3.html">PkgErr</A> IMPORT ImportError;
+
+VAR
+  default: T := NIL;
+  defaultReplica: TEXT := NIL;
+
+PROCEDURE <A NAME="New"><procedure>New</procedure></A>(replica: TEXT): T
+    RAISES {PkgErr.E, NetObj.Error, Thread.Alerted} =
+  VAR ipPort: IP.Port;
+  VAR obj: NetObj.T;
+      addr: IP.Address;
+  BEGIN
+    IF (replica = NIL) OR Text.Empty(replica) THEN
+      IF default # NIL THEN RETURN default; END;
+      PkgErr.Raise(ImportError);
+    ELSE
+      IF (default # NIL) AND Text.Equal(replica, defaultReplica) THEN
+        RETURN default;
+      END;
+    END;
+    TRY
+      &lt;* ASSERT replica # NIL *&gt;
+      ipPort := Site.Get().ipPort;
+      IF ipPort = IP.NullPort THEN
+        obj := NetObj.Import(
+          PkgProt.PkgExportName, NetObj.Locate(replica));
+      ELSE
+        IF NOT IP.GetHostByName(replica, addr) THEN
+          PkgErr.Raise(ImportError);
+        END;
+        obj := NetObj.Import(
+          PkgProt.PkgExportName,
+          TCPNetObj.Locate(IP.Endpoint{addr, ipPort}));
+      END;
+    EXCEPT
+    | IP.Error(ipErr) =&gt; PkgErr.Raise(ImportError, ipErr);
+    | NetObj.Invalid =&gt; PkgErr.Raise(ImportError, NIL);
+    END;
+    IF (obj = NIL) OR NOT ISTYPE(obj, T) THEN
+      PkgErr.Raise(ImportError, NIL);
+    END;
+    RETURN NARROW(obj, T);
+  END New;
+
+PROCEDURE <A NAME="SetServerT"><procedure>SetServerT</procedure></A>(t: T; replica: TEXT) =
+  BEGIN
+    default := t;
+    defaultReplica := replica;
+  END SetServerT;
+
+BEGIN
+END PackageObj.
+</PRE>
+</inModule>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

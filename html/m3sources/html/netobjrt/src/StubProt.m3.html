@@ -1,0 +1,279 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: netobjrt/src/StubProt.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>netobjrt/src/StubProt.m3</H2></A><HR>
+<inModule>
+<PRE><A HREF="../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM> StubProt.m3 </EM></BLOCKQUOTE><PRE>
+
+UNSAFE MODULE <module>StubProt</module> EXPORTS <A HREF="StubLib.i3.html"><implements>StubLib</A></implements>, <A HREF="StubLibPrivate.i3.html"><implements>StubLibPrivate</A></implements>;
+
+IMPORT <A HREF="NetObj.i3.html">NetObj</A>, <A HREF="NetObjRep.i3.html">NetObjRep</A>, <A HREF="NetObjRT.i3.html">NetObjRT</A>,
+       <A HREF="Protocol.i3.html">Protocol</A>, <A HREF="Transport.i3.html">Transport</A>, <A HREF="TransportUtils.i3.html">TransportUtils</A>, <A HREF="WireRep.i3.html">WireRep</A>;
+IMPORT <A HREF="../../libm3/DS/AtomList.i3.html">AtomList</A>, <A HREF="../../thread/src/Common/Thread.i3.html">Thread</A>, <A HREF="../../rw/src/Common/Rd.i3.html">Rd</A>, <A HREF="../../rw/src/Common/Wr.i3.html">Wr</A>, <A HREF="../../runtime/src/common/RTType.i3.html">RTType</A>;
+IMPORT <A HREF="../../rw/src/Common/RdClass.i3.html">RdClass</A>, <A HREF="../../rw/src/Common/WrClass.i3.html">WrClass</A>; (* UnsafeWr *)
+
+FROM <A HREF="Protocol.i3.html">Protocol</A> IMPORT Header, CallHeader, Op;
+</PRE> Since clients of <CODE>Conn</CODE> must avoid accessing them concurrently,
+   we operate on the embedded streams without locking them.
+
+
+<P><PRE>EXCEPTION FatalError;  &lt;* FATAL FatalError *&gt;
+</PRE><P>
+REVEAL RdClass.Private &lt;: MUTEX;
+REVEAL WrClass.Private &lt;: MUTEX;
+
+
+<P><PRE>TYPE ObjectStack = RECORD
+    pos: CARDINAL := 0;
+    objs: REF ARRAY OF NetObj.T := NIL;
+  END;
+
+CONST DefaultObjStackSize = 8;
+
+REVEAL
+  <A NAME="Conn">Conn</A> = Transport.Conn BRANDED OBJECT
+    objStack: ObjectStack := ObjectStack {};
+    inObj: BOOLEAN := FALSE;
+  END;
+</PRE> The field <CODE>t.objStack</CODE> is used to record the set of network objects
+   marshalled during any single method invocation (at either client or
+   server).  This record is required for cleanup at the termination of
+   the call.   The <CODE>t.objStack</CODE> field is managed by the network object
+   runtime and should not be modified by any transport implementation. 
+
+<P><PRE>REVEAL
+  Transport.<A NAME="T">T</A> = TransportUtils.Public BRANDED OBJECT
+  OVERRIDES
+    serviceCall := ServiceCall;
+  END;
+
+PROCEDURE <A NAME="ServiceCall"><procedure>ServiceCall</procedure></A>(&lt;*UNUSED*&gt; tt: Transport.T; c: Conn) : BOOLEAN
+    RAISES {Thread.Alerted} =
+  BEGIN
+      TRY
+        VAR
+          dispatcher: Dispatcher;
+          obj: NetObj.T;
+          prot: StubProtocol;
+          rd := c.rd;
+          h := LOOPHOLE(ADR(rd.buff[rd.st+rd.cur-rd.lo]),
+                                     UNTRACED REF CallHeader);
+        BEGIN
+          IF rd.hi - rd.cur &lt; BYTESIZE(CallHeader) OR
+                     h.hdr.private # ORD(Op.MethodCall) THEN
+               RaiseUnmarshalFailure();
+          END;
+          INC(rd.cur, BYTESIZE(CallHeader));
+          IF h.hdr.intFmt # NativeRep.intFmt THEN
+            IF NOT NativeEndian(h.hdr) THEN
+              prot := Swap32(h.prot);
+            END;
+          END;
+          obj := NetObjRT.FindTarget(h.obj, prot, dispatcher);
+          TRY
+            c.objStack.pos := 0;
+            dispatcher(c, obj, h.hdr, prot);
+            IF (c.objStack.pos # 0) THEN
+              (* take this out, later *)
+              (* UnsafeWr.FastPutChar(c.wr, '\000'); *)
+              c.wr.nextMsg();
+              IF NOT rd.nextMsg() OR rd.hi - rd.cur &lt; BYTESIZE(Header) THEN
+                RETURN FALSE;
+              END;
+              VAR hh := LOOPHOLE(ADR(rd.buff[rd.st+rd.cur-rd.lo]),
+                                              UNTRACED REF Header)^;
+              BEGIN
+                INC(rd.cur, BYTESIZE(Header));
+                IF hh.private # ORD(Op.ResultAck) THEN RETURN FALSE; END;
+              END;
+            ELSE
+              c.wr.nextMsg();
+            END;
+          FINALLY
+            IF (c.objStack.pos # 0) THEN
+              NetObjRT.Unpin(SUBARRAY(c.objStack.objs^, 0, c.objStack.pos));
+              FOR i := 0 TO c.objStack.pos-1 DO
+                c.objStack.objs[i] := NIL;
+              END;
+            END;
+          END;
+        END;
+      EXCEPT
+      | Rd.Failure, Wr.Failure =&gt; RETURN FALSE;
+      | NetObj.Error(ec) =&gt;
+          TRY
+            (* this test checks whether we have started marshalling results *)
+            IF c.wr.cur = 0 THEN
+              VAR wr := c.wr;
+                  h := LOOPHOLE(ADR(wr.buff[wr.st+wr.cur-wr.lo]),
+                                             UNTRACED REF Header);
+              BEGIN
+                h^ := NativeRep;
+                h.private := ORD(Op.CallFailed);
+                INC(wr.cur, BYTESIZE(Header));
+              END;
+              OutRef(c, ec);
+            END;
+            c.wr.nextMsg();
+          EXCEPT
+          | Wr.Failure =&gt; RETURN FALSE;
+          END;
+      END;
+    RETURN TRUE;
+  END ServiceCall;
+</PRE> exports to StubLib 
+
+<P><PRE>PROCEDURE <A NAME="StartCall"><procedure>StartCall</procedure></A>(obj: NetObj.T; stubProt: StubProtocol) : Conn
+    RAISES {NetObj.Error, Wr.Failure, Thread.Alerted} =
+  VAR c := NARROW(obj.r, Transport.Location).new();
+  BEGIN
+    c.objStack.pos := 0;
+    c.inObj := FALSE;
+    VAR wr := c.wr;
+        h := LOOPHOLE(ADR(wr.buff[wr.st+wr.cur-wr.lo]),
+                                 UNTRACED REF CallHeader);
+    BEGIN
+      &lt;* ASSERT (wr.hi - wr.cur &gt;= BYTESIZE(CallHeader)) *&gt;
+      INC(wr.cur, BYTESIZE(CallHeader));
+      h.hdr := NativeRep;
+      h.hdr.private := ORD(Op.MethodCall);
+      h.prot := stubProt;
+      h.obj := obj.w;
+    END;
+    RETURN c;
+  END StartCall;
+
+PROCEDURE <A NAME="AwaitResult"><procedure>AwaitResult</procedure></A>(c: Conn) : DataRep
+    RAISES {NetObj.Error, Rd.Failure, Wr.Failure, Thread.Alerted} =
+  VAR hdr: Header;
+      rd := c.rd;
+  BEGIN
+    c.wr.nextMsg();
+    TRY
+      IF NOT rd.nextMsg() OR rd.hi - rd.cur &lt; BYTESIZE(Header) THEN
+        RaiseUnmarshalFailure();
+      END;
+      hdr := LOOPHOLE(ADR(rd.buff[rd.st+rd.cur-rd.lo]), UNTRACED REF Header)^;
+      INC(rd.cur, BYTESIZE(Header));
+    EXCEPT
+    | Thread.Alerted =&gt; RAISE NetObj.Error(AtomList.List1(NetObj.Alerted));
+    END;
+    CASE hdr.private OF
+    | ORD(Op.Return) =&gt;
+    | ORD(Op.CallFailed) =&gt;
+        RAISE NetObj.Error(InRef(c, hdr, TYPECODE(AtomList.T)));
+    ELSE
+      RaiseUnmarshalFailure();
+    END;
+    RETURN hdr;
+  END AwaitResult;
+
+PROCEDURE <A NAME="EndCall"><procedure>EndCall</procedure></A>(c: Conn; reUse: BOOLEAN)
+    RAISES {NetObj.Error, Rd.Failure, Wr.Failure, Thread.Alerted} =
+  BEGIN
+    TRY
+      IF c.objStack.pos # 0 THEN
+        NetObjRT.Unpin(SUBARRAY(c.objStack.objs^, 0, c.objStack.pos));
+        FOR i := 0 TO c.objStack.pos-1 DO
+          c.objStack.objs[i] := NIL;
+        END;
+      END;
+      IF reUse AND c.inObj (* OR NOT UnsafeRd.FastEOF(c.rd) *) THEN
+        VAR wr := c.wr;
+            h := LOOPHOLE(ADR(wr.buff[wr.st+wr.cur-wr.lo]),
+                                       UNTRACED REF Header);
+        BEGIN
+          h^ := NativeRep;
+          h.private := ORD(Op.ResultAck);
+          INC(wr.cur, BYTESIZE(Header));
+          wr.nextMsg();
+        END;
+      END;
+    FINALLY
+      c.loc.free(c, reUse);
+    END;
+  END EndCall;
+
+PROCEDURE <A NAME="StartResult"><procedure>StartResult</procedure></A>(c: Conn)
+    RAISES {Wr.Failure, Thread.Alerted} =
+  VAR wr := c.wr;
+      h := LOOPHOLE(ADR(wr.buff[wr.st+wr.cur-wr.lo]),
+                                 UNTRACED REF Header);
+  BEGIN
+    h^ := NativeRep;
+    h.private := ORD(Op.Return);
+    INC(wr.cur, BYTESIZE(Header));
+  END StartResult;
+
+PROCEDURE <A NAME="OutObject"><procedure>OutObject</procedure></A> (c: Conn; o: NetObj.T)
+    RAISES {Wr.Failure, Thread.Alerted} =
+  VAR s: REF ARRAY OF NetObj.T;
+  BEGIN
+    IF o = NIL THEN
+      OutBytes(c, WireRep.NullT.byte);
+    ELSE
+      OutBytes(c, NetObjRT.InsertAndPin(o).byte);
+      s := c.objStack.objs;
+      IF s = NIL THEN
+        s := NEW(REF ARRAY OF NetObj.T, DefaultObjStackSize);
+        c.objStack.objs := s;
+      ELSIF c.objStack.pos = NUMBER(s^) THEN
+        s := NEW(REF ARRAY OF NetObj.T, 2 * c.objStack.pos);
+        SUBARRAY(s^, 0, c.objStack.pos) := c.objStack.objs^;
+        c.objStack.objs := s;
+      END;
+      s[c.objStack.pos] := o;
+      INC(c.objStack.pos);
+    END;
+  END OutObject;
+
+PROCEDURE <A NAME="InObject"><procedure>InObject</procedure></A> (c: Conn; tc: INTEGER := -1): NetObj.T
+    RAISES {NetObj.Error, Rd.Failure, Thread.Alerted} =
+  VAR w: WireRep.T;
+      o: NetObj.T;
+  BEGIN
+    InBytes(c, w.byte);
+    IF w = WireRep.NullT THEN RETURN NIL END;
+    o := NetObjRT.Find(w, c.loc);
+    IF tc # -1 AND NOT RTType.IsSubtype(TYPECODE(o), tc) THEN
+      RaiseUnmarshalFailure();
+    END;
+    c.inObj := TRUE;
+    RETURN o;
+  END InObject;
+
+BEGIN
+END StubProt.
+</PRE>
+</inModule>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

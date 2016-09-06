@@ -1,0 +1,85 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: gef/src/GEFTable.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>gef/src/GEFTable.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+
+INTERFACE <interface><A HREF="GEFTable.m3.html">GEFTable</A></interface>;
+</PRE> A so-so table for a few hundred elements - uses linear search 
+
+<P><PRE>EXCEPTION NotFound;
+
+TYPE
+  <A HREF="GEFTable.m3.html#T">T</A> &lt;: TPublic;
+  TPublic = OBJECT
+  METHODS
+    init(initialSize := 10): T;
+    put(key, value: REFANY); (* no check for duplicates *)
+    get(key: REFANY): REFANY RAISES {NotFound};
+    clear();
+    enumerate(proc: EnumerateProc;
+          data: REFANY;
+          VAR (*OUT*) key: REFANY;
+          VAR (*OUT*) value: REFANY;
+        ): BOOLEAN;
+    (*
+
+          Invokes /proc(data, key, value)/ for each pair /(key,value)/ in the
+          table.  If /proc/ returns TRUE, the enumeration is terminated, the
+          terminating entry is stored into /key/ and /value/, and TRUE is
+          returned.  If /proc/ never returns TRUE, /key/ and /value/ are set
+          to /NIL/ and /NIL/, and FALSE is returned.
+
+          The client is responsible for external locking of T.
+
+          The client procedure /proc/ is allowed to modify the /value/ field
+          of visited entries.
+          *)
+
+  END;
+
+TYPE
+
+  EnumerateProc = PROCEDURE(data: REFANY; key: REFANY; VAR value: REFANY): BOOLEAN;
+  (*
+    A client-defined procedure called by Enumerate on each key/value
+    pair in the table.
+
+    The /data/ parameter is the client data passed to
+    Enumerate.  An EnumerateProc should return true to halt the
+    enumeration, false to continue it.  *)
+
+END GEFTable.
+</PRE>
+</inInterface>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

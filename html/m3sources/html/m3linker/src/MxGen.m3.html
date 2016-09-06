@@ -1,0 +1,624 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: m3linker/src/MxGen.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>m3linker/src/MxGen.m3</H2></A><HR>
+<inModule>
+<PRE><A HREF="../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM>                                                             </EM></BLOCKQUOTE><PRE>
+</PRE> File: MxGen.m3                                              
+ Last Modified On Thu Feb 23 08:53:23 PST 1995 By kalsow     
+      Modified On Fri Jul  2 19:33:09 PDT 1993 By muller     
+
+<P><PRE>MODULE <module><implements><A HREF="MxGen.i3.html">MxGen</A></implements></module>;
+
+IMPORT <A HREF="../../rw/src/Common/Wr.i3.html">Wr</A>, <A HREF="../../fmtlex/src/Fmt.i3.html">Fmt</A>, <A HREF="../../thread/src/Common/Thread.i3.html">Thread</A>, <A HREF="../../libm3/DS/IntRefTbl.i3.html">IntRefTbl</A>, <A HREF="../../rw/src/Common/Stdio.i3.html">Stdio</A>, <A HREF="../../libm3/DS/IntArraySort.i3.html">IntArraySort</A>;
+IMPORT <A HREF="Mx.i3.html">Mx</A>, <A HREF="MxRep.i3.html">MxRep</A>, <A HREF="MxMap.i3.html">MxMap</A>, <A HREF="#x1">M3ID</A>, <A HREF="../../m3middle/src/M3RT.i3.html">M3RT</A>, <A HREF="../../m3middle/src/Target.i3.html">Target</A>;
+&lt;*FATAL Wr.Failure, Thread.Alerted*&gt;
+
+CONST (* name-mangling done by the compiler &amp; back-end *)
+  IR_Prefix = ARRAY BOOLEAN OF TEXT { &quot;MM_&quot;, &quot;MI_&quot; };
+
+TYPE
+  State = RECORD
+    base          : Mx.LinkSet   := NIL;
+    errors        : Wr.T         := NIL;
+    output        : Wr.T         := NIL;
+    failed        : BOOLEAN      := FALSE;
+    verbose       : BOOLEAN      := FALSE;
+    gui           : BOOLEAN      := FALSE;
+    n_modules     : INTEGER      := 0;
+    dfs_count     : INTEGER      := 0;
+    init_stack    : UnitInfo     := NIL;
+    n_opaques     : INTEGER      := 0;
+    opaques       : IntRefTbl.T  := NIL; (* type name -&gt; OpaqueInfo *)
+    all_opaques   : OpaqueInfo   := NIL;
+    builtin_name  : Mx.Name      := 0;
+    builtin_unit  : Mx.Unit      := NIL;
+    eol           : TEXT         := NIL;
+  END;
+
+TYPE
+  UnitInfo = REF RECORD
+    unit         : Mx.Unit;
+    next         : UnitInfo;
+    imports      : UnitInfoList := NIL;
+    exporters    : UnitInfoList := NIL;
+    dfs_id       : INTEGER  := 0;
+    low_link     : INTEGER  := 0;
+    prev_stack   : UnitInfo := NIL;
+    init_started : BOOLEAN  := FALSE;
+    stacked      : BOOLEAN  := FALSE;
+  END;
+
+TYPE
+  UnitInfoList = REF RECORD
+    ui   : UnitInfo;
+    next : UnitInfoList;
+  END;
+
+TYPE
+  UnitProc = PROCEDURE (VAR s: State;  u: Mx.Unit);
+
+TYPE
+  OpaqueInfo = REF RECORD
+    next   : OpaqueInfo     := NIL;
+    type   : Mx.OpaqueType  := NIL;
+    t_unit : Mx.Unit        := NIL;
+    reveal : Mx.Revelation  := NIL;
+    r_unit : Mx.Unit        := NIL;
+  END;
+</PRE>------------------------------------------------------------------------
+
+<P><PRE>PROCEDURE <A NAME="GenerateMain"><procedure>GenerateMain</procedure></A> (base: Mx.LinkSet;  output: Wr.T;
+                        verbose: BOOLEAN;  windowsGUI: BOOLEAN) =
+  VAR s: State;
+  BEGIN
+    s.base    := base;
+    s.output  := output;
+    s.verbose := verbose;
+    s.errors  := Stdio.stdout;
+    s.gui     := windowsGUI;
+    s.eol     := Target.EOL;
+    GenTypeDecls (s);
+    CheckOpaques (s);
+    FindBuiltins (s);
+    GenerateUnitList (s);
+    GenerateEntry (s);
+    (* EmitTypecodeTypedef (s); -- no used by the debugger *)
+  END GenerateMain;
+</PRE>------------------------------------------------------------------------
+
+<P><PRE>PROCEDURE <A NAME="GenTypeDecls"><procedure>GenTypeDecls</procedure></A> (VAR s: State) =
+  VAR  tc_words := Fmt.Int (M3RT.TC_SIZE DIV Target.Address.size);
+  BEGIN
+    Out (s, &quot;typedef long  _INTEGER;&quot;, s.eol);
+    Out (s, &quot;typedef char* _ADDRESS;&quot;, s.eol);
+    Out (s, &quot;typedef void (*_PROC)();&quot;, s.eol);
+    Out (s, s.eol);
+
+    Out (s, &quot;typedef struct module {&quot;, s.eol);
+    Out (s, &quot;  _ADDRESS  file;&quot;, s.eol);
+    Out (s, &quot;  _ADDRESS  type_cells;&quot;, s.eol);
+    Out (s, &quot;  _ADDRESS  type_cell_ptrs;&quot;, s.eol);
+    Out (s, &quot;  _ADDRESS  full_revelations;&quot;, s.eol);
+    Out (s, &quot;  _ADDRESS  partial_revelations;&quot;, s.eol);
+    Out (s, &quot;  _ADDRESS  proc_info;&quot;, s.eol);
+    Out (s, &quot;  _ADDRESS  try_scopes;&quot;, s.eol);
+    Out (s, &quot;  _ADDRESS  var_map;&quot;, s.eol);
+    Out (s, &quot;  _ADDRESS  gc_map;&quot;, s.eol);
+    Out (s, &quot;  _PROC     link;&quot;, s.eol);
+    Out (s, &quot;  _PROC     main;&quot;, s.eol);
+    Out (s, &quot;} _MODULE;&quot;, s.eol, s.eol);
+
+    Out (s, &quot;typedef struct link_info {&quot;, s.eol);
+    Out (s, &quot;  _INTEGER n_modules;&quot;, s.eol);
+    Out (s, &quot;  _ADDRESS modules;&quot;, s.eol);
+    Out (s, &quot;  _INTEGER argc;&quot;, s.eol);
+    Out (s, &quot;  _ADDRESS argv;&quot;, s.eol);
+    Out (s, &quot;  _ADDRESS envp;&quot;, s.eol);
+    Out (s, &quot;  _ADDRESS instance;&quot;, s.eol);
+    Out (s, &quot;  _ADDRESS bottom_of_stack;&quot;, s.eol);
+    Out (s, &quot;  _ADDRESS top_of_stack;&quot;, s.eol);
+    Out (s, &quot;} _LINK_INFO;&quot;, s.eol, s.eol);
+
+    Out (s, &quot;typedef struct {&quot;, s.eol);
+    Out (s, &quot;  _MODULE     module;&quot;, s.eol);
+    Out (s, &quot;  _ADDRESS    info_typecell[&quot;, tc_words, &quot;];&quot;, s.eol);
+    Out (s, &quot;  _LINK_INFO *info;&quot;, s.eol);
+    Out (s, &quot;} _LINKER;&quot;, s.eol, s.eol);
+
+  END GenTypeDecls;
+</PRE>------------------------------------------------------------------------
+
+<P><PRE>PROCEDURE <A NAME="CheckOpaques"><procedure>CheckOpaques</procedure></A> (VAR s: State) =
+  VAR o: OpaqueInfo;
+  BEGIN
+    s.opaques := NEW (IntRefTbl.Default).init ();
+    ForEachUnit (s, NoteOpaques);
+    ForEachUnit (s, IdentifyOpaques);
+    o := s.all_opaques;
+    WHILE (o # NIL) DO
+      IF (o.reveal = NIL) THEN
+        Err (s, &quot;opaque type never revealed: &quot;,TName(o.type.type), Wr.EOL);
+        Err (s, &quot;  defined in &quot;, MxRep.UnitName (o.t_unit), Wr.EOL);
+      END;
+      o := o.next;
+    END;
+  END CheckOpaques;
+
+PROCEDURE <A NAME="NoteOpaques"><procedure>NoteOpaques</procedure></A> (VAR s: State;  u: Mx.Unit) =
+  VAR o: Mx.OpaqueType;  z: OpaqueInfo;  ref: REFANY;
+  BEGIN
+    o := u.opaques;
+    WHILE (o # NIL) DO
+      IF s.opaques.get (o.type, ref) THEN
+        z := ref;
+        Err (s, &quot;opaque type defined twice: &quot;, TName (z.type.type), Wr.EOL);
+        Err (s, &quot;  defined in  &quot;, MxRep.UnitName (z.t_unit), Wr.EOL);
+        Err (s, &quot;  and also    &quot;, MxRep.UnitName (u), Wr.EOL);
+      ELSE
+        z := NEW (OpaqueInfo, type := o, t_unit := u, next:= s.all_opaques);
+        s.all_opaques := z;
+        EVAL s.opaques.put (o.type, z);
+        INC (s.n_opaques);
+      END;
+      o := o.next;
+    END;
+  END NoteOpaques;
+
+PROCEDURE <A NAME="IdentifyOpaques"><procedure>IdentifyOpaques</procedure></A> (VAR s: State;  u: Mx.Unit) =
+  VAR z: OpaqueInfo;  ref: REFANY;  r := u.revelations;
+  BEGIN
+    WHILE (r # NIL) DO
+      IF (r.partial) OR (NOT r.export) THEN
+        (* ignore for now *)
+      ELSIF s.opaques.get (r.lhs, ref) THEN
+        z := ref;
+        IF (z.reveal # NIL) THEN
+          Err (s, &quot;multiple revelations for opaque type:  &quot;,
+                   TName(z.type.type), Wr.EOL );
+          Err (s, &quot;  defined in  &quot;, MxRep.UnitName (z.t_unit), Wr.EOL);
+          Err (s, &quot;  revealed in &quot;, MxRep.UnitName (z.r_unit), Wr.EOL);
+          Err (s, &quot;  and also in &quot;, MxRep.UnitName (u), Wr.EOL);
+        ELSE
+          z.reveal := r;
+          z.r_unit := u;
+        END;
+      ELSE
+        Err (s, &quot;revelation without matching opaque type declaration:  &quot;,
+                 TName (r.lhs), Wr.EOL);
+        Err (s, &quot;  revealed in &quot;, MxRep.UnitName (u), Wr.EOL);
+      END;
+      r := r.next;
+    END;
+  END IdentifyOpaques;
+</PRE>------------------------------------------------------------------------
+
+<P><PRE>PROCEDURE <A NAME="FindBuiltins"><procedure>FindBuiltins</procedure></A> (VAR s: State) =
+  VAR u: Mx.Unit;
+  BEGIN
+    s.builtin_unit := NIL;
+    s.builtin_name := M3ID.Add (Mx.BuiltinUnitName);
+    u := MxMap.Get (s.base.interfaces, s.builtin_name);
+    IF (u = NIL) THEN
+      Err (s, &quot;builtins are missing: &quot;, Mx.BuiltinUnitName, Wr.EOL);
+    END;
+    s.builtin_unit := u;
+  END FindBuiltins;
+</PRE>------------------------------------------------------------------------
+
+<P><PRE>PROCEDURE <A NAME="GenerateUnitList"><procedure>GenerateUnitList</procedure></A> (VAR s: State) =
+  VAR
+    u       : Mx.Unit;
+    main    : UnitInfo;
+    builtin : UnitInfo;
+    nm      : Mx.Name;
+    ui, vi  : UnitInfo;
+    all_ui  : UnitInfo := NIL;
+    intfs   : REF ARRAY OF UnitInfo;
+    units   : MxMap.Contents;
+    n_units : INTEGER := 0;
+  BEGIN
+    (* allocate the UnitInfo nodes for the interfaces *)
+    units := MxMap.GetData (s.base.interfaces);
+    intfs := NEW (REF ARRAY OF UnitInfo, NUMBER (units^));
+    FOR i := 0 TO LAST (units^) DO
+      u := units[i].value;
+      ui := NIL;
+      IF (u # NIL) THEN
+        ui := NEW (UnitInfo, unit := u, next := all_ui);
+        all_ui := ui;
+        INC (n_units);
+      END;
+      intfs [i] := ui;
+    END;
+
+    (* allocate the UnitInfo nodes for the modules *)
+    units := MxMap.GetData (s.base.modules);
+    FOR i := 0 TO LAST (units^) DO
+      u := units[i].value;
+      IF (u # NIL) THEN
+        all_ui := NEW (UnitInfo, unit := u, next := all_ui);
+        INC (n_units);
+      END;
+    END;
+
+    (* sort the units by name to help canonicalize _m3main.c *)
+    all_ui := SortUnits (all_ui, n_units);
+
+    (* connect the UnitInfo graph *)
+    ui := all_ui;
+    WHILE (ui # NIL) DO
+      u := ui.unit;
+
+      FOR i := u.imported_units.start
+            TO u.imported_units.start + u.imported_units.cnt - 1 DO
+        nm := u.info [i];
+        vi := FindUnit (s, intfs, nm);
+        IF (ui # vi) THEN
+          ui.imports := NEW (UnitInfoList, next := ui.imports, ui := vi);
+        END;
+      END;
+
+      FOR i := u.exported_units.start
+            TO u.exported_units.start + u.exported_units.cnt - 1 DO
+        nm := u.info [i];
+        vi := FindUnit (s, intfs, nm);
+        IF (ui # vi) THEN
+          ui.imports := NEW (UnitInfoList, next := ui.imports, ui := vi);
+          vi.exporters := NEW (UnitInfoList, next := vi.exporters, ui := ui);
+        END;
+      END;
+
+      ui := ui.next;
+    END;
+
+    (* generate the debugger's import/export map *)
+    GenExporters (s, all_ui);
+
+    (* import the units *)
+    ui := all_ui;
+    WHILE (ui # NIL) DO
+      ImportUnit (s, ui.unit);
+      ui := ui.next;
+    END;
+
+    (* locate &quot;Main&quot; *)
+    main := FindUnit (s, intfs, M3ID.Add (&quot;Main&quot;));
+    builtin := FindUnit (s, intfs, s.builtin_name);
+
+    Out (s, s.eol, &quot;static _MODULE *_modules[&quot;);
+    Out (s, Fmt.Int (n_units+1), &quot;] = {&quot;, s.eol);
+
+    s.dfs_count := 1;
+    s.init_stack := NIL;
+    IF (builtin # NIL) THEN InitUnit (s, builtin, NIL) END;
+    InitUnit (s, main, all_ui);
+
+    Out (s, &quot;  0&quot;, s.eol, &quot;};&quot;);
+    Out (s, s.eol, s.eol);
+
+    &lt;*ASSERT n_units = s.n_modules*&gt;
+  END GenerateUnitList;
+
+PROCEDURE <A NAME="SortUnits"><procedure>SortUnits</procedure></A> (all_ui: UnitInfo;  n_units: INTEGER): UnitInfo =
+  (* generate a sorted list of the imports *)
+  VAR
+    ui,vi : UnitInfo;
+    cnt   := 0;
+    units := NEW (REF ARRAY OF UnitInfo, n_units);
+    map   := NEW (REF ARRAY OF INTEGER, n_units);
+
+  PROCEDURE CmpUnit (a, b: INTEGER): [-1..1] =
+    VAR ax := units[a].unit.name;  bx := units[b].unit.name;
+    BEGIN
+      IF    (ax = bx)          THEN RETURN 0;
+      ELSIF M3ID.IsLT (ax, bx) THEN RETURN -1;
+      ELSE                          RETURN +1;
+      END;
+    END CmpUnit;
+
+  BEGIN
+    ui := all_ui;
+    WHILE (ui # NIL) DO
+      units [cnt] := ui;
+      map   [cnt] := cnt;
+      INC (cnt);
+      ui := ui.next;
+    END;
+    &lt;*ASSERT cnt = n_units*&gt;
+
+    IntArraySort.Sort (map^, CmpUnit);
+
+    (* rebuild the linked list *)
+    ui := NIL;
+    FOR i := n_units-1 TO 0 BY -1 DO
+      vi := units[map[i]];
+      vi.next := ui;
+      ui := vi;
+    END;
+
+    RETURN ui;
+  END SortUnits;
+
+PROCEDURE <A NAME="GenExporters"><procedure>GenExporters</procedure></A> (VAR s: State;  all_ui: UnitInfo) =
+  CONST ShortForm = TRUE;
+  VAR ui := all_ui;  u: Mx.Unit;  z: UnitInfoList;
+  BEGIN
+    Out (s, s.eol, &quot;struct {&quot;, s.eol);
+    WHILE (ui # NIL) DO
+      u := ui.unit;
+      IF (u.interface) THEN
+        z := ui.exporters;
+        IF (z # NIL) THEN
+          IF (ShortForm) AND (z.next = NIL) AND (z.ui.unit.name = u.name) THEN
+            (* this is a simple &quot;A exports A&quot; case =&gt; don't emit it *)
+          ELSE
+            Out (s, &quot;  struct {&quot;);
+            WHILE (z # NIL) DO
+              Out (s, &quot; int &quot;, M3ID.ToText (z.ui.unit.name), &quot;;&quot;);
+              z := z.next;
+            END;
+            Out (s, &quot; } &quot;, M3ID.ToText (u.name), &quot;;&quot;, s.eol);
+          END;
+        END;
+      END;
+      ui := ui.next;
+    END;
+    Out (s, &quot;} * _m3_exporters;&quot;, s.eol, s.eol);
+  END GenExporters;
+
+PROCEDURE <A NAME="FindUnit"><procedure>FindUnit</procedure></A> (VAR s: State;  intfs: REF ARRAY OF UnitInfo;
+                     READONLY name: Mx.Name): UnitInfo =
+  VAR x: INTEGER;
+  BEGIN
+    x := MxMap.GetIndex (s.base.interfaces, name);
+    IF (0 &lt;= x) AND (x &lt;= LAST (intfs^))
+      THEN RETURN intfs[x];
+      ELSE RETURN NIL;
+    END;
+  END FindUnit;
+
+PROCEDURE <A NAME="ImportUnit"><procedure>ImportUnit</procedure></A> (VAR s: State;  u: Mx.Unit) =
+  BEGIN
+    Out (s, &quot;extern _MODULE &quot;, IR_Prefix [u.interface]);
+    Out (s, M3ID.ToText (u.name), &quot;;&quot;, s.eol);
+  END ImportUnit;
+
+PROCEDURE <A NAME="InitUnit"><procedure>InitUnit</procedure></A> (VAR s: State;  ui: UnitInfo;  others: UnitInfo) =
+  (* This procedure is adapted from the algorithm, SEARHC, given in
+     &quot;The Design and Analysis of Computer Algorithms&quot; by Aho, Hopcroft,
+     and Ullman for finding strongly connected components. *)
+  VAR x: UnitInfoList;  z, next_z: UnitInfo;  n_mods: INTEGER;
+  BEGIN
+    IF (ui # NIL) THEN
+      ui.init_started := TRUE;
+      ui.dfs_id := s.dfs_count;  INC (s.dfs_count);
+      ui.low_link := ui.dfs_id;
+
+      &lt;*ASSERT NOT ui.stacked *&gt;
+      ui.stacked := TRUE;
+      ui.prev_stack := s.init_stack;
+      s.init_stack := ui;
+
+      (* visit my imports *)
+      x := ui.imports;
+      WHILE (x # NIL) DO  InitProbe (s, ui, x.ui); x := x.next;  END;
+      (* visit my exporters *)
+      x := ui.exporters;
+      WHILE (x # NIL) DO  InitProbe (s, ui, x.ui); x := x.next;  END;
+    END;
+
+    (* visit everbody else *)
+    z := others;
+    WHILE (z # NIL) DO  InitProbe (s, ui, z); z := z.next;  END;
+
+    IF (ui # NIL) AND (ui.low_link = ui.dfs_id) THEN
+      (* ui is the root of a strongly connected component *)
+      (* =&gt; &quot;pop&quot; the component off the stack *)
+      n_mods := s.n_modules;
+
+      (* first, init the interfaces in the component *)
+      z := s.init_stack;
+      LOOP
+        IF (z.unit.interface) THEN EmitInit (s, z.unit) END;
+        IF (z = ui) THEN EXIT END;
+        z := z.prev_stack;
+      END;
+
+      (* then, init the modules in the component *)
+      z := s.init_stack;
+      LOOP
+        IF (NOT z.unit.interface) THEN EmitInit (s, z.unit) END;
+        IF (z = ui) THEN EXIT END;
+        z := z.prev_stack;
+      END;
+
+      IF (n_mods # s.n_modules) THEN Out (s, s.eol) END; (*break list*)
+
+      (* finally, pop the stack *)
+      z := s.init_stack;
+      LOOP
+        next_z := z.prev_stack;
+        z.stacked := FALSE;
+        z.prev_stack := NIL;
+        IF (z = ui) THEN EXIT END;
+        z := next_z;
+      END;
+      s.init_stack := next_z;
+    END;
+  END InitUnit;
+
+PROCEDURE <A NAME="InitProbe"><procedure>InitProbe</procedure></A> (VAR s: State;  v, w: UnitInfo) =
+  BEGIN
+    IF (NOT w.init_started) THEN
+      InitUnit (s, w, NIL);
+      IF (v # NIL) THEN v.low_link := MIN (w.low_link, v.low_link) END;
+    ELSIF (v # NIL) AND (w.dfs_id &lt; v.dfs_id) AND (w.stacked) THEN
+      v.low_link := MIN (w.dfs_id, v.low_link);
+    END;
+  END InitProbe;
+
+PROCEDURE <A NAME="EmitInit"><procedure>EmitInit</procedure></A> (VAR s: State;  u: Mx.Unit) =
+  BEGIN
+    Out (s, &quot;  &amp;&quot;, IR_Prefix [u.interface], M3ID.ToText (u.name));
+    Out (s, &quot;,&quot;, s.eol);
+    INC (s.n_modules);
+  END EmitInit;
+</PRE>------------------------------------------------------------------------
+
+<P><PRE>PROCEDURE <A NAME="GenerateEntry"><procedure>GenerateEntry</procedure></A> (VAR s: State) =
+  BEGIN
+    Out (s, &quot;static _LINK_INFO _m3_link_info = {&quot;, s.eol);
+    Out (s, &quot;  /* n_modules  */ &quot;, Fmt.Int (s.n_modules), &quot;,&quot;, s.eol);
+    Out (s, &quot;  /* modules    */ (_ADDRESS)_modules,&quot;, s.eol);
+    Out (s, &quot;  /* argc       */ 0,&quot;, s.eol);
+    Out (s, &quot;  /* argv       */ 0,&quot;, s.eol);
+    Out (s, &quot;  /* envp       */ 0,&quot;, s.eol);
+    Out (s, &quot;  /* instance   */ 0,&quot;, s.eol);
+    Out (s, &quot;  /* stack_bot  */ 0,&quot;, s.eol);
+    Out (s, &quot;  /* stack_top  */ (_ADDRESS)0x400000&quot;, s.eol);
+    Out (s, &quot;};&quot;, s.eol, s.eol);
+
+    IF (s.gui) THEN
+      Out (s, &quot;#include &lt;windows.h&gt;&quot;, s.eol);
+      Out (s, &quot;int WINAPI &quot;);
+      Out (s, &quot;WinMain (HINSTANCE self, HINSTANCE prev,&quot;, s.eol);
+      Out (s, &quot;                    LPSTR args, int mode)&quot;, s.eol);
+      Out (s, &quot;{&quot;, s.eol);
+      Out (s, &quot;  { /* initialize RTLinker's global data */&quot;, s.eol);
+      Out (s, &quot;    _LINKER* linker = (_LINKER*)&amp;&quot;, IR_Prefix[TRUE],
+                  &quot;RTLinker;&quot;, s.eol);
+      Out (s, &quot;    linker-&gt;info = &amp;_m3_link_info;&quot;, s.eol);
+      Out (s, &quot;    _m3_link_info.argc = -1;&quot;, s.eol);
+      Out (s, &quot;    _m3_link_info.argv = (_ADDRESS)(args);&quot;, s.eol);
+      Out (s, &quot;    _m3_link_info.envp = (_ADDRESS)GetEnvironmentStrings();&quot;, s.eol);
+      Out (s, &quot;    _m3_link_info.instance = (_ADDRESS)(self);&quot;, s.eol);
+    ELSE
+      Out (s, &quot;int main (argc, argv, envp)&quot;, s.eol);
+      Out (s, &quot;int argc;&quot;, s.eol);
+      Out (s, &quot;char **argv;&quot;, s.eol);
+      Out (s, &quot;char **envp;&quot;, s.eol);
+      Out (s, &quot;{&quot;, s.eol);
+      Out (s, &quot;  { /* initialize RTLinker's global data */&quot;, s.eol);
+      Out (s, &quot;    _LINKER* linker = (_LINKER*)&amp;&quot;, IR_Prefix[TRUE],
+                  &quot;RTLinker;&quot;, s.eol);
+      Out (s, &quot;    linker-&gt;info = &amp;_m3_link_info;&quot;, s.eol);
+      Out (s, &quot;    _m3_link_info.argc = argc;&quot;, s.eol);
+      Out (s, &quot;    _m3_link_info.argv = (_ADDRESS)(argv);&quot;, s.eol);
+      Out (s, &quot;    _m3_link_info.envp = (_ADDRESS)(envp);&quot;, s.eol);
+      Out (s, &quot;    _m3_link_info.instance = (_ADDRESS)(0);&quot;, s.eol);
+    END;
+    Out (s, &quot;    _m3_link_info.bottom_of_stack = (_ADDRESS)(&amp;linker);&quot;, s.eol);
+    Out (s, &quot;  };&quot;, s.eol, s.eol);
+
+    Out (s, &quot;  /* finally, start the Modula-3 program */&quot;, s.eol);
+    Out (s, &quot;  &quot;, IR_Prefix[FALSE], &quot;RTLinker.main ();&quot;, s.eol);
+    Out (s, &quot;  return 0;&quot;, s.eol);
+    Out (s, &quot;}&quot;, s.eol, s.eol);
+  END GenerateEntry;
+</PRE>------------------------------------------------------------------------
+
+<P><PRE>PROCEDURE <A NAME="ForEachUnit"><procedure>ForEachUnit</procedure></A> (VAR s: State;  p: UnitProc) =
+  VAR x: MxMap.Contents;  u: Mx.Unit;
+  BEGIN
+    x := MxMap.GetData (s.base.interfaces);
+    FOR i := 0 TO LAST (x^) DO
+      u := x[i].value;
+      IF (u # NIL) THEN p (s, u) END;
+    END;
+    x := MxMap.GetData (s.base.modules);
+    FOR i := 0 TO LAST (x^) DO
+      u := x[i].value;
+      IF (u # NIL) THEN p (s, u) END;
+    END;
+  END ForEachUnit;
+
+PROCEDURE <A NAME="TName"><procedure>TName</procedure></A> (t: Mx.TypeName): TEXT =
+  BEGIN
+    RETURN &quot;_t&quot; &amp; Fmt.Unsigned (t, 16);
+  END TName;
+
+PROCEDURE <A NAME="Err"><procedure>Err</procedure></A> (VAR s: State;  a, b, c, d: TEXT := NIL) =
+  BEGIN
+    s.failed := TRUE;
+    IF (s.errors = NIL) THEN RETURN END;
+    IF (a # NIL) THEN Wr.PutText (s.errors, a); END;
+    IF (b # NIL) THEN Wr.PutText (s.errors, b); END;
+    IF (c # NIL) THEN Wr.PutText (s.errors, c); END;
+    IF (d # NIL) THEN Wr.PutText (s.errors, d); END;
+  END Err;
+
+PROCEDURE <A NAME="Out"><procedure>Out</procedure></A> (VAR s: State;  a, b, c, d: TEXT := NIL) =
+  BEGIN
+    IF (a # NIL) THEN Wr.PutText (s.output, a) END;
+    IF (b # NIL) THEN Wr.PutText (s.output, b) END;
+    IF (c # NIL) THEN Wr.PutText (s.output, c) END;
+    IF (d # NIL) THEN Wr.PutText (s.output, d) END;
+  END Out;
+</PRE>*************************
+PROCEDURE OutI (VAR s: State;  i: INTEGER) =
+  &lt;*FATAL Convert.Failed*&gt;
+  VAR
+    buf: ARRAY [0..BITSIZE(INTEGER) + 3] OF CHAR;
+    len := Convert.FromInt (buf, i);
+  BEGIN
+    Wr.PutString (s.output, SUBARRAY (buf, 0, len));
+  END OutI;
+<P>
+PROCEDURE OutU (VAR s: State;  i: INTEGER) =
+  &lt;*FATAL Convert.Failed*&gt;
+  VAR
+    buf: ARRAY [0..BITSIZE(INTEGER) + 3] OF CHAR;
+    len := Convert.FromUnsigned (buf, i, 16);
+  BEGIN
+    Wr.PutString (s.output, SUBARRAY (buf, 0, len));
+  END OutU;
+<P>
+PROCEDURE OutC (VAR s: State;  c: CHAR) =
+  BEGIN
+    Wr.PutChar (s.output, c);
+  END OutC;
+***************************
+
+<P><PRE>BEGIN
+END MxGen.
+</PRE>
+</inModule>
+<HR>
+<A NAME="x1">interface M3ID is in:
+</A><UL>
+<LI><A HREF="../../m3middle/src/M3ID.i3.html#0TOP0">m3middle/src/M3ID.i3</A>
+<LI><A HREF="../../m3tools/src/M3ID.i3.html#0TOP0">m3tools/src/M3ID.i3</A>
+</UL>
+<P>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

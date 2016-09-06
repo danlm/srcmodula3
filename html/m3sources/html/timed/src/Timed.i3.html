@@ -1,0 +1,96 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: timed/src/Timed.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>timed/src/Timed.i3</H2></A><HR>
+<PRE></PRE> Copyright 93 Digital Equipment Corporation.
+   Digital Internal Use Only
+<P>
+INTERFACE Timed;
+<P>
+(* Versions of Thread.Wait, Thread.AlertWait and Thread.Fork with timeouts.
+<P>
+   This interface contains a new version of Thread.Wait and Thread.AlertWait
+   that allow the caller to place a suggested upper bound on the time a
+   thread will wait for a condition variable.
+<P>
+   The current implementation signals the wake up by broadcasting the
+   condition variable.  This may not be acceptable on a high traffic
+   condition variable.  The current implementation has a timer thread
+   which needs to acquire the mutex passed into Wait.  For this reason
+   any mutex used with this interface should be held only for short periods
+   of time.
+<P>
+   Timed.Fork creates a thread that will automatically be alerted after
+   the timeout expires.  This can be used to place timeouts on more
+   general computations.
+<P>
+   The current implementation may delay a broadcast or alert by as
+   much as 0.1 second.  Additional scheduling delays may also be incurred
+   between the timeout given and the time the condition is broadcast.
+<P>
+   Index: synchronization, timeouts; timeouts; threads, timeouts . 
+
+<P><PRE>IMPORT Time, Thread;
+</PRE> The timeout parameter is an absolute time, usually gotten by
+   calling Time.Now() and adding a small number to it.   The thread
+   will exit from Wait or AlertWait soon after that time if it has
+   not done so before.
+
+
+<P><PRE>PROCEDURE Wait (m: MUTEX; c: Thread.Condition; timeout: Time.T);
+
+PROCEDURE AlertWait (m: MUTEX; c: Thread.Condition; timeout: Time.T)
+  RAISES {Thread.Alerted};
+
+PROCEDURE Fork(closure: Thread.Closure; timeout: Time.T): Thread.T;
+  (* Creates a new thread calling the given closure.apply and arranges
+     for that thread to be alerted if it hasn't terminated by the time given.
+     The client may alert the thread independently. *)
+
+END Timed.
+</PRE> Sample usage: Wait for &lt;condition&gt; but raise Timedout if it
+   does not occur within 3 seconds.
+<P>
+    LOCK m DO
+      WITH timeout = Time.Now() + 3.0 DO
+        LOOP
+          IF &lt;condition&gt; THEN (* do stuff  <PRE>EXIT; END;
+          IF Time.Now() &gt;= timeout THEN RAISE Timeout; END;
+          Timed.Wait(m, c, timeout);
+        END;
+      END;
+    END;
+
+*)
+</PRE>
+</inInterface>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

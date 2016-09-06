@@ -1,0 +1,100 @@
+(* Copyright 1991 Digital Equipment Corporation.               *)
+(* Distributed only by permission.                             *)
+
+MODULE ObPkg;
+IMPORT SynWr, SynLocation, ObCommand, Text, ObErr;
+
+  TYPE
+    TableImpl =
+      Table OBJECT
+        packages: TList := NIL;
+      OVERRIDES
+        Register := RegisterPackage;
+        RegisterHelp := RegisterPackageHelp;
+        Lookup := LookupPackage;
+        LookupFixity := LookupPackageFixity;
+      END;
+
+    TList = 
+      OBJECT
+        package: T;
+        rest: TList;
+      END;
+
+  PROCEDURE Setup()  =
+  BEGIN
+    packageTable := NEW(TableImpl);
+    helpCommandSet := ObCommand.NewSet();
+  END Setup;
+
+  PROCEDURE RegisterPackage(self: TableImpl; 
+        package: T) =
+    BEGIN
+      ObCommand.Register(helpCommandSet,
+          NEW(ObCommand.T, name:=package.name, 
+              sortingName:=package.sortingName,
+              Exec:=package.Help));
+      self.packages :=
+        NEW(TList, package:=package, rest:=self.packages);
+    END RegisterPackage;
+
+  PROCEDURE RegisterPackageHelp(self: TableImpl; name: TEXT;
+      helpProc: HelpProc) =
+    VAR pkg: T;
+    BEGIN
+      IF self.Lookup(name, (*out*)pkg) THEN
+        pkg.Help := helpProc;
+        ObCommand.ReRegister(helpCommandSet, name, helpProc);
+      ELSE ObErr.Msg(SynWr.out, 
+                     "RegisterPackageHelp: package not found: " & name);
+      END;
+    END RegisterPackageHelp;
+
+  PROCEDURE LookupPackage(self: TableImpl; name: TEXT; 
+      VAR(*out*) pkg: T): BOOLEAN =
+    VAR list: TList;
+    BEGIN
+      list := self.packages;
+      LOOP
+        IF list=NIL THEN RETURN FALSE END;
+        IF Text.Equal(name, list.package.name) THEN 
+          pkg := list.package;
+          RETURN TRUE;
+        END;
+        list := list.rest;
+      END;
+    END LookupPackage;
+
+  PROCEDURE LookupPackageFixity(self: TableImpl;
+      opName: TEXT; VAR (*out*)pkgName: TEXT): OpFixity = 
+    VAR list: TList; opCodes: REF ARRAY OF OpCode;
+    BEGIN
+      list := self.packages;
+      LOOP
+        IF list=NIL THEN RETURN OpFixity.Undefined END;
+        opCodes := list.package.opCodes;
+        FOR i:=0 TO NUMBER(opCodes^)-1 DO
+          IF Text.Equal(opName, opCodes^[i].name) THEN
+            pkgName := list.package.name;
+            RETURN opCodes^[i].fixity;
+          END;
+        END;
+        list := list.rest;
+      END;
+    END LookupPackageFixity;
+
+  PROCEDURE EncodeTermOp(self: T; opName: TEXT; 
+      VAR(*out*)code: OpCode; location: SynLocation.T) RAISES {ObErr.Fail} =
+    BEGIN
+      FOR i:=FIRST(self.opCodes^) TO LAST(self.opCodes^) DO
+        IF Text.Equal(opName, self.opCodes^[i].name) THEN
+          code := self.opCodes^[i];
+          RETURN;
+        END;
+      END;
+      ObErr.Fault(SynWr.out, 
+                  "Unknown operation: " & self.name & "_" & opName);
+    END EncodeTermOp;
+
+BEGIN
+END ObPkg.

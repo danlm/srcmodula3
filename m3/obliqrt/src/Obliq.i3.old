@@ -1,0 +1,179 @@
+
+(* Copyright 1991 Digital Equipment Corporation.               *)
+(* Distributed only by permission.                             *)
+
+INTERFACE Obliq;
+IMPORT ObTree, ObValue; 
+
+(* Program interface to Obliq run-time values and evaluation.
+   Other important interfaces are ObTree and ObValue, but the
+   present interface attempts to be fairly self-contained.
+*)
+
+  TYPE 
+    Term = ObTree.Term;
+    Phrase = ObTree.Phrase;
+    Val = ObValue.Val;
+    Vals = ARRAY OF Val;
+    FieldList = ObValue.ObjField;
+    Env <: REFANY;
+
+  EXCEPTION Failure(TEXT);
+
+  PROCEDURE PackageSetup();
+  (* To be called at least once before any other use of the obliqrt package. *)
+
+(* ====== Environments ====== *)
+
+  VAR (* READONLY*) emptyEnv: Env;
+  (* The empty evaluation environment. This is a legal environment. *)
+  
+  PROCEDURE NewEnv(name: TEXT; val: Val; rest: Env): Env RAISES {Failure};
+  (* Extend an evaluation environment with a new association name-val. 
+     This is a legal environment if "rest" is, and if "val" a legal value. *)
+
+(* ====== Eval ====== *)
+
+  PROCEDURE EvalTerm(term: Term; env: Env): Val RAISES {Failure};
+  (* Check and evaluate a term in an environment. "env" must be a legal
+     environment. Produces a legal value, or an exception.
+     A Term can be obtained via ObliqParser.i3. *)
+
+  PROCEDURE EvalPhrase(phrase: Phrase; env: Env): Env RAISES {Failure};
+  (* Check and evaluate a phrase in an environment. "env" must be a legal
+     environment. Produces an enriched legal environment or an exception.
+     (The result environment is enriched with new bindings when phrase is 
+     a definition.) A Phrase can be obtained via ObliqParser.i3. *)
+
+(* ====== Ground types ====== *)
+
+  VAR (*READONLY*) ok: Val;
+
+  VAR (*READONLY*) true, false: Val;
+  PROCEDURE NewBool(bool: BOOLEAN): Val;
+  PROCEDURE ToBool(val: Val): BOOLEAN RAISES{Failure};
+  PROCEDURE Is(val1, val2: Val): BOOLEAN;
+
+  VAR (*READONLY*) zero, one: Val;
+  PROCEDURE NewInt(int: INTEGER): Val;
+  PROCEDURE ToInt(val: Val): INTEGER RAISES{Failure};
+
+  VAR (*READONLY*) zeroPointZero, onePointZero: Val;
+  PROCEDURE NewReal(real: LONGREAL): Val;
+  PROCEDURE ToReal(val: Val): LONGREAL RAISES{Failure};
+
+  VAR (*READONLY*) char: ARRAY [0..255] OF Val;
+  PROCEDURE NewChar(char: CHAR): Val;
+  PROCEDURE ToChar(val: Val): CHAR RAISES{Failure};
+
+  VAR (*READONLY*) emptyText: Val;
+  PROCEDURE NewText(text: TEXT): Val;
+  PROCEDURE ToText(val: Val): TEXT RAISES{Failure};
+
+(* ====== Objects ====== *)
+
+  PROCEDURE NewObject(fields: FieldList): Val;
+  (* Allocates a legal object from a list of fields. This is a legal
+     value if the fields have unique names and contain legal values. *)
+
+  PROCEDURE NewField(label: TEXT; val: Val; rest: FieldList:=NIL): FieldList;
+  (* Used to build value field lists to be passed to NewObject.
+     (Method fields require knowledge beyond the scope of this interface.) *)
+  
+  PROCEDURE ObjectSelect(object: Val; label: TEXT): Val RAISES {Failure};
+  (* Selects the contents of a field of an object. The value produced
+     (if any) is a legal value provided that "object" is both a legal value 
+     and an object. *)
+    
+  PROCEDURE ObjectInvoke(object: Val; label: TEXT; args: Vals): Val
+    RAISES {Failure};
+  (* Invokes a method of an object. The value produced (if any) is a 
+     legal value provided that "object" is both a legal value and 
+     an object, and args is an array of legal values. *)
+    
+  PROCEDURE ObjectUpdate(object: Val; label: TEXT; val: Val) RAISES {Failure};
+  (* Updates a field or method of an object. The value produced (if any) is a 
+     legal value provided that "object" is both a legal value and 
+     an object, and val is a legal value. *)
+
+(* ====== Arrays ====== *)
+
+  PROCEDURE NewArray(READONLY vals: Vals): Val;
+  (* Allocates an array value from an array of values. *)
+  
+  PROCEDURE ArraySize(array: Val): INTEGER RAISES {Failure};
+  (* The size of an array value. *)
+
+  PROCEDURE ArraySelect(array: Val; i: INTEGER): Val RAISES {Failure};
+  (* The ith component of an array value. *)
+    
+  PROCEDURE ArrayUpdate(array: Val; i: INTEGER; val: Val) RAISES {Failure};
+  (* Set the ith componet of an array value to val. *)
+
+  PROCEDURE ToArray(val: Val; VAR(*out*) array:  Vals) RAISES {Failure};
+  (* Put the elements of an array value into an array. The size of "array"
+     must much the array size of "val". *)
+  
+  PROCEDURE NewIntArray(READONLY array: ARRAY OF INTEGER): Val;
+  PROCEDURE ToIntArray(val: Val; VAR(*out*) array: ARRAY OF INTEGER) RAISES {Failure};
+  PROCEDURE NewRealArray(READONLY array: ARRAY OF LONGREAL): Val;
+  PROCEDURE ToRealArray(val: Val; VAR(*out*) array: ARRAY OF LONGREAL) RAISES {Failure};
+  PROCEDURE NewTextArray(READONLY array: ARRAY OF TEXT): Val;
+  PROCEDURE ToTextArray(val: Val; VAR(*out*) array: ARRAY OF TEXT) RAISES {Failure};
+  (* These utility array routines maps to and from arrays of ground
+     types. They use NewArray and ToArray with appopriate coercions
+     for the array elements. *)
+
+(* ====== Procedures ====== *)
+
+  PROCEDURE Call(proc: Val; args: ARRAY OF Val): Val RAISES {Failure};
+  (* Take a procedure value with N parameters (i.e. the result of evaluating
+     an Obliq program of the form "proc(x1..xn)...end"), and call it 
+     (do the equivalent of "(proc(x1..xn)...end)(a1..an)"), returning
+     its result. *)
+  
+(* ====== Calling Modula-3 from Obliq via sys_call ====== *)
+
+  VAR 
+    sysCallFailure: ObValue.ValException;
+    (* An exception to be raised by SysCall procedures. *)
+
+  TYPE
+    SysCallClosure = OBJECT
+    METHODS
+      SysCall(arg: Val): Val RAISES{ObValue.Error, ObValue.Exception}; 
+      (* To be overridden. It should return an obliq Val, or raise an error
+         by calling RaiseError, or raise an exception by calling 
+         RaiseException. The raised exception should normally be 
+         sysCallFailure. *)
+    END;
+
+  PROCEDURE RaiseError(msg: TEXT) RAISES {ObValue.Error};
+    (* Raises an Obliq error. *)
+
+  PROCEDURE RaiseException(exception: ObValue.ValException; msg: TEXT) 
+    RAISES {ObValue.Exception};
+    (* Raises an Obliq exception; the exception should normally be
+       sysCallFailure. *)
+
+  PROCEDURE RaiseSysCallFailure(self: SysCallClosure; arg: Val): Val
+    RAISES{ObValue.Error, ObValue.Exception};
+    (* A SysCallProc that simply raises sysCallFailure. *)
+
+  PROCEDURE RegisterSysCall(name: TEXT; clos: SysCallClosure);
+    (* To register a Modula-3 procedure that can be called from Obliq,
+       under a given name. Re-registering for the same name overrides 
+       the previous proc for that name. Use clos=NIL to unregister. *)
+
+(* ====== Printing ====== *)
+
+  PROCEDURE PrintVal(val: Val; depth:=10);
+  (* Prettyprint a value to standard output. *)
+
+  PROCEDURE PrintText(text: TEXT);
+  (* Print a text to standard output, e.g. "\n". *)
+
+  PROCEDURE PrintFlush();
+  (* Flush standard output. *)
+
+END Obliq.

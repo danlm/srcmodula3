@@ -1,0 +1,57 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: m3tk/src/chartool/M3CharNode.ig</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>m3tk/src/chartool/M3CharNode.ig</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+
+GENERIC INTERFACE <genericInterface>M3CharNode</genericInterface>();
+
+IMPORT <A HREF="../gast/AST.i3.html">AST</A>, <A HREF="../gast/ASTWalk.i3.html">ASTWalk</A>;
+
+TYPE
+  Handle &lt;: Public;
+  Public = ASTWalk.Closure OBJECT
+  END;
+
+PROCEDURE NewHandle(): Handle;
+</PRE><BLOCKQUOTE><EM> Creates a new handle suitable for passing to <CODE>ASTWalk.VisitNodes</CODE>,
+   or directly to <CODE>Node</CODE>, from another walk. The <CODE>callback</CODE> method
+   is set to <CODE>Node</CODE>. </EM></BLOCKQUOTE><PRE>
+
+PROCEDURE Node(h: Handle; n: AST.NODE; vm: ASTWalk.VisitMode);
+</PRE><BLOCKQUOTE><EM> </EM></BLOCKQUOTE><PRE>
+
+END M3CharNode.
+</PRE>
+</inInterface>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

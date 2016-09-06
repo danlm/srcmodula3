@@ -1,0 +1,61 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: trestle_by_example/src/push/Push.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>trestle_by_example/src/push/Push.m3</H2></A><HR>
+<inModule>
+<PRE>MODULE <module>Push</module> EXPORTS <A HREF="../../../main/src/Main.i3.html"><implements>Main</A></implements>;
+IMPORT <A HREF="../../../ui/src/vbt/Trestle.i3.html">Trestle</A>, <A HREF="../../../ui/src/vbt/VBT.i3.html">VBT</A>, <A HREF="../../../ui/src/split/TextVBT.i3.html">TextVBT</A>, <A HREF="../../../ui/src/split/RigidVBT.i3.html">RigidVBT</A>, <A HREF="../../../ui/src/split/ButtonVBT.i3.html">ButtonVBT</A>, <A HREF="../../../ui/src/split/BorderedVBT.i3.html">BorderedVBT</A>, <A HREF="../../../ui/src/split/HVSplit.i3.html">HVSplit</A>,
+       <A HREF="../../../geometry/src/Axis.i3.html">Axis</A>;
+</PRE> action of button when pushed 
+<PRE>PROCEDURE <A NAME="QuitAction"><procedure>QuitAction</procedure></A> (self: ButtonVBT.T; READONLY cd: VBT.MouseRec) =
+  BEGIN
+    Trestle.Delete(main);        (* NB.  &quot;main&quot; is visible here. *)
+  END QuitAction;
+
+CONST
+  horz = 30.0;                   (* horizontal size of &quot;hello&quot; window in
+                                    millimeters *)
+  vert = 10.0;                   (* vertical size of &quot;hello&quot; window in
+                                    millimeters *)
+
+VAR
+  hello := RigidVBT.FromHV(TextVBT.New(&quot;Hello World&quot;), horz, vert);
+  quit  := ButtonVBT.New(ch := TextVBT.New(&quot;Quit&quot;), action := QuitAction);
+  main  := HVSplit.Cons(Axis.T.Ver, hello, BorderedVBT.New(quit));
+
+BEGIN
+  Trestle.Install(main);
+  Trestle.AwaitDelete(main);
+END Push.
+</PRE>
+</inModule>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

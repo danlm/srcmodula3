@@ -1,0 +1,97 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: m3tk/src/ast/M3AST_LX_F.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>m3tk/src/ast/M3AST_LX_F.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+
+INTERFACE <interface>M3AST_LX_F</interface>;
+
+IMPORT <A HREF="M3AST.i3.html">M3AST</A>, <A HREF="M3AST_LX.i3.html">M3AST_LX</A>;
+IMPORT <A HREF="../../DS/SeqM3AST_LX_SRC_NODE.i3.html">SeqM3AST_LX_SRC_NODE</A>;
+
+TYPE
+  SRC_NODE = M3AST.NODE OBJECT
+    lx_srcpos: M3AST_LX.SrcPos := 0;
+  END;
+
+  SRC_NODE_C = M3AST_LX.SRC_NODE OBJECT
+    lx_node_s := SeqM3AST_LX_SRC_NODE.Null;
+  END;
+
+  ID = M3AST_LX.SRC_NODE OBJECT
+    lx_symrep: M3AST_LX.Symbol_rep := NIL;
+  END;
+</PRE> To reduce space requirements <CODE>M3AST_AS</CODE> reveals a LITERAL to be 
+a subtype of <CODE>EXP</CODE>, so we defer the exposure of the <CODE>lx</CODE> component
+until then.
+<P>
+  LITERAL = M3AST_LX.SRC_NODE OBJECT
+    lx_litrep: M3AST_LX.Literal_rep := NIL;
+  END;
+
+
+<P>  <PRE>Whitespace = M3AST_LX.SRC_NODE OBJECT
+    lx_whitespace_rep: M3AST_LX.Whitespace_rep := NIL;
+  END;
+
+  Comment = M3AST_LX.SRC_NODE OBJECT
+    lx_comment_rep: M3AST_LX.Comment_rep := NIL;
+  END;
+
+  Pragma = M3AST_LX.SRC_NODE OBJECT
+    lx_pragma_rep: M3AST_LX.Pragma_rep := NIL;
+  END;
+
+  BadChar = M3AST_LX.SRC_NODE OBJECT
+   lx_badchar_rep: M3AST_LX.BadChar_rep := NIL;
+  END;
+
+  Token = M3AST_LX.SRC_NODE OBJECT
+    lx_token_rep: M3AST_LX.Token_rep := NIL;
+  END;
+
+REVEAL
+  M3AST_LX.SRC_NODE &lt;: SRC_NODE;
+  M3AST_LX.SRC_NODE_C &lt;: SRC_NODE_C;
+  M3AST_LX.ID &lt;: ID;
+</PRE><BLOCKQUOTE><EM>M3AST_LX.LITERAL &lt;: LITERAL;</EM></BLOCKQUOTE><PRE>
+  M3AST_LX.Whitespace &lt;: Whitespace;
+  M3AST_LX.Comment &lt;: Comment;
+  M3AST_LX.Pragma &lt;: Pragma;
+  M3AST_LX.BadChar &lt;: BadChar;
+  M3AST_LX.Token &lt;: Token;
+
+END M3AST_LX_F.
+</PRE>
+</inInterface>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

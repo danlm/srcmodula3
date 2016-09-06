@@ -1,0 +1,138 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: thread/src/WIN32/ThreadF.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>thread/src/WIN32/ThreadF.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM>                                                             </EM></BLOCKQUOTE><PRE>
+
+INTERFACE <interface><A HREF="#x1">ThreadF</A></interface>;
+</PRE>--------------------------------------------- exception handling support --
+
+<P><PRE>PROCEDURE <A HREF="#x2">GetCurrentHandlers</A>(): ADDRESS;
+</PRE><BLOCKQUOTE><EM> == RETURN WinBase.TlsGetValue(handlersIndex) </EM></BLOCKQUOTE><PRE>
+
+PROCEDURE <A HREF="#x3">SetCurrentHandlers</A>(h: ADDRESS);
+</PRE><BLOCKQUOTE><EM> == WinBase.TlsSetValue(handlersIndex, h) </EM></BLOCKQUOTE><PRE>
+</PRE>--------------------------------------------- garbage collector support ---
+
+<P><PRE>PROCEDURE <A HREF="#x4">SuspendOthers</A> ();
+</PRE><BLOCKQUOTE><EM> Suspend all threads except the caller's </EM></BLOCKQUOTE><PRE>
+
+PROCEDURE <A HREF="#x5">ResumeOthers</A> ();
+</PRE><BLOCKQUOTE><EM> Resume the threads suspended by <CODE>SuspendOthers</CODE> </EM></BLOCKQUOTE><PRE>
+
+PROCEDURE <A HREF="#x6">ProcessStacks</A> (p: PROCEDURE (start, stop: ADDRESS));
+</PRE><BLOCKQUOTE><EM> Apply p to each thread stack, with start and stop being the limits
+   of the stack.  All other threads must be suspended.  ProcessStacks
+   exists solely for the garbage collector.  </EM></BLOCKQUOTE><PRE>
+</PRE> Feature:  Windows threads not created by Thread.Fork are not suspended
+    or resumed, and their stacks are not processed. 
+
+<P>------------------------------------------------------------ preemption ---
+
+<P><PRE>PROCEDURE <A HREF="#x7">SetSwitchingInterval</A> (usec: CARDINAL);
+</PRE><BLOCKQUOTE><EM> Sets the time between thread preemptions to 'usec' microseconds.
+   This procedure is a no-op on Windows/NT. </EM></BLOCKQUOTE><PRE>
+</PRE>------------------------------------------------------------ thread IDs ---
+
+<P><PRE>TYPE
+  Id = INTEGER;
+
+PROCEDURE <A HREF="#x8">MyId</A> (): Id RAISES {};
+</PRE><BLOCKQUOTE><EM> return Id of caller </EM></BLOCKQUOTE><PRE>
+
+END ThreadF.
+</PRE>
+</inInterface>
+<HR>
+<A NAME="x1">ThreadF's implementation  is in:
+</A><UL>
+<LI><A HREF="../NOOP/Thread.m3.html#0TOP0">thread/src/NOOP/Thread.m3</A>
+<LI><A HREF="../POSIX/ThreadPosix.m3.html#0TOP0">thread/src/POSIX/ThreadPosix.m3</A>
+<LI><A HREF="ThreadWin32.m3.html#0TOP0">thread/src/WIN32/ThreadWin32.m3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x2">procedure ThreadF.GetCurrentHandlers is in:
+</A><UL>
+<LI><A HREF="../NOOP/Thread.m3.html#GetCurrentHandlers">thread/src/NOOP/Thread.m3</A>
+<LI><A HREF="../POSIX/ThreadPosix.m3.html#GetCurrentHandlers">thread/src/POSIX/ThreadPosix.m3</A>
+<LI><A HREF="ThreadWin32.m3.html#GetCurrentHandlers">thread/src/WIN32/ThreadWin32.m3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x3">procedure ThreadF.SetCurrentHandlers is in:
+</A><UL>
+<LI><A HREF="../NOOP/Thread.m3.html#SetCurrentHandlers">thread/src/NOOP/Thread.m3</A>
+<LI><A HREF="../POSIX/ThreadPosix.m3.html#SetCurrentHandlers">thread/src/POSIX/ThreadPosix.m3</A>
+<LI><A HREF="ThreadWin32.m3.html#SetCurrentHandlers">thread/src/WIN32/ThreadWin32.m3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x4">procedure ThreadF.SuspendOthers is in:
+</A><UL>
+<LI><A HREF="../POSIX/ThreadPosix.m3.html#SuspendOthers">thread/src/POSIX/ThreadPosix.m3</A>
+<LI><A HREF="ThreadWin32.m3.html#SuspendOthers">thread/src/WIN32/ThreadWin32.m3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x5">procedure ThreadF.ResumeOthers is in:
+</A><UL>
+<LI><A HREF="../POSIX/ThreadPosix.m3.html#ResumeOthers">thread/src/POSIX/ThreadPosix.m3</A>
+<LI><A HREF="ThreadWin32.m3.html#ResumeOthers">thread/src/WIN32/ThreadWin32.m3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x6">procedure ThreadF.ProcessStacks is in:
+</A><UL>
+<LI><A HREF="../NOOP/Thread.m3.html#ProcessStacks">thread/src/NOOP/Thread.m3</A>
+<LI><A HREF="../POSIX/ThreadPosix.m3.html#ProcessStacks">thread/src/POSIX/ThreadPosix.m3</A>
+<LI><A HREF="ThreadWin32.m3.html#ProcessStacks">thread/src/WIN32/ThreadWin32.m3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x7">procedure ThreadF.SetSwitchingInterval is in:
+</A><UL>
+<LI><A HREF="../POSIX/ThreadPosix.m3.html#SetSwitchingInterval">thread/src/POSIX/ThreadPosix.m3</A>
+<LI><A HREF="ThreadWin32.m3.html#SetSwitchingInterval">thread/src/WIN32/ThreadWin32.m3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x8">procedure ThreadF.MyId is in:
+</A><UL>
+<LI><A HREF="../NOOP/Thread.m3.html#MyId">thread/src/NOOP/Thread.m3</A>
+<LI><A HREF="../POSIX/ThreadPosix.m3.html#MyId">thread/src/POSIX/ThreadPosix.m3</A>
+<LI><A HREF="ThreadWin32.m3.html#MyId">thread/src/WIN32/ThreadWin32.m3</A>
+</UL>
+<P>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

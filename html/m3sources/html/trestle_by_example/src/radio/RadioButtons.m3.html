@@ -1,0 +1,92 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: trestle_by_example/src/radio/RadioButtons.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>trestle_by_example/src/radio/RadioButtons.m3</H2></A><HR>
+<inModule>
+<PRE>MODULE <module>RadioButtons</module> EXPORTS <A HREF="../../../main/src/Main.i3.html"><implements>Main</A></implements>;
+
+IMPORT <A HREF="../../../ui/src/vbt/Trestle.i3.html">Trestle</A>, <A HREF="../../../ui/src/vbt/VBT.i3.html">VBT</A>, <A HREF="../../../ui/src/split/TextVBT.i3.html">TextVBT</A>, <A HREF="../../../lego/src/SwitchVBT.i3.html">SwitchVBT</A>, <A HREF="../../../lego/src/ChoiceVBT.i3.html">ChoiceVBT</A>;
+IMPORT <A HREF="../../../lego/src/MarginFeedbackVBT.i3.html">MarginFeedbackVBT</A>, <A HREF="../../../lego/src/BiFeedbackVBT.i3.html">BiFeedbackVBT</A>, <A HREF="../../../lego/src/ShadowedFeedbackVBT.i3.html">ShadowedFeedbackVBT</A>;
+IMPORT <A HREF="../../../lego/src/Shadow.i3.html">Shadow</A>, <A HREF="../../../geometry/src/Axis.i3.html">Axis</A>, <A HREF="../../../ui/src/split/HVSplit.i3.html">HVSplit</A>, <A HREF="../../../ui/src/split/HVBar.i3.html">HVBar</A>;
+FROM <A HREF="../common/Colors.i3.html">Colors</A> IMPORT lblue, dblue;
+
+TYPE
+  S = SwitchVBT.T OBJECT
+      METHODS
+        init (ch: VBT.T; s: Shadow.T): S := Init
+      END;
+
+PROCEDURE <A NAME="Init"><procedure>Init</procedure></A> (self: S; ch: VBT.T; s: Shadow.T): S =
+  VAR
+    m := MarginFeedbackVBT.NewBullet(
+           NEW(ShadowedFeedbackVBT.T).init(ch, s));
+  BEGIN
+    EVAL SwitchVBT.T.init(self, f := NEW(BiFeedbackVBT.T).init(m));
+    RETURN (self);
+  END Init;
+
+CONST shsize = 5.0;              (* shadow size in points *)
+
+PROCEDURE <A NAME="kanu"><procedure>kanu</procedure></A> (v: ChoiceVBT.T; READONLY cd: VBT.MouseRec) =
+  BEGIN
+    TextVBT.Put(text, &quot;90.1 FM&quot;);
+  END kanu;
+
+PROCEDURE <A NAME="wbaa"><procedure>wbaa</procedure></A> (v: ChoiceVBT.T; READONLY cd: VBT.MouseRec) =
+  BEGIN
+    TextVBT.Put(text, &quot;106.1 AM&quot;);
+  END wbaa;
+
+PROCEDURE <A NAME="kera"><procedure>kera</procedure></A> (v: ChoiceVBT.T; READONLY cd: VBT.MouseRec) =
+  BEGIN
+    TextVBT.Put(text, &quot;90.5 FM&quot;);
+  END kera;
+
+VAR
+  text    := TextVBT.New(&quot;frequency&quot;);
+  sh      := Shadow.New(size := shsize, light := lblue, dark := dblue);
+  switch1 := NEW(S).init(TextVBT.New(&quot;KANU&quot;), sh);
+  switch2 := NEW(S).init(TextVBT.New(&quot;WBAA&quot;), sh);
+  switch3 := NEW(S).init(TextVBT.New(&quot;KERA&quot;), sh);
+  group   := NEW (ChoiceVBT.Group);
+  choice1 := NEW(ChoiceVBT.T, callback := kanu).init(switch1, group);
+  choice2 := NEW(ChoiceVBT.T, callback := wbaa).init(switch2, group);
+  choice3 := NEW(ChoiceVBT.T, callback := kera).init(switch3, group);
+  main := HVSplit.Cons(Axis.T.Ver, choice1, HVBar.New(), choice2,
+                       HVBar.New(), choice3, HVBar.New(), text);
+BEGIN
+  Trestle.Install(main);
+  Trestle.AwaitDelete(main)
+END RadioButtons.
+</PRE>
+</inModule>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

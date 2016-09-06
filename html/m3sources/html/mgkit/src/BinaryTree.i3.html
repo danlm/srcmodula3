@@ -1,0 +1,60 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: mgkit/src/BinaryTree.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>mgkit/src/BinaryTree.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM> </EM></BLOCKQUOTE><PRE>
+</PRE> by Steve Glassman and Stephen Harrison 
+
+<P><PRE>INTERFACE <interface><A HREF="BinaryTree.m3.html">BinaryTree</A></interface>;
+
+&lt;* PRAGMA LL *&gt;
+
+IMPORT <A HREF="GenericTree.i3.html">GenericTree</A>;
+
+TYPE
+  <A HREF="BinaryTree.m3.html#V">V</A> &lt;: GenericTree.V;
+  <A HREF="BinaryTree.m3.html#T">T</A> &lt;: PublicT;
+  PublicT = GenericTree.GenericTree OBJECT
+    l, r: T;
+  METHODS
+    &lt;* LL = v.mu *&gt;
+    set(v: V; lr: LR; ch: T);
+  END;
+
+  LR = {Left, Right};
+
+END BinaryTree.
+</PRE>
+</inInterface>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

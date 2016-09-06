@@ -1,0 +1,131 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: ui/src/winvbt/WinScreenType.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>ui/src/winvbt/WinScreenType.m3</H2></A><HR>
+<inModule>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM> Digital Internal Use Only                                                 </EM></BLOCKQUOTE><PRE>
+</PRE>                                                                           
+       Created on Tue Jan 17 11:23:11 PST 1995 by najork                   
+
+<P>
+<P><PRE>UNSAFE MODULE <module>WinScreenType</module> EXPORTS <A HREF="WinScreenType.i3.html"><implements>WinScreenType</A></implements>, <A HREF="WinScreenTypePrivate.i3.html"><implements>WinScreenTypePrivate</A></implements>;
+
+IMPORT <A HREF="../../../geometry/src/Axis.i3.html">Axis</A>, <A HREF="../../../C/src/Common/Ctypes.i3.html">Ctypes</A>, <A HREF="../vbt/PaintOp.i3.html">PaintOp</A>, <A HREF="../vbt/Pixmap.i3.html">Pixmap</A>, <A HREF="../../../geometry/src/Rect.i3.html">Rect</A>, <A HREF="../trestle/TrestleImpl.i3.html">TrestleImpl</A>, <A HREF="../vbt/VBTRep.i3.html">VBTRep</A>, <A HREF="../../../win32/src/WinDef.i3.html">WinDef</A>,
+       <A HREF="../../../win32/src/WinGDI.i3.html">WinGDI</A>, <A HREF="WinScrnColorMap.i3.html">WinScrnColorMap</A>, <A HREF="WinScrnCursor.i3.html">WinScrnCursor</A>, <A HREF="WinScrnFont.i3.html">WinScrnFont</A>, <A HREF="WinScrnPaintOp.i3.html">WinScrnPaintOp</A>,
+       <A HREF="WinScrnPixmap.i3.html">WinScrnPixmap</A>, <A HREF="WinTrestle.i3.html">WinTrestle</A>, <A HREF="../../../win32/src/WinUser.i3.html">WinUser</A>;
+
+REVEAL
+  <A NAME="T">T</A> = Private BRANDED OBJECT END;
+</PRE> New returns a new color screen type of a depth corresponding to the number 
+   of planes supported by the current Windows desktop.
+   It is supposed to fill in the following fields:
+     depth, color, bg, fg, bits, font, cmap
+   It also calls InnerNew to fill in the remaining fields. 
+
+<P><PRE>PROCEDURE <A NAME="New"><procedure>New</procedure></A>(trsl: WinTrestle.T): T =
+  VAR res := NEW(T);  n_colors := GetDeviceCaps (WinGDI.NUMCOLORS);
+  BEGIN
+    LOCK trsl DO
+      res.trsl  := trsl;
+      res.bg    := WinGDI.RGB (255, 255, 255); (* white *)
+      res.fg    := WinGDI.RGB (0, 0, 0);       (* black *)
+      res.depth := BITSIZE (WinDef.COLORREF);
+      res.bits  := NewBits(trsl);
+      res.color := (n_colors &gt; 2) OR (n_colors &lt; 0); (* Amazing Win32! *)
+      res.cmap  := WinScrnColorMap.NewOracle();
+      InnerNew (res);
+    END;
+    RETURN res;
+  END New;
+</PRE> NewBits returns a new screen type of depth 1 (i.e. a bitmap screen type).
+   It is supposed to fill in the following fields:
+     depth, color, bg, fg, bits, font, cmap
+   It also calls InnerNew to fill in the remaining fields.
+   LL = trsl 
+
+<P><PRE>PROCEDURE <A NAME="NewBits"><procedure>NewBits</procedure></A>(trsl: WinTrestle.T): T =
+  VAR
+    res := NEW (T);
+  BEGIN
+    res.trsl  := trsl;
+    res.bg    := 0;
+    res.fg    := 1;
+    res.depth := 1;
+    res.bits  := res;
+    res.cmap  := NIL;
+    res.color := FALSE;
+    InnerNew(res);
+    RETURN res;
+  END NewBits;
+
+PROCEDURE <A NAME="InnerNew"><procedure>InnerNew</procedure></A> ((* IN-OUT *) res: T) =
+  BEGIN
+    WITH pix_hor = WinUser.GetSystemMetrics(WinUser.SM_CXSCREEN),
+         pix_ver = WinUser.GetSystemMetrics(WinUser.SM_CYSCREEN),
+         mm_hor  = GetDeviceCaps (WinGDI.HORZSIZE),
+         mm_ver  = GetDeviceCaps (WinGDI.VERTSIZE) DO
+      res.rootDom := Rect.FromSize(pix_hor, pix_ver);
+      res.res[Axis.T.Hor] := FLOAT(pix_hor) / FLOAT(mm_hor);
+      res.res[Axis.T.Ver] := FLOAT(pix_ver) / FLOAT(mm_ver);
+    END;
+    res.op := WinScrnPaintOp.NewOracle (res);
+    res.cursor := WinScrnCursor.NewOracle (res);
+    res.pixmap := WinScrnPixmap.NewOracle (res);
+    res.ops := NIL;
+    res.cursors := NIL;
+    res.pixmaps := NIL;
+    res.fonts := NIL;
+
+    res.optable := NEW (REF ARRAY OF WinScrnPaintOp.OpRecord,
+                        NUMBER (PaintOp.Predefined));
+    res.pmtable := NEW (REF ARRAY OF WinScrnPixmap.PixmapRecord,
+                        NUMBER (Pixmap.Predefined));
+    res.font  := WinScrnFont.NewOracle ();
+  END InnerNew;
+
+PROCEDURE <A NAME="GetDeviceCaps"><procedure>GetDeviceCaps</procedure></A> (cap: Ctypes.int): INTEGER =
+  VAR
+    hwnd   := WinUser.GetDesktopWindow ();
+    hdc    := WinUser.GetDC (hwnd);
+    res    := WinGDI.GetDeviceCaps (hdc, cap);
+    status := WinUser.ReleaseDC (hwnd, hdc);
+  BEGIN
+    &lt;* ASSERT status # 0 *&gt;
+    RETURN res;
+  END GetDeviceCaps;
+
+BEGIN
+END WinScreenType.
+</PRE>
+</inModule>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

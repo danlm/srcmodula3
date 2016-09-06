@@ -1,0 +1,16 @@
+# Host: Intel 386 running Solaris 2 (SVR4)
+
+XM_FILE= xm-i386v4.h
+XDEPFILES= 
+
+NAT_FILE= nm-i386v4.h
+NATDEPFILES= core-svr4.o procfs.o fork-child.o i386v4-nat.o corelow.o
+
+# SVR4 comes standard with terminfo, and in some implementations, the
+# old termcap descriptions are incomplete.  So ensure that we use the
+# new terminfo interface and latest terminal descriptions.
+TERMCAP=-ltermlib
+
+# Solaris-2 makes `install' optional in the Berkeley compatability pkg.
+# cp will do fine.
+INSTALL = cp

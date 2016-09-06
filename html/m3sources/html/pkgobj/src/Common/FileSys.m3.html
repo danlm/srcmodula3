@@ -1,0 +1,163 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: pkgobj/src/Common/FileSys.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>pkgobj/src/Common/FileSys.m3</H2></A><HR>
+<inModule>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM> FileSys.m3 </EM></BLOCKQUOTE><PRE>
+
+MODULE <module><implements><A HREF="FileSys.i3.html">FileSys</A></implements></module>;
+
+IMPORT <A HREF="../../../os/src/Common/OSError.i3.html">OSError</A>, <A HREF="../../../libm3/DS/TextList.i3.html">TextList</A>, <A HREF="../../../rw/src/Common/Rd.i3.html">Rd</A>, <A HREF="../../../text/src/Text.i3.html">Text</A>, <A HREF="../../../thread/src/Common/Thread.i3.html">Thread</A>, <A HREF="../../../time/src/Common/Time.i3.html">Time</A>, <A HREF="../../../rw/src/Common/Wr.i3.html">Wr</A>, <A HREF="../../../weakref/src/WeakRef.i3.html">WeakRef</A>;
+IMPORT <A HREF="../../../rw/src/Common/FileRd.i3.html">FileRd</A>, <A HREF="../../../rw/src/Common/FileWr.i3.html">FileWr</A>, <A HREF="../../../os/src/Common/FS.i3.html">FS</A>, <A HREF="../../../os/src/Common/Pathname.i3.html">Pathname</A>;
+
+PROCEDURE <A NAME="OpenRead"><procedure>OpenRead</procedure></A>(fn: FN) : Rd.T RAISES {OSError.E} =
+  VAR rd: Rd.T;
+  BEGIN
+    IF fn = NIL THEN fn := &quot;&quot;; END;
+    rd := FileRd.Open(fn);
+    EVAL WeakRef.FromRef(rd, CloseRd);
+    RETURN rd;
+  END OpenRead;
+
+PROCEDURE <A NAME="OpenWrite"><procedure>OpenWrite</procedure></A>(fn: FN) : Wr.T RAISES {OSError.E} =
+  VAR wr: Wr.T;
+  BEGIN
+    IF fn = NIL THEN fn := &quot;&quot;; END;
+    wr := FileWr.Open(fn);
+    EVAL WeakRef.FromRef(wr, CloseWr);
+    RETURN wr;
+  END OpenWrite;
+
+PROCEDURE <A NAME="OpenAppend"><procedure>OpenAppend</procedure></A>(fn: FN) : Wr.T RAISES {OSError.E} =
+  VAR wr: Wr.T;
+  BEGIN
+    IF fn = NIL THEN fn := &quot;&quot;; END;
+    wr := FileWr.OpenAppend(fn);
+    EVAL WeakRef.FromRef(wr, CloseWr);
+    RETURN wr;
+  END OpenAppend;
+
+PROCEDURE <A NAME="CloseRd"><procedure>CloseRd</procedure></A>(&lt;*UNUSED*&gt; READONLY w: WeakRef.T; r: REFANY) =
+    &lt;* FATAL Thread.Alerted *&gt;
+  BEGIN
+    TRY Rd.Close(r); EXCEPT Rd.Failure =&gt; END;
+  END CloseRd;
+
+PROCEDURE <A NAME="CloseWr"><procedure>CloseWr</procedure></A>(&lt;*UNUSED*&gt; READONLY w: WeakRef.T; r: REFANY) =
+    &lt;* FATAL Thread.Alerted *&gt;
+  BEGIN
+    TRY Wr.Close(r); EXCEPT Wr.Failure =&gt; END;
+  END CloseWr;
+
+PROCEDURE <A NAME="Enumerate"><procedure>Enumerate</procedure></A> (fn: FN): Enumeration RAISES {OSError.E} =
+  VAR
+    res, tail, l: TextList.T := NIL;
+    t: TEXT;
+    i: FS.Iterator;
+  BEGIN
+    IF fn = NIL THEN fn := &quot;&quot;; END;
+    TRY
+      i := FS.Iterate(fn);
+      WHILE i.next(t) DO
+        l := TextList.Cons(t, NIL);
+        IF res = NIL THEN
+          res := l;
+        ELSE
+          tail.tail := l;
+        END;
+        tail := l;
+      END;
+    FINALLY
+      i.close();
+    END;
+    RETURN res;
+  END Enumerate;
+
+PROCEDURE <A NAME="MakeDir"><procedure>MakeDir</procedure></A> (path: FN) RAISES {OSError.E} =
+  BEGIN
+    FS.CreateDirectory(path);
+  END MakeDir;
+
+PROCEDURE <A NAME="SetModifiedDate"><procedure>SetModifiedDate</procedure></A> (path: FN; date: Time.T) RAISES {OSError.E} =
+  BEGIN
+    FS.SetModificationTime(path, date);
+  END SetModifiedDate;
+
+PROCEDURE <A NAME="Rename"><procedure>Rename</procedure></A> (source, dest: FN) RAISES {OSError.E} =
+  BEGIN
+    FS.Rename(source, dest);
+  END Rename;
+
+PROCEDURE <A NAME="Remove"><procedure>Remove</procedure></A> (path: FN; recursive: BOOLEAN := FALSE)
+    RAISES {OSError.E} =
+    (* iff recursive, we'll remove entire dir, otherwise the target
+       must be a non-directory *)
+  VAR waitCtr: CARDINAL;
+  CONST WaitInterval = 10;
+  PROCEDURE RemoveTreeInternal (thisPath: Text.T) RAISES {OSError.E} =
+    VAR
+      info: FileInfo;
+      eList: TextList.T;
+    BEGIN
+      DEC (waitCtr);
+      IF waitCtr = 0 THEN
+        waitCtr := WaitInterval; Thread.Pause (5.0D-2);
+      END;
+      info := GetInfo(thisPath);
+      IF recursive THEN
+        IF info.type = FileType.Dir THEN
+          EVAL CheckAccess(thisPath, TRUE, TRUE);
+          eList := Enumerate(thisPath);
+          WHILE eList # NIL DO
+            RemoveTreeInternal (Pathname.Join(thisPath, eList.head, NIL));
+            eList := eList.tail;
+          END;
+        END;
+      END;
+      IF info.type = FileType.Dir THEN
+        FS.DeleteDirectory(thisPath);
+      ELSE
+        FS.DeleteFile(thisPath);
+      END;
+    END RemoveTreeInternal;
+  BEGIN
+    waitCtr := WaitInterval;
+    IF path = NIL THEN path := &quot;&quot;; END;
+    RemoveTreeInternal (path);
+  END Remove;
+
+BEGIN
+END FileSys.
+</PRE>
+</inModule>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

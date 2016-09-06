@@ -1,0 +1,187 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: pkgobj/src/Common/Site.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>pkgobj/src/Common/Site.m3</H2></A><HR>
+<inModule>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM> Site.m3 </EM></BLOCKQUOTE><PRE>
+
+MODULE <module>Site</module> EXPORTS <A HREF="Site.i3.html"><implements>Site</A></implements>, <A HREF="SiteObj.i3.html"><implements>SiteObj</A></implements>;
+
+IMPORT <A HREF="../../../params/src/Env.i3.html">Env</A>, <A HREF="../../../convert/src/Convert.i3.html">Convert</A>, <A HREF="../../../tcp/src/common/IP.i3.html">IP</A>, <A HREF="../../../text/src/Text.i3.html">Text</A>, <A HREF="../../../thread/src/Common/Thread.i3.html">Thread</A>, <A HREF="../../../time/src/Common/Time.i3.html">Time</A>;
+IMPORT <A HREF="../../../netobjrt/src/NetObj.i3.html">NetObj</A>, <A HREF="../../../tcpnetobj/src/TCPNetObj.i3.html">TCPNetObj</A>;
+
+CONST
+  CacheTimeout = 9.0D2; (* 15 minutes *)
+
+VAR
+  cacheMu: MUTEX := NEW(MUTEX);
+  cachedT: T := NIL;
+  cacheTimeout: Time.T;
+  localST: ST := NIL;
+
+PROCEDURE <A NAME="Init"><procedure>Init</procedure></A>() : T RAISES {Error, Thread.Alerted} =
+  BEGIN
+    RETURN GetInner(FALSE);
+  END Init;
+
+PROCEDURE <A NAME="ErrMsg"><procedure>ErrMsg</procedure></A>(ec: EC): TEXT =
+  BEGIN
+    CASE ec OF
+    | EC.MissingEnvVariable =&gt;
+       RETURN &quot;Site error: missing SIPHON_SITE environment variable&quot;;
+    | EC.InfoServerUnavailable =&gt;
+       RETURN &quot;Site error: info unavailable (packageserver down?)&quot;;
+    | EC.BadInfoServerSpec, EC.BadIPPortSpec =&gt;
+       RETURN &quot;Site error: bad address (in SIPHON_SITE environment variable?)&quot;;
+    END;
+  END ErrMsg;
+
+PROCEDURE <A NAME="Get"><procedure>Get</procedure></A>(cacheOK: BOOLEAN := TRUE): T =
+    &lt;* FATAL Error, Thread.Alerted *&gt;
+  BEGIN
+    RETURN GetInner(cacheOK);
+  END Get;
+
+PROCEDURE <A NAME="GetInner"><procedure>GetInner</procedure></A>(cacheOK: BOOLEAN := TRUE): T
+   RAISES {Error, Thread.Alerted} =
+  VAR loc: TEXT;
+      st: ST;
+      t: T;
+  BEGIN
+    LOCK cacheMu DO
+      IF cachedT # NIL AND cacheOK AND Time.Now() &lt; cacheTimeout THEN
+        RETURN cachedT;
+      ELSE
+        t := cachedT;
+      END;
+    END;
+    IF localST # NIL THEN
+      st := localST;
+    ELSE
+      loc := Env.Get(EnvVarName);
+      IF loc = NIL THEN
+        RAISE Error(EC.MissingEnvVariable);
+      END;
+      st := Import(loc);
+    END;
+    TRY
+      t := st.get();
+      LOCK cacheMu DO
+        cachedT := t;
+        cacheTimeout := Time.Now() + CacheTimeout;
+      END;
+    EXCEPT
+    | Thread.Alerted, NetObj.Error =&gt;
+        IF t # NIL THEN RETURN t; END;
+        RAISE Error(EC.InfoServerUnavailable);
+    END;
+    RETURN t;
+  END GetInner;
+
+PROCEDURE <A NAME="FindRemote"><procedure>FindRemote</procedure></A>(
+      site: TEXT;
+      VAR (*OUT*) remote: Remote;
+      cacheOK: BOOLEAN := FALSE) : BOOLEAN =
+  VAR t := Get(cacheOK);
+  BEGIN
+    IF t.foreignSites # NIL THEN
+      FOR i := 0 TO LAST(t.foreignSites^) DO
+        IF Text.Equal(site, t.foreignSites[i].name) THEN
+          remote := t.foreignSites[i];
+          RETURN TRUE;
+        END;
+      END;
+    END;
+    RETURN FALSE;
+  END FindRemote;
+
+PROCEDURE <A NAME="SetServerST"><procedure>SetServerST</procedure></A>(st: ST) =
+  BEGIN
+    localST := st;
+  END SetServerST;
+
+PROCEDURE <A NAME="Import"><procedure>Import</procedure></A>(loc: TEXT) : ST RAISES {Error, Thread.Alerted} =
+  VAR o: NetObj.T;
+      a: NetObj.Address;
+      ipEP: IP.Endpoint;
+  BEGIN
+    IF loc = NIL THEN loc := &quot;&quot;; END;
+    TRY
+      IF ParseIPHostname(loc, ipEP) THEN
+        a := TCPNetObj.Locate(ipEP);
+      ELSE
+        a := NetObj.Locate(loc);
+      END;
+      o := NetObj.Import(SiteObjName, a);
+      IF o # NIL AND NOT ISTYPE(o, ST) THEN
+        RAISE Error(EC.InfoServerUnavailable);
+      END;
+    EXCEPT
+    | NetObj.Error =&gt;
+       RAISE Error(EC.InfoServerUnavailable);
+    | NetObj.Invalid =&gt;
+       RAISE Error(EC.BadInfoServerSpec);
+    END;
+    RETURN o;
+  END Import;
+
+PROCEDURE <A NAME="ParseIPHostname"><procedure>ParseIPHostname</procedure></A>(loc: TEXT; VAR ipEP: IP.Endpoint) : BOOLEAN
+    RAISES {Error} =
+  VAR i, j, n, res: INTEGER;
+      buffer: ARRAY [0..9] OF CHAR;
+  BEGIN
+    i := Text.FindChar(loc, ':', 0);
+    IF i &gt;= 0 THEN
+      TRY
+        n := Text.Length(loc) - (i+1);
+        Text.SetChars(buffer, Text.Sub(loc, i+1, n));
+        res := Convert.ToInt(SUBARRAY(buffer, 0, MIN(NUMBER(buffer), n)), j);
+        IF res &gt;= 0 AND res &lt;= LAST(IP.Port) THEN
+          ipEP.port := res;
+          IF IP.GetHostByName(Text.Sub(loc, 0, i), ipEP.addr) THEN
+            RETURN TRUE;
+          END;
+        END;
+      EXCEPT
+      | IP.Error =&gt; RAISE Error(EC.BadInfoServerSpec);
+      END;
+      RAISE Error(EC.BadIPPortSpec);
+    END;
+    RETURN FALSE;
+  END ParseIPHostname;
+
+BEGIN
+END Site.
+</PRE>
+</inModule>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

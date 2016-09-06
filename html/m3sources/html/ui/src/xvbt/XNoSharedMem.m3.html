@@ -1,0 +1,100 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: ui/src/xvbt/XNoSharedMem.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>ui/src/xvbt/XNoSharedMem.m3</H2></A><HR>
+<inModule>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+
+UNSAFE MODULE <module>XNoSharedMem</module> EXPORTS <A HREF="XSharedMem.i3.html"><implements>XSharedMem</A></implements>;
+
+IMPORT <A HREF="../picture/Completion.i3.html">Completion</A>, <A HREF="#x1">Picture</A>, <A HREF="../vbt/TrestleComm.i3.html">TrestleComm</A>, <A HREF="../vbt/VBT.i3.html">VBT</A>, <A HREF="../../../X11R4/src/Common/X.i3.html">X</A>, <A HREF="XClient.i3.html">XClient</A>, <A HREF="XClientExt.i3.html">XClientExt</A>,
+       <A HREF="XClientF.i3.html">XClientF</A>, <A HREF="XPicture.i3.html">XPicture</A>, <A HREF="XScreenType.i3.html">XScreenType</A>;
+</PRE> New() exported by XSharedFree 
+
+<P> -- XClient and XScreenType stuff -- 
+
+<P><PRE>REVEAL
+  <A NAME="XClient_T">XClient_T</A> = XClientF.T_Rel BRANDED OBJECT
+    shmEventBase := -1;
+    (* GetEventBase returns -1 on error,
+       so use it to signify no extension *)
+  END;
+
+PROCEDURE <A NAME="InitXClient"><procedure>InitXClient</procedure></A> (&lt;*UNUSED*&gt;v: XClient.T) RAISES {TrestleComm.Failure} =
+  BEGIN
+    (* SKIP *)
+  END InitXClient;
+
+PROCEDURE <A NAME="InitXScreenType"><procedure>InitXScreenType</procedure></A> (&lt;* UNUSED *&gt; st: XScreenType.T) =
+  BEGIN
+    (* SKIP *)
+  END InitXScreenType;
+
+PROCEDURE <A NAME="UsesExtension"><procedure>UsesExtension</procedure></A> (&lt;* UNUSED *&gt; st: VBT.ScreenType): BOOLEAN =
+  BEGIN
+    RETURN FALSE;
+  END UsesExtension;
+
+PROCEDURE <A NAME="EventBase"><procedure>EventBase</procedure></A> (v: XClient.T): X.Int =
+  BEGIN
+    RETURN v.shmEventBase;
+  END EventBase;
+
+PROCEDURE <A NAME="PictureUsesExt"><procedure>PictureUsesExt</procedure></A> (
+  &lt;* UNUSED *&gt; st: VBT.ScreenType;
+  &lt;* UNUSED *&gt; picture: Picture.T)
+  : BOOLEAN =
+  BEGIN
+    RETURN FALSE;
+  END PictureUsesExt;
+
+PROCEDURE <A NAME="MakeCompletion"><procedure>MakeCompletion</procedure></A> (&lt;*UNUSED*&gt; im: T): Completion.T =
+  BEGIN
+    RETURN NIL;
+  END MakeCompletion;
+
+REVEAL
+  <A NAME="T">T</A> = XPicture.T BRANDED &quot;XSharedMem.Picture&quot; OBJECT
+  END;
+
+BEGIN
+END XNoSharedMem.
+</PRE>
+</inModule>
+<HR>
+<A NAME="x1">interface Picture is in:
+</A><UL>
+<LI><A HREF="../../../trestle_by_example/src/common/Picture.i3.html#0TOP0">trestle_by_example/src/common/Picture.i3</A>
+<LI><A HREF="../picture/Picture.i3.html#0TOP0">ui/src/picture/Picture.i3</A>
+</UL>
+<P>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

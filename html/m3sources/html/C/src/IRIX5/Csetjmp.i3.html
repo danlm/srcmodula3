@@ -1,0 +1,72 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: C/src/IRIX5/Csetjmp.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>C/src/IRIX5/Csetjmp.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+
+INTERFACE <interface>Csetjmp</interface>;		(* for IRIX5 *)
+
+FROM <A HREF="../Common/Ctypes.i3.html">Ctypes</A> IMPORT int;
+
+CONST
+  JBLEN = 28;
+  SIGJBLEN = 128;
+</PRE>** System V facilities **
+
+<P><PRE>TYPE jmp_buf = ARRAY [0..JBLEN-1] OF int;
+
+&lt;*EXTERNAL*&gt; PROCEDURE setjmp (VAR env: jmp_buf): int;
+&lt;*EXTERNAL*&gt; PROCEDURE longjmp (VAR env: jmp_buf; val: int);
+</PRE> For src/runtime/ex_frame/RTException.m3 
+
+<P><PRE>&lt;*EXTERNAL setjmp *&gt; PROCEDURE usetjmp (VAR env: jmp_buf): int;
+&lt;*EXTERNAL longjmp *&gt; PROCEDURE ulongjmp (VAR env: jmp_buf; val: int);
+</PRE>** POSIX facilities **
+
+<P><PRE>TYPE sigjmp_buf = ARRAY [0..SIGJBLEN-1] OF int;
+
+&lt;*EXTERNAL*&gt; PROCEDURE sigsetjmp (VAR env: sigjmp_buf; savemask: int): int;
+&lt;*EXTERNAL*&gt; PROCEDURE siglongjmp (VAR env: sigjmp_buf; val: int);
+</PRE>** 4.3 BSD facilities **
+
+<P><PRE>&lt;*EXTERNAL *&gt; PROCEDURE BSDsetjmp (VAR env: sigjmp_buf): int;
+&lt;*EXTERNAL *&gt; PROCEDURE BSDlongjmp (VAR env: sigjmp_buf; val: int): int;
+
+&lt;*EXTERNAL &quot;_setjmp&quot; *&gt; PROCEDURE BSD_setjmp (VAR env: sigjmp_buf): int;
+&lt;*EXTERNAL &quot;_longjmp&quot; *&gt;
+PROCEDURE BSD_longjmp (VAR env: sigjmp_buf; val: int): int;
+
+END Csetjmp.
+</PRE>
+</inInterface>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

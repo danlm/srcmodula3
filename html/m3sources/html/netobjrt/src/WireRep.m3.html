@@ -1,0 +1,107 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: netobjrt/src/WireRep.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>netobjrt/src/WireRep.m3</H2></A><HR>
+<inModule>
+<PRE><A HREF="../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM> WireRep.m3 </EM></BLOCKQUOTE><PRE>
+
+UNSAFE MODULE <module><implements><A HREF="WireRep.i3.html">WireRep</A></implements></module>;
+
+IMPORT <A HREF="#x1">NetObjEpoch</A>, <A HREF="SpaceID.i3.html">SpaceID</A>, <A HREF="../../time/src/Common/Time.i3.html">Time</A>, <A HREF="../../word/src/Word.i3.html">Word</A>;  (* IO, Fmt *)
+
+TYPE
+  Int32 = BITS 32 FOR [ -16_7fffffff-1 .. 16_7fffffff ];
+  TRep  = RECORD ts: Int32; objNum: Int32; space: SpaceID.T; END;
+
+VAR myTs: Int32 := GetTime();
+    myObjNum := 0;
+    mu := NEW(MUTEX);
+
+PROCEDURE <A NAME="GetTime"><procedure>GetTime</procedure></A> (): Int32 =
+  BEGIN
+    RETURN ROUND (Time.Now () - NetObjEpoch.T);
+  END GetTime;
+
+PROCEDURE <A NAME="New"><procedure>New</procedure></A>() : T =
+  VAR wt: TRep;
+  BEGIN
+    LOCK mu DO
+      IF myObjNum = LAST(Int32) THEN myTs := GetTime(); END;
+      INC(myObjNum);
+      wt.ts := myTs;
+      wt.objNum := myObjNum;
+    END;
+    wt.space := SpaceID.Mine();
+    RETURN LOOPHOLE(wt, T);
+  END New;
+
+PROCEDURE <A NAME="Equal"><procedure>Equal</procedure></A>(t1, t2: T) : BOOLEAN =
+  BEGIN
+    RETURN (t1 = t2);
+  END Equal;
+</PRE><P>
+CONST Multiplier = -1640531527; (* good only for 32-bit words 
+
+<P><PRE>PROCEDURE Hash(t: T) : Word.T =
+  VAR x: Word.T;
+  BEGIN
+    x := Word.Xor(LOOPHOLE(t, TRep).objNum, LOOPHOLE(t, TRep).ts);
+    IO.Put(Fmt.Unsigned(x, 16) &amp; &quot; &quot; &amp;
+        Fmt.Unsigned(Word.Times(x, Multiplier), 16)
+        &amp; &quot;\n&quot;);
+    RETURN x;
+  END Hash;
+*)
+
+PROCEDURE <A NAME="Hash"><procedure>Hash</procedure></A>(t: T) : Word.T =
+  BEGIN
+    RETURN Word.Xor(LOOPHOLE(t, TRep).objNum, LOOPHOLE(t, TRep).ts);
+  END Hash;
+
+PROCEDURE <A NAME="GetSpaceID"><procedure>GetSpaceID</procedure></A>(t: T) : SpaceID.T =
+  BEGIN
+    RETURN LOOPHOLE(t, TRep).space;
+  END GetSpaceID;
+
+BEGIN
+END WireRep.
+</PRE>
+</inModule>
+<HR>
+<A NAME="x1">interface NetObjEpoch is in:
+</A><UL>
+<LI><A HREF="POSIX/NetObjEpoch.i3.html#0TOP0">netobjrt/src/POSIX/NetObjEpoch.i3</A>
+<LI><A HREF="WIN32/NetObjEpoch.i3.html#0TOP0">netobjrt/src/WIN32/NetObjEpoch.i3</A>
+</UL>
+<P>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

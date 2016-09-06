@@ -1,0 +1,62 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: zeus/src/ZeusPanelFriends.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>zeus/src/ZeusPanelFriends.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+&lt;* PRAGMA LL *&gt;
+
+INTERFACE <interface><A HREF="ZeusPanel.m3.html">ZeusPanelFriends</A></interface>;
+
+IMPORT <A HREF="View.i3.html">View</A>;
+
+VAR (* Hack to stop drifting snapshot/restore *)
+  XDRIFT: INTEGER := 0;
+  YDRIFT: INTEGER := 24;
+
+VAR
+  (* READONLY *) whichAlg, whichView: TEXT;
+  (* When the New procedure for an algorithm or view, &quot;whichAlg&quot; or &quot;whichView&quot;
+     is set to the name of the selected algorithm or view.  These variables
+     are only valid during a call on the New procedure *)
+
+PROCEDURE <A HREF="ZeusPanel.m3.html#DetachView">DetachView</A> (view: View.T);
+</PRE><BLOCKQUOTE><EM> Detach the specified view from its ZeusPanel.Session and remove the
+   session from view's property list.  If the view was previously attached
+   with Zeus.AttachView, this is identical to Zeus.DetachView.  If the view
+   wasn't previously attached, then this just deletes the view from the
+   session's list of not-yet-attached views.  LL = VBT.mu </EM></BLOCKQUOTE><PRE>
+
+END ZeusPanelFriends.
+</PRE>
+</inInterface>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

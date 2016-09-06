@@ -1,0 +1,32 @@
+(* An example of mouse detection. *)
+
+let g = graph_new();
+graph_setWorld(g, ~5.0, 10.0, 10.0, ~5.0);
+
+let v1 = graph_newVertex(g);
+graph_moveVertex(v1, 1.0, 1.0, true);
+graph_setVertexSize(v1, 1.0, 1.0);
+let v2 = graph_newVertex(g);
+graph_moveVertex(v2, 4.0, 4.0, true);
+graph_setVertexSize(v2, 1.0, 1.0);
+let e = graph_newEdge(v1, v2);
+graph_setEdgeColor(e, color_named("red"));
+graph_setEdgeArrows(e, false, true);
+
+graph_show(g);
+
+let a = proc() graph_animate(g, 0.0, 1.0) end;
+
+pause(2.0);
+
+a();
+
+graph_setClickAction(g,
+  proc(g,x,y)
+    let vs = graph_verticesAt(g, x-0.1, x+0.1, y-0.1, y+0.1);
+    if #(vs) > 0 
+    then
+      graph_removeVertex(vs[0]);
+      graph_redisplay(g);
+    end
+  end);

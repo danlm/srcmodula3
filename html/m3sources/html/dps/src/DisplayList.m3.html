@@ -1,0 +1,250 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: dps/src/DisplayList.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>dps/src/DisplayList.m3</H2></A><HR>
+<inModule>
+<PRE><A HREF="../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+
+MODULE <module><implements><A HREF="DisplayList.i3.html">DisplayList</A></implements></module>;
+
+IMPORT <A HREF="DPS.i3.html">DPS</A>, <A HREF="DPSWindow.i3.html">DPSWindow</A>, <A HREF="../../fmtlex/src/Fmt.i3.html">Fmt</A>, <A HREF="#x1">Err</A>;
+
+PROCEDURE <A NAME="NewBox"><procedure>NewBox</procedure></A> (e: E; box: DPS.Box) =
+</PRE><BLOCKQUOTE><EM> Could just offer NewBoxToParent. This is convenient for subclassers. </EM></BLOCKQUOTE><PRE>
+ VAR p: T;
+  BEGIN
+  p := e.parent;
+  IF p # NIL THEN p.NewBoxOfChild (e, box);
+   ELSE e.box := box; (* New box of root. Needs repaint? *)
+    END;
+  END NewBox;
+
+PROCEDURE <A NAME="NewBoxToParent"><procedure>NewBoxToParent</procedure></A> (e: E; box: DPS.Box) =
+ VAR p: T;
+  BEGIN
+  p := e.parent;
+  IF p # NIL THEN p.NewBoxOfChild (e, box);
+   ELSE e.box := box; (* New box of root. Needs repaint? *)
+    END;
+  END NewBoxToParent;
+
+PROCEDURE <A NAME="NewBoxOfChild"><procedure>NewBoxOfChild</procedure></A> (&lt;*UNUSED*&gt; t: T; e: E; box: DPS.Box) =
+ VAR dirt: DPS.Box;
+  BEGIN
+  dirt := DPS.BoxUnion (e.box, box);
+  e.box := box;
+  e.Dirty (dirt, NIL);
+  END NewBoxOfChild;
+
+PROCEDURE <A NAME="Repaint"><procedure>Repaint</procedure></A> (t: T; box: DPS.Box; only: REFANY): TEXT =
+ VAR him, ret: TEXT := &quot;&quot;;
+ VAR ee: E;
+  BEGIN
+  TYPECASE only OF
+  NULL =&gt;
+    ee := t.First();
+    WHILE ee # NIL DO
+      him := ee.Repaint (box, only);
+      IF him # NIL THEN ret := ret &amp; him; END;
+      ee := ee.Next();
+      END;
+  | E(eeonly) =&gt;
+    (*
+    ee := t.First();
+    WHILE ee # NIL DO
+      him := ee.Repaint (box, NIL);
+      IF him # NIL THEN ret := ret &amp; him; END;
+      ee := ee.Next();
+      END;
+    *)
+    (*
+    ret := eeonly.Repaint (box, only);
+    *)
+    ee := t.First();
+    WHILE ee # NIL DO
+      IF ee = eeonly THEN RETURN ee.Repaint (box, only); END;
+      ee := ee.Next();
+      END;
+    (* If 'only' not child, have to traverse tree so ancestors can warp. *)
+    ee := t.First();
+    WHILE ee # NIL DO
+      him := ee.Repaint (box, only);
+      IF him # NIL THEN ret := ret &amp; him; END;
+      ee := ee.Next();
+      END;
+   ELSE Err.Msg (&quot;Bad -only- in DisplayList.Repaint&quot;);
+    END;
+  RETURN ret;
+  END Repaint;
+
+PROCEDURE <A NAME="DirtyToWindow"><procedure>DirtyToWindow</procedure></A> (r: R; box: DPS.Box; only: T := NIL) =
+  BEGIN
+  r.window.Dirty (box, only);
+  END DirtyToWindow;
+
+PROCEDURE <A NAME="DirtyToParent"><procedure>DirtyToParent</procedure></A> (e: E; box: DPS.Box; only: T := NIL) =
+ VAR p: T;
+  BEGIN
+  p := e.parent;
+  IF p # NIL THEN p.Dirty(box, only); END;
+  END DirtyToParent;
+
+PROCEDURE <A NAME="PostScriptToParent"><procedure>PostScriptToParent</procedure></A> (e: E; script: TEXT) =
+ VAR p: T;
+  BEGIN
+  p := e.parent;
+  IF p # NIL THEN p.ImmediatePostScript(script); END;
+  END PostScriptToParent;
+
+PROCEDURE <A NAME="PostScriptToWindow"><procedure>PostScriptToWindow</procedure></A> (r: R; script: TEXT) =
+ &lt;*FATAL DPS.BadPostScript*&gt;
+ VAR w: DPSWindow.T;
+  BEGIN
+  w := r.window;
+  IF w # NIL THEN w.Send(script); END;
+  END PostScriptToWindow;
+
+PROCEDURE <A NAME="Mouse"><procedure>Mouse</procedure></A> (t: T; window: DPSWindow.T; event: DPS.MouseEvent): BOOLEAN =
+ VAR e: E;
+  BEGIN
+  e := t.Last();
+  WHILE e # NIL DO
+    IF e.Mouse (window, event) THEN RETURN TRUE; END;
+    e := e.Previous();
+    END;
+  (* Used to kill input focus if no-one accepted mouse. *)
+  RETURN FALSE;
+  END Mouse;
+
+PROCEDURE <A NAME="CharR"><procedure>CharR</procedure></A> (r: R; window: DPSWindow.T; char: CHAR): BOOLEAN =
+ VAR e: E;
+  BEGIN
+  e := r.childWithInputFocus;
+  IF e # NIL THEN RETURN e.Char (window, char); END;
+  Err.Msg (&quot;Discarded Char: &quot;, Fmt.Int(ORD(char)));
+  RETURN FALSE;
+  END CharR;
+
+PROCEDURE <A NAME="CharT"><procedure>CharT</procedure></A> (r: T; window: DPSWindow.T; char: CHAR): BOOLEAN =
+ VAR e: E;
+  BEGIN
+  e := r.childWithInputFocus;
+  IF e # NIL THEN RETURN e.Char (window, char); END;
+  Err.Msg (&quot;Discarded Char: &quot;, Fmt.Int(ORD(char)));
+  RETURN FALSE;
+  END CharT;
+
+PROCEDURE <A NAME="Key"><procedure>Key</procedure></A> (t: T; window: DPSWindow.T; event: DPS.KeyEvent) =
+ VAR got: CHAR;
+ VAR e: E;
+  BEGIN
+  got := DPS.CharFromKey (event.key, event.modifiers);
+  IF got = '\000' THEN RETURN; END;
+  e := t.Last();
+  WHILE e # NIL DO
+    IF e.Char (window, got) THEN RETURN; END;
+    e := e.Previous();
+    END;
+  Err.Msg (&quot;Ignored Keystroke = &quot;,Fmt.Int(event.key),&quot; = &quot;,Fmt.Int(ORD(got)));
+  END Key;
+
+PROCEDURE <A NAME="GetInputFocus"><procedure>GetInputFocus</procedure></A> (t: T; e: E := NIL) =
+ VAR c: E;
+ VAR p: T;
+  BEGIN
+  IF e = NIL THEN (* Start of a call. *)
+    KillAnyInputFocusDownFromHere (t);
+    END;
+  IF e # NIL THEN (* Recursive, internal call. *)
+    c := t.childWithInputFocus;
+    (*
+    IF c = e THEN RETURN; END;
+    IF c # NIL THEN c.LoseInputFocus (); END;
+    *)
+    IF (c#e) AND (c#NIL) THEN c.LoseInputFocus (); END;
+    t.childWithInputFocus := e;
+    END;
+  p := t.parent; IF p # NIL THEN p.GetInputFocus(t); END;
+  IF e = NIL THEN (* Debugging. *)
+    ForceInputFocusToHere (t);
+    END;
+  END GetInputFocus;
+
+PROCEDURE <A NAME="ForceInputFocusToHere"><procedure>ForceInputFocusToHere</procedure></A> (e: E) =
+ VAR parent: E;
+  BEGIN
+  e.childWithInputFocus := NIL;
+  WHILE e.parent # NIL DO
+    parent := e.parent; parent.childWithInputFocus := e;
+    e := e.parent;
+   END;
+  END ForceInputFocusToHere;
+
+PROCEDURE <A NAME="KillAnyInputFocusDownFromHere"><procedure>KillAnyInputFocusDownFromHere</procedure></A> (e: E) =
+ VAR child: E;
+  BEGIN
+  IF e # NIL THEN
+    child := e.childWithInputFocus;
+    e.LoseInputFocus();
+    e.childWithInputFocus := NIL; (* In case he doesn't. *)
+    KillAnyInputFocusDownFromHere (child);
+    END;
+  END KillAnyInputFocusDownFromHere;
+
+PROCEDURE <A NAME="LoseInputFocus"><procedure>LoseInputFocus</procedure></A> (&lt;*UNUSED*&gt; t: T) =
+  BEGIN
+  END LoseInputFocus;
+
+PROCEDURE <A NAME="KillInputFocus"><procedure>KillInputFocus</procedure></A> (t: T) =
+ VAR e, ee: E;
+  BEGIN
+  e := t.childWithInputFocus;
+  WHILE e # NIL DO
+    ee := e.childWithInputFocus;
+    e.LoseInputFocus(); (* Is it OK to work downward? *)
+    e := ee;
+    END;
+  END KillInputFocus;
+
+  BEGIN
+
+  END DisplayList.
+</PRE>
+</inModule>
+<HR>
+<A NAME="x1">interface Err is in:
+</A><UL>
+<LI><A HREF="Err.i3.html#0TOP0">dps/src/Err.i3</A>
+<LI><A HREF="../../m3tk/src/misc/Err.i3.html#0TOP0">m3tk/src/misc/Err.i3</A>
+</UL>
+<P>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

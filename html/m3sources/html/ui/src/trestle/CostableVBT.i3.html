@@ -1,0 +1,86 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: ui/src/trestle/CostableVBT.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>ui/src/trestle/CostableVBT.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM>                                                                           </EM></BLOCKQUOTE><PRE>
+&lt;*PRAGMA LL*&gt;
+</PRE> A <CODE>CostableVBT.T</CODE> is a filter whose size range is determined so as
+   to avoid changing the pref except as necessary, similar to a StableVBT.
+   In addition, a <CODE>CostableVBT.T</CODE> works with other buddies to maintain a
+   shared version of their current size.
+   
+
+<P><PRE>INTERFACE <interface><A HREF="CostableVBT.m3.html">CostableVBT</A></interface>;
+
+IMPORT <A HREF="../split/Filter.i3.html">Filter</A>, <A HREF="../vbt/VBT.i3.html">VBT</A>;
+
+TYPE
+  <A HREF="CostableVBT.m3.html#Link">Link</A> &lt;: LinkPublic;
+  LinkPublic = MUTEX OBJECT METHODS
+    init(): Link
+  END;
+
+  <A HREF="CostableVBT.m3.html#T">T</A> &lt;: Public;
+  Public = Filter.T OBJECT METHODS
+    &lt;* LL.sup &lt;= VBT.mu *&gt;
+    init(ch: VBT.T; project := TRUE; link: Link := NIL): T
+  END;
+</PRE> The call <CODE>v.init(ch, b)</CODE> initializes <CODE>v</CODE> as a <CODE>CostableVBT</CODE> with
+   child <CODE>ch</CODE>.  v is projecting if b is TRUE.  If <CODE>link</CODE> is non-NIL,
+   <CODE>v</CODE> shares shape computations with other VBTs using <CODE>link</CODE>. 
+
+<P><PRE>PROCEDURE <A HREF="CostableVBT.m3.html#New">New</A>(ch: VBT.T; project := TRUE; link: Link := NIL): T;
+</PRE><BLOCKQUOTE><EM> <CODE>New(...)</CODE> is equivalent to <CODE>NEW(T).init(...)</CODE>. </EM></BLOCKQUOTE><PRE>
+
+PROCEDURE <A HREF="CostableVBT.m3.html#Disable">Disable</A>(v: VBT.T); &lt;* LL.sup &lt; v *&gt;
+</PRE><BLOCKQUOTE><EM> Temporarily disable the lowest (possibly improper) ancestor of <CODE>v</CODE>
+   that is a <CODE>CostableVBT.T</CODE>, if any, and all linked VBTs.  </EM></BLOCKQUOTE><PRE>
+</PRE> While disabled, the filter reports its preferred size as the 
+   child's preferred size.  The filter will be reenabled as soon
+   as it is reshaped to a non-empty domain. 
+
+<P><PRE>PROCEDURE <A HREF="CostableVBT.m3.html#SetShape">SetShape</A> (v: VBT.T; hPref, vPref: CARDINAL); &lt;* LL.sup &lt; v *&gt;
+</PRE><BLOCKQUOTE><EM> Set the preferred shape of the lowest <CODE>CostableVBT.T</CODE> ancestor of <CODE>v</CODE>.  A
+   value of <CODE>0</CODE> leaves the current value unchanged. </EM></BLOCKQUOTE><PRE>
+
+PROCEDURE <A HREF="CostableVBT.m3.html#GetProjecting">GetProjecting</A>(v: VBT.T): BOOLEAN; &lt;* LL.sup &lt; v *&gt;
+</PRE><BLOCKQUOTE><EM> Return TRUE if the lowest <CODE>CostableVBT.T</CODE> ancestor of <CODE>v</CODE> is projecting </EM></BLOCKQUOTE><PRE>
+
+PROCEDURE <A HREF="CostableVBT.m3.html#SetProjecting">SetProjecting</A>(v: VBT.T; project: BOOLEAN); &lt;* LL.sup &lt; v *&gt;
+</PRE><BLOCKQUOTE><EM> Set the lowest <CODE>CostableVBT.T</CODE> ancestor of <CODE>v</CODE> to be projecting </EM></BLOCKQUOTE><PRE>
+
+END CoStableVBT.
+</PRE>
+</inInterface>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

@@ -1,0 +1,486 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: fmtlex/src/Fmt.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>fmtlex/src/Fmt.m3</H2></A><HR>
+<inModule>
+<PRE><A HREF="../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM>                                                                     </EM></BLOCKQUOTE><PRE>
+
+UNSAFE MODULE <module><implements><A HREF="Fmt.i3.html">Fmt</A></implements></module>;
+
+IMPORT <A HREF="../../text/src/Text.i3.html">Text</A>, <A HREF="../../text/src/TextF.i3.html">TextF</A>, <A HREF="../../word/src/Word.i3.html">Word</A>, <A HREF="../../convert/src/Convert.i3.html">Convert</A>, <A HREF="FmtBuf.i3.html">FmtBuf</A>, <A HREF="FmtBufF.i3.html">FmtBufF</A>;
+IMPORT <A HREF="#x1">Real</A> AS R, <A HREF="#x2">LongReal</A> AS LR, <A HREF="#x3">Extended</A> AS ER;
+IMPORT <A HREF="../../float/src/Common/RealFloat.i3.html">RealFloat</A>, <A HREF="../../float/src/Common/LongFloat.i3.html">LongFloat</A>, <A HREF="../../float/src/Common/ExtendedFloat.i3.html">ExtendedFloat</A>;
+</PRE> Boolean, character values ----------------------------------------------- 
+
+<P><PRE>PROCEDURE <A NAME="Bool"><procedure>Bool</procedure></A> (b: BOOLEAN): Text.T =
+  CONST Map = ARRAY BOOLEAN OF Text.T { &quot;FALSE&quot;, &quot;TRUE&quot; };
+  BEGIN
+    RETURN Map[b];
+  END Bool;
+
+PROCEDURE <A NAME="Char"><procedure>Char</procedure></A> (c: CHAR): Text.T =
+  BEGIN
+    RETURN Text.FromChar(c);
+  END Char;
+</PRE> Integer, unsigned values ------------------------------------------------ 
+
+<P><PRE>CONST
+  SmallInts = ARRAY [-50..100] OF TEXT {
+    &quot;-50&quot;,&quot;-49&quot;,&quot;-48&quot;,&quot;-47&quot;,&quot;-46&quot;,&quot;-45&quot;,&quot;-44&quot;,&quot;-43&quot;,&quot;-42&quot;,&quot;-41&quot;,
+    &quot;-40&quot;,&quot;-39&quot;,&quot;-38&quot;,&quot;-37&quot;,&quot;-36&quot;,&quot;-35&quot;,&quot;-34&quot;,&quot;-33&quot;,&quot;-32&quot;,&quot;-31&quot;,
+    &quot;-30&quot;,&quot;-29&quot;,&quot;-28&quot;,&quot;-27&quot;,&quot;-26&quot;,&quot;-25&quot;,&quot;-24&quot;,&quot;-23&quot;,&quot;-22&quot;,&quot;-21&quot;,
+    &quot;-20&quot;,&quot;-19&quot;,&quot;-18&quot;,&quot;-17&quot;,&quot;-16&quot;,&quot;-15&quot;,&quot;-14&quot;,&quot;-13&quot;,&quot;-12&quot;,&quot;-11&quot;,
+    &quot;-10&quot;, &quot;-9&quot;, &quot;-8&quot;, &quot;-7&quot;, &quot;-6&quot;, &quot;-5&quot;, &quot;-4&quot;, &quot;-3&quot;, &quot;-2&quot;, &quot;-1&quot;,
+      &quot;0&quot;,  &quot;1&quot;,  &quot;2&quot;,  &quot;3&quot;,  &quot;4&quot;,  &quot;5&quot;,  &quot;6&quot;,  &quot;7&quot;,  &quot;8&quot;,  &quot;9&quot;,
+     &quot;10&quot;, &quot;11&quot;, &quot;12&quot;, &quot;13&quot;, &quot;14&quot;, &quot;15&quot;, &quot;16&quot;, &quot;17&quot;, &quot;18&quot;, &quot;19&quot;,
+     &quot;20&quot;, &quot;21&quot;, &quot;22&quot;, &quot;23&quot;, &quot;24&quot;, &quot;25&quot;, &quot;26&quot;, &quot;27&quot;, &quot;28&quot;, &quot;29&quot;,
+     &quot;30&quot;, &quot;31&quot;, &quot;32&quot;, &quot;33&quot;, &quot;34&quot;, &quot;35&quot;, &quot;36&quot;, &quot;37&quot;, &quot;38&quot;, &quot;39&quot;,
+     &quot;40&quot;, &quot;41&quot;, &quot;42&quot;, &quot;43&quot;, &quot;44&quot;, &quot;45&quot;, &quot;46&quot;, &quot;47&quot;, &quot;48&quot;, &quot;49&quot;,
+     &quot;50&quot;, &quot;51&quot;, &quot;52&quot;, &quot;53&quot;, &quot;54&quot;, &quot;55&quot;, &quot;56&quot;, &quot;57&quot;, &quot;58&quot;, &quot;59&quot;,
+     &quot;60&quot;, &quot;61&quot;, &quot;62&quot;, &quot;63&quot;, &quot;64&quot;, &quot;65&quot;, &quot;66&quot;, &quot;67&quot;, &quot;68&quot;, &quot;69&quot;,
+     &quot;70&quot;, &quot;71&quot;, &quot;72&quot;, &quot;73&quot;, &quot;74&quot;, &quot;75&quot;, &quot;76&quot;, &quot;77&quot;, &quot;78&quot;, &quot;79&quot;,
+     &quot;80&quot;, &quot;81&quot;, &quot;82&quot;, &quot;83&quot;, &quot;84&quot;, &quot;85&quot;, &quot;86&quot;, &quot;87&quot;, &quot;88&quot;, &quot;89&quot;,
+     &quot;90&quot;, &quot;91&quot;, &quot;92&quot;, &quot;93&quot;, &quot;94&quot;, &quot;95&quot;, &quot;96&quot;, &quot;97&quot;, &quot;98&quot;, &quot;99&quot;,
+     &quot;100&quot;
+  };
+
+PROCEDURE <A NAME="Int"><procedure>Int</procedure></A> (n: INTEGER; base: Base := 10): Text.T =
+  BEGIN
+    IF FIRST(SmallInts) &lt;= n AND n &lt;= LAST(SmallInts) AND base = 10
+      THEN RETURN SmallInts[n]
+      ELSE RETURN AnyInt(n, base)
+    END
+  END Int;
+
+PROCEDURE <A NAME="AnyInt"><procedure>AnyInt</procedure></A> (n: INTEGER; base: Base := 10): Text.T =
+  &lt;* FATAL Convert.Failed *&gt;
+  VAR chars: ARRAY [0..BITSIZE(INTEGER)] OF CHAR; used: INTEGER; BEGIN
+    used := Convert.FromInt(chars, n, base, prefix := FALSE);
+    RETURN Text.FromChars(SUBARRAY(chars, 0, used))
+  END AnyInt;
+
+PROCEDURE <A NAME="Unsigned"><procedure>Unsigned</procedure></A> (n: Word.T; base: Base := 10): Text.T =
+  BEGIN
+    IF 0 &lt;= n AND n &lt;= LAST(SmallInts) AND base = 10
+      THEN RETURN SmallInts[n]
+      ELSE RETURN AnyUnsigned (n, base)
+    END
+  END Unsigned;
+
+PROCEDURE <A NAME="AnyUnsigned"><procedure>AnyUnsigned</procedure></A> (n: Word.T; base: Base := 10): Text.T =
+  &lt;* FATAL Convert.Failed *&gt;
+  VAR chars: ARRAY [0..BITSIZE(INTEGER)-1] OF CHAR; used: INTEGER; BEGIN
+    used := Convert.FromUnsigned (chars, n, base, prefix := FALSE);
+    RETURN Text.FromChars(SUBARRAY(chars, 0, used))
+  END AnyUnsigned;
+</PRE> Floating-point values --------------------------------------------------- 
+
+<P><PRE>PROCEDURE <A NAME="Real"><procedure>Real</procedure></A>(x: REAL; style := Style.Auto;
+    prec: CARDINAL := R.MaxSignifDigits - 1;
+    literal := FALSE): TEXT =
+  CONST RealMin = MAX(6 + R.MaxExpDigits, 12);
+  VAR
+    da := RealFloat.ToDecimal(x);
+    bufSz := RealMin + prec;
+    num: FmtBufF.NumAttr;
+  BEGIN
+    num.class := FmtBufF.ClassMapReal[da.class];
+    num.kind := FmtBufF.IEEEKind.Single;
+    num.maxExpDigits := R.MaxExpDigits;
+    num.sign := da.sign;
+    IF num.class = FmtBufF.Class.Number THEN
+      num.len := da.len;
+      num.exp := da.exp;
+      num.errorSign := da.errorSign;
+      INC(bufSz, MAX(1, da.exp))
+    END;
+    RETURN Float(bufSz, num, da.digits, FmtBufF.FmtRec{style, prec, literal})
+  END Real;
+
+PROCEDURE <A NAME="LongReal"><procedure>LongReal</procedure></A>(x: LONGREAL; style := Style.Auto;
+    prec: CARDINAL := LR.MaxSignifDigits - 1;
+    literal := FALSE): TEXT =
+  CONST LongMin = MAX(6 + LR.MaxExpDigits, 12);
+  VAR
+    da := LongFloat.ToDecimal(x);
+    bufSz := LongMin + prec;
+    num: FmtBufF.NumAttr;
+  BEGIN
+    num.class := FmtBufF.ClassMapLong[da.class];
+    num.kind := FmtBufF.IEEEKind.Double;
+    num.maxExpDigits := LR.MaxExpDigits;
+    num.sign := da.sign;
+    IF num.class = FmtBufF.Class.Number THEN
+      num.len := da.len;
+      num.exp := da.exp;
+      num.errorSign := da.errorSign;
+      INC(bufSz, MAX(1, da.exp))
+    END;
+    RETURN Float(bufSz, num, da.digits, FmtBufF.FmtRec{style, prec, literal})
+  END LongReal;
+
+PROCEDURE <A NAME="Extended"><procedure>Extended</procedure></A>(x: EXTENDED; style := Style.Auto;
+    prec: CARDINAL := ER.MaxSignifDigits - 1;
+    literal := FALSE): TEXT =
+  CONST ExtdMin = MAX(6 + ER.MaxExpDigits, 12);
+  VAR
+    da := ExtendedFloat.ToDecimal(x);
+    bufSz := ExtdMin + prec;
+    num: FmtBufF.NumAttr;
+  BEGIN
+    num.class := FmtBufF.ClassMapExtd[da.class];
+    num.kind := FmtBufF.IEEEKind.Extended;
+    num.maxExpDigits := ER.MaxExpDigits;
+    num.sign := da.sign;
+    IF num.class = FmtBufF.Class.Number THEN
+      num.len := da.len;
+      num.exp := da.exp;
+      num.errorSign := da.errorSign;
+      INC(bufSz, MAX(1, da.exp))
+    END;
+    RETURN Float(bufSz, num, da.digits, FmtBufF.FmtRec{style, prec, literal})
+  END Extended;
+
+CONST StackBufSz = 100;
+</PRE> The following procedure is implemented using the <CODE>Float</CODE> procedure in the
+   <CODE>FmtBufF</CODE> interface. That interface requires the caller to pass a character
+   buffer. To avoid an unnecessary allocation, these routines pass a
+   stack-based buffer of size <CODE>StackBufSz</CODE> in the fast case. Otherwise, they
+   allocate a sufficiently large buffer.
+<P>
+   The analysis in the <CODE>FmtBufF</CODE> interface concludes the the buffer
+   requirements are bounded from above as follows:
+<P>
+<PRE>
+         Style.Sci:  width &lt;= MAX(5 + MAX(prec, 1) + T.MaxExpDigits, 12)
+         Style.Fix:  width &lt;= MAX(4 + MAX(prec, 1) + MAX(exp, 1), 12)
+</PRE>
+   Since <CODE>prec</CODE> is a cardinal, we have <CODE>MAX(prec, 1) &lt;= 1 + prec</CODE>. Hence, we
+   will use the overall conservative bound of:
+<P>
+<PRE>
+         All cases:  width &lt;= MAX(6 + prec + T.MaxExpDigits + MAX(exp, 1), 12)
+                           &lt;= MAX(6 + T.MaxExpDigits, 12) + prec + MAX(exp, 1)
+</PRE>
+   The first element of this sum can be computed statically. 
+
+<P><PRE>PROCEDURE <A NAME="Float"><procedure>Float</procedure></A>(
+    bufSz: CARDINAL;
+    READONLY num: FmtBufF.NumAttr;
+    VAR (*IN*) digits: FmtBufF.Digits;
+    READONLY fmt: FmtBufF.FmtRec)
+  : TEXT =
+  VAR res: TEXT; BEGIN
+    IF bufSz &lt;= StackBufSz THEN
+      VAR
+        buf: ARRAY [0..StackBufSz-1] OF CHAR;
+        cnt := FmtBufF.Float(buf, num, digits, fmt);
+      BEGIN
+        res := Text.FromChars(SUBARRAY(buf, 0, cnt))
+      END
+    ELSE
+      VAR
+        buf := NEW(UNTRACED REF FmtBuf.T, bufSz);
+        cnt := FmtBufF.Float(buf^, num, digits, fmt);
+      BEGIN
+        res := Text.FromChars(SUBARRAY(buf^, 0, cnt));
+        DISPOSE(buf)
+      END
+    END;
+    RETURN res
+  END Float;
+</PRE> Padding routines -------------------------------------------------------- 
+
+<P><PRE>PROCEDURE <A NAME="Pad"><procedure>Pad</procedure></A>(
+    text: Text.T;
+    length: CARDINAL;
+    padChar: CHAR := ' ';
+    align : Align := Align.Right)
+  : Text.T =
+  VAR buff: ARRAY [0..99] OF CHAR; len, padLen: INTEGER; pad: Text.T; BEGIN
+    len := length - Text.Length(text);
+    IF len &lt;= 0 THEN RETURN text END;
+    padLen := MIN(NUMBER(buff), len);
+    FOR i := 0 TO padLen - 1 DO buff[i] := padChar END;
+    pad := Text.FromChars(SUBARRAY(buff, 0, padLen));
+    WHILE len &gt;= padLen DO
+      IF align = Align.Right
+        THEN text := pad &amp; text
+        ELSE text := text &amp; pad
+      END;
+      DEC(len, padLen)
+    END;
+    IF len &gt; 0 THEN
+      IF align = Align.Right
+        THEN text := Text.Sub(pad, 0, len) &amp; text
+        ELSE text := text &amp; Text.Sub(pad, 0, len)
+      END
+    END;
+    RETURN text
+  END Pad;
+
+PROCEDURE <A NAME="F"><procedure>F</procedure></A>(fmt: Text.T; t1, t2, t3, t4, t5: Text.T := NIL): Text.T =
+</PRE><BLOCKQUOTE><EM> Construct an array of texts not including NIL texts in the suffix, and call
+   <CODE>FN</CODE> with the constructed array. </EM></BLOCKQUOTE><PRE>
+  VAR
+    a := ARRAY [0..4] OF Text.T {t1, t2, t3, t4, t5};
+    pos: INTEGER := LAST(a);
+  BEGIN
+    WHILE pos &gt;= 0 AND a[pos] = NIL DO DEC(pos) END;
+    RETURN FN(fmt, SUBARRAY(a, 0, pos + 1))
+  END F;
+
+CONST
+  SpecBufferSize = 32;
+
+TYPE
+  (* Padding information *)
+  FormatSpecPad = RECORD
+    align: Align;
+    width: CARDINAL;
+    padChar: CHAR;
+  END;
+
+  FormatSpec = RECORD
+    (* Textual position and size of specifier (including % and s) *)
+    start, length: CARDINAL;
+    (* Corresponding argument and its length *)
+    arg: Text.T;
+    argLength: CARDINAL;
+    (* Padding information extracted from the specification *)
+    pad: FormatSpecPad;
+  END;
+
+  SpecBuffer = ARRAY [0..SpecBufferSize-1] OF FormatSpec;
+
+  SpecBufferList = REF RECORD
+    next: SpecBufferList := NIL;
+    buffer: SpecBuffer;
+  END;
+
+PROCEDURE <A NAME="ReadSpec"><procedure>ReadSpec</procedure></A>(
+    fmt: Text.T;
+    start: CARDINAL;
+    VAR (*OUT*) pad: FormatSpecPad)
+    : CARDINAL =
+</PRE><BLOCKQUOTE><EM> Reads a format specifier from the string <CODE>Text.Sub(fmt, start)</CODE>. This
+   routine assumes that the leading '%' character has already been processed.
+   It writes the <CODE>align</CODE>, <CODE>padChar</CODE>, and <CODE>width</CODE> fields of <CODE>pad</CODE>, and returns
+   the number of characters in the specifier (including the already processed
+   '%' character). </EM></BLOCKQUOTE><PRE>
+  VAR
+    ch : CHAR    := fmt[start];
+    pos: INTEGER := start + 1;
+  BEGIN
+    (* Alignment *)
+    IF ch = '-'
+      THEN pad.align := Align.Left; ch := fmt[pos]; INC(pos)
+      ELSE pad.align := Align.Right;
+    END;
+
+    (* Pad character *)
+    IF ch = '0'
+      THEN pad.padChar := '0'; ch := fmt[pos]; INC(pos)
+      ELSE pad.padChar := ' ';
+    END;
+
+    (* Field width *)
+    pad.width := 0;
+    WHILE '0' &lt;= ch AND ch &lt;= '9' DO
+      pad.width := pad.width * 10 + ORD(ch) - ORD('0');
+      ch := fmt[pos]; INC(pos)
+    END;
+
+    (* terminating 's' *)
+    IF ch = 's'
+      THEN RETURN pos - start + 1 (* add 1 for '%' *)
+      ELSE RETURN 0
+    END;
+  END ReadSpec;
+
+PROCEDURE <A NAME="PutSpec"><procedure>PutSpec</procedure></A>(
+    READONLY spec: FormatSpec;
+    pos: CARDINAL;
+    VAR (*INOUT*) list: SpecBufferList) =
+</PRE><BLOCKQUOTE><EM> Add the specifier <CODE>spec</CODE> with index <CODE>pos</CODE> to the list <CODE>list</CODE>, where the
+   first specifier in <CODE>list</CODE> has index <CODE>SpecBufferSize</CODE> on the initial,
+   non-recursive call. Hence, this procedure requires that <CODE>pos &gt;=
+   SpecBufferSize</CODE> on the initial call. </EM></BLOCKQUOTE><PRE>
+  BEGIN
+    DEC(pos, SpecBufferSize);
+    IF pos &gt;= SpecBufferSize THEN
+      PutSpec(spec, pos, list.next)
+    ELSE
+      IF pos = 0 THEN list := NEW(SpecBufferList) END;
+      list.buffer[pos] := spec;
+    END
+  END PutSpec;
+
+PROCEDURE <A NAME="GetSpec"><procedure>GetSpec</procedure></A>(pos: CARDINAL; list: SpecBufferList): FormatSpec =
+</PRE><BLOCKQUOTE><EM> Return the specifier with index <CODE>i</CODE> from <CODE>list</CODE>, where the first specifier
+   in <CODE>list</CODE> has index <CODE>SpecBufferSize</CODE> on the initial, non-recursive call.
+   Hence, this procedure requires that <CODE>pos &gt;= SpecBufferSize</CODE> on the initial
+   call. </EM></BLOCKQUOTE><PRE>
+  BEGIN
+    DEC(pos, SpecBufferSize);
+    IF pos &gt;= SpecBufferSize
+      THEN RETURN GetSpec(pos, list.next)
+      ELSE RETURN list.buffer[pos]
+    END
+  END GetSpec;
+
+PROCEDURE <A NAME="FN"><procedure>FN</procedure></A>(fmt: Text.T; READONLY texts: ARRAY OF Text.T): Text.T =
+  &lt;* FATAL Convert.Failed *&gt;
+  VAR
+    fmtLen := Text.Length(fmt);
+    resLen := fmtLen;			 (* length of final string *)
+    buffer: SpecBuffer;
+    overflow: SpecBufferList := NIL;
+
+  PROCEDURE ReadSpecs(): CARDINAL =
+  (* Scan through &quot;fmt&quot; looking for format specifiers. Information on each
+     one found is stored in &quot;buffer&quot; or, if &quot;buffer&quot; overflows, &quot;overflow&quot;.
+     This implementation requires quadriatic time for specifications inserted
+     in &quot;overflow&quot;. Returns the number of specifiers found. *)
+    VAR spec: FormatSpec; cnt := 0; fPos := 0; BEGIN
+      WHILE fPos &lt; fmtLen DO
+    	IF fmt[fPos] = '%' THEN
+    	  spec.start := fPos; INC(fPos);
+    	  spec.length := ReadSpec(fmt, fPos, spec.pad);
+    	  IF spec.length # 0 THEN
+    	    INC(fPos, spec.length - 1);
+    	    spec.arg := texts[cnt];
+    	    spec.argLength := Text.Length(spec.arg);
+    	    INC(resLen, MAX(spec.argLength, spec.pad.width) - spec.length);
+    	    IF cnt &lt; SpecBufferSize
+    	      THEN buffer[cnt] := spec;
+    	      ELSE PutSpec(spec, cnt, overflow);
+    	    END;
+    	    INC(cnt)
+    	  END
+    	ELSE
+    	  INC(fPos)
+    	END
+      END;
+      RETURN cnt
+    END ReadSpecs;
+
+  PROCEDURE ConstructResult(cnt: CARDINAL): TEXT =
+  (* Allocate and return a string formed from &quot;fmt&quot;, &quot;buffer&quot;, and &quot;overflow&quot;
+     by replacing format specifiers in &quot;fmt&quot; by the corresponding padded and
+     aligned &quot;cnt&quot; argument values. *)
+    VAR res: TEXT; fPos, rPos := 0; spec: FormatSpec; BEGIN
+      res := TextF.New(resLen);
+      FOR i := 0 TO cnt - 1 DO
+
+        (* get next spec *)
+        IF i &lt; SpecBufferSize
+          THEN spec := buffer[i];
+          ELSE spec := GetSpec(i, overflow);
+        END;
+
+        (* copy section of 'fmt' between this and the last spec *)
+        VAR fl := spec.start - fPos; BEGIN
+          IF fl &gt; 0 THEN
+            SUBARRAY(res^, rPos, fl) := SUBARRAY(fmt^, fPos, fl);
+            INC(rPos, fl)
+          END
+        END;
+        fPos := spec.start + spec.length;
+
+        (* copy padded argument *)
+        WITH al = spec.argLength, padChar = spec.pad.padChar DO
+          VAR padding := spec.pad.width - al; BEGIN
+            IF spec.pad.align = Align.Right AND padding &gt; 0 THEN
+              WITH limit = rPos + padding DO
+          	REPEAT res[rPos] := padChar; INC(rPos) UNTIL rPos = limit
+              END
+            END;
+            IF al &gt; 0 THEN
+              SUBARRAY(res^, rPos, al) := SUBARRAY(spec.arg^, 0, al);
+              INC(rPos, al);
+            END;
+            IF spec.pad.align = Align.Left AND padding &gt; 0 THEN
+              WITH limit = rPos + padding DO
+          	REPEAT res[rPos] := padChar; INC(rPos) UNTIL rPos = limit;
+              END
+            END
+          END
+        END
+
+      END; (* FOR *)
+
+      (* copy tail of format string *)
+      WITH fl = fmtLen - fPos DO
+        IF fl &gt; 0 THEN
+          SUBARRAY(res^, rPos, fl) := SUBARRAY(fmt^, fPos, fl)
+        END
+      END;
+      RETURN res
+    END ConstructResult;
+
+  VAR specCnt: CARDINAL; BEGIN
+    specCnt := ReadSpecs();		 (* read format specifiers *)
+    IF specCnt # NUMBER(texts) THEN	 (* check for proper arg count *)
+      RAISE Convert.Failed
+    END;
+    IF specCnt = 0 THEN RETURN fmt END;	 (* handle the null case *)
+    RETURN ConstructResult(specCnt)	 (* replace specs by args *)
+  END FN;
+
+BEGIN
+END Fmt.
+</PRE>
+</inModule>
+<HR>
+<A NAME="x1">interface Real is in:
+</A><UL>
+<LI><A HREF="../../float/src/IEEE/Real.i3.html#0TOP0">float/src/IEEE/Real.i3</A>
+<LI><A HREF="../../float/src/VAX/Real.i3.html#0TOP0">float/src/VAX/Real.i3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x2">interface LongReal is in:
+</A><UL>
+<LI><A HREF="../../float/src/IEEE/LongReal.i3.html#0TOP0">float/src/IEEE/LongReal.i3</A>
+<LI><A HREF="../../float/src/VAX/LongReal.i3.html#0TOP0">float/src/VAX/LongReal.i3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x3">interface Extended is in:
+</A><UL>
+<LI><A HREF="../../float/src/IEEE/Extended.i3.html#0TOP0">float/src/IEEE/Extended.i3</A>
+<LI><A HREF="../../float/src/VAX/Extended.i3.html#0TOP0">float/src/VAX/Extended.i3</A>
+</UL>
+<P>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

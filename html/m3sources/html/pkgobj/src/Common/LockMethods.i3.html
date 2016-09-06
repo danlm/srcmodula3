@@ -1,0 +1,108 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: pkgobj/src/Common/LockMethods.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>pkgobj/src/Common/LockMethods.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM> LockMethods.i3 </EM></BLOCKQUOTE><PRE>
+
+INTERFACE <interface>LockMethods</interface>;
+
+IMPORT <A HREF="LockOps.i3.html">LockOps</A>, <A HREF="../../../fingerprint/src/Fingerprint.i3.html">Fingerprint</A>, <A HREF="PkgErr.i3.html">PkgErr</A>, <A HREF="../../../netobjrt/src/NetObj.i3.html">NetObj</A>, <A HREF="../../../thread/src/Common/Thread.i3.html">Thread</A>;
+
+FROM <A HREF="LockOps.i3.html">LockOps</A> IMPORT Auth, Dir, PN, BreakRights, CommitFailures, DirList,
+                    EnumList, Instance, RefEntry, ShipArray, SiteName, Version;
+
+REVEAL
+  LockOps.<A NAME="T">T</A> = NetObj.T BRANDED &quot;LockOps.T&quot; OBJECT METHODS
+    create(
+        auth: Auth; pn: PN; initialKey: TEXT;
+        version: Version; remoteCheck: BOOLEAN)
+        RAISES {NetObj.Error, PkgErr.E, Thread.Alerted};
+    remove(auth: Auth; package: PN; key: TEXT; reship: BOOLEAN)
+        RAISES {NetObj.Error, PkgErr.E, Thread.Alerted,
+                LockOps.CommitFailed, LockOps.LockConflict};
+    lock(
+        auth: Auth; pn: PN;
+        version: Version; key: TEXT; keySite: SiteName) : Version
+        RAISES {NetObj.Error, PkgErr.E, LockOps.LockConflict,
+                Thread.Alerted};
+    unlock(
+        auth: Auth; pn: PN;
+        version: Version; key: TEXT; keySite: SiteName;
+        breakRights: BreakRights; forceVersion: BOOLEAN)
+        RAISES {NetObj.Error, PkgErr.E, LockOps.CommitFailed,
+                         LockOps.LockConflict, LockOps.SynchVersions,
+                         Thread.Alerted};
+    assign(
+        auth: Auth; pn: PN;
+        key: TEXT; keySite: SiteName) : Version
+        RAISES {NetObj.Error, PkgErr.E, LockOps.LockConflict,
+                Thread.Alerted};
+    commit(
+        auth: Auth; pn: PN; version: Version;
+        VAR ships: ShipArray; reship: BOOLEAN) : CommitFailures
+        RAISES {NetObj.Error, LockOps.CommitFailed, PkgErr.E,
+                Thread.Alerted};
+    enumerate(
+        dir: Dir; site: SiteName;
+        locksOnly, localOnly, pendingOnly: BOOLEAN): EnumList
+        RAISES {NetObj.Error, PkgErr.E, Thread.Alerted};
+    getEntry(pn: PN; goRemote: BOOLEAN) : RefEntry
+        RAISES {NetObj.Error, PkgErr.E, Thread.Alerted};
+    setEntry(auth: Auth; pn: PN; entry: RefEntry)
+        RAISES {NetObj.Error, PkgErr.E, Thread.Alerted};
+    setFingerprint(
+        auth: Auth; pn: PN; version: Version; fp: Fingerprint.T)
+        RAISES {NetObj.Error, PkgErr.E, Thread.Alerted};
+    createCheck(pn: PN)
+        RAISES {NetObj.Error, PkgErr.E, Thread.Alerted};
+    createForeign (
+        auth: Auth; pn: PN; owningSite: SiteName; instance: Instance)
+        RAISES {NetObj.Error, PkgErr.E, Thread.Alerted};
+    createDir (auth: Auth; dir: Dir)
+        RAISES {NetObj.Error, PkgErr.E, Thread.Alerted};
+    removeDir(auth: Auth; dir: Dir)
+        RAISES {NetObj.Error, PkgErr.E, Thread.Alerted};
+    checkDir(dir: Dir)
+        RAISES {NetObj.Error, PkgErr.E, Thread.Alerted};
+    enumerateDirs(site: SiteName): DirList
+        RAISES {NetObj.Error, PkgErr.E, Thread.Alerted};
+    removeForeign(auth: Auth; pn: PN)
+        RAISES {NetObj.Error, PkgErr.E, LockOps.CommitFailed,
+                Thread.Alerted};
+  END;
+
+END LockMethods.
+</PRE>
+</inInterface>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

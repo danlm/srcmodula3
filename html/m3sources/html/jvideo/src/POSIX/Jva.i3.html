@@ -1,0 +1,88 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: jvideo/src/POSIX/Jva.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>jvideo/src/POSIX/Jva.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE> audio client interface to the local J-Video server.  All the methods
+   lock the object and block the thread until the server replies 
+
+<P><PRE>INTERFACE <interface><A HREF="Jva.m3.html">Jva</A></interface>;
+
+IMPORT <A HREF="../../../atom/src/Atom.i3.html">Atom</A>, <A HREF="Jv.i3.html">Jv</A>, <A HREF="../../../os/src/Common/OSError.i3.html">OSError</A>, <A HREF="../../../thread/src/Common/Thread.i3.html">Thread</A>;
+FROM <A HREF="../../../C/src/Common/Ctypes.i3.html">Ctypes</A> IMPORT int;
+
+TYPE
+  Volume = [-30 .. 30];
+  Statistics = RECORD
+                 reads  : int;   (* # of calls to read() from input() *)
+                 bytes  : int;   (* total bytes read from source *)
+                 aFrames: int;
+                 aBytes : int;
+                 aFramesWithDrops: int;
+                 aLatencyTotal   : int;
+                 aLatePlays      : int;
+                 aReorders       : int;  (* Out of order packets *)
+                 aLateBytes: int;  (* How many bytes have been missed *)
+               END;
+
+TYPE
+  <A HREF="Jva.m3.html#T">T</A> &lt;: Public;
+  Public =
+    Jv.T OBJECT
+    METHODS
+      (* all methods LL &lt; self *)
+      init (): T RAISES {OSError.E, Thread.Alerted};
+      (* initialise local state and establish a connection with the local
+         server.  May raise OSError.E(invalidHostname) *)
+
+      connect (hostname: TEXT) RAISES {OSError.E, Thread.Alerted};
+      (* establish an audio connection with the source on &quot;hostname&quot; *)
+
+      setMute (on: BOOLEAN) RAISES {OSError.E, Thread.Alerted};
+      (* turn muting on or off *)
+
+      setVolume (volume: Volume) RAISES {OSError.E, Thread.Alerted};
+      (* set the volume level for the connection *)
+
+      getStatistics (): Statistics RAISES {OSError.E, Thread.Alerted};
+      (* get statistics about the performance of the audio stream *)
+
+      (* &quot;close()&quot; is now LL &lt; self *)
+    END;
+
+VAR invalidHostname: Atom.T;     (* may be raised in OSError.E *)
+
+END Jva.
+</PRE>
+</inInterface>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

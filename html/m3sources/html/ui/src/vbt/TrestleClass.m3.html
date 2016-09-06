@@ -1,0 +1,77 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: ui/src/vbt/TrestleClass.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>ui/src/vbt/TrestleClass.m3</H2></A><HR>
+<inModule>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM>                                                                           </EM></BLOCKQUOTE><PRE>
+</PRE> by Steve Glassman, Mark Manasse and Greg Nelson           
+
+<P><PRE>&lt;*PRAGMA LL*&gt;
+
+MODULE <module><implements><A HREF="TrestleClass.i3.html">TrestleClass</A></implements></module>;
+
+IMPORT <A HREF="Trestle.i3.html">Trestle</A>, <A HREF="TrestleComm.i3.html">TrestleComm</A>;
+
+TYPE CCList = REF RECORD cc: ConnectClosure; link: CCList END;
+
+VAR cclist: CCList := NIL; mu := NEW(MUTEX);
+
+PROCEDURE <A NAME="Connect"><procedure>Connect</procedure></A>(
+    inst: TEXT := NIL;
+    localOnly: BOOLEAN := FALSE)
+    : Trestle.T
+  RAISES {TrestleComm.Failure} =
+    VAR ccl: CCList; res: Trestle.T;
+  BEGIN
+    LOCK mu DO ccl := cclist END;
+    WHILE ccl # NIL DO
+      IF ccl.cc.apply(inst, localOnly, res) THEN RETURN res END;
+      ccl := ccl.link
+    END;
+    RAISE TrestleComm.Failure
+  END Connect;
+
+PROCEDURE <A NAME="RegisterConnectClosure"><procedure>RegisterConnectClosure</procedure></A>(cc: ConnectClosure) =
+  BEGIN
+    LOCK mu DO
+      cclist := NEW(CCList, cc := cc, link := cclist)
+    END
+  END RegisterConnectClosure;
+
+BEGIN
+  connectMu := NEW(MUTEX);
+  closeMu := NEW(MUTEX)
+END TrestleClass.
+</PRE>
+</inModule>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

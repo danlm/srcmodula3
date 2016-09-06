@@ -1,0 +1,97 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: dps/src/DLWindow.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>dps/src/DLWindow.m3</H2></A><HR>
+<inModule>
+<PRE><A HREF="../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+
+MODULE <module><implements><A HREF="DLWindow.i3.html">DLWindow</A></implements></module>;
+
+IMPORT <A HREF="DisplayList.i3.html">DisplayList</A>, <A HREF="DPS.i3.html">DPS</A>, <A HREF="../../fmtlex/src/Fmt.i3.html">Fmt</A>;
+
+PROCEDURE <A NAME="Paint"><procedure>Paint</procedure></A> (t: T; box: DPS.Box; only: REFANY) =
+  &lt;*FATAL DPS.BadPostScript*&gt;
+ VAR him, ret: TEXT := &quot;&quot;;
+ VAR dl: DisplayList.T;
+  BEGIN
+  IF only = NIL THEN
+    ret := &quot; gsave &quot; &amp; Fmt.Real(BackgroundGray) &amp; &quot; setgray &quot;
+     &amp; DPS.NewPathBox (box) &amp; &quot; fill grestore &quot;;
+    END;
+  dl := t.displayList;
+  IF dl # NIL THEN
+    him :=  dl.Repaint (box, only);
+    IF him # NIL THEN ret := ret &amp; him; END;
+    END;
+  IF ret # NIL THEN t.Send ( ret ); END;
+  END Paint;
+
+PROCEDURE <A NAME="Mouse"><procedure>Mouse</procedure></A> (t: T; event: DPS.MouseEvent): BOOLEAN =
+ VAR dl: DisplayList.T;
+  BEGIN
+  dl := t.displayList;
+  IF dl = NIL THEN RETURN FALSE; END;
+  IF dl.Mouse (t, event) THEN RETURN TRUE; END;
+  (* If no-one processes mouse, kill any input focus. *)
+  dl.KillInputFocus();
+  RETURN FALSE;
+  END Mouse;
+
+PROCEDURE <A NAME="Char"><procedure>Char</procedure></A> (t: T; char: CHAR): BOOLEAN =
+ VAR dl: DisplayList.T;
+  BEGIN
+  dl := t.displayList;
+  IF dl = NIL THEN RETURN FALSE; END;
+  RETURN dl.Char (t, char);
+  END Char;
+
+PROCEDURE <A NAME="Key"><procedure>Key</procedure></A> (t: T; event: DPS.KeyEvent) =
+ VAR got: CHAR;
+  BEGIN
+  got := DPS.CharFromKey (event.key, event.modifiers);
+  IF got = '\000' THEN RETURN; END;
+  EVAL Char (t, got);
+  END Key;
+
+PROCEDURE <A NAME="KillInputFocus"><procedure>KillInputFocus</procedure></A> (t: T) =
+ VAR dl: DisplayList.T;
+  BEGIN
+  dl := t.displayList;
+  IF dl = NIL THEN RETURN; END;
+  dl.KillInputFocus();
+  END KillInputFocus;
+
+  BEGIN
+  END DLWindow.
+</PRE>
+</inModule>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

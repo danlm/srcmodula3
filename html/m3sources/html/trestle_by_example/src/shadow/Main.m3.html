@@ -1,0 +1,94 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: trestle_by_example/src/shadow/Main.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>trestle_by_example/src/shadow/Main.m3</H2></A><HR>
+<inModule>
+<PRE>MODULE <module><implements><A HREF="../../../main/src/Main.i3.html">Main</A></implements></module>;
+IMPORT <A HREF="../../../ui/src/vbt/Trestle.i3.html">Trestle</A>, <A HREF="../../../ui/src/vbt/VBT.i3.html">VBT</A>, <A HREF="../../../lego/src/ShadowedVBT.i3.html">ShadowedVBT</A>, <A HREF="../../../ui/src/split/ButtonVBT.i3.html">ButtonVBT</A>, <A HREF="../../../ui/src/split/TextVBT.i3.html">TextVBT</A>, <A HREF="../../../ui/src/split/RigidVBT.i3.html">RigidVBT</A>;
+IMPORT <A HREF="../../../ui/src/split/HVSplit.i3.html">HVSplit</A>, <A HREF="../../../geometry/src/Axis.i3.html">Axis</A>, <A HREF="../../../lego/src/Shadow.i3.html">Shadow</A>, <A HREF="../../../ui/src/vbt/PaintOp.i3.html">PaintOp</A>, <A HREF="../../../geometry/src/Region.i3.html">Region</A>;
+FROM <A HREF="../common/Colors.i3.html">Colors</A> IMPORT grey, dgrey, lgrey;
+
+TYPE
+  TintVBT = VBT.Leaf OBJECT
+              tint: PaintOp.T := PaintOp.Bg;
+            OVERRIDES
+              repaint := Repaint;
+            END;
+
+PROCEDURE <A NAME="Repaint"><procedure>Repaint</procedure></A> (v: TintVBT; READONLY rgn: Region.T) RAISES {} =
+  BEGIN
+    VBT.PaintTint(v, rgn.r, v.tint);
+  END Repaint;
+
+PROCEDURE <A NAME="NoAction"><procedure>NoAction</procedure></A> (v: ButtonVBT.T; READONLY cd: VBT.MouseRec) =
+  BEGIN (* Do nothing *)
+  END NoAction;
+
+PROCEDURE <A NAME="Button"><procedure>Button</procedure></A> (text: TEXT): ButtonVBT.T =
+  BEGIN
+    RETURN (ButtonVBT.New(TextVBT.New(text), NoAction));
+  END Button;
+
+CONST
+  flex  = RigidVBT.SizeRange{lo := 0.0, pref := 8.0, hi := 9999.0};
+  shape = RigidVBT.Shape{flex, flex};
+
+VAR
+  sh := Shadow.New(size := 7.0, bg := grey, light := lgrey, dark := dgrey);
+  flat  := ShadowedVBT.New(Button(&quot;FlatStyle&quot;), sh, Shadow.Style.Flat);
+  raise := ShadowedVBT.New(Button(&quot;RaisedStyle&quot;), sh, Shadow.Style.Raised);
+  lower := ShadowedVBT.New(
+             Button(&quot;LoweredStyle&quot;), sh, Shadow.Style.Lowered);
+  ridge := ShadowedVBT.New(Button(&quot;RidgedStyle&quot;), sh, Shadow.Style.Ridged);
+  chisel := ShadowedVBT.New(
+              Button(&quot;ChiseledSTyle&quot;), sh, Shadow.Style.Chiseled);
+
+  l := NEW(RigidVBT.T).init(NEW(TintVBT, tint := grey), shape);
+  m := NEW(RigidVBT.T).init(NEW(TintVBT, tint := grey), shape);
+  u := NEW(RigidVBT.T).init(NEW(TintVBT, tint := grey), shape);
+  v := NEW(RigidVBT.T).init(NEW(TintVBT, tint := grey), shape);
+  w := NEW(RigidVBT.T).init(NEW(TintVBT, tint := grey), shape);
+  x := NEW(RigidVBT.T).init(NEW(TintVBT, tint := grey), shape);
+  y := NEW(RigidVBT.T).init(NEW(TintVBT, tint := grey), shape);
+  z := NEW(RigidVBT.T).init(NEW(TintVBT, tint := grey), shape);
+
+  ch := ARRAY [1 .. 11] OF
+          VBT.T{u, flat, v, raise, w, lower, x, ridge, y, chisel, z};
+  main := HVSplit.Cons(Axis.T.Hor, l, HVSplit.ConsArray(Axis.T.Ver, ch), m);
+
+BEGIN
+  Trestle.Install(main);
+  Trestle.AwaitDelete(main);
+END Main.
+</PRE>
+</inModule>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

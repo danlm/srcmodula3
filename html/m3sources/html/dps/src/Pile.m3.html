@@ -1,0 +1,100 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: dps/src/Pile.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>dps/src/Pile.m3</H2></A><HR>
+<inModule>
+<PRE><A HREF="../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+
+MODULE <module><implements><A HREF="Pile.i3.html">Pile</A></implements></module>;
+
+IMPORT <A HREF="../../text/src/Text.i3.html">Text</A>;
+
+PROCEDURE <A NAME="New"><procedure>New</procedure></A> (): T =
+  BEGIN
+  RETURN NEW (T, first := NIL, mutex := NEW (MUTEX));
+  END New;
+
+PROCEDURE <A NAME="Insert"><procedure>Insert</procedure></A> (pile: T; it: Element) =
+  BEGIN
+  LOCK pile.mutex DO
+    it.next := pile.first;
+    pile.first := it;
+    END;
+  END Insert;
+
+PROCEDURE <A NAME="Delete"><procedure>Delete</procedure></A> (pile: T; it: Element) =
+ VAR one: Element;
+  BEGIN
+  LOCK pile.mutex DO
+    one := pile.first;
+    &lt;* ASSERT one # NIL *&gt; (* Client error: Delete from empty pile! *)
+    IF one = it THEN pile.first := one.next; RETURN; END;
+    WHILE one.next#NIL DO
+      IF one.next = it THEN one.next := one.next.next; RETURN; END;
+      one := one.next;
+      END;
+    &lt;* ASSERT FALSE *&gt; (* Client error: Delete-ee not in pile! *)
+    END; (* of LOCK *)
+  END Delete;
+
+PROCEDURE <A NAME="FindByKey"><procedure>FindByKey</procedure></A> (pile: T; key: INTEGER): Element =
+ VAR one: Element;
+  BEGIN
+  LOCK pile.mutex DO
+    one := pile.first;
+    WHILE one#NIL DO
+      IF one.key = key THEN RETURN one; END;
+      one := one.next;
+      END;
+    END;
+  RETURN NIL;
+  END FindByKey;
+
+PROCEDURE <A NAME="FindByName"><procedure>FindByName</procedure></A> (pile: T; name: TEXT): Element =
+ VAR one: Element;
+  BEGIN
+  LOCK pile.mutex DO
+    one := pile.first;
+    WHILE one#NIL DO
+      IF Text.Equal(one.name, name) THEN RETURN one; END;
+      one := one.next;
+      END;
+    END;
+  RETURN NIL;
+  END FindByName;
+
+  BEGIN
+
+  END Pile.
+</PRE>
+</inModule>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

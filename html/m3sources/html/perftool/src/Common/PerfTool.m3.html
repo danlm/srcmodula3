@@ -1,0 +1,100 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: perftool/src/Common/PerfTool.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>perftool/src/Common/PerfTool.m3</H2></A><HR>
+<inModule>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE> Last Modified On Wed Jul 14 16:37:42 PDT 1993 by kalsow                   
+      Modified On Wed Feb  3 22:59:13 PST 1993 by mjordan                  
+      Modified On Fri May 29 16:48:29 PDT 1992 by muller                   
+
+<P><PRE>MODULE <module><implements><A HREF="PerfTool.i3.html">PerfTool</A></implements></module>;
+
+IMPORT <A HREF="../../../rw/src/Common/Rd.i3.html">Rd</A>, <A HREF="../../../rw/src/Common/Wr.i3.html">Wr</A>, <A HREF="../../../os/src/Common/File.i3.html">File</A>, <A HREF="../../../rw/src/Common/FileRd.i3.html">FileRd</A>, <A HREF="../../../rw/src/Common/FileWr.i3.html">FileWr</A>, <A HREF="../../../text/src/Text.i3.html">Text</A>, <A HREF="LowPerfTool.i3.html">LowPerfTool</A>, <A HREF="../../../runtime/src/common/RTParams.i3.html">RTParams</A>, <A HREF="../../../os/src/Common/OSError.i3.html">OSError</A>;
+
+PROCEDURE <A NAME="Start"><procedure>Start</procedure></A> (name: Text.T; VAR rd: Rd.T; VAR wr: Wr.T): BOOLEAN =
+  VAR r, w: File.T;
+BEGIN
+  IF NOT LowPerfTool.Start (name, r, w) THEN
+    RETURN FALSE; END;
+
+  (* create rd and wr *)
+  TRY
+    rd := NEW(FileRd.T).init (r);
+    wr := NEW(FileWr.T).init (w);
+  EXCEPT
+    | OSError.E =&gt; RETURN FALSE; END;
+  RETURN TRUE;
+END Start;
+
+PROCEDURE <A NAME="StartAndWait"><procedure>StartAndWait</procedure></A> (name: Text.T; VAR rd: Rd.T; VAR wr: Wr.T): BOOLEAN =
+  VAR r, w: File.T;
+BEGIN
+  IF NOT LowPerfTool.StartAndWait (name, r, w) THEN
+    RETURN FALSE; END;
+
+  TRY
+    rd := NEW(FileRd.T).init (r);
+    wr := NEW(FileWr.T).init (w);
+  EXCEPT
+    | OSError.E =&gt; RETURN FALSE; END;
+  RETURN TRUE;
+END StartAndWait;
+
+PROCEDURE <A NAME="ParamStart"><procedure>ParamStart</procedure></A> (param: Text.T; VAR rd: Rd.T; wr: Wr.T): BOOLEAN =
+  VAR value := RTParams.Value (param);
+  BEGIN
+    IF value = NIL THEN
+      RETURN FALSE;
+    ELSIF Text.Length (value) = 0 THEN
+      RETURN Start (param, rd, wr);
+    ELSE
+      RETURN Start (value, rd, wr); END;
+  END ParamStart;
+
+PROCEDURE <A NAME="ParamStartAndWait"><procedure>ParamStartAndWait</procedure></A> (param: Text.T;
+                             VAR rd: Rd.T; VAR wr: Wr.T): BOOLEAN =
+  VAR value := RTParams.Value (param);
+  BEGIN
+    IF value = NIL THEN
+      RETURN FALSE;
+    ELSIF Text.Length (value) = 0 THEN
+      RETURN StartAndWait (param, rd, wr);
+    ELSE
+      RETURN StartAndWait (value, rd, wr); END;
+  END ParamStartAndWait;
+
+BEGIN
+END PerfTool.
+</PRE>
+</inModule>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

@@ -1,0 +1,85 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: formsvbt/src/MForm.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>formsvbt/src/MForm.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM>                                                              </EM></BLOCKQUOTE><PRE>
+
+INTERFACE <interface><A HREF="MForm.m3.html">MForm</A></interface>;
+
+IMPORT <A HREF="FormsVBT.i3.html">FormsVBT</A>, <A HREF="../../etext/src/TextPort.i3.html">TextPort</A>;
+
+TYPE
+  <A HREF="MForm.m3.html#ButtonClosure">ButtonClosure</A> &lt;:
+    FormsVBT.Closure OBJECT
+    METHODS
+      init (model: TextPort.Model; setDefault := TRUE): ButtonClosure
+    END;
+</PRE> If a <CODE>ButtonClosure</CODE> is attached to a <CODE>FormsVBT</CODE> component, then the
+   event-handler for that component will call
+<PRE>
+      TextPort.ChangeAllTextPorts (model)
+   </PRE>
+If <CODE>setDefault</CODE> is <CODE>TRUE</CODE>, then the event-handler will also set
+   <CODE>TextPort.DefaultModel</CODE> to <CODE>model</CODE>.
+
+
+<P><PRE>TYPE
+  <A HREF="MForm.m3.html#RadioClosure">RadioClosure</A> &lt;: FormsVBT.Closure OBJECT
+                  METHODS
+                    init (READONLY map: Map; setDefault := TRUE): RadioClosure
+                  END;
+  Map = ARRAY TextPort.Model OF TEXT;
+</PRE> If a <CODE>RadioClosure</CODE> is attached to a <CODE>Radio</CODE>-component named {\it rn} of a
+   form {\it fv}, then the event-handler for that component will look for a
+   model <CODE>m</CODE> such that
+<PRE>
+      map[m] # NIL AND Text.Equal(map[m], FormsVBT.GetChoice(<KBD>fv</KBD>, <KBD>rn</KBD>))
+   </PRE>
+If there is such an <CODE>m</CODE>, then the event-handler will call
+<PRE>
+      TextPort.ChangeAllTextPorts (m)
+   </PRE>
+If <CODE>setDefault</CODE> is <CODE>TRUE</CODE>, then the event-handler will also set
+   <CODE>TextPort.DefaultModel</CODE> to <CODE>model</CODE>.
+   This is intended to make it convenient to use a <CODE>Radio</CODE> component whose
+   choices correspond to models.  Clients may wish to initialize such
+   components by calling
+<PRE>
+      FormsVBT.PutChoice (<KBD>fv</KBD>, <KBD>rn</KBD>, map[TextPort,DefaultModel])
+   
+
+<P><PRE>END MForm.
+</PRE>
+</inInterface>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

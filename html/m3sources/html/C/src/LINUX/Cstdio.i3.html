@@ -1,0 +1,88 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: C/src/LINUX/Cstdio.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>C/src/LINUX/Cstdio.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+
+INTERFACE <interface><A HREF="#x1">Cstdio</A></interface>;
+
+FROM <A HREF="../Common/Ctypes.i3.html">Ctypes</A> IMPORT int, char_star, unsigned_int;
+
+CONST
+  NIOBRW = 3;
+  IOEOF  = 8_20;
+
+TYPE
+  FILE = RECORD
+            flags: int;
+            gptr:   char_star;
+            egptr:  char_star;
+            eback:  char_star;
+            pbase:  char_star;
+            pptr:   char_star;
+            epptr:  char_star;
+            base:   char_star;
+            ebuf:   char_star;
+            chain:  ADDRESS; END;
+
+  FILE_star = UNTRACED REF FILE;
+
+VAR iob: ARRAY [0..NIOBRW-1] OF FILE_star;
+
+&lt;*EXTERNAL &quot;__std_filebuf_0&quot;*&gt; VAR stdin_file: FILE;
+&lt;*EXTERNAL &quot;__std_filebuf_1&quot;*&gt; VAR stdout_file: FILE;
+&lt;*EXTERNAL &quot;__std_filebuf_2&quot;*&gt; VAR stderr_file: FILE;
+
+&lt;*EXTERNAL &quot;_flsbuf&quot;*&gt; PROCEDURE flsbuf (c: unsigned_int; f:
+FILE_star): int; &lt;*EXTERNAL &quot;_filbuf&quot;*&gt; PROCEDURE filbuf (f:
+FILE_star): int;
+
+&lt;*EXTERNAL feof*&gt;      PROCEDURE feof (f: FILE_star): int;
+&lt;*EXTERNAL getc*&gt;      PROCEDURE getc (f: FILE_star): int;
+&lt;*EXTERNAL ungetc*&gt;    PROCEDURE ungetc (c: int; f: FILE_star): int;
+&lt;*EXTERNAL putc*&gt;      PROCEDURE putc (c: int; f: FILE_star): int;
+&lt;*EXTERNAL fflush*&gt;    PROCEDURE fflush (f: FILE_star): int;
+
+END Cstdio.
+</PRE>
+</inInterface>
+<HR>
+<A NAME="x1">Cstdio's implementation  is in:
+</A><UL>
+<LI><A HREF="../FreeBSD/Cstdio.m3.html#0TOP0">C/src/FreeBSD/Cstdio.m3</A>
+<LI><A HREF="../FreeBSD2/Cstdio.m3.html#0TOP0">C/src/FreeBSD2/Cstdio.m3</A>
+<LI><A HREF="Cstdio.m3.html#0TOP0">C/src/LINUX/Cstdio.m3</A>
+<LI><A HREF="../LINUXELF/Cstdio.m3.html#0TOP0">C/src/LINUXELF/Cstdio.m3</A>
+</UL>
+<P>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

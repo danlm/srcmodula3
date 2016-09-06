@@ -1,0 +1,172 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: float/src/DS3100/FPU.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>float/src/DS3100/FPU.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+
+INTERFACE <interface><A HREF="#x1">FPU</A></interface>;
+
+IMPORT <A HREF="../../../C/src/Common/Ctypes.i3.html">Ctypes</A>, <A HREF="../../../word/src/Word.i3.html">Word</A>;
+</PRE> This interface defines the DS3100 hardware (and libm.a) defined interface
+   to floating-point values 
+
+<P>------------------------------------------------- binary representation ---
+
+<P><PRE>TYPE
+  RealRep = RECORD
+    significand: BITS 23 FOR [0 .. 8*1024*1024-1];
+    exponent:    BITS  8 FOR [0 .. 255];
+    sign:        BITS  1 FOR [0..1];
+  END;
+
+CONST
+  RealBias = 127;
+
+TYPE
+  LongRealRep = RECORD
+    significand1 : BITS 32 FOR Word.T;
+    significand0 : BITS 20 FOR [0..16_FFFFF];
+    exponent     : BITS 11 FOR [0..16_7FF];
+    sign         : BITS  1 FOR [0..1];
+  END;
+
+CONST
+  LongRealBias = 1023;
+
+TYPE
+  ExtendedRep = LongRealRep;
+
+CONST
+  ExtendedBias = LongRealBias;
+</PRE>--------------------------------------------------- IEEE classification ---
+
+<P><PRE>TYPE
+  FPClass = { SignalingNaN, QuietNaN,
+              PosInfinity,  NegInfinity,
+              PosNormal,    NegNormal,
+              PosDenormal,  NegDenormal,
+              PosZero,      NegZero };
+
+&lt;*EXTERNAL fp_class_d*&gt; PROCEDURE LongClass (x: LONGREAL): Ctypes.int;
+&lt;*EXTERNAL fp_class_f*&gt; PROCEDURE RealClass (x: REAL): Ctypes.int;
+</PRE><BLOCKQUOTE><EM> returns the IEEE defined class of its argument </EM></BLOCKQUOTE><PRE>
+</PRE>----------------------------------------------- control/status register ---
+
+<P><PRE>TYPE
+  Flag = BITS 1 FOR BOOLEAN;
+
+TYPE
+  ControlStatus = RECORD
+    rounding_mode : BITS 2 FOR RoundingMode;
+
+    (* &quot;sticky&quot; bits, only reset by writing the control register *)
+    se_inexact   : Flag;
+    se_underflow : Flag;
+    se_overflow  : Flag;
+    se_divide0   : Flag;
+    se_invalid   : Flag;
+
+    (* trap enable flags for the exceptions *)
+    en_inexact   : Flag;
+    en_underflow : Flag;
+    en_overflow  : Flag;
+    en_divide0   : Flag;
+    en_invalid   : Flag;
+
+    (* exceptions that occurred during the most recent instruction *)
+    ex_inexact   : Flag;
+    ex_underflow : Flag;
+    ex_overflow  : Flag;
+    ex_divide0   : Flag;
+    ex_invalid   : Flag;
+    ex_unimplemented : Flag;
+
+    reserved1 : BITS 5 FOR [0..31];
+    condition : Flag;  (* result of most recent compare instruction *)
+    reserved0 : BITS 8 FOR [0..255];
+  END;
+
+TYPE
+  RoundingMode = { ToNearest, ToZero, ToPlusInfinity, ToMinusInfinity };
+
+&lt;*EXTERNAL get_fpc_csr*&gt; PROCEDURE GetStatus (): INTEGER(*ControlStatus*);
+</PRE><BLOCKQUOTE><EM> returns the current setting of the floating point control registers </EM></BLOCKQUOTE><PRE>
+
+&lt;*EXTERNAL set_fpc_csr*&gt; PROCEDURE SetStatus (new: INTEGER): INTEGER(*ControlStatus*);
+</PRE><BLOCKQUOTE><EM> sets the floating point control registers and returns their previous state</EM></BLOCKQUOTE><PRE>
+
+&lt;*EXTERNAL swapRM*&gt;PROCEDURE SetRounding(new: INTEGER):INTEGER(*RoundingMode*);
+</PRE><BLOCKQUOTE><EM> sets the rounding mode and returns its previous value </EM></BLOCKQUOTE><PRE>
+
+&lt;*EXTERNAL swapINX*&gt; PROCEDURE SetInexact (new: INTEGER): INTEGER(*BOOLEAN*);
+</PRE><BLOCKQUOTE><EM> sets the <CODE>sticky inexact bit</CODE> and returns its old value </EM></BLOCKQUOTE><PRE>
+</PRE>--------------------------------------------- standard? IEEE operations ---
+
+<P><PRE>&lt;*EXTERNAL isnan*&gt; PROCEDURE IsNaN (x: LONGREAL): INTEGER (*BOOLEAN*);
+</PRE><BLOCKQUOTE><EM> return 1 if x is NaN, 0 otherwise. </EM></BLOCKQUOTE><PRE>
+
+&lt;*EXTERNAL copysign*&gt; PROCEDURE CopySign (x, y: LONGREAL): LONGREAL;
+</PRE><BLOCKQUOTE><EM> return 'x' with the sign of 'y'. </EM></BLOCKQUOTE><PRE>
+
+&lt;*EXTERNAL drem*&gt; PROCEDURE Remainder (x, y: LONGREAL): LONGREAL;
+</PRE><BLOCKQUOTE><EM> returns the remainder r := x - n*y  where n is the integer nearest the
+   exact value of x/y.  Additionally if |n-x/y|=1/2, then n is even.
+   Consequently the remainder is computed exactly and |r| &lt; |y|/2.
+   Remainder (x, 0.0) and Remainder (infinity, y) produce NaN. </EM></BLOCKQUOTE><PRE>
+
+&lt;*EXTERNAL finite*&gt; PROCEDURE IsFinite (x: LONGREAL): INTEGER (*BOOLEAN*);
+</PRE><BLOCKQUOTE><EM> = 1 if -infinity &lt; x &lt; +infinity, otherwise = 0 </EM></BLOCKQUOTE><PRE>
+
+&lt;*EXTERNAL logb*&gt; PROCEDURE BinaryLog (x: LONGREAL): LONGREAL;
+</PRE><BLOCKQUOTE><EM> for x finite, non-zero, and above the underflow threshold,
+   returns the integer valued floating-point number n, such that
+   1 &lt; ABS (x) / (2^n) &lt; 2.  Note that BinaryLog (+infinity) = +infinity,
+   and BinaryLog (0) = -infinity (and causes a division-by-zero error). </EM></BLOCKQUOTE><PRE>
+
+&lt;*EXTERNAL*&gt; PROCEDURE scalb (x: LONGREAL;  n: INTEGER): LONGREAL;
+</PRE><BLOCKQUOTE><EM> returns x * (2^n) </EM></BLOCKQUOTE><PRE>
+
+&lt;*EXTERNAL*&gt; PROCEDURE sqrt (x: LONGREAL): LONGREAL;
+</PRE><BLOCKQUOTE><EM> returns sqrt (x) </EM></BLOCKQUOTE><PRE>
+
+END FPU.
+</PRE>
+</inInterface>
+<HR>
+<A NAME="x1">FPU's implementation  is in:
+</A><UL>
+<LI><A HREF="../IEEE-default/FPU.m3.html#0TOP0">float/src/IEEE-default/FPU.m3</A>
+<LI><A HREF="../VAX/FPU.m3.html#0TOP0">float/src/VAX/FPU.m3</A>
+</UL>
+<P>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

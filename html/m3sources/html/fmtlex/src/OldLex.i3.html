@@ -1,0 +1,127 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: fmtlex/src/OldLex.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>fmtlex/src/OldLex.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+
+INTERFACE <interface><A HREF="OldLex.m3.html">OldLex</A></interface>;
+</PRE><BLOCKQUOTE><EM> Sifting through a reader for booleans, integers, reals, and text strings. </EM></BLOCKQUOTE><PRE>
+
+IMPORT <A HREF="../../rw/src/Common/Rd.i3.html">Rd</A>, <A HREF="../../convert/src/Convert.i3.html">Convert</A>;
+
+  EXCEPTION Error;
+
+  CONST
+    Blanks = SET OF CHAR {'\t', '\n', '\r', '\f', ' '};
+    NonBlanks = SET OF CHAR {'!'..'~'};
+    BoolChars = SET OF CHAR {'T','R','U','E','F','A','L','S',
+      't','r','u','e','f','a','l','s'};
+    DecChars = SET OF CHAR {'-', '+', '0'..'9'};
+    HexChars = SET OF CHAR {'0'..'9', 'A'..'F', 'a'..'f'};
+    IntChars = SET OF CHAR {'-', '+', '_', '0'..'9', 'A'..'F', 'a'..'f'};
+    RealChars = SET OF CHAR {'-', '+', '.', 'D', 'E', 'd', 'e', '0'..'9'};
+    (* See Char.i3 for more. *)
+
+&lt;*OBSOLETE*&gt;
+  PROCEDURE <A HREF="OldLex.m3.html#Scan">Scan</A>(rd: Rd.T; READONLY cs: SET OF CHAR := NonBlanks): TEXT
+    RAISES {Rd.Failure};
+    (* Let t be the longest prefix of rd composed of characters in
+       cs, and let p be position of rd immediately following t (or EOF).
+       Return t, leaving rd at position p. (It may call Rd.UnGetChar.) *)
+
+&lt;*OBSOLETE*&gt;
+  PROCEDURE <A HREF="OldLex.m3.html#Skip">Skip</A>(rd: Rd.T; READONLY cs: SET OF CHAR := Blanks)
+    RAISES {Rd.Failure};
+    (* Let t be the longest initial segment of rd composed of characters in
+       cs, and let p be position of rd immediately following t (or EOF).
+       Leave rd at position p. (It may call Rd.UnGetChar.) *)
+
+&lt;*OBSOLETE*&gt;
+  PROCEDURE <A HREF="OldLex.m3.html#Match">Match</A>(rd: Rd.T; t: TEXT) RAISES {Rd.Failure, Error};
+    (* Read the first Text.Length(t) characters of rd and raise Error
+       if these are not the same as t or if EOF is encountered. *)
+
+&lt;*OBSOLETE*&gt;
+  PROCEDURE <A HREF="OldLex.m3.html#Bool">Bool</A>(rd: Rd.T; READONLY cs: SET OF CHAR := NonBlanks): BOOLEAN
+    RAISES {Rd.Failure, Error};
+    (* Let t be the result of Scan(rd, cs).
+       Return TRUE if t = &quot;TRUE&quot;,&quot;True&quot;,&quot;true&quot;,&quot;T&quot;, or &quot;t&quot;.
+       Return FALSE if t = &quot;FALSE&quot;,&quot;False&quot;,&quot;false&quot;,&quot;F&quot;, or &quot;f&quot;.
+       Raise Error otherwise. *)
+
+&lt;*OBSOLETE*&gt;
+  PROCEDURE <A HREF="OldLex.m3.html#Int">Int</A>(rd: Rd.T; base: Convert.Base := 10;
+    READONLY cs: SET OF CHAR := NonBlanks): INTEGER
+    RAISES {Rd.Failure, Convert.Failed, Error};
+    (* Inteprets the longest prefix of rd made of cs's as an integer of
+       given base. It does so by applying Convert.ToInt(buf, (*VAR*)used, base)
+       to a buf obtained by Scan(rd, cs). Raises Error if Convert.ToInt does
+       not use the entire prefix (i.e. if used#NUMBER(buf)). *)
+
+&lt;*OBSOLETE*&gt;
+  PROCEDURE <A HREF="OldLex.m3.html#Unsigned">Unsigned</A>(rd: Rd.T; base: Convert.Base := 10;
+    READONLY cs: SET OF CHAR := NonBlanks): INTEGER
+    RAISES {Rd.Failure, Convert.Failed, Error};
+    (* Inteprets the longest prefix of rd made of cs's as an unsigned of given
+       base. It does so by applying Convert.ToUnsigned(buf, (*VAR*)used, base)
+       to a buf obtained by Scan(rd, cs). Raises Error if Convert.ToUnsigned
+       does not use the entire prefix (i.e. if used#NUMBER(buf)). *)
+
+&lt;*OBSOLETE*&gt;
+  PROCEDURE <A HREF="OldLex.m3.html#Real">Real</A>(rd: Rd.T; READONLY cs: SET OF CHAR := NonBlanks): REAL
+    RAISES {Rd.Failure, Convert.Failed, Error};
+    (* Inteprets the longest prefix of rd made of cs's as a real.
+       It does so by applying Convert.ToFloat to the text obtained by
+       Scan(rd, cs). Raises Error if Convert.ToFloat does not use the entire
+       prefix. *)
+
+&lt;*OBSOLETE*&gt;
+  PROCEDURE <A HREF="OldLex.m3.html#LongReal">LongReal</A>(rd: Rd.T; READONLY cs: SET OF CHAR := NonBlanks): LONGREAL
+    RAISES {Rd.Failure, Convert.Failed, Error};
+    (* Inteprets the longest prefix of rd made of cs's as a real.
+       It does so by applying Convert.ToLongFloat to the text obtained by
+       Scan(rd, cs). Raises Error if Convert.ToLongFloat does not use the
+       entire prefix. *)
+
+  (* Not implemented
+  PROCEDURE Extended(rd: Rd.T; READONLY cs: SET OF CHAR := NonBlanks): EXTENDED
+    RAISES {Rd.Failure, Convert.Failed, Error};
+       Inteprets the longest prefix of rd made of cs's as an extended.
+       It does so by applying Convert.ToExtended to the text obtained by
+       Scan(rd, cs). Raises Error if Convert.ToExtended does not use the entire
+       prefix. *)
+
+END OldLex.
+</PRE>
+</inInterface>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

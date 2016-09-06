@@ -1,0 +1,64 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: runtime/src/common/RTTypeSRC.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>runtime/src/common/RTTypeSRC.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><P>
+  <CODE>RTTypeSRC</CODE> provides SRC Modula-3 extensions to RTType and RTTypeFP.
+
+
+<P><PRE>INTERFACE <interface><A HREF="RTType.m3.html">RTTypeSRC</A></interface>;
+
+IMPORT <A HREF="RT0.i3.html">RT0</A>;
+
+PROCEDURE <A HREF="RTType.m3.html#TypeName">TypeName</A> (ref: REFANY): TEXT;
+</PRE><BLOCKQUOTE><EM> = TypecodeName (TYPECODE (ref)) </EM></BLOCKQUOTE><PRE>
+
+PROCEDURE <A HREF="RTType.m3.html#TypecodeName">TypecodeName</A> (tc: RT0.Typecode): TEXT;
+</PRE><BLOCKQUOTE><EM> Returns a text describing the ref whose typecode = <CODE>tc</CODE>.  Its
+   heuristic is to consider, in order, <CODE>named typecells</CODE>, brands, arrays,
+   object-subtypes, objects, and procedures.  If all else fails, it returns
+   <CODE>&lt;?&gt;</CODE>. </EM></BLOCKQUOTE><PRE>
+
+PROCEDURE <A HREF="RTType.m3.html#FindType">FindType</A> (id: INTEGER): RT0.TypeDefn;
+</PRE><BLOCKQUOTE><EM> Returns the type descriptor with UID id.  If no such type exists,
+   reutrns NIL. </EM></BLOCKQUOTE><PRE>
+</PRE>------------------------------------------------------------------ setup --
+
+<P><PRE>PROCEDURE <A HREF="RTType.m3.html#Init">Init</A> ();
+</PRE><BLOCKQUOTE><EM> called by the startup code to initialize the runtime type system. </EM></BLOCKQUOTE><PRE>
+
+END RTTypeSRC.
+</PRE>
+</inInterface>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

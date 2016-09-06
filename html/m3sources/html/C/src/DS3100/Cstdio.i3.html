@@ -1,0 +1,76 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: C/src/DS3100/Cstdio.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>C/src/DS3100/Cstdio.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+
+INTERFACE <interface><A HREF="#x1">Cstdio</A></interface>;
+
+FROM <A HREF="../Common/Ctypes.i3.html">Ctypes</A> IMPORT int, short, char;
+
+TYPE
+  char_star = UNTRACED REF char;  (* because of the weird def in Ctypes *)
+
+CONST
+  N_STATIC_IOBS = 3;
+  IOEOF  = 8_20;
+
+TYPE
+  Base = [2..16];
+  iobuf = RECORD
+            cnt: int;
+            ptr: char_star;
+            base: char_star;
+            bufsiz: int;
+            flag: short;
+            file: short; END;
+
+&lt;*EXTERNAL &quot;_iob&quot;*&gt; VAR iob: ARRAY [0..N_STATIC_IOBS - 1] OF iobuf;
+&lt;*EXTERNAL &quot;_flsbuf&quot;*&gt; PROCEDURE flsbuf (c: CHAR; f: UNTRACED REF iobuf);
+&lt;*EXTERNAL &quot;_filbuf&quot;*&gt; PROCEDURE filbuf (f: UNTRACED REF iobuf): CHAR;
+&lt;*EXTERNAL &quot;ungetc&quot;*&gt;  PROCEDURE ungetc (c: CHAR; f: UNTRACED REF iobuf);
+&lt;*EXTERNAL &quot;fflush&quot;*&gt; PROCEDURE flush (f: UNTRACED REF iobuf);
+
+END Cstdio.
+</PRE>
+</inInterface>
+<HR>
+<A NAME="x1">Cstdio's implementation  is in:
+</A><UL>
+<LI><A HREF="../FreeBSD/Cstdio.m3.html#0TOP0">C/src/FreeBSD/Cstdio.m3</A>
+<LI><A HREF="../FreeBSD2/Cstdio.m3.html#0TOP0">C/src/FreeBSD2/Cstdio.m3</A>
+<LI><A HREF="../LINUX/Cstdio.m3.html#0TOP0">C/src/LINUX/Cstdio.m3</A>
+<LI><A HREF="../LINUXELF/Cstdio.m3.html#0TOP0">C/src/LINUXELF/Cstdio.m3</A>
+</UL>
+<P>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

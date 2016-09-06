@@ -1,0 +1,78 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: Compiler</TITLE>
+</HEAD>
+<BODY BGCOLOR="#ffffff" VLINK="#006633">
+
+<H2>Compiler</H2>
+<P>
+
+<EM> Invoking the compiler directly is possible, but requires
+expert knowledge of the myriad command line parameters. </EM>
+You should use 
+<A HREF="../m3build/m3build.html"><TT>m3build</TT></A>
+instead.
+<P>
+
+The <B>m3</B> command invokes the SRC Modula-3 compiler.
+It compiles and links Modula-3 compilation units
+and objects to produce a program or library.
+It behaves like a typical Unix C compiler <TT>cc</TT>.
+<P>
+
+The syntax for invoking the compiler is
+<PRE>
+    m3 [options] [files] [libraries] 
+</PRE>
+The order of arguments is generally not significant.
+The order of the search path options (<B>-D</B> and <B>-L</B>) and
+libraries (<B>-l</B>) are significant.
+<P>
+
+The derived files produced by
+<B>m3</B> (objects, libraries, and programs) are
+placed in the directory where
+<B>m3</B> is invoked.
+We call that directory the
+<I>derived</I> directory.
+<P>
+
+<B>m3</B> parses the command line and invokes the
+compiler passes and linker as required.
+<B>m3</B> tells the compiler where to seek imported interfaces
+and where to find the Modula-3 runtime and standard libraries.
+<P>
+
+The full path names of the compiler and runtime library are <EM>not</EM>
+configured into <B>m3</B>.
+They are defined by
+<A HREF="../m3build/m3build.html"><TT>m3build</TT></A>.
+<P>
+
+More information is available on the following topics:
+<UL>
+<LI><A HREF="options.html">command line options</A>
+<LI><A HREF="files.html">recognized file extensions</A>
+<LI><A HREF="intfs.html">finding interfaces</A>
+<LI><A HREF="libs.html">finding libraries</A>
+<LI><A HREF="overlays.html">building overlays</A>
+<LI><A HREF="vstamps.html">version stamps</A>
+<LI><A HREF="errors.html">error messages</A>
+</UL>
+<P>
+
+<HR>
+<A HREF="../home.html">[Modula-3 home page]</A>
+<P>
+<A HREF="mailto:m3-request@src.dec.com">
+<ADDRESS>m3-request@src.dec.com</ADDRESS></A>
+<PRE>
+Last modified on Thu Jan  4 11:09:09 PST 1996 by heydon
+     modified on Thu Apr 21 11:41:42 PDT 1994 by kalsow
+     modified on Fri Feb  7 00:38:19 PST 1992 by muller
+</PRE>
+
+Copyright (C) 1992, 1996, Digital Equipment Corporation. All rights reserved.<BR>
+See the <A HREF="http://www.research.digital.com/SRC/m3sources/html/COPYRIGHT.html">COPYRIGHT</A> for a full description.
+</BODY>
+</HTML>

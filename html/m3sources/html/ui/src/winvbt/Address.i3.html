@@ -1,0 +1,64 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: ui/src/winvbt/Address.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>ui/src/winvbt/Address.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM> Digital Internal Use Only                                                 </EM></BLOCKQUOTE><PRE>
+</PRE>                                                                           
+       Created on Wed Jan 18 20:59:43 PST 1995 by najork                   
+
+<P> An <CODE>Address.T</CODE> is an <CODE>ADDRESS</CODE>. This interface is intended to be used to
+   instantiate generic interfaces and modules such as <CODE>Table</CODE> and <CODE>List</CODE>. 
+
+<P><PRE>INTERFACE <interface><A HREF="Address.m3.html">Address</A></interface>;
+
+IMPORT <A HREF="../../../word/src/Word.i3.html">Word</A>;
+
+CONST Brand = &quot;Address-1.0&quot;;
+
+TYPE T = ADDRESS;
+
+PROCEDURE <A HREF="Address.m3.html#Equal">Equal</A>(a, b: T): BOOLEAN;
+</PRE><BLOCKQUOTE><EM> Return <CODE>a = b</CODE>. </EM></BLOCKQUOTE><PRE>
+
+PROCEDURE <A HREF="Address.m3.html#Hash">Hash</A>(a: T): Word.T;
+</PRE><BLOCKQUOTE><EM> Return <CODE>LOOPHOLE(a, Word.T)</CODE>. This assumes that <CODE>ADDRESS</CODE> and <CODE>INTEGER</CODE>
+   have the same size. </EM></BLOCKQUOTE><PRE>
+
+PROCEDURE <A HREF="Address.m3.html#Compare">Compare</A>(a, b: T): [-1..1];
+</PRE><BLOCKQUOTE><EM> Return <CODE>-1</CODE> if <CODE>a &lt; b</CODE>, <CODE>0</CODE> if <CODE>a = b</CODE>, or <CODE>+1</CODE> if <CODE>a &gt; b</CODE>. </EM></BLOCKQUOTE><PRE>
+
+END Address.
+</PRE>
+</inInterface>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

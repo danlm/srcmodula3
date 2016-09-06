@@ -1,0 +1,365 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: runtime/src/ex_frame/RTException.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>runtime/src/ex_frame/RTException.m3</H2></A><HR>
+<inModule>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM>                                                             </EM></BLOCKQUOTE><PRE>
+
+UNSAFE MODULE <module>RTException</module> EXPORTS <A HREF="../common/RTException.i3.html"><implements>RTException</A></implements>, <A HREF="#x1"><implements>RTExRep</A></implements>;
+
+IMPORT <A HREF="../common/RT0.i3.html">RT0</A>, <A HREF="../common/RTMisc.i3.html">RTMisc</A>, <A HREF="../common/RTIO.i3.html">RTIO</A>, <A HREF="../common/RTParams.i3.html">RTParams</A>, <A HREF="../common/RTOS.i3.html">RTOS</A>;
+IMPORT <A HREF="../../../thread/src/Common/Thread.i3.html">Thread</A>, <A HREF="#x2">ThreadF</A>, <A HREF="../../../C/src/Common/M3toC.i3.html">M3toC</A>, <A HREF="../../../C/src/Common/Ctypes.i3.html">Ctypes</A>, <A HREF="#x3">Csetjmp</A>;
+
+VAR
+  DEBUG := FALSE;
+  dump_enabled := FALSE;
+
+TYPE
+  FinallyProc = PROCEDURE () RAISES ANY;
+
+EXCEPTION
+  OUCH; (* to keep the compiler from complaining *)
+
+PROCEDURE <A NAME="Raise"><procedure>Raise</procedure></A> (en: ExceptionName;  arg: ExceptionArg) RAISES ANY =
+  VAR
+    f := LOOPHOLE(ThreadF.GetCurrentHandlers(), Frame);
+    ex: ExceptionList;
+  BEGIN
+    IF DEBUG THEN
+      RTIO.PutText (&quot;---&gt; RAISE:&quot;);
+      RTIO.PutText (&quot;  en=&quot;);   RTIO.PutAddr (en);
+      RTIO.PutText (&quot; &quot;);       RTIO.PutString (en^);
+      RTIO.PutText (&quot;  arg=&quot;);  RTIO.PutAddr (arg);
+      RTIO.PutText (&quot;\n&quot;);
+      DumpStack ();
+    END;
+
+    LOOP
+      IF (f = NIL) THEN NoHandler (en, raises := FALSE); END;
+
+      CASE f.class OF
+      | ORD (ScopeKind.Except) =&gt;
+          ex := LOOPHOLE (f, PF1).handles;
+          WHILE (ex^ # NIL) DO
+            IF (ex^ = en) THEN ResumeRaise (en, arg) END;
+            INC (ex, ADRSIZE (ex^));
+          END;
+      | ORD (ScopeKind.ExceptElse) =&gt;
+          (* 's' is a TRY-EXCEPT-ELSE frame =&gt; go for it *)
+          ResumeRaise (en, arg);
+      | ORD (ScopeKind.Finally),
+        ORD (ScopeKind.FinallyProc),
+        ORD (ScopeKind.Lock) =&gt;
+          (* ignore for this pass *)
+      | ORD (ScopeKind.Raises) =&gt;
+          (* check that this procedure does indeed raise 'en' *)
+          ex := LOOPHOLE (f, PF3).raises;
+          IF ex = NIL THEN NoHandler (en); END;
+          LOOP
+            IF (ex^ = NIL) THEN  NoHandler (en) END;
+            IF (ex^ = en)  THEN  (* ok, it passes *) EXIT  END;
+            INC (ex, ADRSIZE (ex^));
+          END;
+      | ORD (ScopeKind.RaisesNone) =&gt;
+          NoHandler (en);
+      ELSE
+        BadStack ();
+      END;
+
+      f := f.next;   (* try the previous frame *)
+    END;
+  END Raise;
+
+PROCEDURE <A NAME="ResumeRaise"><procedure>ResumeRaise</procedure></A> (en: ExceptionName;  arg: ExceptionArg) RAISES ANY =
+  VAR
+    f := LOOPHOLE(ThreadF.GetCurrentHandlers(), Frame);
+    ex: ExceptionList;
+  BEGIN
+    IF DEBUG THEN
+      RTIO.PutText (&quot;---&gt; RERAISE:&quot;);
+      RTIO.PutText (&quot;  en=&quot;);   RTIO.PutAddr (en);
+      RTIO.PutText (&quot; &quot;);       RTIO.PutString (en^);
+      RTIO.PutText (&quot;  arg=&quot;);  RTIO.PutAddr (arg);
+      RTIO.PutText (&quot;\n&quot;);
+      DumpStack ();
+    END;
+
+    LOOP
+      IF (f = NIL) THEN  BadStack ();  END;
+
+      CASE f.class OF
+      | ORD (ScopeKind.ExceptElse),
+        ORD (ScopeKind.Finally) =&gt;
+          InvokeHandler (f, en, arg);
+      | ORD (ScopeKind.Except) =&gt;
+          ex := LOOPHOLE (f, PF1).handles;
+          WHILE (ex^ # NIL) DO
+            IF (ex^ = en) THEN InvokeHandler (f, en, arg) END;
+            INC (ex, ADRSIZE (ex^));
+          END;
+      | ORD (ScopeKind.FinallyProc) =&gt;
+          InvokeFinallyHandler (f, en, arg);
+      | ORD (ScopeKind.Lock) =&gt;
+          ReleaseLock (f);
+      | ORD (ScopeKind.Raises) =&gt;
+          (* already checked during the first pass *)
+      ELSE
+          BadStack ();
+      END;
+
+      ThreadF.SetCurrentHandlers (f.next); (* cut to the new handler *)
+      f := f.next;                         (* try the previous frame *)
+    END;
+  END ResumeRaise;
+
+PROCEDURE <A NAME="InvokeHandler"><procedure>InvokeHandler</procedure></A> (f: Frame; en: ExceptionName;
+                         arg: ExceptionArg) RAISES ANY =
+  VAR p := LOOPHOLE (f, PF1);
+  BEGIN
+    IF DEBUG THEN
+      RTIO.PutText (&quot;--&gt; INVOKE HANDLER:&quot;);
+      RTIO.PutText (&quot;  en=&quot;);     RTIO.PutAddr (en);
+      RTIO.PutText (&quot; &quot;);         RTIO.PutString (en^);
+      RTIO.PutText (&quot;  arg=&quot;);    RTIO.PutAddr (arg);
+      RTIO.PutText (&quot;  frame=&quot;);  RTIO.PutAddr (f);
+      RTIO.PutText (&quot;  class=&quot;);  RTIO.PutInt (f.class);
+      RTIO.PutText (&quot;\n&quot;);
+      RTIO.Flush ();
+    END;
+    ThreadF.SetCurrentHandlers (f.next); (* cut to the new handler *)
+    p.exception := en;                   (* record the exception *)
+    p.arg := arg;                        (* and it argument *)
+    Csetjmp.ulongjmp (p.jmpbuf, 1);      (* and jump... *)
+    RAISE OUCH;
+  END InvokeHandler;
+
+PROCEDURE <A NAME="InvokeFinallyHandler"><procedure>InvokeFinallyHandler</procedure></A> (f: Frame; en: ExceptionName;
+                                arg: ExceptionArg) RAISES ANY =
+  VAR
+    p := LOOPHOLE (f, PF2);
+    cl: RT0.ProcedureClosure;
+  BEGIN
+    IF DEBUG THEN
+      RTIO.PutText (&quot;--&gt; INVOKE FINALLY HANDLER:&quot;);
+      RTIO.PutText (&quot;  en=&quot;);     RTIO.PutAddr (en);
+      RTIO.PutText (&quot; &quot;);         RTIO.PutString (en^);
+      RTIO.PutText (&quot;  arg=&quot;);    RTIO.PutAddr (arg);
+      RTIO.PutText (&quot;  frame=&quot;);  RTIO.PutAddr (f);
+      RTIO.PutText (&quot;  class=&quot;);  RTIO.PutInt (f.class);
+      RTIO.PutText (&quot;\n&quot;);
+      RTIO.Flush ();
+    END;
+
+    (* build a nested procedure closure  *)
+    cl.marker := RT0.ClosureMarker;
+    cl.proc   := p.handler;
+    cl.frame  := p.frame;
+
+    ThreadF.SetCurrentHandlers (f.next); (* cut to the new handler *)
+    CallProc (LOOPHOLE (ADR (cl), FinallyProc));
+  END InvokeFinallyHandler;
+
+PROCEDURE <A NAME="CallProc"><procedure>CallProc</procedure></A> (p: FinallyProc) RAISES ANY =
+  (* we need to fool the compiler into generating a call
+     to a nested procedure... *)
+  BEGIN
+    p ();
+  END CallProc;
+
+PROCEDURE <A NAME="ReleaseLock"><procedure>ReleaseLock</procedure></A> (f: Frame) =
+  VAR p := LOOPHOLE (f, PF4);
+  BEGIN
+    IF DEBUG THEN
+      RTIO.PutText (&quot;--&gt; UNLOCK:&quot;);
+      RTIO.PutText (&quot;  frame=&quot;);  RTIO.PutAddr (p);
+      RTIO.PutText (&quot;  mutex=&quot;);  RTIO.PutAddr (LOOPHOLE (p.mutex, ADDRESS));
+      RTIO.PutText (&quot;\n&quot;);
+      RTIO.Flush ();
+    END;
+    ThreadF.SetCurrentHandlers (f.next); (* cut to the new handler *)
+    Thread.Release (p.mutex);            (* and release the lock *)
+  END ReleaseLock;
+
+PROCEDURE <A NAME="NoHandler"><procedure>NoHandler</procedure></A> (en: ExceptionName;  raises := TRUE) =
+  VAR nm := EName (en);
+  BEGIN
+    IF (raises) THEN
+      RTMisc.FatalError (NIL, 0, &quot;Exception \&quot;&quot;, nm, &quot;\&quot; not in RAISES list&quot;);
+    ELSE
+      RTMisc.FatalError (NIL, 0, &quot;Unhandled exception \&quot;&quot;, nm, &quot;\&quot;&quot;);
+    END;
+  END NoHandler;
+
+PROCEDURE <A NAME="BadStack"><procedure>BadStack</procedure></A> () =
+  BEGIN
+    RTMisc.FatalError (NIL, 0, &quot;corrupt exception stack&quot;);
+  END BadStack;
+</PRE>----------------------------------------------------------- diagnostics ---
+
+<P><PRE>PROCEDURE <A NAME="SanityCheck"><procedure>SanityCheck</procedure></A> () =
+  CONST Min_SK = ORD (FIRST (ScopeKind));
+  CONST Max_SK = ORD (LAST (ScopeKind));
+  VAR f := LOOPHOLE(ThreadF.GetCurrentHandlers(), Frame);
+  VAR i: INTEGER;
+  BEGIN
+    WHILE (f # NIL) DO
+      i := f.class;
+      IF (i &lt; Min_SK) OR (Max_SK &lt; i) THEN BadStack () END;
+      f := f.next;
+    END;
+  END SanityCheck;
+
+PROCEDURE <A NAME="DumpStack"><procedure>DumpStack</procedure></A> () =
+  VAR f := LOOPHOLE(ThreadF.GetCurrentHandlers(), Frame);
+  BEGIN
+    IF NOT DEBUG AND NOT dump_enabled THEN RETURN; END;
+
+    RTOS.LockHeap (); (* disable thread switching... (you wish!) *)
+
+    RTIO.PutText (&quot;------------------ EXCEPTION HANDLER STACK ---------------------\n&quot;);
+    WHILE (f # NIL) DO
+      RTIO.PutAddr (f);
+
+      CASE f.class OF
+      | ORD (ScopeKind.Except) =&gt;
+          RTIO.PutText (&quot; TRY-EXCEPT &quot;);
+          DumpHandles (LOOPHOLE (f, PF1).handles);
+      | ORD (ScopeKind.ExceptElse) =&gt;
+          RTIO.PutText (&quot; TRY-EXCEPT-ELSE &quot;);
+      | ORD (ScopeKind.Finally) =&gt;
+          RTIO.PutText (&quot; TRY-FINALLY &quot;);
+      | ORD (ScopeKind.FinallyProc) =&gt;
+          VAR x := LOOPHOLE (f, PF2); BEGIN
+            RTIO.PutText (&quot; TRY-FINALLY  proc = &quot;);
+            RTIO.PutAddr (x.handler);
+            RTIO.PutText (&quot;   frame = &quot;);
+            RTIO.PutAddr (x.frame);
+          END;
+      | ORD (ScopeKind.Raises) =&gt;
+          RTIO.PutText (&quot; RAISES &quot;);
+          DumpHandles (LOOPHOLE (f, PF3).raises);
+      | ORD (ScopeKind.RaisesNone) =&gt;
+          RTIO.PutText (&quot; RAISES {}&quot;);
+      | ORD (ScopeKind.Lock) =&gt;
+          VAR x := LOOPHOLE (f, PF4); BEGIN
+            RTIO.PutText (&quot; LOCK  mutex = &quot;);
+            RTIO.PutAddr (LOOPHOLE (x.mutex, ADDRESS));
+          END;
+      ELSE
+         RTIO.PutText (&quot; *** BAD EXCEPTION RECORD, class = &quot;);
+         RTIO.PutInt (f.class);
+         RTIO.PutText (&quot; ***\n&quot;);
+         EXIT;
+      END;
+      RTIO.PutText (&quot;\n&quot;);
+      f := f.next;
+    END;
+    RTIO.PutText (&quot;----------------------------------------------------------------\n&quot;);
+    RTIO.Flush ();
+
+    RTOS.UnlockHeap ();
+  END DumpStack;
+
+PROCEDURE <A NAME="DumpHandles"><procedure>DumpHandles</procedure></A> (x: ExceptionList) =
+  VAR first := TRUE;  en: ExceptionName;
+  BEGIN
+    RTIO.PutText (&quot; {&quot;);
+    IF (x # NIL) THEN
+      WHILE (x^ # NIL) DO
+        IF (NOT first) THEN RTIO.PutText (&quot;, &quot;);  END;
+        first := FALSE;
+        en := x^;
+        RTIO.PutString (en^);
+        INC (x, ADRSIZE (x^));
+      END;
+    END;
+    RTIO.PutText (&quot;}&quot;);
+  END DumpHandles;
+
+PROCEDURE <A NAME="EName"><procedure>EName</procedure></A> (en: ExceptionName): TEXT =
+  BEGIN
+    RETURN M3toC.StoT (LOOPHOLE (en^, Ctypes.char_star));
+  END EName;
+
+BEGIN
+  dump_enabled := RTParams.IsPresent (&quot;stackdump&quot;);
+  EVAL SanityCheck; (* avoid the unused warning *)
+END RTException.
+</PRE>
+</inModule>
+<HR>
+<A NAME="x1">interface RTExRep is in:
+</A><UL>
+<LI><A HREF="RTExRep.i3.html#0TOP0">runtime/src/ex_frame/RTExRep.i3</A>
+<LI><A HREF="../ex_stack/RTExRep.i3.html#0TOP0">runtime/src/ex_stack/RTExRep.i3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x2">interface ThreadF is in:
+</A><UL>
+<LI><A HREF="../../../thread/src/NOOP/ThreadF.i3.html#0TOP0">thread/src/NOOP/ThreadF.i3</A>
+<LI><A HREF="../../../thread/src/POSIX/ThreadF.i3.html#0TOP0">thread/src/POSIX/ThreadF.i3</A>
+<LI><A HREF="../../../thread/src/WIN32/ThreadF.i3.html#0TOP0">thread/src/WIN32/ThreadF.i3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x3">interface Csetjmp is in:
+</A><UL>
+<LI><A HREF="../../../C/src/AIX386/Csetjmp.i3.html#0TOP0">C/src/AIX386/Csetjmp.i3</A>
+<LI><A HREF="../../../C/src/ALPHA_OSF/Csetjmp.i3.html#0TOP0">C/src/ALPHA_OSF/Csetjmp.i3</A>
+<LI><A HREF="../../../C/src/AP3000/Csetjmp.i3.html#0TOP0">C/src/AP3000/Csetjmp.i3</A>
+<LI><A HREF="../../../C/src/ARM/Csetjmp.i3.html#0TOP0">C/src/ARM/Csetjmp.i3</A>
+<LI><A HREF="../../../C/src/DS3100/Csetjmp.i3.html#0TOP0">C/src/DS3100/Csetjmp.i3</A>
+<LI><A HREF="../../../C/src/FreeBSD/Csetjmp.i3.html#0TOP0">C/src/FreeBSD/Csetjmp.i3</A>
+<LI><A HREF="../../../C/src/FreeBSD2/Csetjmp.i3.html#0TOP0">C/src/FreeBSD2/Csetjmp.i3</A>
+<LI><A HREF="../../../C/src/HP300/Csetjmp.i3.html#0TOP0">C/src/HP300/Csetjmp.i3</A>
+<LI><A HREF="../../../C/src/HPPA/Csetjmp.i3.html#0TOP0">C/src/HPPA/Csetjmp.i3</A>
+<LI><A HREF="../../../C/src/IBMR2/Csetjmp.i3.html#0TOP0">C/src/IBMR2/Csetjmp.i3</A>
+<LI><A HREF="../../../C/src/IBMRT/Csetjmp.i3.html#0TOP0">C/src/IBMRT/Csetjmp.i3</A>
+<LI><A HREF="../../../C/src/IRIX5/Csetjmp.i3.html#0TOP0">C/src/IRIX5/Csetjmp.i3</A>
+<LI><A HREF="../../../C/src/LINUX/Csetjmp.i3.html#0TOP0">C/src/LINUX/Csetjmp.i3</A>
+<LI><A HREF="../../../C/src/LINUXELF/Csetjmp.i3.html#0TOP0">C/src/LINUXELF/Csetjmp.i3</A>
+<LI><A HREF="../../../C/src/NEXT/Csetjmp.i3.html#0TOP0">C/src/NEXT/Csetjmp.i3</A>
+<LI><A HREF="../../../C/src/NT386/Csetjmp.i3.html#0TOP0">C/src/NT386/Csetjmp.i3</A>
+<LI><A HREF="../../../C/src/OKI/Csetjmp.i3.html#0TOP0">C/src/OKI/Csetjmp.i3</A>
+<LI><A HREF="../../../C/src/SEQUENT/Csetjmp.i3.html#0TOP0">C/src/SEQUENT/Csetjmp.i3</A>
+<LI><A HREF="../../../C/src/SOLgnu/Csetjmp.i3.html#0TOP0">C/src/SOLgnu/Csetjmp.i3</A>
+<LI><A HREF="../../../C/src/SOLsun/Csetjmp.i3.html#0TOP0">C/src/SOLsun/Csetjmp.i3</A>
+<LI><A HREF="../../../C/src/SPARC/Csetjmp.i3.html#0TOP0">C/src/SPARC/Csetjmp.i3</A>
+<LI><A HREF="../../../C/src/SUN3/Csetjmp.i3.html#0TOP0">C/src/SUN3/Csetjmp.i3</A>
+<LI><A HREF="../../../C/src/SUN386/Csetjmp.i3.html#0TOP0">C/src/SUN386/Csetjmp.i3</A>
+<LI><A HREF="../../../C/src/UMAX/Csetjmp.i3.html#0TOP0">C/src/UMAX/Csetjmp.i3</A>
+<LI><A HREF="../../../C/src/VAX/Csetjmp.i3.html#0TOP0">C/src/VAX/Csetjmp.i3</A>
+</UL>
+<P>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

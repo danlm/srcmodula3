@@ -1,0 +1,101 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: os/src/POSIX/FilePosix.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>os/src/POSIX/FilePosix.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+
+INTERFACE <interface><A HREF="FilePosix.m3.html">FilePosix</A></interface>;
+
+IMPORT <A HREF="../Common/File.i3.html">File</A>, <A HREF="../Common/OSError.i3.html">OSError</A>, <A HREF="../Common/Pipe.i3.html">Pipe</A>, <A HREF="#x1">Ustat</A>;
+</PRE> In this interface we reveal that all Unix <CODE>File.T</CODE>s have a
+   file descriptor field, <CODE>fd</CODE>. 
+
+<P><PRE>TYPE T = File.Public OBJECT
+    fd: INTEGER;
+    ds: DirectionSet
+  END;
+
+REVEAL File.T &lt;: T;
+
+TYPE
+  Direction = {Read, Write};
+  DirectionSet = SET OF Direction;
+
+CONST
+  Read = DirectionSet{Direction.Read};
+  Write = DirectionSet{Direction.Write};
+  ReadWrite = DirectionSet{Direction.Read, Direction.Write};
+
+PROCEDURE <A HREF="FilePosix.m3.html#New">New</A>(fd: INTEGER; ds: DirectionSet): File.T RAISES {OSError.E};
+</PRE><BLOCKQUOTE><EM> Create the appropriate subtype of <CODE>File.T</CODE>, based on the characteristics
+   of the opened file descriptor <CODE>fd</CODE> and directions <CODE>ds</CODE>. </EM></BLOCKQUOTE><PRE>
+
+PROCEDURE <A HREF="FilePosix.m3.html#NewPipe">NewPipe</A>(fd: INTEGER; ds: DirectionSet): Pipe.T;
+</PRE><BLOCKQUOTE><EM> Create a <CODE>Pipe.T</CODE> based on <CODE>fd</CODE> and <CODE>ds</CODE>.  It is an unchecked (but safe)
+   error if <CODE>fd</CODE> is not <CODE>S_IFPIPE</CODE>, <CODE>S_IFPORT</CODE>, or <CODE>S_IFSOCK</CODE>. </EM></BLOCKQUOTE><PRE>
+
+PROCEDURE <A HREF="FilePosix.m3.html#FileTypeFromStatbuf">FileTypeFromStatbuf</A>(READONLY statbuf: Ustat.struct_stat)
+  : File.Type;
+</PRE><BLOCKQUOTE><EM> Return the <CODE>File.Type</CODE> corresponding mostly closely to
+   <CODE>Word.And(statbuf.st_mode, Ustat.S_IFMT)</CODE>. </EM></BLOCKQUOTE><PRE>
+
+END FilePosix.
+</PRE>
+</inInterface>
+<HR>
+<A NAME="x1">interface Ustat is in:
+</A><UL>
+<LI><A HREF="../../../unix/src/aix-3-2/Ustat.i3.html#0TOP0">unix/src/aix-3-2/Ustat.i3</A>
+<LI><A HREF="../../../unix/src/aix-ps2-1-2/Ustat.i3.html#0TOP0">unix/src/aix-ps2-1-2/Ustat.i3</A>
+<LI><A HREF="../../../unix/src/freebsd-1/Ustat.i3.html#0TOP0">unix/src/freebsd-1/Ustat.i3</A>
+<LI><A HREF="../../../unix/src/freebsd-2/Ustat.i3.html#0TOP0">unix/src/freebsd-2/Ustat.i3</A>
+<LI><A HREF="../../../unix/src/hpux-7-0/Ustat.i3.html#0TOP0">unix/src/hpux-7-0/Ustat.i3</A>
+<LI><A HREF="../../../unix/src/ibm-4-3/Ustat.i3.html#0TOP0">unix/src/ibm-4-3/Ustat.i3</A>
+<LI><A HREF="../../../unix/src/irix-5.2/Ustat.i3.html#0TOP0">unix/src/irix-5.2/Ustat.i3</A>
+<LI><A HREF="../../../unix/src/linux/Ustat.i3.html#0TOP0">unix/src/linux/Ustat.i3</A>
+<LI><A HREF="../../../unix/src/osf-1.generic/Ustat.i3.html#0TOP0">unix/src/osf-1.generic/Ustat.i3</A>
+<LI><A HREF="../../../unix/src/solaris-2-x/Ustat.i3.html#0TOP0">unix/src/solaris-2-x/Ustat.i3</A>
+<LI><A HREF="../../../unix/src/sunos-4-x/Ustat.i3.html#0TOP0">unix/src/sunos-4-x/Ustat.i3</A>
+<LI><A HREF="../../../unix/src/sysv-4.0/Ustat.i3.html#0TOP0">unix/src/sysv-4.0/Ustat.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.AP3000/Ustat.i3.html#0TOP0">unix/src/ultrix-3-1.AP3000/Ustat.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.ARM/Ustat.i3.html#0TOP0">unix/src/ultrix-3-1.ARM/Ustat.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.DS3100/Ustat.i3.html#0TOP0">unix/src/ultrix-3-1.DS3100/Ustat.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.NEXT/Ustat.i3.html#0TOP0">unix/src/ultrix-3-1.NEXT/Ustat.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.SEQUENT/Ustat.i3.html#0TOP0">unix/src/ultrix-3-1.SEQUENT/Ustat.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.SUN3/Ustat.i3.html#0TOP0">unix/src/ultrix-3-1.SUN3/Ustat.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.SUN386/Ustat.i3.html#0TOP0">unix/src/ultrix-3-1.SUN386/Ustat.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.UMAX/Ustat.i3.html#0TOP0">unix/src/ultrix-3-1.UMAX/Ustat.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.VAX/Ustat.i3.html#0TOP0">unix/src/ultrix-3-1.VAX/Ustat.i3</A>
+</UL>
+<P>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

@@ -1,0 +1,137 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: rw/src/Common/IO.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>rw/src/Common/IO.m3</H2></A><HR>
+<inModule>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+
+MODULE <module><implements><A HREF="IO.i3.html">IO</A></implements></module>;
+
+IMPORT <A HREF="Rd.i3.html">Rd</A>, <A HREF="Wr.i3.html">Wr</A>, <A HREF="../../../thread/src/Common/Thread.i3.html">Thread</A>, <A HREF="Stdio.i3.html">Stdio</A>, <A HREF="FileRd.i3.html">FileRd</A>, <A HREF="FileWr.i3.html">FileWr</A>, <A HREF="../../../fmtlex/src/Fmt.i3.html">Fmt</A>, <A HREF="../../../os/src/Common/OSError.i3.html">OSError</A>, <A HREF="../../../fmtlex/src/Lex.i3.html">Lex</A>, <A HREF="#x1">FloatMode</A>;
+
+&lt;* FATAL Rd.Failure, Wr.Failure, Thread.Alerted *&gt;
+
+PROCEDURE <A NAME="Put"><procedure>Put</procedure></A>(txt: TEXT; wr: Wr.T := NIL)=
+  BEGIN
+    IF wr = NIL THEN wr := Stdio.stdout END;
+    Wr.PutText(wr, txt); Wr.Flush(wr);
+  END Put;
+
+PROCEDURE <A NAME="PutInt"><procedure>PutInt</procedure></A>(n: INTEGER; wr: Wr.T := NIL)=
+  BEGIN
+    IF wr = NIL THEN wr := Stdio.stdout END;
+    Wr.PutText(wr, Fmt.Int(n)); Wr.Flush(wr);
+  END PutInt;
+
+PROCEDURE <A NAME="PutReal"><procedure>PutReal</procedure></A>(r: REAL; wr: Wr.T := NIL)=
+  BEGIN
+    IF wr = NIL THEN wr := Stdio.stdout END;
+    Wr.PutText(wr, Fmt.Real(r)); Wr.Flush(wr);
+  END PutReal;
+
+PROCEDURE <A NAME="EOF"><procedure>EOF</procedure></A>(rd: Rd.T := NIL): BOOLEAN=
+  BEGIN
+    IF rd = NIL THEN rd := Stdio.stdin END;
+    RETURN Rd.EOF(rd);
+  END EOF;
+
+PROCEDURE <A NAME="GetLine"><procedure>GetLine</procedure></A>(rd: Rd.T := NIL): TEXT RAISES {Error}=
+  BEGIN
+    IF rd = NIL THEN rd := Stdio.stdin END;
+    TRY RETURN Rd.GetLine(rd);
+    EXCEPT
+    | Rd.EndOfFile =&gt; RAISE Error;
+    END;
+  END GetLine;
+
+PROCEDURE <A NAME="GetChar"><procedure>GetChar</procedure></A>(rd: Rd.T := NIL): CHAR RAISES {Error}=
+  BEGIN
+    IF rd = NIL THEN rd := Stdio.stdin END;
+    TRY RETURN Rd.GetChar(rd);
+    EXCEPT
+    | Rd.EndOfFile =&gt; RAISE Error;
+    END;
+  END GetChar;
+
+PROCEDURE <A NAME="GetInt"><procedure>GetInt</procedure></A>(rd: Rd.T := NIL): INTEGER RAISES {Error}=
+  BEGIN
+    IF rd = NIL THEN rd := Stdio.stdin END;
+    TRY RETURN Lex.Int(rd);
+    EXCEPT
+    | Lex.Error, FloatMode.Trap =&gt; RAISE Error;
+    END;
+  END GetInt;
+
+PROCEDURE <A NAME="GetReal"><procedure>GetReal</procedure></A>(rd: Rd.T := NIL): REAL RAISES {Error}=
+  BEGIN
+    IF rd = NIL THEN rd := Stdio.stdin END;
+    TRY RETURN Lex.Real(rd);
+    EXCEPT
+    | Lex.Error, FloatMode.Trap =&gt; RAISE Error;
+    END;
+  END GetReal;
+
+PROCEDURE <A NAME="OpenRead"><procedure>OpenRead</procedure></A>(f: TEXT): Rd.T=
+  BEGIN
+    TRY RETURN FileRd.Open(f);
+    EXCEPT
+    | OSError.E =&gt;
+        RETURN NIL;
+    END
+  END OpenRead;
+
+PROCEDURE <A NAME="OpenWrite"><procedure>OpenWrite</procedure></A>(f: TEXT): Wr.T=
+  BEGIN
+    TRY RETURN FileWr.Open(f);
+    EXCEPT
+    | OSError.E =&gt;
+        RETURN NIL;
+    END
+  END OpenWrite;
+
+BEGIN
+END IO.
+</PRE>
+</inModule>
+<HR>
+<A NAME="x1">interface FloatMode is in:
+</A><UL>
+<LI><A HREF="../../../float/src/DS3100/FloatMode.i3.html#0TOP0">float/src/DS3100/FloatMode.i3</A>
+<LI><A HREF="../../../float/src/IEEE-default/FloatMode.i3.html#0TOP0">float/src/IEEE-default/FloatMode.i3</A>
+<LI><A HREF="../../../float/src/IRIX5/FloatMode.i3.html#0TOP0">float/src/IRIX5/FloatMode.i3</A>
+<LI><A HREF="../../../float/src/SOLsun/FloatMode.i3.html#0TOP0">float/src/SOLsun/FloatMode.i3</A>
+<LI><A HREF="../../../float/src/SPARC/FloatMode.i3.html#0TOP0">float/src/SPARC/FloatMode.i3</A>
+<LI><A HREF="../../../float/src/SUN386/FloatMode.i3.html#0TOP0">float/src/SUN386/FloatMode.i3</A>
+<LI><A HREF="../../../float/src/VAX/FloatMode.i3.html#0TOP0">float/src/VAX/FloatMode.i3</A>
+</UL>
+<P>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

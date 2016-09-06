@@ -1,0 +1,376 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: jvideo/src/POSIX/ultrix/JVBuffer.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>jvideo/src/POSIX/ultrix/JVBuffer.m3</H2></A><HR>
+<inModule>
+<PRE><A HREF="../../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+
+UNSAFE MODULE <module><implements><A HREF="../JVBuffer.i3.html">JVBuffer</A></implements></module>;
+
+IMPORT <A HREF="../../../../C/src/Common/Ctypes.i3.html">Ctypes</A>, <A HREF="../../../../os/src/Common/OSError.i3.html">OSError</A>, <A HREF="../../../../os/src/POSIX/OSErrorPosix.i3.html">OSErrorPosix</A>, <A HREF="#x1">Uipc</A>, <A HREF="#x2">Ushm</A>, <A HREF="../../../../thread/src/Common/Thread.i3.html">Thread</A>;
+</PRE> -- T -- 
+
+<P><PRE>REVEAL
+  <A NAME="T">T</A> = Public BRANDED OBJECT
+        count, users: CARDINAL := 0;
+        next        : T        := NIL; (* for linked list *)
+        pool        : Pool;
+      METHODS
+        inc () := Inc;
+      OVERRIDES
+        init := InitT;
+        free := Free;
+      END;
+
+PROCEDURE <A NAME="Inc"><procedure>Inc</procedure></A> (t: T) =
+  BEGIN
+    LOCK t DO INC(t.count) END
+  END Inc;
+
+PROCEDURE <A NAME="InitT"><procedure>InitT</procedure></A> (t: T; shmid: Ctypes.int; address: ADDRESS): T
+  RAISES {OSError.E} =
+  VAR shmid_ds: Ushm.struct_smem;
+  BEGIN
+    IF Ushm.shmctl(shmid, Uipc.IPC_STAT, ADR(shmid_ds)) = -1 THEN
+      OSErrorPosix.Raise();
+    END;
+
+    LOCK t DO
+      t.length := shmid_ds.sm_size;
+      t.shmid := shmid;
+      t.addr := address;
+    END;
+    RETURN t;
+  END InitT;
+
+PROCEDURE <A NAME="Free"><procedure>Free</procedure></A> (t: T) =
+  VAR pool := t.pool;
+  BEGIN
+    IF t.ready # NIL THEN
+      TRY t.ready.apply() EXCEPT Thread.Alerted =&gt; END;
+      t.ready := NIL
+    END;
+    LOCK pool DO
+      LOCK t DO
+        &lt;* ASSERT t.count &gt; 0 *&gt;
+        DEC(t.count);
+        IF t.users &gt; 0 THEN DEC(t.users) END;
+        IF t = pool.current AND t.users = 0 AND t.count = 1 THEN
+          DEC(t.count);
+          pool.current := NIL;
+          Thread.Broadcast(pool.changeEvent)
+        END;
+        IF t.count = 0 THEN Return(pool, t); END;
+      END
+    END;
+  END Free;
+</PRE> -- Pool -- 
+
+<P><PRE>REVEAL
+  <A NAME="Pool">Pool</A> = PoolPublic BRANDED OBJECT
+           closed      := FALSE;
+           current : T := NIL;   (* most recently inserted image *)
+           freeList: T := NIL;
+           freeBuffers : CARDINAL   := 0; (* num buffers in free list *)
+           totalBuffers: CARDINAL   := 0;
+           maxBuffers  : CARDINAL;
+           factory     : Factory;
+           bufferFree : Thread.Condition;
+           changeEvent: Thread.Condition;
+
+           clients    : CARDINAL           := 0;
+           clientEvent: Thread.Condition;
+         OVERRIDES
+           init             := Init;
+           setSize          := SetSize;
+           getCurrentBuffer := GetCurrentBuffer;
+           waitForChange    := WaitForChange;
+           getFreeBuffer    := GetFreeBuffer;
+           insert           := Insert;
+           join             := Join;
+           leave            := Leave;
+           signalClosed     := SignalClosed;
+           clearClosed      := ClearClosed;
+         END;
+
+PROCEDURE <A NAME="Init"><procedure>Init</procedure></A> (pool: Pool; factory: Factory; maxBuffers: CARDINAL): Pool =
+  BEGIN
+    LOCK pool DO
+      pool.factory := factory;
+      pool.maxBuffers := maxBuffers;
+      pool.bufferFree := NEW(Thread.Condition);
+      pool.changeEvent := NEW(Thread.Condition);
+      pool.clientEvent := NEW(Thread.Condition);
+    END;
+    RETURN pool;
+  END Init;
+
+PROCEDURE <A NAME="SetSize"><procedure>SetSize</procedure></A> (pool: Pool; maxBuffers: CARDINAL)
+  RAISES {Thread.Alerted, OSError.E} =
+  VAR broadcast := FALSE;
+  BEGIN
+    LOCK pool DO
+      broadcast := pool.maxBuffers &lt; maxBuffers;
+      pool.maxBuffers := maxBuffers;
+
+      (* get rid of excess buffers *)
+      WHILE pool.totalBuffers &gt; pool.maxBuffers AND pool.freeBuffers &gt; 0 DO
+        DEC(pool.totalBuffers);
+        pool.factory.destroy(Pop(pool));
+      END;
+    END;
+    IF broadcast THEN Thread.Broadcast(pool.bufferFree); END;
+  END SetSize;
+
+PROCEDURE <A NAME="GetCurrentBuffer"><procedure>GetCurrentBuffer</procedure></A> (pool: Pool): T =
+  BEGIN
+    LOCK pool DO
+      IF pool.current # NIL THEN pool.current.inc(); END;
+      RETURN pool.current;
+    END;
+  END GetCurrentBuffer;
+
+PROCEDURE <A NAME="WaitForChange"><procedure>WaitForChange</procedure></A> (pool: Pool): T RAISES {Thread.Alerted, Closed} =
+  VAR oldSerial: Serial;
+  BEGIN
+    LOCK pool DO
+      IF pool.current = NIL THEN
+        WHILE NOT pool.closed AND pool.current = NIL DO
+          Thread.AlertWait(pool, pool.changeEvent);
+        END;
+      ELSE
+        oldSerial := pool.current.serial;
+        WHILE NOT pool.closed
+                AND (pool.current = NIL OR oldSerial = pool.current.serial) DO
+          Thread.AlertWait(pool, pool.changeEvent);
+        END;
+      END;
+      &lt;* ASSERT pool.closed OR pool.current # NIL *&gt;
+      IF Thread.TestAlert() THEN RAISE Thread.Alerted; END;
+
+      IF pool.closed THEN RAISE Closed; END;
+      pool.current.inc();
+      RETURN pool.current;
+    END;
+  END WaitForChange;
+
+PROCEDURE <A NAME="GetFreeBuffer"><procedure>GetFreeBuffer</procedure></A> (pool: Pool; wait := FALSE; subtype: CARDINAL): T
+  RAISES {Thread.Alerted, OSError.E} =
+  VAR res: T := NIL;
+  BEGIN
+    LOOP
+      LOCK pool DO
+        (* only release buffers if someone is listening *)
+        WHILE pool.clients = 0 DO
+          IF wait THEN
+            Thread.AlertWait(pool, pool.clientEvent);
+          ELSE
+            RETURN NIL;
+          END;
+        END;
+
+        WHILE pool.totalBuffers &gt;= pool.maxBuffers AND pool.freeBuffers = 0 DO
+          (* cannot create any more buffers *)
+          IF wait THEN
+            Thread.AlertWait(pool, pool.bufferFree);
+          ELSE
+            RETURN NIL;
+          END;
+        END;
+
+        &lt;* ASSERT
+             pool.totalBuffers &lt; pool.maxBuffers OR pool.freeBuffers &gt; 0 *&gt;
+        IF Thread.TestAlert() THEN RAISE Thread.Alerted; END;
+
+        IF pool.freeBuffers &gt; 0 THEN
+          WITH free = Pop(pool) DO free.inc(); RETURN free; END;
+        END;
+        INC(pool.totalBuffers);
+      END;
+      VAR ok := FALSE;
+      BEGIN
+        TRY
+          res := pool.factory.make(FALSE, subtype);
+          ok := TRUE
+        FINALLY
+          IF res = NIL OR NOT ok THEN
+            LOCK pool DO DEC(pool.totalBuffers) END
+          END
+        END
+      END;
+      LOCK pool DO
+        IF res # NIL THEN
+          res.pool := pool;
+          res.inc();
+          RETURN res
+        ELSIF NOT wait THEN
+          RETURN NIL
+        END
+      END;
+      Thread.Pause(0.5D0)
+    END
+  END GetFreeBuffer;
+
+PROCEDURE <A NAME="Insert"><procedure>Insert</procedure></A> (pool: Pool; buffer: T) =
+  BEGIN
+    LOCK pool DO
+      buffer.users := pool.clients;
+      IF pool.current # NIL THEN
+        WITH curr = pool.current DO
+          (* free the previous current, with different locking *)
+          LOCK curr DO
+            &lt;* ASSERT curr.count &gt; 0 *&gt;
+            DEC(curr.count);
+            IF curr.count = 0 THEN Return(pool, curr); END;
+          END;
+        END;
+      END;
+      pool.current := buffer;
+    END;
+    Thread.Broadcast(pool.changeEvent);
+  END Insert;
+
+PROCEDURE <A NAME="Join"><procedure>Join</procedure></A> (pool: Pool) =
+  BEGIN
+    LOCK pool DO INC(pool.clients); END;
+    IF pool.clients = 1 THEN Thread.Signal(pool.clientEvent); END;
+  END Join;
+
+PROCEDURE <A NAME="Leave"><procedure>Leave</procedure></A> (pool: Pool) =
+  BEGIN
+    &lt;* ASSERT pool.clients &gt; 0 *&gt;
+    LOCK pool DO DEC(pool.clients); END;
+  END Leave;
+
+PROCEDURE <A NAME="SignalClosed"><procedure>SignalClosed</procedure></A> (pool: Pool) =
+  BEGIN
+    LOCK pool DO pool.closed := TRUE; END;
+    Thread.Broadcast(pool.changeEvent);
+  END SignalClosed;
+
+PROCEDURE <A NAME="ClearClosed"><procedure>ClearClosed</procedure></A> (pool: Pool) =
+  BEGIN
+    LOCK pool DO pool.closed := FALSE; END;
+  END ClearClosed;
+</PRE> restore this buffer to the free list.  If there are now more buffers
+   than maxBuffers, this will be sorted out in GetFreeBuffer.  This avoids
+   having to manage extra exception handling all over the place for the
+   factory.destroy method 
+ LL &gt;= pool 
+ Old Return procedure
+PROCEDURE Return (pool: Pool; buffer: T) =
+  BEGIN
+    buffer.next := pool.freeList;
+    pool.freeList := buffer;
+    INC(pool.freeBuffers);
+    &lt;* ASSERT pool.freeBuffers &lt;= pool.totalBuffers *&gt;
+<P>
+    IF pool.freeBuffers = 1 AND pool.totalBuffers &lt;= pool.maxBuffers THEN
+      Thread.Broadcast(pool.bufferFree);
+    END;
+  END Return;
+
+
+<P> LL &gt;= pool, buffer 
+<PRE>PROCEDURE <A NAME="Return"><procedure>Return</procedure></A> (pool: Pool; buffer: T) =
+  BEGIN
+    IF pool.current = buffer THEN pool.current := NIL END;
+    DEC(pool.totalBuffers);
+    TRY
+      pool.factory.destroy(buffer);
+    EXCEPT OSError.E =&gt;
+    | Thread.Alerted =&gt; Thread.Alert(Thread.Self())
+    END;
+    Thread.Broadcast(pool.bufferFree);
+  END Return;
+</PRE> get the top buffer from the free list 
+ LL &gt;= pool 
+<PRE>PROCEDURE <A NAME="Pop"><procedure>Pop</procedure></A> (pool: Pool): T =
+  VAR res: T;
+  BEGIN
+    &lt;* ASSERT pool.freeList # NIL AND pool.freeBuffers &gt; 0 *&gt;
+    res := pool.freeList;
+    pool.freeList := res.next;
+    res.next := NIL;
+    DEC(pool.freeBuffers);
+    RETURN res;
+  END Pop;
+
+BEGIN
+END JVBuffer.
+</PRE>
+</inModule>
+<HR>
+<A NAME="x1">interface Uipc is in:
+</A><UL>
+<LI><A HREF="../../../../unix/src/aix-3-2/Uipc.i3.html#0TOP0">unix/src/aix-3-2/Uipc.i3</A>
+<LI><A HREF="../../../../unix/src/aix-ps2-1-2/Uipc.i3.html#0TOP0">unix/src/aix-ps2-1-2/Uipc.i3</A>
+<LI><A HREF="../../../../unix/src/freebsd-1/Uipc.i3.html#0TOP0">unix/src/freebsd-1/Uipc.i3</A>
+<LI><A HREF="../../../../unix/src/freebsd-2/Uipc.i3.html#0TOP0">unix/src/freebsd-2/Uipc.i3</A>
+<LI><A HREF="../../../../unix/src/hpux-7-0/Uipc.i3.html#0TOP0">unix/src/hpux-7-0/Uipc.i3</A>
+<LI><A HREF="../../../../unix/src/ibm-4-3/Uipc.i3.html#0TOP0">unix/src/ibm-4-3/Uipc.i3</A>
+<LI><A HREF="../../../../unix/src/irix-5.2/Uipc.i3.html#0TOP0">unix/src/irix-5.2/Uipc.i3</A>
+<LI><A HREF="../../../../unix/src/linux/Uipc.i3.html#0TOP0">unix/src/linux/Uipc.i3</A>
+<LI><A HREF="../../../../unix/src/osf-1.generic/Uipc.i3.html#0TOP0">unix/src/osf-1.generic/Uipc.i3</A>
+<LI><A HREF="../../../../unix/src/solaris-2-x/Uipc.i3.html#0TOP0">unix/src/solaris-2-x/Uipc.i3</A>
+<LI><A HREF="../../../../unix/src/sunos-4-x/Uipc.i3.html#0TOP0">unix/src/sunos-4-x/Uipc.i3</A>
+<LI><A HREF="../../../../unix/src/sysv-4.0/Uipc.i3.html#0TOP0">unix/src/sysv-4.0/Uipc.i3</A>
+<LI><A HREF="../../../../unix/src/ultrix-3-1.generic/Uipc.i3.html#0TOP0">unix/src/ultrix-3-1.generic/Uipc.i3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x2">interface Ushm is in:
+</A><UL>
+<LI><A HREF="../../../../unix/src/aix-3-2/Ushm.i3.html#0TOP0">unix/src/aix-3-2/Ushm.i3</A>
+<LI><A HREF="../../../../unix/src/aix-ps2-1-2/Ushm.i3.html#0TOP0">unix/src/aix-ps2-1-2/Ushm.i3</A>
+<LI><A HREF="../../../../unix/src/freebsd-1/Ushm.i3.html#0TOP0">unix/src/freebsd-1/Ushm.i3</A>
+<LI><A HREF="../../../../unix/src/freebsd-2/Ushm.i3.html#0TOP0">unix/src/freebsd-2/Ushm.i3</A>
+<LI><A HREF="../../../../unix/src/hpux-7-0/Ushm.i3.html#0TOP0">unix/src/hpux-7-0/Ushm.i3</A>
+<LI><A HREF="../../../../unix/src/ibm-4-3/Ushm.i3.html#0TOP0">unix/src/ibm-4-3/Ushm.i3</A>
+<LI><A HREF="../../../../unix/src/irix-5.2/Ushm.i3.html#0TOP0">unix/src/irix-5.2/Ushm.i3</A>
+<LI><A HREF="../../../../unix/src/linux/Ushm.i3.html#0TOP0">unix/src/linux/Ushm.i3</A>
+<LI><A HREF="../../../../unix/src/osf-1.generic/Ushm.i3.html#0TOP0">unix/src/osf-1.generic/Ushm.i3</A>
+<LI><A HREF="../../../../unix/src/solaris-2-x/Ushm.i3.html#0TOP0">unix/src/solaris-2-x/Ushm.i3</A>
+<LI><A HREF="../../../../unix/src/sunos-4-x/Ushm.i3.html#0TOP0">unix/src/sunos-4-x/Ushm.i3</A>
+<LI><A HREF="../../../../unix/src/sysv-4.0/Ushm.i3.html#0TOP0">unix/src/sysv-4.0/Ushm.i3</A>
+<LI><A HREF="../../../../unix/src/ultrix-3-1.AP3000/Ushm.i3.html#0TOP0">unix/src/ultrix-3-1.AP3000/Ushm.i3</A>
+<LI><A HREF="../../../../unix/src/ultrix-3-1.ARM/Ushm.i3.html#0TOP0">unix/src/ultrix-3-1.ARM/Ushm.i3</A>
+<LI><A HREF="../../../../unix/src/ultrix-3-1.DS3100/Ushm.i3.html#0TOP0">unix/src/ultrix-3-1.DS3100/Ushm.i3</A>
+<LI><A HREF="../../../../unix/src/ultrix-3-1.NEXT/Ushm.i3.html#0TOP0">unix/src/ultrix-3-1.NEXT/Ushm.i3</A>
+<LI><A HREF="../../../../unix/src/ultrix-3-1.SEQUENT/Ushm.i3.html#0TOP0">unix/src/ultrix-3-1.SEQUENT/Ushm.i3</A>
+<LI><A HREF="../../../../unix/src/ultrix-3-1.SUN3/Ushm.i3.html#0TOP0">unix/src/ultrix-3-1.SUN3/Ushm.i3</A>
+<LI><A HREF="../../../../unix/src/ultrix-3-1.SUN386/Ushm.i3.html#0TOP0">unix/src/ultrix-3-1.SUN386/Ushm.i3</A>
+<LI><A HREF="../../../../unix/src/ultrix-3-1.UMAX/Ushm.i3.html#0TOP0">unix/src/ultrix-3-1.UMAX/Ushm.i3</A>
+<LI><A HREF="../../../../unix/src/ultrix-3-1.VAX/Ushm.i3.html#0TOP0">unix/src/ultrix-3-1.VAX/Ushm.i3</A>
+</UL>
+<P>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

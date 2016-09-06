@@ -1,0 +1,140 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: how to get it</TITLE>
+</HEAD>
+<BODY BGCOLOR="#ffffff" VLINK="#006633">
+
+<H2>How to get SRC Modula-3</H2>
+<P>
+
+SRC Modula-3 is distributed via anonymous <TT>ftp</TT> from
+<TT>gatekeeper.dec.com</TT> and its
+<A HREF="ftp.html">mirrors</A>.
+The distribution is in a set of compressed <TT>tar</TT>
+files in the directory named
+<A HREF="ftp://gatekeeper.dec.com/pub/DEC/Modula-3">
+<TT>pub/DEC/Modula-3/release-X.Y</TT></A>.
+The files are named with names of the form <EM>archive</EM><TT>.tar.gz</TT>.
+<P>
+
+The distribution is also mirrored in Germany at
+<TT>ftp-i3.informatik.rwth-aachen.de</TT>
+in the directory
+<A HREF="ftp://ftp-i3.informatik.rwth-aachen.de/pub/Modula-3">
+<TT>pub/Modula-3</TT></A>.
+<P>
+
+The archives "<TT>boot-</TT><EM>architecture</EM><TT>.tar.gz</TT>"
+and "<TT>m3cc.tar.gz</TT>" are used to build and
+install a bootstrap Modula-3 system including <TT>m3build</TT>,
+<TT>m3ship</TT>, and a compiler.  These programs are
+built from assembly files that are architecture specific; you
+need to get the archive(s) corresponding to the architecture(s) on
+which you want to install SRC Modula-3.
+There are about 20 supported
+<A HREF="platforms.html"><EM>architecture</EM>s</A>. See these
+<A HREF="installingWin32.html">notes</A> if you plan to install
+SRC Modula-3 on Windows/NT or Windows 95.
+<P>
+
+Each of these archives is about 1.5MBytes compressed and 12Mbytes uncompressed.
+The bootstrap process also requires the <TT>m3cc</TT> archive.  It's about
+6.3MB compressed and 25MB uncompressed.  You will need
+between 50MB (<TT>LINUX</TT>) and 150MB (<TT>ALPHA_OSF</TT>) of disk space to
+build the bootstrap system.  After it's installed, only about 7MB
+needs to be retained.
+<P>
+
+The other archives in the SRC Modula-3 distribution, listed below, contain
+source files and documentation for various libraries and programs.
+Each is a compressed <TT>tar</TT> file.
+<PRE>
+Archive    Contents
+<HR>
+<TT>m3</TT>         the full SRC Modula-3 sources
+<TT>m3gdb</TT>      a version of gdb modified to recognize Modula-3 symbols
+<TT>html</TT>       a copy of the WWW documentation
+<TT>docs</TT>       misc. documents
+</PRE>
+<P>
+
+You must build and install <TT>m3</TT> to have a useful system, but
+all the other pieces are optional.
+<P>
+
+In the following, <TT>$</TT> is the shell prompt and <TT>ftp></TT> is the
+<TT>ftp</TT> prompt. To get SRC Modula-3:
+<P>
+
+<OL>
+<LI> Make sure that you have enough disk space.
+  
+<LI> Create a fresh directory for the software and go there. Path
+     names below are relative to that directory, and it will be called the
+     top-level directory:
+<PRE>
+    $ mkdir <EM>top-level</EM>
+    $ cd <EM>top-level</EM>
+</PRE>
+
+<LI> Open an <TT>ftp</TT> connection with <TT>gatekeeper.dec.com</TT>
+     [16.1.0.2]; give <TT>anonymous</TT> for the name and your login
+     id for the password:
+<PRE>
+    $ ftp gatekeeper.dec.com
+    Connected to gatekeeper.dec.com.
+    ...
+    Name (gatekeeper.dec.com): anonymous
+    Password (gatekeeper.dec.com:anonymous): <EM>your name</EM>@<EM>your machine</EM>
+    ...
+</PRE>
+
+<LI> Change to the proper directory:
+<PRE>
+    <TT>ftp></TT> cd pub/DEC/Modula-3/release-X.Y
+</PRE>
+
+<LI> Set the transmission type to binary:
+<PRE>
+    ftp> type binary
+</PRE>
+
+<LI> Get the distribution bootstrap:
+<PRE>
+    <TT>ftp></TT> get boot-<EM>architecture</EM>.tar.gz
+    <TT>ftp></TT> get m3cc.tar.gz
+</PRE>
+
+<LI> Get the Modula-3 sources, <TT>m3.tar.gz</TT>, along with any
+other pieces that you want:
+<PRE>
+    <TT>ftp></TT> get m3.tar.gz
+    <TT>ftp></TT> get ...
+</PRE>
+
+<LI> Close the connection:
+<PRE>
+    ftp> quit
+</PRE>
+
+</OL>
+<P>
+
+Click here for <A HREF="install.html">detailed installation instructions</A>.
+<P>
+
+<HR>
+<A HREF="home.html">[Modula-3 home page]</A>
+<P>
+<A HREF="mailto:m3-request@src.dec.com">
+<ADDRESS>m3-request@src.dec.com</ADDRESS></A>
+<PRE>
+Last modified on Thu Jan  4 11:07:55 PST 1996 by heydon                    .
+     modified on Wed Mar  1 16:07:35 PST 1995 by kalsow                    .
+     modified on Thu Jan  7 18:40:11 PST 1993 by muller                    .
+</PRE>
+
+Copyright (C) 1992, 1996, Digital Equipment Corporation. All rights reserved.<BR>
+See the <A HREF="http://www.research.digital.com/SRC/m3sources/html/COPYRIGHT.html">COPYRIGHT</A> for a full description.
+</BODY>
+</HTML>

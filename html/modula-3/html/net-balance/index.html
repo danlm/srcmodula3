@@ -1,0 +1,91 @@
+<html>
+<head>
+<title>Net Balance: A Network Objects Example</title>
+</head>
+<body>
+<h2>Net Balance: A Network Objects Example</h2>
+
+<blockquote>
+A simple implementation of the canonical bank account example using Modula-3
+<a href="http://www.research.digital.com/SRC/modula-3/html/bib.html#Netobj">Network Objects</a>,
+<a href="http://www.research.digital.com/SRC/modula-3/html/bib.html#FormsVBT">FormsVBT</a>,
+<a href="http://www.research.digital.com/SRC/modula-3/html/bib.html#Trestle">Trestle</a>, and
+<a href="http://www.research.digital.com/SRC/modula-3/html/m3build/resources.html">Resources</a>.
+</blockquote>
+
+<h3>Quick Start</h3>
+
+<ol>
+<li>
+Fetch the 
+<A HREF="http://www.research.digital.com/SRC/modula-3/html/net-balance/net-balance.tar.gz">gzipped tar archive</A>
+of the sources.
+<li>
+<a href="http://www.research.digital.com/SRC/modula-3/html/compiling.html">Build</a>
+the server and client by running
+<a href="http://www.research.digital.com/SRC/modula-3/html/m3build/m3build.html"><tt>m3build</tt></a> in each directory.
+<li>
+Make sure you have
+<a href="http://www.research.digital.com/SRC/Obliq/netobjd.1.txt"><tt>netobjd</tt></a> running. To run a new one, type "netobjd &amp;".
+<li>
+Run the server. You should see a window displaying "Account Summary".
+<li>
+Run a client, specifying the name of the machine on which the
+server is running as the client's only command-line argument. You
+should get a window. Type your name in the top type-in box, and then
+press "New". You should see a new account on the server window. Edit
+the amount in the lower type-in and click the "Withdraw" and "Deposit"
+buttons to perform transactions.
+<li>
+Run two clients at a time. Make requests to the server concurrently.
+</ol>
+
+<h3> The Sources </h3>
+<ul>
+<li>
+The shared interface,
+<a href="./server/src/Bank.i3.txt"><tt>server/src/Bank.i3</tt></a> (which
+happens to be a symbolic link to
+<a href="./client/src/Bank.i3.txt"><tt>client/src/Bank.i3</tt></a>).<p>
+(I have been told that a better way to organize things is to put
+the shared absractions in their own package. I thought such an
+approach would require too much organization for such a simple
+program. The interesting part is that Modula-3 and Network Objects
+don't know anything about the symbolic link but everything hangs
+together due to magic of
+<a href="http://www.research.digital.com/SRC/m3defn/html/types.html">structural equivalence</a>!)
+<p>
+<li>
+The server implementation,
+<a href="./server/src/Server.m3.txt">Server.m3</a>. There isn't much
+documentation there, the basic point to remember is to always have
+your server "wait" in its main body, since otherwise, the server's
+main body will end (and therefore the program will exit) before it
+has served any incoming requests. In our example, we call
+<tt><a href="http://www.research.digital.com/SRC/m3sources/html/ui/src/vbt/Trestle.i3.html">Trestle</a>.AwaitDelete</tt>.
+<p>
+The server's user-interface is specified in the FormsVBT form files
+<a href="./server/src/bankmacro.fv.txt">bankmacro.fv</a> (which defines
+useful FormsVBT macros) and
+<a href="./server/src/bank.fv.txt">back-background.fv</a>.
+<p>
+<li>
+The client implementation, <a href="./client/src/Client.m3.txt">Client.m3</a>.
+The client's user-interface is specified in the FormsVBT form
+file <a href="./client/src/client.fv.txt">client.fv</a>.
+<p>
+<li>
+<a href="http://www.research.digital.com/SRC/modula-3/html/m3build/m3makefile.html">m3makefiles</a> for the
+<a href="./server/src/m3makefile.txt">server</a> and
+<a href="./client/src/m3makefile.txt">client</a>.
+</ul>
+
+<hr>
+Created By <a href=mailto:farshad@cmass.com>Farshad Nayeri</a>, April 1996
+<br>Based on work with Ben Hurwitz some while ago.
+<br>Scenario idea based on Iona's Bank account demo in OBJECT magazine
+    a while ago.
+<br>I borrowed the terms "Quick Start" and netobjd.1 from Luca's
+<a href="http://www.research.digital.com/SRC/Obliq/Obliq.html">Obliq page</a>.
+</body>
+</html>

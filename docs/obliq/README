@@ -1,0 +1,41 @@
+#
+# Last modified on Fri Mar 11 02:33:52 PST 1994 by luca
+#      modified on Thu Mar 10 07:33:34 PST 1994 by kalsow
+#
+
+This archive contains the Obliq sources.
+
+Obliq is a lexically-scoped untyped language that supports distributed 
+object-oriented computation. An Obliq computation may involve multiple 
+threads of control within an address space, multiple address spaces 
+on a machine, heterogeneous machines over a local network, and multiple 
+networks over the Internet. Objects are local to a site, while computation 
+can roam over the network. The distributed computation mechanism 
+is based on Modula-3 Network Objects. 
+
+* The documentation is in obliq/src/Doc.
+  The main document is provided in ps and html formats. (The html version is 
+  automatically generated and, therefore, rather crude.)
+  A "quick-start" html document is enclosed (its links may be site-dependent).
+
+* Examples of Obliq programs are in obliq/src/Doc/Example.
+
+* You will need a binary for "netobjd", the network object daemon, in order
+  to use Obliq's network objects. (But this is not otherwise necessary.)
+  Netobjd is part of the network objects distribution.
+
+* You should build and ship the components of this archive in the
+  following order:
+
+      synloc, synex, metasyn, obliqrt,
+      obliqlibm3, obliqlibui, obliqlibanim,
+      obliqparse, obliqprint, obliq
+      obliqbinmin, obliqbinstd, obliqbinui, obliqbinanim
+      obliqsrvstd, obliqsrvui
+
+  You can use the provided "obliq.builder" script.
+
+  You should also copy the entire obliq/src/Doc/* to an http accessible 
+  directory <dir>/, using <dir>/Obliq.html as the Mosaic entry point to 
+  the Obliq documentation. The links in Obliq.html work if the structure of 
+  obliq/src/Doc is maintained.

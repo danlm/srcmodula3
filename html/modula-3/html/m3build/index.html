@@ -1,0 +1,103 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: m3build</TITLE>
+</HEAD>
+<BODY BGCOLOR="#ffffff" VLINK="#006633">
+
+<H2>m3build</H2>
+<P>
+
+<B>m3build</B> is tiny program and a set of predefined
+<A HREF="../quake/quake.html">quake</A> functions
+that make it easy to construct Modula-3 programs.
+It is a replacement for <B>make</B>.
+<P>
+
+When started, <B>m3build</B> looks for a file named
+<A HREF="m3makefile.html"><TT>m3makefile</TT></A>.  This file
+describes what goes into a particular piece of the system, but not how
+to construct it.  The operational aspects of the system are confined to
+templates that are configured when SRC Modula-3 is installed.
+<B>m3build</B> expects systems to be structured into
+<A HREF="../packages.html">packages</A>.
+<B>m3build</B> expects to be invoked
+from the root directory of a package and,
+by default, it expects to find the
+<A HREF="m3makefile.html"><TT>m3makefile</TT></A>
+in the <TT>src</TT> sub-directory.
+<P>
+
+The syntax for invoking <B>m3build</B> is
+<PRE>
+     m3build [<A HREF="options.html">options</A>] [target ...]
+</PRE>
+<P>
+If no target is specified, "<B>all</B>" is used.
+
+To process an
+<A HREF="m3makefile.html"><TT>m3makefile</TT></A>,
+change directory to the package directory and type <B>m3build</B>.
+<P>
+
+The procedures defined by <B>m3build</B> that are available in all
+<A HREF="m3makefile.html"><TT>m3makefile</TT></A>s fit into
+the following categories:
+<UL>
+<LI><A HREF="sources.html">specifying sources</A>
+<LI><A HREF="imports.html">importing packages</A>
+<LI><A HREF="progs.html">building programs and libraries</A>
+<LI><A HREF="m3options.html">changing compiler options</A>
+<LI><A HREF="profiling.html">compiling for profiling and coverage analysis</A>
+<LI><A HREF="overrides.html">overriding package locations</A>
+<LI><A HREF="foreign.html">importing foreign object files and libraries</A>
+<LI><A HREF="exports.html">exporting other files</A>
+<LI><A HREF="hiding.html">explicitly setting interface visibility</A>
+<LI><A HREF="build-generics.html">instantiating generics</A>
+<LI><A HREF="variables.html">global variables</A>
+<LI><A HREF="machine.html">machine and operating system dependencies</A>
+<LI><A HREF="misc.html">misc. builtins</A>
+</UL>
+<P>
+
+The more specialized procedures are:
+<UL>
+<LI><A HREF="emacs.html">emacs support</A>
+<LI><A HREF="generics.html">generic lists, queues, tables, ...</A>
+<LI><A HREF="noweb.html">literate programming with noweb</A>
+<LI><A HREF="manpage.html">man pages</A>
+<LI><A HREF="netobj.html">network objects</A>
+<LI><A HREF="resources.html">resources: arbitrary binary data</A>
+<LI><A HREF="zeus.html">zeus animations</A>
+</UL>
+<P>
+
+When SRC Modula-3 is configured and installed several public
+repositories are identified.  In these web pages we refer to them with
+the following short names:
+<PRE>
+  /bin        shared executable programs
+  /lib        shared libraries
+  /doc        shared documentation
+  /pkg        public packages
+  /emacs      shared gnuemacs lisp code
+  /man        installed man pages
+  /html       installed HTML sources
+</PRE>
+<P>
+
+<HR>
+<A HREF="../home.html">[Modula-3 home page]</A>
+<P>
+<A HREF="mailto:m3-request@src.dec.com">
+<ADDRESS>m3-request@src.dec.com</ADDRESS></A>
+<PRE>
+Last modified on Thu Mar  7 18:08:53 PST 1996 by heydon 
+     modified on Fri Jul 22 07:57:04 PDT 1994 by kalsow 
+     modified on Wed May 19 11:36:32 PDT 1993 by mjordan
+     modified on Tue Oct 13 16:39:21 PDT 1992 by muller
+     modified on Tue Sep 22 08:36:57 PDT 1992 by mhb
+</PRE>
+Copyright (C) 1992, 1996, Digital Equipment Corporation. All rights reserved.<BR>
+See the <A HREF="http://www.research.digital.com/SRC/m3sources/html/COPYRIGHT.html">COPYRIGHT</A> for a full description.
+</BODY>
+</HTML>

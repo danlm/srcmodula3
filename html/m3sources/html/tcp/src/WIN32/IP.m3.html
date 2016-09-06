@@ -1,0 +1,149 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: tcp/src/WIN32/IP.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>tcp/src/WIN32/IP.m3</H2></A><HR>
+<inModule>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM>                                                          </EM></BLOCKQUOTE><PRE>
+</PRE> Created on Sat Jan 11 15:49:00 PST 1992 by gnelson       
+                                                          
+
+<P><PRE>UNSAFE MODULE <module><implements><A HREF="../common/IP.i3.html">IP</A></implements></module>;
+
+IMPORT <A HREF="../../../atom/src/Atom.i3.html">Atom</A>, <A HREF="../../../libm3/DS/AtomList.i3.html">AtomList</A>, <A HREF="../../../C/src/Common/M3toC.i3.html">M3toC</A>, <A HREF="../../../os/src/Common/Process.i3.html">Process</A>, <A HREF="../../../text/src/TextF.i3.html">TextF</A>, <A HREF="WinSock.i3.html">WinSock</A>;
+
+VAR mu := NEW(MUTEX);
+
+PROCEDURE <A NAME="GetHostByName"><procedure>GetHostByName</procedure></A>(nm: TEXT; VAR (*out*) res: Address): BOOLEAN
+    RAISES {Error} =
+  BEGIN
+    LOCK mu DO
+      VAR h := WinSock.gethostbyname(ADR(nm[0])); BEGIN
+        IF h = NIL THEN InterpretError(); RETURN FALSE; END;
+        res := GetAddress(h);
+      END;
+    END;
+    RETURN TRUE;
+  END GetHostByName;
+
+PROCEDURE <A NAME="GetCanonicalByName"><procedure>GetCanonicalByName</procedure></A>(nm: TEXT): TEXT RAISES {Error} =
+  BEGIN
+    LOCK mu DO
+      VAR h := WinSock.gethostbyname(ADR(nm[0])); BEGIN
+        IF h # NIL THEN
+          RETURN M3toC.CopyStoT(h.h_name);
+        END;
+      END;
+    END;
+    InterpretError();
+    RETURN NIL;
+  END GetCanonicalByName;
+
+PROCEDURE <A NAME="GetCanonicalByAddr"><procedure>GetCanonicalByAddr</procedure></A>(addr: Address): TEXT RAISES {Error} =
+  VAR ua: WinSock.struct_in_addr;
+  BEGIN
+    ua.s_addr := LOOPHOLE(addr, WinSock.u_long);
+    LOCK mu DO
+      VAR h := WinSock.gethostbyaddr(
+                   ADR(ua), BYTESIZE(ua), WinSock.AF_INET);
+      BEGIN
+        IF h # NIL THEN
+          RETURN M3toC.CopyStoT(h.h_name);
+        END;
+      END;
+    END;
+    InterpretError();
+    RETURN NIL;
+  END GetCanonicalByAddr;
+
+PROCEDURE <A NAME="GetAddress"><procedure>GetAddress</procedure></A> (ent: WinSock.struct_hostent_star): Address =
+  VAR ua: WinSock.struct_in_addr;
+  BEGIN
+    &lt;* ASSERT ent.h_length &lt;= BYTESIZE(Address) *&gt;
+    ua := LOOPHOLE(ent.h_addr_list,
+                    UNTRACED REF UNTRACED REF WinSock.struct_in_addr)^^;
+    RETURN LOOPHOLE(ua.s_addr, Address);
+  END GetAddress;
+
+PROCEDURE <A NAME="GetHostAddr"><procedure>GetHostAddr</procedure></A>(): Address =
+  VAR hname: ARRAY [0..255] OF CHAR;
+  BEGIN
+    LOCK mu DO
+      IF WinSock.gethostname(ADR(hname[0]), BYTESIZE(hname)) # 0 THEN
+        Die();
+      END;
+      RETURN GetAddress(WinSock.gethostbyname(ADR(hname[0])));
+    END;
+  END GetHostAddr;
+
+PROCEDURE <A NAME="InterpretError"><procedure>InterpretError</procedure></A>() RAISES {Error} =
+  VAR err := WinSock.WSAGetLastError();
+  BEGIN
+    CASE err OF
+    | WinSock.TRY_AGAIN, WinSock.NO_RECOVERY, WinSock.NO_ADDRESS =&gt;
+        RAISE Error(AtomList.List1(LookupFailure));
+    ELSE
+    END;
+  END InterpretError;
+
+CONST WinSockVersion = 16_0101;       (* App version 1.1 *)
+
+PROCEDURE <A NAME="Init"><procedure>Init</procedure></A>() =
+  VAR data: WinSock.WSAData;
+  BEGIN
+    IF WinSock.WSAStartup(WinSockVersion, ADR(data)) # 0 THEN Die(); END;
+    Process.RegisterExitor(Exitor);
+  END Init;
+
+PROCEDURE <A NAME="Exitor"><procedure>Exitor</procedure></A>() =
+  BEGIN
+    EVAL WinSock.WSACleanup();
+  END Exitor;
+
+EXCEPTION FatalError;
+
+PROCEDURE <A NAME="Die"><procedure>Die</procedure></A>() RAISES {} =
+  &lt;* FATAL FatalError *&gt;
+  BEGIN
+    RAISE FatalError;
+  END Die;
+
+BEGIN
+  LookupFailure := Atom.FromText(&quot;IP.LookupFailure&quot;);
+  Unreachable := Atom.FromText(&quot;IP.Unreachable&quot;);
+  PortBusy := Atom.FromText(&quot;IP.PortBusy&quot;);
+  NoResources := Atom.FromText(&quot;IP.NoResources&quot;);
+  Init();
+END IP.
+</PRE>
+</inModule>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

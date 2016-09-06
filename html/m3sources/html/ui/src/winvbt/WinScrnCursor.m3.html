@@ -1,0 +1,293 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: ui/src/winvbt/WinScrnCursor.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>ui/src/winvbt/WinScrnCursor.m3</H2></A><HR>
+<inModule>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM> Digital Internal Use Only                                                 </EM></BLOCKQUOTE><PRE>
+</PRE>                                                                           
+       Created on Tue Jan 17 16:14:18 PST 1995 by najork                   
+
+<P>
+<P><PRE>UNSAFE MODULE <module><implements><A HREF="WinScrnCursor.i3.html">WinScrnCursor</A></implements></module>;
+
+IMPORT <A HREF="../vbt/Cursor.i3.html">Cursor</A>, <A HREF="../../../geometry/src/Point.i3.html">Point</A>, <A HREF="../../../geometry/src/Rect.i3.html">Rect</A>, <A HREF="../vbt/ScrnCursor.i3.html">ScrnCursor</A>, <A HREF="../vbt/ScrnPixmap.i3.html">ScrnPixmap</A>, <A HREF="../../../text/src/Text.i3.html">Text</A>, <A HREF="../vbt/TrestleComm.i3.html">TrestleComm</A>,
+       <A HREF="../trestle/TrestleImpl.i3.html">TrestleImpl</A>, <A HREF="../vbt/VBTClass.i3.html">VBTClass</A>, <A HREF="../../../win32/src/WinDef.i3.html">WinDef</A>, <A HREF="../../../win32/src/WinGDI.i3.html">WinGDI</A>, <A HREF="../../../win32/src/WinNT.i3.html">WinNT</A>, <A HREF="WinScreenType.i3.html">WinScreenType</A>,
+       <A HREF="WinScrnPixmap.i3.html">WinScrnPixmap</A>, <A HREF="../../../win32/src/WinUser.i3.html">WinUser</A>;
+
+CONST
+  False = 0;
+  True  = 1;
+
+TYPE
+  T = ScrnCursor.T BRANDED OBJECT
+  OVERRIDES
+    localize := Localize;
+    unload   := Unload;
+  END;
+</PRE>-----------------------------------------------------------------------------
+   The spec in ScrnCursor.i3 states:
+<P>
+       If <CODE>cs</CODE> is a <CODE>ScrnCursor.T</CODE>, then <CODE>cs.id</CODE> is an identifier whose
+       interpretation depends on the screentype that owns <CODE>cs</CODE>.  The method
+       call <CODE>cs.localize()</CODE> returns a raw cursor equal to the one on which
+       <CODE>cs</CODE> is a handle, and the method call <CODE>cs.unload()</CODE> causes <CODE>cs</CODE>
+       to become anonymous.  
+<P>
+   However, the X version of <CODE>localize</CODE> (XScrnCrsr.CursorLocalize) always 
+   raises <CODE>Failure</CODE>, and the X version of <CODE>unload</CODE> (XScrnCrsr.CursorUnregister)
+   is a no-op. For now, we do the same ...
+-----------------------------------------------------------------------------
+
+<P>
+<P><PRE>PROCEDURE <A NAME="Localize"><procedure>Localize</procedure></A> (&lt;*UNUSED*&gt; self: T): ScrnCursor.Raw
+    RAISES {ScrnCursor.Failure} =
+  BEGIN
+    RAISE ScrnCursor.Failure;
+  END Localize;
+
+PROCEDURE <A NAME="Unload"><procedure>Unload</procedure></A> (&lt;*UNUSED*&gt; self: T) =
+  BEGIN
+  END Unload;
+</PRE>***************************************************************************
+
+<P><PRE>TYPE
+  Oracle = ScrnCursor.Oracle BRANDED OBJECT
+    st: WinScreenType.T;
+  OVERRIDES
+    load    := Load;
+    list    := List;
+    lookup  := Lookup;
+    builtIn := BuiltIn;
+  END;
+
+PROCEDURE <A NAME="NewOracle"><procedure>NewOracle</procedure></A> (st: WinScreenType.T): ScrnCursor.Oracle =
+  BEGIN
+    RETURN NEW (Oracle, st := st);
+  END NewOracle;
+
+PROCEDURE <A NAME="Load"><procedure>Load</procedure></A> (                      self: Oracle;
+                             READONLY c   : ScrnCursor.Raw;
+                &lt;* UNUSED *&gt;          nm  : TEXT): ScrnCursor.T =
+  VAR
+    status  : WinDef.BOOL;
+    hcursor : WinDef.HCURSOR;
+    iconInfo: WinUser.ICONINFO;
+    col1    : WinDef.COLORREF;
+    col2    : WinDef.COLORREF;
+    col3    : WinDef.COLORREF;
+    andRaw  : ScrnPixmap.Raw;
+    colRaw  : ScrnPixmap.Raw;
+  BEGIN
+    IF c.plane1 = NIL OR c.plane2 = NIL OR
+       c.plane1.depth # 1 OR c.plane2.depth # 1 OR
+       Rect.IsEmpty (c.plane1.bounds) OR c.plane1.bounds # c.plane2.bounds THEN
+      RETURN ScrnCursor.DontCare;
+    END;
+
+    WITH st = self.st DO
+      LOCK st.trsl DO
+        (* I assume that we have a color screen, and don't deal with
+           with the &quot;gray&quot; and &quot;bw&quot; fields of &quot;c.color1&quot;, ..., &quot;c.color3&quot; *)
+
+        col1 := WinGDI.RGB (ROUND (255.0 * c.color1.r),
+                            ROUND (255.0 * c.color1.g),
+                            ROUND (255.0 * c.color1.b));
+        col2 := WinGDI.RGB (ROUND (255.0 * c.color2.r),
+                            ROUND (255.0 * c.color2.g),
+                            ROUND (255.0 * c.color2.b));
+        col3 := WinGDI.RGB (ROUND (255.0 * c.color3.r),
+                            ROUND (255.0 * c.color3.g),
+                            ROUND (255.0 * c.color3.b));
+
+        (* Construct the AND and XOR bitmaps *)
+        andRaw := ScrnPixmap.NewRaw (1, c.plane1.bounds);
+        colRaw := ScrnPixmap.NewRaw (32, c.plane1.bounds);
+
+        FOR y := c.plane1.bounds.north TO c.plane1.bounds.south - 1 DO
+          FOR x := c.plane1.bounds.west TO c.plane1.bounds.east - 1 DO
+            WITH pt = Point.T {x, y},
+                 p1 = c.plane1.get (pt),
+                 p2 = c.plane2.get (pt) DO
+              IF    p1 = 0 AND p2 = 0 THEN
+                andRaw.set (pt, 1);
+                colRaw.set (pt, 0);
+              ELSIF p1 = 0 AND p2 = 1 THEN
+                andRaw.set (pt, 0);
+                colRaw.set (pt, col1);
+              ELSIF p1 = 1 AND p2 = 0 THEN
+                andRaw.set (pt, 0);
+                colRaw.set (pt, col2);
+              ELSIF p1 = 1 AND p2 = 1 THEN
+                andRaw.set (pt, 0);
+                colRaw.set (pt, col3);
+              ELSE
+                &lt;* ASSERT FALSE *&gt;
+              END;
+            END;
+          END;
+        END;
+
+        WITH hbmMask  = WinScrnPixmap.PixmapFromRaw(st, andRaw),
+             hbmColor = WinScrnPixmap.PixmapFromRaw(st, colRaw) DO
+
+          iconInfo := WinUser.ICONINFO {
+                          fIcon    := False,
+                          xHotspot := c.hotspot.h,
+                          yHotspot := c.hotspot.v,
+                          hbmMask  := hbmMask,
+                          hbmColor := hbmColor};
+
+          hcursor := WinUser.CreateIconIndirect (ADR (iconInfo));
+          &lt;* ASSERT hcursor # NIL *&gt;
+
+          status := WinGDI.DeleteObject (hbmMask);
+          &lt;* ASSERT status = True *&gt;
+          status := WinGDI.DeleteObject (hbmColor);
+          &lt;* ASSERT status = True *&gt;
+
+          RETURN NEW (T, id := LOOPHOLE (hcursor, INTEGER));
+        END;
+      END;
+    END;
+  END Load;
+</PRE>-----------------------------------------------------------------------------
+   The spec in ScrnCursor.i3 states:
+<P>
+       The method call <CODE>st.cursor.list(pat, maxResults)</CODE> returns the names 
+       of all cursors owned by <CODE>st</CODE> that match the pattern <CODE>pat</CODE>.  The list 
+       of results may be truncated to length <CODE>maxResults</CODE>. A <CODE>*</CODE> matches 
+       any number of characters and a <CODE>?</CODE> matches a single character.
+<P>
+   However, the X version (XScrnCrsr.CursorList) always returns NIL.
+   Since this seems to be adequate, we do the same ...
+-----------------------------------------------------------------------------
+
+<P><PRE>PROCEDURE <A NAME="List"><procedure>List</procedure></A> (&lt;* UNUSED *&gt; self      : Oracle;
+                &lt;* UNUSED *&gt; pat       : TEXT;
+                &lt;* UNUSED *&gt; maxResults: CARDINAL): REF ARRAY OF TEXT =
+  BEGIN
+    RETURN NIL
+  END List;
+
+TYPE
+  NamedCursor = RECORD
+    name: TEXT;
+    crsr: WinNT.LPCTSTR;
+  END;
+
+VAR
+  cursors := ARRAY [1 .. 14] OF NamedCursor {
+                       NamedCursor {&quot;ARROW&quot;,       WinUser.IDC_ARROW},
+                       NamedCursor {&quot;IBEAM&quot;,       WinUser.IDC_IBEAM},
+                       NamedCursor {&quot;WAIT&quot;,        WinUser.IDC_WAIT},
+                       NamedCursor {&quot;CROSS&quot;,       WinUser.IDC_CROSS},
+                       NamedCursor {&quot;UPARROW&quot;,     WinUser.IDC_UPARROW},
+                       NamedCursor {&quot;SIZE&quot;,        WinUser.IDC_SIZE},
+                       NamedCursor {&quot;ICON&quot;,        WinUser.IDC_ICON},
+                       NamedCursor {&quot;SIZENWSE&quot;,    WinUser.IDC_SIZENWSE},
+                       NamedCursor {&quot;SIZENESW&quot;,    WinUser.IDC_SIZENESW},
+                       NamedCursor {&quot;SIZEWE&quot;,      WinUser.IDC_SIZEWE},
+                       NamedCursor {&quot;SIZENS&quot;,      WinUser.IDC_SIZENS},
+                       NamedCursor {&quot;SIZEALL&quot;,     WinUser.IDC_SIZEALL},
+                       NamedCursor {&quot;NO&quot;,          WinUser.IDC_NO},
+                       NamedCursor {&quot;APPSTARTING&quot;, WinUser.IDC_APPSTARTING}};
+
+PROCEDURE <A NAME="Lookup"><procedure>Lookup</procedure></A> (self: Oracle; name: TEXT): ScrnCursor.T
+    RAISES {TrestleComm.Failure} =
+  BEGIN
+    FOR i := FIRST (cursors) TO LAST (cursors) DO
+      IF Text.Equal (name, cursors[i].name) THEN
+        LOCK self.st.trsl DO
+          RETURN LoadCursor (cursors[i].crsr);
+        END;
+      END;
+    END;
+    RETURN NIL;
+  END Lookup;
+
+PROCEDURE <A NAME="BuiltIn"><procedure>BuiltIn</procedure></A> (self: Oracle; cs: Cursor.Predefined): ScrnCursor.T =
+  BEGIN
+    TRY
+      LOCK self.st.trsl DO
+        CASE cs OF
+        | Cursor.DontCare.cs =&gt;
+          RETURN ScrnCursor.DontCare;
+        | Cursor.TextPointer.cs =&gt;
+          RETURN LoadCursor (WinUser.IDC_ARROW);
+        | Cursor.NotReady.cs =&gt;
+          RETURN LoadCursor (WinUser.IDC_WAIT);
+        END;
+      END;
+    EXCEPT
+      TrestleComm.Failure =&gt;  RETURN ScrnCursor.DontCare;
+    END;
+  END BuiltIn;
+
+PROCEDURE <A NAME="LoadCursor"><procedure>LoadCursor</procedure></A> (lpszCursor: WinNT.LPCTSTR): ScrnCursor.T
+    RAISES {TrestleComm.Failure} =
+  BEGIN
+    WITH hcursor = WinUser.LoadCursor (NIL, lpszCursor) DO
+      IF hcursor # NIL THEN
+        RETURN NEW (T, id := LOOPHOLE(hcursor, INTEGER));
+      ELSE
+        RAISE TrestleComm.Failure;
+      END;
+    END;
+  END LoadCursor;
+
+PROCEDURE <A NAME="SetCursor"><procedure>SetCursor</procedure></A> (cs: ScrnCursor.T) =
+  VAR
+    hcursor: WinDef.HCURSOR;
+  BEGIN
+    (* In xvbt, a value of &quot;ScrnCursor.DontCare&quot; means that the cursor is
+       &quot;undefined&quot;, that is, its appearance is the same as that of the parent
+       window (which is always the root window, since xvbt does not build up
+       trees of X windows.
+
+       For simplicity, I assume that the cursor of the desktop window
+       is always &quot;IDC_ARROW&quot;. So, undefining the cursor allociated with
+       a &quot;Child&quot; means setting it to &quot;IDC_ARROW&quot;. *)
+
+    IF cs = ScrnCursor.DontCare THEN
+      hcursor := WinUser.LoadCursor (NIL, WinUser.IDC_ARROW);
+    ELSE
+      hcursor := LOOPHOLE (cs.id, ADDRESS);
+    END;
+    EVAL WinUser.SetCursor (hcursor);
+  END SetCursor;
+
+BEGIN
+END WinScrnCursor.
+</PRE>
+</inModule>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

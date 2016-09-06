@@ -1,0 +1,75 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: win32/src/WinIoctl.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>win32/src/WinIoctl.m3</H2></A><HR>
+<inModule>
+<PRE><A HREF="../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM>                                                             </EM></BLOCKQUOTE><PRE>
+
+MODULE <module><implements><A HREF="WinIoctl.i3.html">WinIoctl</A></implements></module>;
+
+IMPORT <A HREF="../../word/src/Word.i3.html">Word</A>;
+FROM <A HREF="WinDef.i3.html">WinDef</A> IMPORT DWORD;
+
+PROCEDURE <A NAME="IsRecognizedPartition"><procedure>IsRecognizedPartition</procedure></A> (ptype: DWORD): BOOLEAN =
+</PRE><BLOCKQUOTE><EM><P>
+<PRE>
+      #define IsRecognizedPartition( PartitionType ) (          \
+           ((PartitionType &amp; PARTITION_NTFT) &amp;&amp;                 \
+            ((PartitionType &amp; ~16_C0) == PARTITION_FAT_12)) ||  \
+           ((PartitionType &amp; PARTITION_NTFT) &amp;&amp;                 \
+            ((PartitionType &amp; ~16_C0) == PARTITION_FAT_16)) ||  \
+           ((PartitionType &amp; PARTITION_NTFT) &amp;&amp;                 \
+            ((PartitionType &amp; ~16_C0) == PARTITION_IFS))    ||  \
+           ((PartitionType &amp; PARTITION_NTFT) &amp;&amp;                 \
+            ((PartitionType &amp; ~16_C0) == PARTITION_HUGE))   ||  \
+           ((PartitionType &amp; ~PARTITION_NTFT) == PARTITION_FAT_12) ||  \
+           ((PartitionType &amp; ~PARTITION_NTFT) == PARTITION_FAT_16) ||  \
+           ((PartitionType &amp; ~PARTITION_NTFT) == PARTITION_IFS)    ||  \
+           ((PartitionType &amp; ~PARTITION_NTFT) == PARTITION_HUGE) )
+</EM></BLOCKQUOTE><PRE>
+  BEGIN
+    IF Word.And (ptype, PARTITION_NTFT) # 0
+      THEN ptype := Word.And (ptype, Word.Not (16_C0));
+      ELSE ptype := Word.And (ptype, Word.Not (PARTITION_NTFT));
+    END;
+    RETURN (ptype = PARTITION_FAT_12)
+        OR (ptype = PARTITION_FAT_16)
+        OR (ptype = PARTITION_IFS)
+        OR (ptype = PARTITION_HUGE);
+  END IsRecognizedPartition;
+
+BEGIN
+END WinIoctl.
+</PRE>
+</inModule>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

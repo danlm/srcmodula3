@@ -1,0 +1,21 @@
+(* The prime number sieve as a self-cloning, self-modifying object. *)
+
+let sieve =
+  {m => 
+    meth(s,n)
+      let sieve1 = clone(s);
+      s.prime := n;
+      s.next := sieve1;
+      s.m := 
+        meth(s1,n1)
+          if (n1%n) is 0 then ok else sieve1.m(n1) end
+        end
+    end,
+    prime => -1,
+    next => ok,
+    };
+
+for i = 2 to 100 do sieve.m(i) end;
+
+sieve.next.next.prime;  (* The third prime. *)
+

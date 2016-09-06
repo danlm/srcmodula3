@@ -1,0 +1,56 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: m3front/src/types/SubrangeType.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>m3front/src/types/SubrangeType.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE> File: SubrangeType.i3                                       
+ Last Modified On Fri Jun 24 09:28:42 PDT 1994 By kalsow     
+      Modified On Sat Jan 20 01:13:51 1990 By muller         
+
+<P><PRE>INTERFACE <interface><A HREF="SubrangeType.m3.html">SubrangeType</A></interface>;
+
+IMPORT <A HREF="Type.i3.html">Type</A>, <A HREF="../../../m3middle/src/Target.i3.html">Target</A>;
+
+PROCEDURE <A HREF="SubrangeType.m3.html#Parse">Parse</A> (): Type.T;
+
+PROCEDURE <A HREF="SubrangeType.m3.html#New">New</A> (READONLY min, max: Target.Int;  base: Type.T;
+               builtin: BOOLEAN): Type.T;
+
+PROCEDURE <A HREF="SubrangeType.m3.html#Split">Split</A> (t: Type.T;  VAR min, max: Target.Int): BOOLEAN;
+
+PROCEDURE <A HREF="SubrangeType.m3.html#Base">Base</A> (t: Type.T): Type.T;
+
+END SubrangeType.
+</PRE>
+</inInterface>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

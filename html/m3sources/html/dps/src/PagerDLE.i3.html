@@ -1,0 +1,82 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: dps/src/PagerDLE.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>dps/src/PagerDLE.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+
+INTERFACE <interface><A HREF="PagerDLE.m3.html">PagerDLE</A></interface>;
+</PRE>  A PagerDLE.T is a subclass of a DisplayList.T. (And similarly
+    for a PagerDLE.E.)
+<P>
+    The PagerDLE implementation allows the client to define
+    a sequence of logical <CODE>child</CODE> display list elements, and to have
+    those elements <CODE>paged</CODE> as real children of the PagerDLE.T, one
+    at a time.
+<P>
+    Methods allow the client to append a logical page to the
+    (initially empty) sequence, to display the next page, and to 
+    display the nth page. 
+
+<P><PRE>IMPORT <A HREF="DisplayList.i3.html">DisplayList</A>, <A HREF="DPS.i3.html">DPS</A>, <A HREF="DPSWindow.i3.html">DPSWindow</A>, <A HREF="PopupMenuDLE.i3.html">PopupMenuDLE</A>;
+
+TYPE T = DisplayList.T OBJECT
+  initialized: BOOLEAN := FALSE;
+  canMouseChildren: BOOLEAN := TRUE;
+  popup: PopupMenuDLE.T;
+  pages: REF ARRAY OF DisplayList.T;
+  page: INTEGER := -1;
+  pageCount: INTEGER := 0;
+ METHODS
+  AppendPage (page: DisplayList.T) := AppendPage;
+  NthPage (page: INTEGER) := NthPage;
+  NextPage () := NextPage;
+ OVERRIDES
+  Mouse := Mouse;
+  Char := Char;
+  END;
+TYPE E = T;
+
+PROCEDURE <A HREF="PagerDLE.m3.html#Init">Init</A> ( t: T; pages: REF ARRAY OF DisplayList.T := NIL );
+
+PROCEDURE <A HREF="PagerDLE.m3.html#AppendPage">AppendPage</A> ( t: T; page: DisplayList.T );
+
+PROCEDURE <A HREF="PagerDLE.m3.html#NthPage">NthPage</A> (t: T; page: INTEGER);
+PROCEDURE <A HREF="PagerDLE.m3.html#NextPage">NextPage</A> (t: T);
+
+PROCEDURE <A HREF="PagerDLE.m3.html#Mouse">Mouse</A> (e: E; t: DPSWindow.T; event: DPS.MouseEvent): BOOLEAN;
+PROCEDURE <A HREF="PagerDLE.m3.html#Char">Char</A> (e: E; t: DPSWindow.T; char: CHAR): BOOLEAN;
+
+  END PagerDLE.
+</PRE>
+</inInterface>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

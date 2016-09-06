@@ -1,0 +1,76 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: rw/src/Common/NullRd.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>rw/src/Common/NullRd.m3</H2></A><HR>
+<inModule>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+
+MODULE <module><implements><A HREF="NullRd.i3.html">NullRd</A></implements></module>;
+
+IMPORT <A HREF="RdClass.i3.html">RdClass</A>;
+
+REVEAL
+  <A NAME="T">T</A> = Public BRANDED OBJECT
+      OVERRIDES
+        seek   := Seek;
+        length := Length;
+        init   := Init;
+      END;
+
+PROCEDURE <A NAME="Init"><procedure>Init</procedure></A> (rd: T): T =
+  BEGIN
+    rd.st := 0;
+    rd.lo := 0;
+    rd.cur := 0;
+    rd.hi := 0;
+    rd.buff := NIL;
+    rd.closed := FALSE;
+    rd.seekable := TRUE;
+    rd.intermittent := FALSE;
+    RETURN rd;
+  END Init;
+
+PROCEDURE <A NAME="Seek"><procedure>Seek</procedure></A> (&lt;*UNUSED*&gt; rd: T; &lt;*UNUSED*&gt; pos: CARDINAL;
+                                  &lt;*UNUSED*&gt; dontBlock: BOOLEAN):
+  RdClass.SeekResult =
+  BEGIN
+    RETURN (RdClass.SeekResult.Eof);
+  END Seek;
+
+PROCEDURE <A NAME="Length"><procedure>Length</procedure></A>(&lt;*UNUSED*&gt; rd: T): INTEGER =
+  BEGIN RETURN 0; END Length;
+
+BEGIN
+END NullRd.
+</PRE>
+</inModule>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

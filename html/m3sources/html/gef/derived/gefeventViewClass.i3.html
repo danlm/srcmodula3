@@ -1,0 +1,66 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: gef/derived/gefeventViewClass.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>gef/derived/gefeventViewClass.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE>********************************************************************
+<PRE>
+      *  NOTE: This file is generated automatically from the event 
+      *        definition file gefevent.evt.
+ </PRE>
+********************************************************************
+
+<P><PRE>INTERFACE <interface><A HREF="gefeventViewClass.m3.html">gefeventViewClass</A></interface>;
+
+&lt;* NOWARN *&gt; IMPORT <A HREF="../../libm3/derived/RefList.i3.html">RefList</A>;
+&lt;* NOWARN *&gt; IMPORT <A HREF="../../slisp/src/SLispClass.i3.html">SLispClass</A>;
+IMPORT <A HREF="../../thread/src/Common/Thread.i3.html">Thread</A>, <A HREF="../../zeus/src/View.i3.html">View</A>;
+
+&lt;* PRAGMA LL *&gt;
+
+TYPE
+  <A HREF="gefeventViewClass.m3.html#T">T</A> &lt;: Public;
+  Public = View.T OBJECT
+      METHODS
+      &lt;*LL = {} *&gt;
+        oeInit ( files: RefList.T) RAISES {Thread.Alerted};
+        oeEvent ( name: TEXT; args: RefList.T) RAISES {Thread.Alerted};
+        oePause ( ) RAISES {Thread.Alerted};
+      &lt;*LL = VBT.mu *&gt;
+        ueUpdate ( name: TEXT; args: RefList.T) RAISES {Thread.Alerted};
+      END;
+
+END gefeventViewClass.
+</PRE>
+</inInterface>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

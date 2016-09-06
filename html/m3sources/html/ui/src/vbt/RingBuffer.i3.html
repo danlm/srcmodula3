@@ -1,0 +1,74 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: ui/src/vbt/RingBuffer.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>ui/src/vbt/RingBuffer.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM>                                                                           </EM></BLOCKQUOTE><PRE>
+</PRE> by Steve Glassman, Mark Manasse and Greg Nelson           
+<PRE>&lt;*PRAGMA LL*&gt;
+
+GENERIC INTERFACE <genericInterface><A HREF="RingBuffer.m3.html">RingBuffer</A></genericInterface>(Elem);
+</PRE><BLOCKQUOTE><EM> Elem.T must not be an open array type;
+   Elem.NormalSize must be a constant positive integer. </EM></BLOCKQUOTE><PRE>
+</PRE> A RingBuffer.T represents an unmonitored indefinitely expandible
+   FIFO queue. 
+
+<P><PRE>TYPE T =
+  RECORD
+    lo, hi: CARDINAL := 0;
+    buff: REF ARRAY OF Elem.T := NIL
+  END;
+  (* buff[lo..hi-1] circularly are the active entries;
+     lo = hi =&gt; the queue is empty; lo # hi =&gt; buff # NIL. *)
+
+CONST Empty = T{0, 0, NIL};
+
+&lt;*INLINE*&gt; PROCEDURE <A HREF="RingBuffer.m3.html#IsEmpty">IsEmpty</A>(READONLY rb: T): BOOLEAN;
+</PRE><BLOCKQUOTE><EM> Return whether rb is empty. </EM></BLOCKQUOTE><PRE>
+
+PROCEDURE <A HREF="RingBuffer.m3.html#Insert">Insert</A>(VAR rb: T; READONLY e: Elem.T);
+</PRE><BLOCKQUOTE><EM> Insert e into rb, extending rb if necessary. </EM></BLOCKQUOTE><PRE>
+
+EXCEPTION Exhausted;
+
+PROCEDURE <A HREF="RingBuffer.m3.html#Remove">Remove</A>(VAR rb: T): Elem.T RAISES {Exhausted};
+</PRE><BLOCKQUOTE><EM> Raise the exception if rb is empty, else remove the
+   oldest element of rb and return it. </EM></BLOCKQUOTE><PRE>
+
+PROCEDURE <A HREF="RingBuffer.m3.html#Peek">Peek</A>(VAR rb: T): Elem.T RAISES {Exhausted};
+</PRE><BLOCKQUOTE><EM> Like Remove, but leave the returned element at the head of the queue. </EM></BLOCKQUOTE><PRE>
+
+END RingBuffer.
+</PRE>
+</inInterface>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

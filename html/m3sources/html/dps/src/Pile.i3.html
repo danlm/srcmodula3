@@ -1,0 +1,64 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: dps/src/Pile.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>dps/src/Pile.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+
+INTERFACE <interface><A HREF="Pile.m3.html">Pile</A></interface>;
+
+TYPE Element = OBJECT
+  next: Element;
+  key: INTEGER := 0;
+  name: TEXT := NIL
+  END;
+
+TYPE T = OBJECT
+  mutex: MUTEX;
+  first: Element
+ METHODS
+  Insert (it: Element) := Insert;
+  Delete (it: Element) := Delete;
+  FindByName (name: TEXT): Element := FindByName;
+  FindByKey (key: INTEGER): Element := FindByKey
+  END;
+PROCEDURE <A HREF="Pile.m3.html#New">New</A> (): T;
+
+PROCEDURE <A HREF="Pile.m3.html#Insert">Insert</A> (pile: T; it: Element);
+PROCEDURE <A HREF="Pile.m3.html#Delete">Delete</A> (pile: T; it: Element);
+PROCEDURE <A HREF="Pile.m3.html#FindByName">FindByName</A> (pile: T; name: TEXT): Element;
+PROCEDURE <A HREF="Pile.m3.html#FindByKey">FindByKey</A> (pile: T; key: INTEGER): Element;
+
+  END Pile.
+</PRE>
+</inInterface>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

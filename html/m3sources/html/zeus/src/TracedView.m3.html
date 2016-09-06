@@ -1,0 +1,120 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: zeus/src/TracedView.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>zeus/src/TracedView.m3</H2></A><HR>
+<inModule>
+<PRE><A HREF="../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+
+MODULE <module><implements><A HREF="TracedView.i3.html">TracedView</A></implements></module>;
+
+IMPORT <A HREF="../../ui/src/split/Filter.i3.html">Filter</A>, List, <A HREF="../../rw/src/Common/Stdio.i3.html">Stdio</A>, <A HREF="../../ui/src/split/TextVBT.i3.html">TextVBT</A>, <A HREF="../../thread/src/Common/Thread.i3.html">Thread</A>, <A HREF="View.i3.html">View</A>, <A HREF="../../rw/src/Common/Wr.i3.html">Wr</A>,
+    <A HREF="Zeus.i3.html">Zeus</A>, <A HREF="ZeusClass.i3.html">ZeusClass</A>, <A HREF="ZeusPanel.i3.html">ZeusPanel</A>;
+
+REVEAL
+  <A NAME="T">T</A> = View.T BRANDED OBJECT
+  OVERRIDES
+    install := Install;
+    delete := Delete;
+    snapshot := Snapshot;
+    restore := Restore;
+    config := Config;
+    startrun := Startrun;
+    endrun := Endrun;
+  END;
+
+PROCEDURE <A NAME="New"><procedure>New</procedure></A> (): View.T =
+  BEGIN RETURN NEW(T) END New;
+
+PROCEDURE <A NAME="Install"><procedure>Install</procedure></A> (view: T) =
+  BEGIN
+    Trace (&quot;install&quot;);
+    EVAL Filter.Replace(view, TextVBT.New(&quot;See stdout&quot;));
+    View.T.install(view);
+  END Install;
+
+PROCEDURE <A NAME="Delete"><procedure>Delete</procedure></A> (view: T) =
+  BEGIN
+    Trace (&quot;delete&quot;);
+    View.T.delete (view);
+   END Delete;
+
+PROCEDURE <A NAME="Snapshot"><procedure>Snapshot</procedure></A> (view: T; wr: Wr.T) =
+  BEGIN
+    Trace (&quot;snapshot&quot;);
+    View.T.snapshot (view, wr);
+   END Snapshot;
+
+PROCEDURE <A NAME="Restore"><procedure>Restore</procedure></A> (view: T; l: List.T) =
+  BEGIN
+    Trace (&quot;restore&quot;);
+    View.T.restore (view, l);
+   END Restore;
+
+PROCEDURE <A NAME="Config"><procedure>Config</procedure></A> (
+    view: T;
+    state: ZeusClass.StateChange;
+    o: ZeusClass.T) =
+  BEGIN
+    Trace (&quot;config&quot;);
+    View.T.config (view, state, o);
+   END Config;
+
+PROCEDURE <A NAME="Startrun"><procedure>Startrun</procedure></A> (view: T) =
+  BEGIN
+    Trace (&quot;startrun&quot;);
+    View.T.startrun (view);
+   END Startrun;
+
+PROCEDURE <A NAME="Endrun"><procedure>Endrun</procedure></A> (view: T) =
+  BEGIN
+    Trace (&quot;endrun&quot;);
+    View.T.endrun (view);
+  END Endrun;
+
+PROCEDURE <A NAME="Trace"><procedure>Trace</procedure></A> (t: TEXT) =
+  BEGIN
+    LOCK Zeus.stdoutMu DO
+      TRY
+        Wr.PutText(Stdio.stdout, &quot;view: &quot; &amp; t &amp; &quot;\n&quot;);
+        Wr.Flush(Stdio.stdout);
+      EXCEPT
+        Wr.Failure, Thread.Alerted =&gt;
+      END;
+    END
+  END Trace;
+
+BEGIN
+  ZeusPanel.RegisterView (New, &quot;Traced View&quot;)
+END TracedView.
+</PRE>
+</inModule>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

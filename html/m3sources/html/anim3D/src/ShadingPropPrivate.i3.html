@@ -1,0 +1,87 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: anim3D/src/ShadingPropPrivate.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>anim3D/src/ShadingPropPrivate.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM> Digital Internal Use Only                                                 </EM></BLOCKQUOTE><PRE>
+</PRE>                                                                           
+       Created on Sun May 22 11:24:48 PDT 1994 by najork                   
+
+<P>
+<P><PRE>INTERFACE <interface><A HREF="ShadingProp.m3.html">ShadingPropPrivate</A></interface>;
+
+IMPORT <A HREF="GraphicsBase.i3.html">GraphicsBase</A>, <A HREF="Prop.i3.html">Prop</A>, <A HREF="PropPrivate.i3.html">PropPrivate</A>;
+
+FROM <A HREF="ShadingProp.i3.html">ShadingProp</A> IMPORT
+  Kind, Name, PublicName, Val, PublicVal, Beh, PublicBeh;
+
+REVEAL
+  Name &lt;: PrivateName;
+
+TYPE
+  PrivateName = PublicName OBJECT
+  METHODS
+    init (default : Kind) : Name;
+    getState (base : GraphicsBase.T) : Kind;
+  END;
+
+REVEAL
+  Val &lt;: PrivateVal;
+
+TYPE
+  PrivateVal = PublicVal OBJECT
+    val : Kind;        (* The cache is updated by calling &quot;adjust&quot;. *)
+  END;
+
+REVEAL
+  Beh &lt;: PrivateBeh;
+
+TYPE
+  PrivateBeh = PublicBeh OBJECT
+  METHODS
+    value (time : LONGREAL) : Kind RAISES {Prop.BadMethod};
+  END;
+
+TYPE
+  <A HREF="ShadingProp.m3.html#Stack">Stack</A> &lt;: PublicStack;
+  PublicStack = PropPrivate.Stack OBJECT
+    top : Kind;
+  METHODS
+    push (val : Kind);
+    pop () : Kind;
+  END;
+
+END ShadingPropPrivate.
+</PRE>
+</inInterface>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

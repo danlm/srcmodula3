@@ -1,0 +1,150 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: m3tk/src/asttrans/M3CTextcatTrans.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>m3tk/src/asttrans/M3CTextcatTrans.m3</H2></A><HR>
+<inModule>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+
+MODULE <module><implements><A HREF="M3CTextcatTrans.i3.html">M3CTextcatTrans</A></implements></module>;
+
+IMPORT <A HREF="../gast/AST.i3.html">AST</A>, <A HREF="../gast/AST_Iter.i3.html">AST_Iter</A>;
+IMPORT <A HREF="../toolmisc/M3Context.i3.html">M3Context</A>, <A HREF="../syn/M3CId.i3.html">M3CId</A>, <A HREF="../sem/M3CStdTypes.i3.html">M3CStdTypes</A>, <A HREF="../misc/M3Assert.i3.html">M3Assert</A>, <A HREF="../toolmisc/M3CUnit.i3.html">M3CUnit</A>, <A HREF="../sem/M3CSearch.i3.html">M3CSearch</A>;
+IMPORT <A HREF="../ast/M3AST_AS.i3.html">M3AST_AS</A>;
+IMPORT <A HREF="../../DS/SeqM3AST_AS_Actual.i3.html">SeqM3AST_AS_Actual</A>, <A HREF="../../DS/SeqM3AST_AS_EXP.i3.html">SeqM3AST_AS_EXP</A>;
+IMPORT <A HREF="../ast/M3AST_AS_F.i3.html">M3AST_AS_F</A>, <A HREF="../ast/M3AST_SM_F.i3.html">M3AST_SM_F</A>;
+
+PROCEDURE <A NAME="Set"><procedure>Set</procedure></A>(c: M3Context.T; cu: M3AST_AS.Compilation_Unit)=
+  VAR text_cu: M3AST_AS.Compilation_Unit; void: M3AST_AS.EXP;
+  BEGIN
+    M3Assert.Check(M3Context.Find(c, &quot;Text&quot;, M3CUnit.Type.Interface, text_cu));
+    WITH cat = M3AST_AS.NewUSED_ID() DO
+      cat.lx_symrep := M3CId.Enter(&quot;Cat&quot;);
+      M3CSearch.Export(text_cu.as_root, cat);
+      M3Assert.Check(cat.sm_def # NIL);
+      EVAL Visit(cu, text_cu.as_root, cat.sm_def, NIL, NIL, void);
+    END
+  END Set;
+
+PROCEDURE <A NAME="Visit"><procedure>Visit</procedure></A>(n: AST.NODE;  text_intf: M3AST_AS.Interface;
+                textcat: M3AST_AS.Proc_id;
+                parent: AST.NODE; parent_iter: AST_Iter.T;
+                VAR (* out*) old_exp: M3AST_AS.EXP): M3AST_AS.Call=
+  BEGIN
+    (* iterate children *)
+    VAR
+      iter := n.newIter();
+      iter2 := n.newIter();
+      child, void: AST.NODE;
+      child_old_exp: M3AST_AS.EXP;
+    BEGIN
+      WHILE iter.next(child) DO
+      	IF child # NIL THEN
+	  WITH r = Visit(child, text_intf, textcat, n, iter2, child_old_exp) DO
+            IF r # NIL THEN
+              (* If we are a &quot;Actual&quot; node and our &quot;as_exp_type&quot; child
+                 was updated, we must also fix up the &quot;sm_actual_s&quot;
+                 entry of the parent &quot;Call&quot; node. *)
+              TYPECASE n OF
+              | M3AST_AS.Actual =&gt;
+                  VAR
+                    call := NARROW(parent, M3AST_AS.Call);
+                    exp_iter := SeqM3AST_AS_EXP.NewIter(call.sm_actual_s);
+                    exp: M3AST_AS.EXP;
+                    ns := SeqM3AST_AS_EXP.Null;
+                  BEGIN
+                    WHILE SeqM3AST_AS_EXP.Next(exp_iter, exp) DO
+                      IF exp = child_old_exp THEN exp := r; END;
+                      SeqM3AST_AS_EXP.AddRear(ns, exp);
+                    END;
+                    call.sm_actual_s := ns;
+                  END;
+              ELSE
+              END;
+            END
+          END
+	END; (* if *)
+	EVAL iter2.next(void);
+      END; (* while *)
+    END;
+    TYPECASE n OF
+    | M3AST_AS.Binary(b) =&gt;
+        IF ISTYPE(b.as_binary_op, M3AST_AS.Textcat) THEN
+          WITH c = TextDotCatCall(text_intf, textcat, b.as_exp1, b.as_exp2) DO
+            parent.update(parent_iter, c);
+            old_exp := b;
+            RETURN c;
+          END;
+        END;
+    ELSE
+    END;
+    RETURN NIL;
+  END Visit;
+
+PROCEDURE <A NAME="TextDotCatCall"><procedure>TextDotCatCall</procedure></A>(
+    text_intf: M3AST_AS.Interface;
+    textcat: M3AST_AS.Proc_id;
+    arg1, arg2: M3AST_AS.EXP): M3AST_AS.EXP=
+  VAR
+    exp_used_id1, exp_used_id2 := M3AST_AS.NewExp_used_id();
+    call := M3AST_AS.NewCall();
+    select := M3AST_AS.NewBinary();
+  BEGIN
+    select.as_binary_op := M3AST_AS.NewSelect();
+    select.as_exp1 := exp_used_id1;
+    select.as_exp2 := exp_used_id2;
+    exp_used_id1.vUSED_ID.lx_symrep := M3CId.Enter(&quot;Text&quot;);
+    exp_used_id1.vUSED_ID.sm_def := text_intf.as_id;
+    exp_used_id1.sm_exp_type_spec := M3CStdTypes.Void();
+    exp_used_id2.vUSED_ID.lx_symrep := M3CId.Enter(&quot;Cat&quot;);
+    exp_used_id2.vUSED_ID.sm_def := textcat;
+    exp_used_id2.sm_exp_type_spec := textcat.sm_type_spec;
+    call.as_callexp := select;
+    MkActual(call, arg1); MkActual(call, arg2);
+    select.sm_exp_type_spec := M3CStdTypes.Text();
+    call.sm_exp_type_spec := select.sm_exp_type_spec;
+    RETURN call;
+  END TextDotCatCall;
+
+PROCEDURE <A NAME="MkActual"><procedure>MkActual</procedure></A>(call: M3AST_AS.Call; arg: M3AST_AS.EXP)=
+  VAR
+    actual := M3AST_AS.NewActual();
+  BEGIN
+    actual.as_id := NIL; actual.as_exp_type := arg;
+    SeqM3AST_AS_Actual.AddRear(call.as_param_s, actual);
+    SeqM3AST_AS_EXP.AddRear(call.sm_actual_s, arg);
+  END MkActual;
+
+BEGIN
+END M3CTextcatTrans.
+</PRE>
+</inModule>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

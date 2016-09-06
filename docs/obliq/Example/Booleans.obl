@@ -1,0 +1,29 @@
+(* Booleans encoded as objects *)
+
+module Booleans;
+
+let True = 
+  { If => meth(x) (x.Then)() end,
+    Then => meth(x) end,
+    Else => meth(x) end};
+
+let False = 
+  { If => meth(x) (x.Else)() end,
+    Then => meth(x) end,
+    Else => meth(x) end};
+
+let Cond =
+  proc(Bool, Then, Else)
+    Bool.Then:=Then;
+    Bool.Else:=Else;
+    Bool.If;
+  end;
+
+Cond(True, proc() 3 end, proc() 4 end);
+
+Cond(False, proc() 3 end, proc() 4 end);
+
+Cond(True, 
+     proc () Cond(True, proc() 3 end, proc() 4 end) end,
+     proc () loop end end);
+     

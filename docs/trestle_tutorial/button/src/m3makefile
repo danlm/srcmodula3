@@ -1,0 +1,11 @@
+% Copyright (C) 1993, Digital Equipment Corporation
+% All rights reserved.
+% See the file COPYRIGHT for a full description.
+%
+% Last modified on Thu Jan 13 10:21:08 PST 1994 by kalsow
+%
+
+import (ui)
+module (Button)
+implementation (ButtonTest)
+program (ButtonTest)

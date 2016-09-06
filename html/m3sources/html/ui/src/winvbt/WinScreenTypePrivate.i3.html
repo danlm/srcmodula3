@@ -1,0 +1,75 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: ui/src/winvbt/WinScreenTypePrivate.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>ui/src/winvbt/WinScreenTypePrivate.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM> Digital Internal Use Only                                                 </EM></BLOCKQUOTE><PRE>
+</PRE>                                                                           
+       Created on Fri Jan 20 21:12:26 PST 1995 by najork                   
+
+<P>
+<P><PRE>INTERFACE <interface><A HREF="WinScreenType.m3.html">WinScreenTypePrivate</A></interface>;
+
+IMPORT <A HREF="WinScrnPaintOp.i3.html">WinScrnPaintOp</A>, <A HREF="WinScrnPixmap.i3.html">WinScrnPixmap</A>;
+
+FROM <A HREF="WinScreenType.i3.html">WinScreenType</A> IMPORT T, Public;
+
+TYPE
+  Private = Public OBJECT
+    optable: REF ARRAY OF WinScrnPaintOp.OpRecord;
+      (* dynamic array of registered paint operations *)
+    opcount: CARDINAL := 0;
+      (* numbers of entries in optable. *)
+    pmtable: REF ARRAY OF WinScrnPixmap.PixmapRecord;
+      (* dynamic array of registered pixmaps *)
+    pmcount: CARDINAL := 0;
+      (* number of entries in pmtable *)
+    pmfree: INTEGER := -1;
+      (* index of first free list entry in pmtable below pmcount;
+         negative if none *)
+  END;
+</PRE><BLOCKQUOTE><EM><P>
+ * In the xvbt version, there is also a field <CODE>empty</CODE> that caches the id
+ * (the index into st.pmtable, not the XID) of the empty pixmap 
+ * (<CODE>Pixmap.Empty</CODE>). This field is updated by <CODE>XScrnPxmp.BuiltIn</CODE>, and 
+ * accessed by various <CODE>XGC.ResolveTextureGC</CODE>, <CODE>XGC.ResolveFillGC</CODE>, and 
+ * <CODE>XGC.ResolveStrokeGC</CODE>.  Its main purpose seems to be performance 
+ * optimization.
+ </EM></BLOCKQUOTE><PRE>
+
+REVEAL T &lt;: Private;
+
+END WinScreenTypePrivate.
+</PRE>
+</inInterface>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

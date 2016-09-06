@@ -1,0 +1,805 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: jvideo/src/decunix/JVSink.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>jvideo/src/decunix/JVSink.m3</H2></A><HR>
+<inModule>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+
+UNSAFE MODULE <module><implements><A HREF="../JVSink.i3.html">JVSink</A></implements></module>;
+
+IMPORT <A HREF="../../../atom/src/Atom.i3.html">Atom</A>, <A HREF="../../../libm3/DS/AtomList.i3.html">AtomList</A>, <A HREF="../../../C/src/Common/Ctypes.i3.html">Ctypes</A>, <A HREF="../../../tcp/src/common/ConnFD.i3.html">ConnFD</A>, <A HREF="../../../tcp/src/common/IP.i3.html">IP</A>, <A HREF="../JVBuffer.i3.html">JVBuffer</A>, <A HREF="../JvsBuffer.i3.html">JvsBuffer</A>, <A HREF="../JVConverter.i3.html">JVConverter</A>,
+       <A HREF="../JVConverterF.i3.html">JVConverterF</A>, <A HREF="../JVFromSource.i3.html">JVFromSource</A>, <A HREF="../jvprotocol.i3.html">jvprotocol</A>, <A HREF="../../../os/src/Common/OSError.i3.html">OSError</A>, <A HREF="../../../os/src/POSIX/OSErrorPosix.i3.html">OSErrorPosix</A>,
+       <A HREF="../../../os/src/Common/Process.i3.html">Process</A>, <A HREF="../../../rw/src/Common/Rd.i3.html">Rd</A>, <A HREF="../../../rw/src/Common/RdUtils.i3.html">RdUtils</A>, <A HREF="../../../tcp/src/common/TCP.i3.html">TCP</A>, <A HREF="../../../tcp/src/POSIX/TCPPosix.i3.html">TCPPosix</A>, <A HREF="../../../thread/src/Common/Thread.i3.html">Thread</A>, <A HREF="../../../time/src/Common/Tick.i3.html">Tick</A>, <A HREF="#x1">Uerror</A>,
+       <A HREF="#x2">Uin</A> (*, Unix *), <A HREF="#x3">Usocket</A>, <A HREF="../../../weakref/src/WeakRef.i3.html">WeakRef</A>, <A HREF="../../../rw/src/Common/Wr.i3.html">Wr</A>;
+</PRE>*IMPORT Stdio;*
+
+<P><PRE>FROM <A HREF="../../../C/src/Common/Ctypes.i3.html">Ctypes</A> IMPORT int;
+FROM <A HREF="#x4">Utypes</A> IMPORT u_int;
+
+CONST RetrySeconds = 30.0d0;
+
+REVEAL
+  <A NAME="T">T</A> = Public BRANDED OBJECT
+        sourceHost           : TEXT;
+        info                 : JVFromSource.StreamInfo;
+        quality              : jvprotocol.ClientQualityVal;
+        tcp                  : TCP.T                         := NIL;
+        maxBuffers           : CARDINAL                      := 0;
+        readThread, prodThread: Thread.T                     := NIL;
+        readClosure          : Closure                       := NIL;
+        prodClosure          : ProdClosure                   := NIL;
+        readSerial           : JVBuffer.Serial;
+        sync                 : CARDINAL                      := 0;
+        delay                : CARDINAL                      := 0;
+
+        retryThread : Thread.T := NIL;
+        retryClosure: Closure  := NIL;
+        retrying               := FALSE;
+      OVERRIDES
+        init  := Init;
+        leave := Leave;
+
+        start := Start;
+        stop  := Stop;
+
+        getInfo := GetInfo;
+        close   := Close;
+
+        startStats := StartStats;
+      END;
+</PRE> {{{ -- methods -- 
+
+<P><PRE>PROCEDURE <A NAME="signed_ntohl"><procedure>signed_ntohl</procedure></A>(x: int): int =
+  BEGIN
+    RETURN LOOPHOLE(Uin.ntohl(LOOPHOLE(x, u_int)), int)
+  END signed_ntohl;
+
+PROCEDURE <A NAME="signed_htonl"><procedure>signed_htonl</procedure></A>(x: int): int =
+  BEGIN
+    RETURN LOOPHOLE(Uin.htonl(LOOPHOLE(x, u_int)), int)
+  END signed_htonl;
+
+PROCEDURE <A NAME="Init"><procedure>Init</procedure></A> (t         : T;
+                hostname  : TEXT;
+                quality   : Quality            := DefaultQuality;
+                maxBuffers: CARDINAL           := 2;
+                factory   : JVBuffer.Factory;
+                delay     : CARDINAL                              ): T
+  RAISES {OSError.E, Thread.Alerted} =
+  BEGIN
+    TRY
+      EVAL JVConverter.T.init(t);
+      t.sourceHost := hostname;
+      t.maxBuffers := maxBuffers;
+      t.quality := quality + FIRST(jvprotocol.ClientQualityVal);
+      t.output := NEW(JVBuffer.Pool).init(factory, t.maxBuffers);
+      t.delay := delay;
+      OpenRemoteConnection(t);
+    EXCEPT
+    | OSError.E (e) =&gt; RAISE OSError.E(AtomList.Cons(sinkError, e));
+    END;
+    RETURN t;
+  END Init;
+
+PROCEDURE <A NAME="Leave"><procedure>Leave</procedure></A> (t:T) RAISES {Thread.Alerted, JVConverter.Error} =
+  VAR th := t.readThread;
+  BEGIN
+  (* Let's not do this, and see if anyone notices *)
+    IF th # NIL AND FALSE THEN
+      Thread.Alert(th)
+    END;
+    Public.leave(t)
+  END Leave;
+
+PROCEDURE <A NAME="Start"><procedure>Start</procedure></A> (t: T) RAISES {JVConverter.Error, Thread.Alerted} =
+  BEGIN
+    &lt;* ASSERT t.output # NIL *&gt;
+    TRY
+      t.output.setSize(t.maxBuffers);
+      Open(t);
+    EXCEPT
+    | OSError.E (e) =&gt;
+        RAISE JVConverter.Error(
+                AtomList.Cons(Atom.FromText(&quot;JVSink.Start&quot;), e));
+    END;
+  END Start;
+
+PROCEDURE <A NAME="Stop"><procedure>Stop</procedure></A> (t: T) RAISES {JVConverter.Error, Thread.Alerted} =
+  BEGIN
+    TRY
+      t.output.setSize(0);
+    EXCEPT
+    | OSError.E (al) =&gt;
+        RAISE JVConverter.Error(
+                AtomList.Cons(Atom.FromText(&quot;JVSink.Stop&quot;), al));
+    END;
+    InnerClose(t, TRUE);
+  END Stop;
+
+PROCEDURE <A NAME="GetInfo"><procedure>GetInfo</procedure></A> (t: T; VAR info: JVFromSource.StreamInfo): BOOLEAN =
+  BEGIN
+    LOCK t DO
+      WITH res = info.serial &lt; t.info.serial DO
+        info := t.info;
+        RETURN res;
+      END;
+    END;
+  END GetInfo;
+
+PROCEDURE <A NAME="Close"><procedure>Close</procedure></A> (t: T) =
+  BEGIN
+    LOCK t DO
+      InnerClose(t, TRUE);
+      t.output.signalClosed();
+      t.output := NIL;
+    END;
+  END Close;
+</PRE> {{{ -- internal procedures 
+
+<P><PRE>PROCEDURE <A NAME="InnerClose"><procedure>InnerClose</procedure></A> (t: T; noRetry := FALSE) =
+  (* unlocked implementation of Close() *)
+  BEGIN
+    IF NOT t.retrying OR noRetry THEN
+      VAR thread := t.retryThread; BEGIN
+        IF thread # NIL THEN
+          Thread.Alert(thread);
+          Thread.Release(t);
+          EVAL Thread.Join(thread); (* don't do anything until the thread
+                                       has finished *)
+          Thread.Acquire(t)
+        END;
+      END;
+    END;
+
+    VAR thread := t.readThread; BEGIN
+      IF thread # NIL THEN
+        Thread.Alert(thread);
+        Thread.Release(t);
+        EVAL Thread.Join(thread); (* ditto *)
+        Thread.Acquire(t);
+      END;
+    END;
+
+    IF t.tcp # NIL THEN t.tcp.close() END;
+    t.tcp := NIL;
+  END InnerClose;
+
+PROCEDURE <A NAME="StartStats"><procedure>StartStats</procedure></A> (t: T) =
+  BEGIN
+    LOCK t DO
+      IF t.statistics = NIL THEN
+        t.statistics := NEW(JVConverter.Statistics);
+      END;
+      t.statistics.framesStarted := 0;
+      t.statistics.framesProcessed := 0;
+      t.statistics.timesBlocked := 0;
+    END;
+  END StartStats;
+</PRE> }}} 
+
+<P> }}} 
+ {{{ -- read thread -- 
+
+<P><PRE>TYPE
+  Closure = Thread.Closure OBJECT t: T;  OVERRIDES apply := ReadApply; END;
+  ProdClosure = Thread.Closure OBJECT t: T;  OVERRIDES apply := ProdApply; END;
+
+CONST AnySize = BYTESIZE(jvprotocol.AnyHeader);
+
+PROCEDURE <A NAME="ProdApply"><procedure>ProdApply</procedure></A> (cl: ProdClosure): REFANY =
+  VAR t := cl.t;
+  BEGIN
+    TRY
+      LOOP
+        Thread.Pause(3.0D0);
+        LOCK t DO
+          IF t.readThread = NIL THEN EXIT END;
+          SendToSource(t.tcp, FIRST(jvprotocol.ClientNumCredits));
+        END
+      END
+    EXCEPT
+      Wr.Failure, Thread.Alerted =&gt;
+    END;
+    LOCK t DO t.prodThread := NIL END;
+    RETURN NIL
+  END ProdApply;
+
+PROCEDURE <A NAME="ReadApply"><procedure>ReadApply</procedure></A> (cl: Closure): REFANY =
+
+  (* control data from the server currently is thrown away *)
+  PROCEDURE GetControl (netlength: Ctypes.int)
+    RAISES {Rd.Failure, Thread.Alerted} =
+    VAR length := signed_ntohl(netlength);
+    BEGIN
+      IF length &gt; jvprotocol.MaxControlMsgSize THEN
+        RAISE Rd.Failure(NIL);
+      END;
+      GetMinBytes(t, t.tcp, SUBARRAY(control, 0, length));
+    END GetControl;
+
+  VAR
+    t                         := cl.t;
+    buffer: jvprotocol.Header;
+    any := LOOPHOLE(ADR(buffer[0]), jvprotocol.AnyHeaderPtr);
+    hdr := LOOPHOLE(ADR(buffer[0]), jvprotocol.VideoFramePtr);
+    control: jvprotocol.ControlBuffer;
+    jvbuff : JVFromSource.T           := NIL;
+    length : CARDINAL;
+    retryp : BOOLEAN;
+    failure: AtomList.T;
+  BEGIN
+    TRY
+      retryp := FALSE;
+      failure := NIL;
+      LOOP
+
+        IF t.paused &gt;= t.clients THEN
+          (* don't start reading until we have a buffer in which to put the
+             frame data *)
+          LOCK t DO
+            SendToSource(t.tcp, jvprotocol.ClientSuspendStream);
+            WHILE t.paused &gt;= t.clients DO
+              Thread.AlertWait(t, t.pauseEvent);
+            END;
+            SendToSource(t.tcp, jvprotocol.ClientResumeStream);
+          END;
+        END;
+
+        LOCK t DO GetHeader(t, t.tcp, buffer); END;
+
+        IF any.type = jvprotocol.JVP_VIDEO THEN
+          VAR subtype := JvsBuffer.Subtype2(signed_ntohl(hdr.length));
+          BEGIN
+            IF jvbuff # NIL AND jvbuff.subtype # subtype THEN
+              jvbuff.free();
+              jvbuff := NIL
+            END;
+            IF jvbuff = NIL THEN
+              jvbuff := NARROW(t.output.getFreeBuffer(FALSE, subtype),
+                               JVFromSource.T)
+            END;
+            IF jvbuff = NIL THEN
+              LOCK t DO
+                IF t.statistics # NIL THEN
+                  INC(t.statistics.timesBlocked);
+                END;
+                SendToSource(t.tcp, jvprotocol.ClientSuspendStream);
+              END;
+              jvbuff := NARROW(t.output.getFreeBuffer(TRUE, subtype),
+                               JVFromSource.T);
+              LOCK t DO
+                IF t.statistics # NIL THEN
+                  INC(t.statistics.timesBlocked);
+                END;
+                SendToSource(t.tcp, jvprotocol.ClientResumeStream);
+              END
+            END
+          END
+        END;
+
+        LOCK t DO
+          (* {{{ -- dispatch header *)
+
+          CASE any.type OF
+          | jvprotocol.JVP_VIDEO =&gt;
+              IF t.statistics # NIL THEN
+                INC(t.statistics.framesStarted);
+              END;
+              GetFrame(t, buffer, jvbuff);
+
+              jvbuff.info := t.info;
+              IF jvbuff.info.serial MOD 8 = 0 THEN
+                jvbuff.ready.endToEnd := TRUE
+              END;
+              jvbuff.ready := NewReady(t.tcp);
+              t.output.insert(jvbuff);
+              jvbuff := NIL;
+              IF t.statistics # NIL THEN
+                INC(t.statistics.framesProcessed);
+              END;
+
+          | jvprotocol.JVP_RESOLUTION =&gt; (* skip *)
+          | jvprotocol.JVP_TYPE =&gt;
+              WITH type = LOOPHOLE(any, jvprotocol.VideoTypePtr),
+                   si   = t.info                                  DO
+                INC(si.serial);
+                si.qfactor := signed_ntohl(type.qfactor);
+                si.width := signed_ntohl(type.width);
+                si.height := signed_ntohl(type.height);
+              END;
+          | jvprotocol.JVP_SYNC =&gt;
+              WITH sync = LOOPHOLE(any, jvprotocol.SyncFramePtr) DO
+                (* if this is the reply we're waiting for, send credits to
+                   restart stream *)
+                IF t.sync = signed_ntohl(sync.code) THEN t.sync := 0; END;
+              END;
+          | jvprotocol.JVP_QUALITIES =&gt;
+              length := LOOPHOLE(any, jvprotocol.QualitiesFramePtr).length;
+              GetControl(signed_ntohl(length));
+          | jvprotocol.JVP_ERROR =&gt;
+              length := LOOPHOLE(any, jvprotocol.ErrorFramePtr).length;
+              GetControl(signed_ntohl(length));
+          | jvprotocol.JVP_INFO =&gt;
+              length := LOOPHOLE(any, jvprotocol.InfoFramePtr).length;
+              GetControl(signed_ntohl(length));
+          | jvprotocol.JVP_VIDEO_UDP_REQUEST,
+              jvprotocol.JVP_VIDEO_UDP_RESPONSE =&gt;
+          | jvprotocol.JVP_AUDIO, jvprotocol.JVP_STATUS,
+              jvprotocol.JVP_ENDMARK, jvprotocol.JVP_AUDIO_SILENCE,
+              jvprotocol.JVP_AUDIO_MULTICAST,
+              jvprotocol.JVP_VIDEO_UDP_DATA =&gt;
+              RAISE Rd.Failure(NIL);
+          ELSE
+            RAISE Rd.Failure(NIL);
+          END;
+
+          (* }}} *)
+        END;
+      END;
+    EXCEPT
+    | Thread.Alerted =&gt;          (* skip *)
+    | Rd.Failure (f) =&gt; failure := f; retryp := TRUE;
+    | Wr.Failure (f) =&gt; failure := f; retryp := TRUE;
+    | OSError.E (f) =&gt; failure := f; retryp := TRUE;
+    END;
+
+    IF jvbuff # NIL THEN jvbuff.free(); END;
+    IF failure # NIL THEN
+      WITH txt = RdUtils.FailureText(failure) DO
+        IF txt # NIL THEN
+          JVConverter.ReportError(
+            &quot;JVSink, read from &quot; &amp; t.sourceHost &amp; txt);
+        END;
+      END;
+    END;
+    LOCK t DO t.readThread := NIL; IF retryp THEN Retry(t); END; END;
+    RETURN NIL;
+  END ReadApply;
+</PRE> }}} 
+ {{{ -- procedures to read from server -- 
+
+<P><PRE>PROCEDURE <A NAME="GetMinBytes"><procedure>GetMinBytes</procedure></A> (o: T; t: TCP.T; VAR buff: ARRAY OF CHAR)
+  RAISES {Rd.Failure, Thread.Alerted} =
+  (* loop until &quot;buff&quot; has been filled *)
+  VAR
+    len       := NUMBER(buff);
+    charsRead := 0;
+  BEGIN
+    TRY
+      Thread.Release(o);
+      TRY
+        WHILE len &gt; 0 DO
+          WITH res = t.get(SUBARRAY(buff, charsRead, len)) DO
+            IF res = 0 THEN RAISE ConnFD.TimedOut END;
+            INC(charsRead, res);
+            DEC(len, res);
+          END;
+        END;
+      EXCEPT
+      | ConnFD.TimedOut =&gt; RAISE Rd.Failure(NIL);
+      END;
+    FINALLY
+      Thread.Acquire(o)
+    END
+  END GetMinBytes;
+
+PROCEDURE <A NAME="GetHeader"><procedure>GetHeader</procedure></A> (o: T; t: TCP.T; VAR buffer: jvprotocol.Header)
+  RAISES {Rd.Failure, Thread.Alerted} =
+  VAR
+    any := LOOPHOLE(ADR(buffer[0]), jvprotocol.AnyHeaderPtr);
+    bytesLeft: CARDINAL;
+  BEGIN
+    GetMinBytes(o, t, SUBARRAY(buffer, 0, AnySize));
+    any.type := signed_ntohl(any.type);
+    CASE any.type OF
+    | jvprotocol.JVP_FirstEvent .. jvprotocol.JVP_LastEvent =&gt;
+        bytesLeft := jvprotocol.HdrSizes[any.type] - AnySize;
+        IF bytesLeft &lt;= 0 THEN RETURN; END;
+        GetMinBytes(o, t, SUBARRAY(buffer, AnySize, bytesLeft));
+    ELSE
+      RAISE Rd.Failure(AtomList.List1(Atom.FromText(&quot;BadHeaderType&quot;)));
+    END;
+  END GetHeader;
+
+TYPE
+  OpenArray = RECORD
+                address: ADDRESS;
+                count  : INTEGER;
+              END;
+  OpenArrayPtr = UNTRACED REF ARRAY OF CHAR;
+</PRE><BLOCKQUOTE><EM> this horrible hack allows us to build an open array from an address and
+   length.  We can't use the trick with the very long fixed array because
+   the NIL check in the subarray fails for shared memory segments </EM></BLOCKQUOTE><PRE>
+</PRE>**
+PROCEDURE Bpt(s: TEXT := <CODE></CODE>) =
+  &lt;*FATAL ANY*&gt;
+  BEGIN
+    Wr.PutText(Stdio.stderr, <CODE>Bpt: </CODE> &amp; s &amp; <CODE>\n</CODE>);
+  END Bpt;
+**
+
+<P><PRE>PROCEDURE <A NAME="GetFrame"><procedure>GetFrame</procedure></A> (         t     : T;
+                    READONLY buffer: jvprotocol.Header;
+                             jvb   : JVBuffer.T         )
+  RAISES {Rd.Failure, Thread.Alerted} =
+  VAR
+    hdr            := LOOPHOLE(ADR(buffer[0]), jvprotocol.VideoFramePtr);
+    oa : OpenArray;
+    oap: OpenArrayPtr := ADR(oa);
+  BEGIN
+    &lt;* ASSERT jvb # NIL *&gt;
+    jvb.serial := t.readSerial;
+    INC(t.readSerial);
+    jvb.timestamp.tv_sec := signed_ntohl(hdr.timestamp.tv_sec);
+    jvb.timestamp.tv_usec := signed_ntohl(hdr.timestamp.tv_usec);
+    jvb.frameLength := signed_ntohl(hdr.length);
+    jvb.localTime := Tick.Now();
+
+    &lt;* ASSERT jvb.frameLength &lt;= jvb.length *&gt;
+    oa.address := jvb.addr;
+    oa.count := jvb.frameLength;
+    GetMinBytes(t, t.tcp, oap^);
+  END GetFrame;
+</PRE> }}} 
+ {{{ -- retry thread -- 
+
+<P> LL &gt;= {t} 
+<PRE>PROCEDURE <A NAME="Retry"><procedure>Retry</procedure></A> (t: T) =
+  BEGIN
+    IF t.retryThread # NIL THEN Thread.Alert(t.retryThread); END;
+    IF t.retryClosure = NIL THEN
+      t.retryClosure := NEW(Closure, t := t, apply := RetryApply);
+    END;
+    t.retrying := TRUE;
+    t.retryThread := Thread.Fork(t.retryClosure);
+  END Retry;
+
+PROCEDURE <A NAME="RetryApply"><procedure>RetryApply</procedure></A> (cl: Closure): REFANY =
+  VAR t := cl.t;
+  BEGIN
+    TRY
+      LOOP
+        TRY
+          JVConverter.ReportError(&quot;JVSink, retrying &quot; &amp; t.sourceHost);
+          LOCK t DO InnerClose(t); Open(t); END;
+          EXIT;                  (* open succeeded *)
+        EXCEPT
+        | OSError.E =&gt;           (* skip and loop again *)
+        END;
+        Thread.AlertPause(RetrySeconds);
+      END;
+    EXCEPT
+    | Thread.Alerted =&gt;          (*skip*)
+    END;
+    LOCK t DO t.retryThread := NIL; t.retrying := FALSE; END;
+    RETURN NIL;
+  END RetryApply;
+</PRE> }}} 
+ {{{ -- internal procedures -- 
+
+<P><PRE>PROCEDURE <A NAME="Open"><procedure>Open</procedure></A> (t: T) RAISES {OSError.E, Thread.Alerted} =
+  (* establish a connection with the server and start a thread to get
+     frames and other info from it *)
+  BEGIN
+    TRY
+      IF NOT t.retrying THEN
+        IF t.retryThread # NIL THEN Thread.Alert(t.retryThread); END;
+      END;
+
+      OpenRemoteConnection(t);
+      (* ask for correct quality *)
+      SendToSource(t.tcp, t.quality);
+
+      (* ask for frame rate *)
+      IF t.delay # 0 THEN
+        SendToSource(t.tcp, jvprotocol.ExtendedCommand);
+        SendFrameRateToSource(t.tcp, jvprotocol.FrameRateHintRec{
+                                       jvprotocol.FrameRateHint, t.delay})
+      END;
+
+      SendToSource(t.tcp, FIRST(jvprotocol.ClientNumCredits));
+      SendToSource(t.tcp, FIRST(jvprotocol.ClientNumCredits));
+
+      t.readSerial := 0;
+      t.info.serial := 0;
+      IF t.readThread = NIL THEN
+        IF t.readClosure = NIL THEN
+          t.readClosure := NEW(Closure, t := t);
+        END;
+        t.readThread := Thread.Fork(t.readClosure);
+      END;
+      IF FALSE AND t.prodThread = NIL THEN
+        IF t.prodClosure = NIL THEN
+          t.prodClosure := NEW(ProdClosure, t := t);
+        END;
+        t.prodThread := Thread.Fork(t.prodClosure);
+      END;
+    EXCEPT
+    | Wr.Failure (f) =&gt;
+        RAISE OSError.E(AtomList.Cons(Atom.FromText(&quot;JVSink.Open&quot;), f));
+    END;
+  END Open;
+
+CONST TCP_NODELAY = 1;
+
+PROCEDURE <A NAME="OpenRemoteConnection"><procedure>OpenRemoteConnection</procedure></A> (t: T) RAISES {OSError.E, Thread.Alerted} =
+  VAR
+    endpoint: IP.Endpoint;
+    arg     : Ctypes.int := 1;
+  BEGIN
+    IF t.tcp # NIL THEN RETURN; (*already open *) END;
+    TRY
+      IF NOT IP.GetHostByName(t.sourceHost, endpoint.addr) THEN
+        RAISE OSError.E(AtomList.Cons(hostNotFound, NIL));
+      END;
+      (* endpoint.port := jvprotocol.PORT_VIDEO; the proper version *)
+      endpoint.port := Uin.ntohs(jvprotocol.PORT_VIDEO);
+      (* BOTCH, do this conversion for now because argo specifies its port
+         in host byte order *)
+      t.tcp := TCP.Connect(endpoint);
+
+      WITH tcp = t.tcp DO
+        LOCK tcp DO
+          IF tcp.closed THEN
+            RAISE IP.Error(AtomList.Cons(TCP.Closed, NIL));
+          END;
+          IF (* Unix.ioctl(tcp.fd, Unix.FIONBIO, ADR(arg)) &lt; 0
+               OR *) Usocket.setsockopt(tcp.fd, Uin.IPPROTO_TCP, TCP_NODELAY,
+                                     ADR(arg), BYTESIZE(arg)) &lt; 0
+               OR Usocket.setsockopt(
+                    tcp.fd, Usocket.SOL_SOCKET, Usocket.SO_KEEPALIVE,
+                    ADR(arg), BYTESIZE(arg)) &lt; 0 THEN
+            Crash(Uerror.errno);
+          END;
+
+          (* set rcv buffer as large as possible *)
+          arg := 64 * 1024 - 1;
+          WHILE Usocket.setsockopt(
+                  tcp.fd, Usocket.SOL_SOCKET, Usocket.SO_RCVBUF, ADR(arg),
+                  BYTESIZE(arg)) &lt; 0 DO
+            IF Uerror.errno = Uerror.ENOBUFS THEN
+              DEC(arg, 1024);
+            ELSE
+              Crash(Uerror.errno);
+            END;
+          END;
+        END;
+      END;
+
+    EXCEPT
+    | IP.Error (ec) =&gt; RAISE OSError.E(AtomList.Cons(sinkError, ec));
+    | OSError.E (e) =&gt; RAISE OSError.E(AtomList.Cons(sinkError, e));
+    END;
+  END OpenRemoteConnection;
+
+PROCEDURE <A NAME="SendToSource"><procedure>SendToSource</procedure></A> (t: TCP.T; msg: jvprotocol.ClientRequest)
+  RAISES {Wr.Failure, Thread.Alerted} =
+  VAR data := LOOPHOLE(ADR(msg), UNTRACED REF ARRAY [0 .. 0] OF CHAR);
+  BEGIN
+    t.put(data^);
+  END SendToSource;
+
+PROCEDURE <A NAME="SendFrameRateToSource"><procedure>SendFrameRateToSource</procedure></A> (         t  : TCP.T;
+                                 READONLY msg: jvprotocol.FrameRateHintRec)
+  RAISES {Wr.Failure, Thread.Alerted} =
+  VAR
+    nmsg := msg;
+    data := LOOPHOLE(ADR(nmsg), UNTRACED REF ARRAY [0 .. 7] OF CHAR);
+  BEGIN
+    nmsg.type := signed_htonl(nmsg.type);
+    nmsg.period := signed_htonl(nmsg.period);
+    t.put(data^);
+  END SendFrameRateToSource;
+
+PROCEDURE <A NAME="Crash"><procedure>Crash</procedure></A> (e: INTEGER) =
+  BEGIN
+    Process.Crash(
+      &quot;Emergency stop: &quot; &amp; Atom.ToText(OSErrorPosix.ErrnoAtom(e)));
+  END Crash;
+</PRE> }}} 
+ {{{ -- ready closure -- 
+
+<P> this ready closure tries to send a credit back to the source if this is
+   the first time the <CODE>apply</CODE> method has been called.  It is supposed to be
+   called just after the <CODE>Picture.Paint</CODE> call for this buffer. 
+
+<P><PRE>TYPE
+  ReadyClosure = JVBuffer.ReadyClosure OBJECT
+                   next  : ReadyClosure;  (* for free list *)
+                   tcp   : TCP.T;
+                   called: BOOLEAN;       (* has apply been called yet? *)
+                   tcpOpen: BOOLEAN;  (* false if a call to this tcp has
+                                         failed *)
+                 OVERRIDES
+                   apply := ReadyApply;
+                 END;
+
+PROCEDURE <A NAME="ReadyApply"><procedure>ReadyApply</procedure></A> (cl: ReadyClosure) RAISES {Thread.Alerted} =
+  BEGIN
+    IF cl.tcpOpen AND NOT cl.called THEN (* unlocked quick check first *)
+      LOCK cl DO
+        IF cl.tcp # NIL AND cl.tcpOpen AND cl.endToEnd AND NOT cl.called THEN
+          cl.called := TRUE;
+          TRY
+            SendToSource(cl.tcp, FIRST(jvprotocol.ClientNumCredits));
+          EXCEPT
+          | Wr.Failure =&gt; cl.tcpOpen := FALSE;
+          END;
+        END;
+      END;
+    END;
+  END ReadyApply;
+
+PROCEDURE <A NAME="NewReady"><procedure>NewReady</procedure></A> (tcp: TCP.T): ReadyClosure =
+  (* use this proc to get a new ReadyClosure, does some free list stuff *)
+  VAR res: ReadyClosure := NIL;
+  BEGIN
+    LOCK readyMutex DO
+      IF readyFrees # NIL THEN
+        res := readyFrees;
+        readyFrees := readyFrees.next;
+      END;
+    END;
+    IF res = NIL THEN
+      res := NEW(ReadyClosure);
+      EVAL WeakRef.FromRef(res, CleanUpReady);
+    END;
+    res.next := NIL;
+    res.tcp := tcp;
+    res.called := FALSE;
+    res.endToEnd := FALSE;
+    res.tcpOpen := TRUE;
+    RETURN res;
+  END NewReady;
+
+PROCEDURE <A NAME="CleanUpReady"><procedure>CleanUpReady</procedure></A> (&lt;* UNUSED*&gt; READONLY w: WeakRef.T; r: REFANY) =
+  (* return to ready free list *)
+  BEGIN
+    WITH rc = NARROW(r, ReadyClosure) DO
+      LOCK readyMutex DO rc.next := readyFrees; END;
+    END;
+  END CleanUpReady;
+
+VAR
+  readyMutex               := NEW(Thread.Mutex);
+  readyFrees: ReadyClosure := NIL;
+</PRE> }}} 
+ ignore SIGPIPES -- no longer needed? 
+
+VAR
+  vec := Usignal.struct_sigvec{Usignal.SIG_IGN, Usignal.empty_sv_mask, 0};
+  ovec: Usignal.struct_sigvec;
+
+<PRE>BEGIN
+</PRE><BLOCKQUOTE><EM>  EVAL Usignal.sigvec(Usignal.SIGPIPE, vec, ovec);
+  IF ovec.sv_handler # Usignal.SIG_IGN
+       AND ovec.sv_handler # Usignal.SIG_DFL THEN
+    EVAL Usignal.sigvec(Usignal.SIGPIPE, ovec, vec);
+  END;
+</EM></BLOCKQUOTE><PRE>
+  hostNotFound := Atom.FromText(&quot;HostNotFound&quot;);
+  sinkError := Atom.FromText(&quot;JVSink: &quot;);
+
+END JVSink.
+</PRE>
+</inModule>
+<HR>
+<A NAME="x1">interface Uerror is in:
+</A><UL>
+<LI><A HREF="../../../unix/src/aix-3-2/Uerror.i3.html#0TOP0">unix/src/aix-3-2/Uerror.i3</A>
+<LI><A HREF="../../../unix/src/aix-ps2-1-2/Uerror.i3.html#0TOP0">unix/src/aix-ps2-1-2/Uerror.i3</A>
+<LI><A HREF="../../../unix/src/freebsd-1/Uerror.i3.html#0TOP0">unix/src/freebsd-1/Uerror.i3</A>
+<LI><A HREF="../../../unix/src/freebsd-2/Uerror.i3.html#0TOP0">unix/src/freebsd-2/Uerror.i3</A>
+<LI><A HREF="../../../unix/src/hpux-7-0/Uerror.i3.html#0TOP0">unix/src/hpux-7-0/Uerror.i3</A>
+<LI><A HREF="../../../unix/src/ibm-4-3/Uerror.i3.html#0TOP0">unix/src/ibm-4-3/Uerror.i3</A>
+<LI><A HREF="../../../unix/src/irix-5.2/Uerror.i3.html#0TOP0">unix/src/irix-5.2/Uerror.i3</A>
+<LI><A HREF="../../../unix/src/linux/Uerror.i3.html#0TOP0">unix/src/linux/Uerror.i3</A>
+<LI><A HREF="../../../unix/src/osf-1.generic/Uerror.i3.html#0TOP0">unix/src/osf-1.generic/Uerror.i3</A>
+<LI><A HREF="../../../unix/src/solaris-2-x/Uerror.i3.html#0TOP0">unix/src/solaris-2-x/Uerror.i3</A>
+<LI><A HREF="../../../unix/src/sunos-4-x/Uerror.i3.html#0TOP0">unix/src/sunos-4-x/Uerror.i3</A>
+<LI><A HREF="../../../unix/src/sysv-4.0/Uerror.i3.html#0TOP0">unix/src/sysv-4.0/Uerror.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.generic/Uerror.i3.html#0TOP0">unix/src/ultrix-3-1.generic/Uerror.i3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x2">interface Uin is in:
+</A><UL>
+<LI><A HREF="../../../unix/src/aix-3-2/Uin.i3.html#0TOP0">unix/src/aix-3-2/Uin.i3</A>
+<LI><A HREF="../../../unix/src/aix-ps2-1-2/Uin.i3.html#0TOP0">unix/src/aix-ps2-1-2/Uin.i3</A>
+<LI><A HREF="../../../unix/src/freebsd-1/Uin.i3.html#0TOP0">unix/src/freebsd-1/Uin.i3</A>
+<LI><A HREF="../../../unix/src/freebsd-2/Uin.i3.html#0TOP0">unix/src/freebsd-2/Uin.i3</A>
+<LI><A HREF="../../../unix/src/hpux-7-0/Uin.i3.html#0TOP0">unix/src/hpux-7-0/Uin.i3</A>
+<LI><A HREF="../../../unix/src/ibm-4-3/Uin.i3.html#0TOP0">unix/src/ibm-4-3/Uin.i3</A>
+<LI><A HREF="../../../unix/src/irix-5.2/Uin.i3.html#0TOP0">unix/src/irix-5.2/Uin.i3</A>
+<LI><A HREF="../../../unix/src/linux/Uin.i3.html#0TOP0">unix/src/linux/Uin.i3</A>
+<LI><A HREF="../../../unix/src/osf-1.ALPHA_OSF/Uin.i3.html#0TOP0">unix/src/osf-1.ALPHA_OSF/Uin.i3</A>
+<LI><A HREF="../../../unix/src/osf-1.DS3100/Uin.i3.html#0TOP0">unix/src/osf-1.DS3100/Uin.i3</A>
+<LI><A HREF="../../../unix/src/solaris-2-x/Uin.i3.html#0TOP0">unix/src/solaris-2-x/Uin.i3</A>
+<LI><A HREF="../../../unix/src/sunos-4-x/Uin.i3.html#0TOP0">unix/src/sunos-4-x/Uin.i3</A>
+<LI><A HREF="../../../unix/src/sysv-4.0/Uin.i3.html#0TOP0">unix/src/sysv-4.0/Uin.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.AP3000/Uin.i3.html#0TOP0">unix/src/ultrix-3-1.AP3000/Uin.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.ARM/Uin.i3.html#0TOP0">unix/src/ultrix-3-1.ARM/Uin.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.DS3100/Uin.i3.html#0TOP0">unix/src/ultrix-3-1.DS3100/Uin.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.NEXT/Uin.i3.html#0TOP0">unix/src/ultrix-3-1.NEXT/Uin.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.SEQUENT/Uin.i3.html#0TOP0">unix/src/ultrix-3-1.SEQUENT/Uin.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.SUN3/Uin.i3.html#0TOP0">unix/src/ultrix-3-1.SUN3/Uin.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.SUN386/Uin.i3.html#0TOP0">unix/src/ultrix-3-1.SUN386/Uin.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.UMAX/Uin.i3.html#0TOP0">unix/src/ultrix-3-1.UMAX/Uin.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.VAX/Uin.i3.html#0TOP0">unix/src/ultrix-3-1.VAX/Uin.i3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x3">interface Usocket is in:
+</A><UL>
+<LI><A HREF="../../../unix/src/aix-3-2/Usocket.i3.html#0TOP0">unix/src/aix-3-2/Usocket.i3</A>
+<LI><A HREF="../../../unix/src/aix-ps2-1-2/Usocket.i3.html#0TOP0">unix/src/aix-ps2-1-2/Usocket.i3</A>
+<LI><A HREF="../../../unix/src/freebsd-1/Usocket.i3.html#0TOP0">unix/src/freebsd-1/Usocket.i3</A>
+<LI><A HREF="../../../unix/src/freebsd-2/Usocket.i3.html#0TOP0">unix/src/freebsd-2/Usocket.i3</A>
+<LI><A HREF="../../../unix/src/hpux-7-0/Usocket.i3.html#0TOP0">unix/src/hpux-7-0/Usocket.i3</A>
+<LI><A HREF="../../../unix/src/ibm-4-3/Usocket.i3.html#0TOP0">unix/src/ibm-4-3/Usocket.i3</A>
+<LI><A HREF="../../../unix/src/irix-5.2/Usocket.i3.html#0TOP0">unix/src/irix-5.2/Usocket.i3</A>
+<LI><A HREF="../../../unix/src/linux/Usocket.i3.html#0TOP0">unix/src/linux/Usocket.i3</A>
+<LI><A HREF="../../../unix/src/osf-1.generic/Usocket.i3.html#0TOP0">unix/src/osf-1.generic/Usocket.i3</A>
+<LI><A HREF="../../../unix/src/solaris-2-x/Usocket.i3.html#0TOP0">unix/src/solaris-2-x/Usocket.i3</A>
+<LI><A HREF="../../../unix/src/sunos-4-x/Usocket.i3.html#0TOP0">unix/src/sunos-4-x/Usocket.i3</A>
+<LI><A HREF="../../../unix/src/sysv-4.0/Usocket.i3.html#0TOP0">unix/src/sysv-4.0/Usocket.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.generic/Usocket.i3.html#0TOP0">unix/src/ultrix-3-1.generic/Usocket.i3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x4">interface Utypes is in:
+</A><UL>
+<LI><A HREF="../../../unix/src/aix-3-2/Utypes.i3.html#0TOP0">unix/src/aix-3-2/Utypes.i3</A>
+<LI><A HREF="../../../unix/src/aix-ps2-1-2/Utypes.i3.html#0TOP0">unix/src/aix-ps2-1-2/Utypes.i3</A>
+<LI><A HREF="../../../unix/src/freebsd-1/Utypes.i3.html#0TOP0">unix/src/freebsd-1/Utypes.i3</A>
+<LI><A HREF="../../../unix/src/freebsd-2/Utypes.i3.html#0TOP0">unix/src/freebsd-2/Utypes.i3</A>
+<LI><A HREF="../../../unix/src/hpux-7-0/Utypes.i3.html#0TOP0">unix/src/hpux-7-0/Utypes.i3</A>
+<LI><A HREF="../../../unix/src/ibm-4-3/Utypes.i3.html#0TOP0">unix/src/ibm-4-3/Utypes.i3</A>
+<LI><A HREF="../../../unix/src/irix-5.2/Utypes.i3.html#0TOP0">unix/src/irix-5.2/Utypes.i3</A>
+<LI><A HREF="../../../unix/src/linux/Utypes.i3.html#0TOP0">unix/src/linux/Utypes.i3</A>
+<LI><A HREF="../../../unix/src/osf-1.ALPHA_OSF/Utypes.i3.html#0TOP0">unix/src/osf-1.ALPHA_OSF/Utypes.i3</A>
+<LI><A HREF="../../../unix/src/osf-1.DS3100/Utypes.i3.html#0TOP0">unix/src/osf-1.DS3100/Utypes.i3</A>
+<LI><A HREF="../../../unix/src/solaris-2-x/Utypes.i3.html#0TOP0">unix/src/solaris-2-x/Utypes.i3</A>
+<LI><A HREF="../../../unix/src/sunos-4-x/Utypes.i3.html#0TOP0">unix/src/sunos-4-x/Utypes.i3</A>
+<LI><A HREF="../../../unix/src/sysv-4.0/Utypes.i3.html#0TOP0">unix/src/sysv-4.0/Utypes.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.AP3000/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.AP3000/Utypes.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.ARM/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.ARM/Utypes.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.DS3100/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.DS3100/Utypes.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.NEXT/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.NEXT/Utypes.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.SEQUENT/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.SEQUENT/Utypes.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.SUN3/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.SUN3/Utypes.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.SUN386/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.SUN386/Utypes.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.UMAX/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.UMAX/Utypes.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.VAX/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.VAX/Utypes.i3</A>
+</UL>
+<P>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

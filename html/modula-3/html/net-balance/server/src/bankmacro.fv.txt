@@ -1,0 +1,14 @@
+(Macro acct BOA (name label amount)
+  `(VBox
+     (HBox (Glue 10) (VBox (Chisel)) (Glue 10))
+     (HBox
+       (Rim (Pen 5)
+         (Text (LabelFont "lucidasans-24") RightAlign ,label))
+       (Shape (Width 150)
+     	 (Rim (Pen 5)
+     	   (Numeric HideButtons (Font "lucidasans-24")
+             (Name ,name) =,amount)
+     )))
+))
+
+

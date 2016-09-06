@@ -1,0 +1,64 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: text/src/TextF.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>text/src/TextF.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM>                                                                           </EM></BLOCKQUOTE><PRE>
+
+INTERFACE <interface><A HREF="Text.m3.html">TextF</A></interface>;
+
+IMPORT <A HREF="Text.i3.html">Text</A>;
+
+TYPE CharArray = ARRAY OF CHAR;
+
+REVEAL
+  (* Remember, the report says that TEXT is predeclared and &lt;: REFANY;
+     just pretend that we have
+         TYPE
+           TEXT &lt;: REFANY
+     in the Text interface. *)
+
+  (* The array contains the characters of the text followed by a '\000' *)
+
+  <A NAME="TEXT">TEXT</A> = BRANDED Text.Brand REF ARRAY OF CHAR;
+
+PROCEDURE <A HREF="Text.m3.html#New">New</A> (n: CARDINAL): TEXT RAISES {};
+  (* create a new text capable of holding n characters. Note that its actual
+     length as an array is n+1 because of the null termination.
+     The characters at positions [0..n-1] are left undefined. The character
+     at position n is '\000' *)
+
+END TextF.
+</PRE>
+</inInterface>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

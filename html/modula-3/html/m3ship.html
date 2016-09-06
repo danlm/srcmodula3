@@ -1,0 +1,90 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: m3ship </TITLE>
+</HEAD>
+<BODY BGCOLOR="#ffffff" VLINK="#006633">
+
+<H2>m3ship</H2>
+<P>
+
+<EM>m3ship</EM>
+will ship all the build directories (for different architectural
+variants) that exist in the package.  It will refuse to ship anything if 
+it finds a variant that was built with "overrides", unless the "-k" option 
+is given, in which case it will ship all the variants except those that
+were built with overrides.
+<P>
+
+The syntax for invoking <B>m3ship</B> is
+<PRE>
+     m3ship [options]
+</PRE>
+<P>
+
+The following options are interpreted by <B>m3ship</B>.
+<UL>
+
+<LI> <B>-k</B>
+Don't generate an error message if any of the .M3SHIP files are
+missing.  Keep on going.
+<P>
+
+<LI> <B>-b</B> <I>"dir"</I>
+Use the  <I>dir</I> configuration and ship from the directory named <I>dir</I>.
+The default directory is configured into m3ship when
+it is installed.
+<P>
+
+<LI> <B>-d</B> <I>"dir"</I>
+Change the current directory to <I>dir</I>
+before doing anything.
+<P>
+
+<LI> <B>-S</B>
+Ship derived objects regardless of the current directory's name.
+Normally, if the current working directory is <B>src</B>, <B>m3ship</B>
+will refuse to build derived objects in it.
+<P>
+
+<LI> <B>-v</B>
+Be verbose, i.e. echo the
+<A HREF="quake/quake.html">quake</A> comand before executing it.
+<P>
+
+<LI> <B>-T</B> <I>"dir"</I>
+Read templates from <I>dir</I>
+instead of the default location.  The new directory
+must include the full set of templates (e.g. COMMON, PLATFORMS).
+</UL>
+<P>
+
+And finally, any other arguments that begin with a "-" are passed on to
+<A HREF="quake/quake.html">quake</A>.
+A couple that may be useful are:
+<UL>
+
+<LI> <B>-n</B>
+Operations that invoke external programs, e.g. the Modula-3 compiler,
+are processed but the external programs are not executed.
+<P>
+
+<LI> <B>-V</B>
+This option causes all the directories in which <TT>m3makefiles</TT> are
+read to be echoed to the standard output. It can be helpful in
+debugging a complex package structure.
+</UL>
+
+<HR>
+<A HREF="home.html">[Modula-3 home page]</A>
+<P>
+<A HREF="mailto:m3-request@src.dec.com">
+<ADDRESS>m3-request@src.dec.com</ADDRESS></A>
+<PRE>
+Last modified on Thu Jan  4 11:08:02 PST 1996 by heydon 
+     modified on Fri Apr 29 11:15:21 PDT 1994 by kalsow 
+</PRE>
+
+Copyright (C) 1992, 1996, Digital Equipment Corporation. All rights reserved.<BR>
+See the <A HREF="http://www.research.digital.com/SRC/m3sources/html/COPYRIGHT.html">COPYRIGHT</A> for a full description.
+</BODY>
+</HTML>

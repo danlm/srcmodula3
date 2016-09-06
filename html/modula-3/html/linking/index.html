@@ -1,0 +1,50 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: The Linker's Inclusion Algorithm</TITLE>
+</HEAD>
+
+<BODY BGCOLOR="#ffffff" VLINK="#006633">
+<H2>The Linker's Inclusion Algorithm</H2>
+<P>
+
+When you build a program package or library package that imports one
+or more library packages, the interfaces you IMPORT from within those
+imported packages must be visible. However, there are other
+requirements you must satisfy when building a program.<P>
+
+The Modula-3 language definition defines a complete <I>program</I> to
+be "a collection of modules and interfaces that contains every
+interface imported or exported by any of its modules or interfaces,
+and in which no procedure, module, or interface is multiply defined"
+(Section 2.5, page 42). There are other requirements on a complete
+program as well. For example, every declared procedure must have an
+implementation, and every opaque type must have a concrete
+revelation.<P>
+
+When you build a program that imports library packages, not all of the
+interfaces and modules in those libraries are necessarily included by
+the linker. In fact, only those interfaces and modules that satisfy a
+<I>reachability requirement</I> are linked into the final program.<P>
+
+<H2>More Information</H2>
+
+<UL>
+<LI><A HREF="ReachabilityReq.html">The Reachability Requirement</A>
+<LI><A HREF="ReachabilityExs.html">Reachability Examples</A>
+<LI><A HREF="LinkingLibs.html">Linking Library Packages</A>
+</UL>
+
+<HR>
+[<A HREF="../linking.html">Up: Linking</A>]
+[<A HREF="../home.html">Modula-3 home page</A>]
+<P>
+<A HREF="mailto:m3-request@src.dec.com">
+<ADDRESS>m3-request@src.dec.com</ADDRESS></A>
+<PRE>
+Last modified on Thu Jan  4 11:10:08 PST 1996 by heydon
+     modified on Wed Apr 12 13:34:39 PDT 1995 by kalsow
+</PRE>
+Copyright (C) 1992, 1996, Digital Equipment Corporation. All rights reserved.<BR>
+See the <A HREF="http://www.research.digital.com/SRC/m3sources/html/COPYRIGHT.html">COPYRIGHT</A> for a full description.
+</BODY>
+</HTML>

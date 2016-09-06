@@ -1,0 +1,67 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: runtime/src/common/RTModule.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>runtime/src/common/RTModule.m3</H2></A><HR>
+<inModule>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+
+UNSAFE MODULE <module><implements><A HREF="RTModule.i3.html">RTModule</A></implements></module>;
+
+IMPORT <A HREF="RT0.i3.html">RT0</A>, <A HREF="#x1">RT0u</A>, <A HREF="RTMisc.i3.html">RTMisc</A>;
+
+PROCEDURE <A NAME="Count"><procedure>Count</procedure></A> (): CARDINAL =
+  BEGIN
+    RETURN RT0u.nModules;
+  END Count;
+
+PROCEDURE <A NAME="Get"><procedure>Get</procedure></A> (m: CARDINAL): RT0.ModulePtr =
+  VAR p := RT0u.modules;
+  BEGIN
+    IF (m &gt;= RT0u.nModules) THEN
+      RTMisc.FatalErrorI (&quot;improper module index: &quot;, m);
+    END;
+    p := p + m * ADRSIZE (RT0.ModulePtr);
+    RETURN p^;
+  END Get;
+
+BEGIN
+END RTModule.
+</PRE>
+</inModule>
+<HR>
+<A NAME="x1">interface RT0u is in:
+</A><UL>
+<LI><A HREF="../POSIX/RT0u.i3.html#0TOP0">runtime/src/POSIX/RT0u.i3</A>
+<LI><A HREF="../WIN32/RT0u.i3.html#0TOP0">runtime/src/WIN32/RT0u.i3</A>
+</UL>
+<P>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

@@ -1,0 +1,8 @@
+(* An client of ArithServer *)
+
+module ArithClient;
+
+let arithServer = 
+  net_import("ObliqArithServer", "");
+
+arithServer.add(1,1);

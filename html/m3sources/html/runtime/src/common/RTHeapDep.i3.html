@@ -1,0 +1,250 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: runtime/src/common/RTHeapDep.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>runtime/src/common/RTHeapDep.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM>                                                          </EM></BLOCKQUOTE><PRE>
+
+INTERFACE <interface><A HREF="#x1">RTHeapDep</A></interface>;
+
+IMPORT <A HREF="../../../word/src/Word.i3.html">Word</A>, <A HREF="#x2">RTMachine</A>;
+</PRE> This is the interface to the machine-dependent portion
+   of the traced heap allocator and collector. 
+
+<P> The heap page size is machine-dependent, since it might depend on the
+   architecture's VM page size (if VM is TRUE).  Otherwise, 8192 bytes is a
+   reasonable page size.  The page size must be a power of two. 
+
+<P><PRE>CONST
+  BytesPerPage    = RTMachine.BytesPerHeapPage;    (* bytes per page *)
+  LogBytesPerPage = RTMachine.LogBytesPerHeapPage;
+  AdrPerPage      = RTMachine.AdrPerHeapPage;      (* addresses per page *)
+  LogAdrPerPage   = RTMachine.LogAdrPerHeapPage;
+
+TYPE Page = [0 .. Word.Divide(-1, AdrPerPage)];
+</PRE> The collector supports the use of VM protection to achieve incremental,
+   generational collection.  This is not possible on all architectures, and
+   it may not be implemented in all cases where it is possible.  The
+   boolean constant VM is TRUE iff all necessary support is present for
+   this architecture.  VM is TRUE for the DS3100, whose implementation you
+   might use as a reference. 
+
+<P><PRE>CONST VM = RTMachine.VMHeap;
+</PRE> None of the procedures below will be called if VM is FALSE.  The
+   descriptions given for each assume that VM is TRUE. 
+
+<P> If VM is TRUE, there must also be machine-dependent code to catch
+   all protection faults that might reference the heap, and call
+   RTHeap.Fault.  In addition to ordinary instructions that may reference
+   heap pages while they are protected, this also includes system calls
+   that might fault when reading or writing heap locations. 
+
+<P><PRE>PROCEDURE <A HREF="#x3">Protect</A> (p: Page; n: CARDINAL; readable, writable: BOOLEAN);
+</PRE> When pages are allocated from the heap, they are assumed to
+   readable and writable, although not executable.  Protect is used to
+   change memory protection on heap pages.
+<P>
+   Protect changes the protection of pages [p..p+n-1] as specified by
+   <CODE>readable</CODE> and <CODE>writable</CODE>.  The page remains unexecutable.  If readable
+   is FALSE and writable is TRUE, but the architecture does not support
+   this combination, it is acceptable for Protect to make the page neither
+   readable nor writable.
+<P>
+   Note that the <CODE>pages</CODE> are heap pages, not VM pages; the locations
+   protected are p*BytesPerPage through (p+n)*BytesPerPage-1.  If VM is
+   TRUE, BytesPerPage must be at least the VM page size. 
+
+<P><PRE>PROCEDURE <A HREF="#x4">TimeUsed</A> (): REAL;
+</PRE> TimeUsed returns the amount of processor time used by the program
+   so far, in arbitrary units.  This information is used to tune the
+   generational collector. 
+
+<P><PRE>PROCEDURE <A HREF="#x5">VMFaultTime</A> (): REAL;
+</PRE> VMFaultTime returns the amount of processor time required to handle
+   a VM fault, in the same units as TimeUsed.  This information is used
+   to tune the generational collector. 
+
+<P><PRE>END RTHeapDep.
+</PRE>
+</inInterface>
+<HR>
+<A NAME="x1">RTHeapDep's implementation  is in:
+</A><UL>
+<LI><A HREF="../AIX386/RTHeapDep.m3.html#0TOP0">runtime/src/AIX386/RTHeapDep.m3</A>
+<LI><A HREF="../ALPHA_OSF/RTHeapDep.m3.html#0TOP0">runtime/src/ALPHA_OSF/RTHeapDep.m3</A>
+<LI><A HREF="../AP3000/RTHeapDep.m3.html#0TOP0">runtime/src/AP3000/RTHeapDep.m3</A>
+<LI><A HREF="../ARM/RTHeapDep.m3.html#0TOP0">runtime/src/ARM/RTHeapDep.m3</A>
+<LI><A HREF="../DS3100/RTHeapDep.m3.html#0TOP0">runtime/src/DS3100/RTHeapDep.m3</A>
+<LI><A HREF="../FreeBSD/RTHeapDep.m3.html#0TOP0">runtime/src/FreeBSD/RTHeapDep.m3</A>
+<LI><A HREF="../FreeBSD2/RTHeapDep.m3.html#0TOP0">runtime/src/FreeBSD2/RTHeapDep.m3</A>
+<LI><A HREF="../HP300/RTHeapDep.m3.html#0TOP0">runtime/src/HP300/RTHeapDep.m3</A>
+<LI><A HREF="../HPPA/RTHeapDep.m3.html#0TOP0">runtime/src/HPPA/RTHeapDep.m3</A>
+<LI><A HREF="../IBMR2/RTHeapDep.m3.html#0TOP0">runtime/src/IBMR2/RTHeapDep.m3</A>
+<LI><A HREF="../IBMRT/RTHeapDep.m3.html#0TOP0">runtime/src/IBMRT/RTHeapDep.m3</A>
+<LI><A HREF="../IRIX5/RTHeapDep.m3.html#0TOP0">runtime/src/IRIX5/RTHeapDep.m3</A>
+<LI><A HREF="../LINUX/RTHeapDep.m3.html#0TOP0">runtime/src/LINUX/RTHeapDep.m3</A>
+<LI><A HREF="../LINUXELF/RTHeapDep.m3.html#0TOP0">runtime/src/LINUXELF/RTHeapDep.m3</A>
+<LI><A HREF="../NEXT/RTHeapDep.m3.html#0TOP0">runtime/src/NEXT/RTHeapDep.m3</A>
+<LI><A HREF="../NT386/RTHeapDep.m3.html#0TOP0">runtime/src/NT386/RTHeapDep.m3</A>
+<LI><A HREF="../OKI/RTHeapDep.m3.html#0TOP0">runtime/src/OKI/RTHeapDep.m3</A>
+<LI><A HREF="../SEQUENT/RTHeapDep.m3.html#0TOP0">runtime/src/SEQUENT/RTHeapDep.m3</A>
+<LI><A HREF="../SOLgnu/RTHeapDep.m3.html#0TOP0">runtime/src/SOLgnu/RTHeapDep.m3</A>
+<LI><A HREF="../SOLsun/RTHeapDep.m3.html#0TOP0">runtime/src/SOLsun/RTHeapDep.m3</A>
+<LI><A HREF="../SPARC/RTHeapDep.m3.html#0TOP0">runtime/src/SPARC/RTHeapDep.m3</A>
+<LI><A HREF="../SUN3/RTHeapDep.m3.html#0TOP0">runtime/src/SUN3/RTHeapDep.m3</A>
+<LI><A HREF="../SUN386/RTHeapDep.m3.html#0TOP0">runtime/src/SUN386/RTHeapDep.m3</A>
+<LI><A HREF="../UMAX/RTHeapDep.m3.html#0TOP0">runtime/src/UMAX/RTHeapDep.m3</A>
+<LI><A HREF="../VAX/RTHeapDep.m3.html#0TOP0">runtime/src/VAX/RTHeapDep.m3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x2">interface RTMachine is in:
+</A><UL>
+<LI><A HREF="../AIX386/RTMachine.i3.html#0TOP0">runtime/src/AIX386/RTMachine.i3</A>
+<LI><A HREF="../ALPHA_OSF/RTMachine.i3.html#0TOP0">runtime/src/ALPHA_OSF/RTMachine.i3</A>
+<LI><A HREF="../AP3000/RTMachine.i3.html#0TOP0">runtime/src/AP3000/RTMachine.i3</A>
+<LI><A HREF="../ARM/RTMachine.i3.html#0TOP0">runtime/src/ARM/RTMachine.i3</A>
+<LI><A HREF="../DS3100/RTMachine.i3.html#0TOP0">runtime/src/DS3100/RTMachine.i3</A>
+<LI><A HREF="../FreeBSD/RTMachine.i3.html#0TOP0">runtime/src/FreeBSD/RTMachine.i3</A>
+<LI><A HREF="../FreeBSD2/RTMachine.i3.html#0TOP0">runtime/src/FreeBSD2/RTMachine.i3</A>
+<LI><A HREF="../HP300/RTMachine.i3.html#0TOP0">runtime/src/HP300/RTMachine.i3</A>
+<LI><A HREF="../HPPA/RTMachine.i3.html#0TOP0">runtime/src/HPPA/RTMachine.i3</A>
+<LI><A HREF="../IBMR2/RTMachine.i3.html#0TOP0">runtime/src/IBMR2/RTMachine.i3</A>
+<LI><A HREF="../IBMRT/RTMachine.i3.html#0TOP0">runtime/src/IBMRT/RTMachine.i3</A>
+<LI><A HREF="../IRIX5/RTMachine.i3.html#0TOP0">runtime/src/IRIX5/RTMachine.i3</A>
+<LI><A HREF="../LINUX/RTMachine.i3.html#0TOP0">runtime/src/LINUX/RTMachine.i3</A>
+<LI><A HREF="../LINUXELF/RTMachine.i3.html#0TOP0">runtime/src/LINUXELF/RTMachine.i3</A>
+<LI><A HREF="../NEXT/RTMachine.i3.html#0TOP0">runtime/src/NEXT/RTMachine.i3</A>
+<LI><A HREF="../NT386/RTMachine.i3.html#0TOP0">runtime/src/NT386/RTMachine.i3</A>
+<LI><A HREF="../OKI/RTMachine.i3.html#0TOP0">runtime/src/OKI/RTMachine.i3</A>
+<LI><A HREF="../SEQUENT/RTMachine.i3.html#0TOP0">runtime/src/SEQUENT/RTMachine.i3</A>
+<LI><A HREF="../SOLgnu/RTMachine.i3.html#0TOP0">runtime/src/SOLgnu/RTMachine.i3</A>
+<LI><A HREF="../SOLsun/RTMachine.i3.html#0TOP0">runtime/src/SOLsun/RTMachine.i3</A>
+<LI><A HREF="../SPARC/RTMachine.i3.html#0TOP0">runtime/src/SPARC/RTMachine.i3</A>
+<LI><A HREF="../SUN3/RTMachine.i3.html#0TOP0">runtime/src/SUN3/RTMachine.i3</A>
+<LI><A HREF="../SUN386/RTMachine.i3.html#0TOP0">runtime/src/SUN386/RTMachine.i3</A>
+<LI><A HREF="../UMAX/RTMachine.i3.html#0TOP0">runtime/src/UMAX/RTMachine.i3</A>
+<LI><A HREF="../VAX/RTMachine.i3.html#0TOP0">runtime/src/VAX/RTMachine.i3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x3">procedure RTHeapDep.Protect is in:
+</A><UL>
+<LI><A HREF="../AIX386/RTHeapDep.m3.html#Protect">runtime/src/AIX386/RTHeapDep.m3</A>
+<LI><A HREF="../ALPHA_OSF/RTHeapDep.m3.html#Protect">runtime/src/ALPHA_OSF/RTHeapDep.m3</A>
+<LI><A HREF="../AP3000/RTHeapDep.m3.html#Protect">runtime/src/AP3000/RTHeapDep.m3</A>
+<LI><A HREF="../ARM/RTHeapDep.m3.html#Protect">runtime/src/ARM/RTHeapDep.m3</A>
+<LI><A HREF="../DS3100/RTHeapDep.m3.html#Protect">runtime/src/DS3100/RTHeapDep.m3</A>
+<LI><A HREF="../FreeBSD/RTHeapDep.m3.html#Protect">runtime/src/FreeBSD/RTHeapDep.m3</A>
+<LI><A HREF="../FreeBSD2/RTHeapDep.m3.html#Protect">runtime/src/FreeBSD2/RTHeapDep.m3</A>
+<LI><A HREF="../HP300/RTHeapDep.m3.html#Protect">runtime/src/HP300/RTHeapDep.m3</A>
+<LI><A HREF="../HPPA/RTHeapDep.m3.html#Protect">runtime/src/HPPA/RTHeapDep.m3</A>
+<LI><A HREF="../IBMR2/RTHeapDep.m3.html#Protect">runtime/src/IBMR2/RTHeapDep.m3</A>
+<LI><A HREF="../IBMRT/RTHeapDep.m3.html#Protect">runtime/src/IBMRT/RTHeapDep.m3</A>
+<LI><A HREF="../IRIX5/RTHeapDep.m3.html#Protect">runtime/src/IRIX5/RTHeapDep.m3</A>
+<LI><A HREF="../LINUX/RTHeapDep.m3.html#Protect">runtime/src/LINUX/RTHeapDep.m3</A>
+<LI><A HREF="../LINUXELF/RTHeapDep.m3.html#Protect">runtime/src/LINUXELF/RTHeapDep.m3</A>
+<LI><A HREF="../NEXT/RTHeapDep.m3.html#Protect">runtime/src/NEXT/RTHeapDep.m3</A>
+<LI><A HREF="../NT386/RTHeapDep.m3.html#Protect">runtime/src/NT386/RTHeapDep.m3</A>
+<LI><A HREF="../OKI/RTHeapDep.m3.html#Protect">runtime/src/OKI/RTHeapDep.m3</A>
+<LI><A HREF="../SEQUENT/RTHeapDep.m3.html#Protect">runtime/src/SEQUENT/RTHeapDep.m3</A>
+<LI><A HREF="../SOLgnu/RTHeapDep.m3.html#Protect">runtime/src/SOLgnu/RTHeapDep.m3</A>
+<LI><A HREF="../SOLsun/RTHeapDep.m3.html#Protect">runtime/src/SOLsun/RTHeapDep.m3</A>
+<LI><A HREF="../SPARC/RTHeapDep.m3.html#Protect">runtime/src/SPARC/RTHeapDep.m3</A>
+<LI><A HREF="../SUN3/RTHeapDep.m3.html#Protect">runtime/src/SUN3/RTHeapDep.m3</A>
+<LI><A HREF="../SUN386/RTHeapDep.m3.html#Protect">runtime/src/SUN386/RTHeapDep.m3</A>
+<LI><A HREF="../UMAX/RTHeapDep.m3.html#Protect">runtime/src/UMAX/RTHeapDep.m3</A>
+<LI><A HREF="../VAX/RTHeapDep.m3.html#Protect">runtime/src/VAX/RTHeapDep.m3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x4">procedure RTHeapDep.TimeUsed is in:
+</A><UL>
+<LI><A HREF="../AIX386/RTHeapDep.m3.html#TimeUsed">runtime/src/AIX386/RTHeapDep.m3</A>
+<LI><A HREF="../ALPHA_OSF/RTHeapDep.m3.html#TimeUsed">runtime/src/ALPHA_OSF/RTHeapDep.m3</A>
+<LI><A HREF="../AP3000/RTHeapDep.m3.html#TimeUsed">runtime/src/AP3000/RTHeapDep.m3</A>
+<LI><A HREF="../ARM/RTHeapDep.m3.html#TimeUsed">runtime/src/ARM/RTHeapDep.m3</A>
+<LI><A HREF="../DS3100/RTHeapDep.m3.html#TimeUsed">runtime/src/DS3100/RTHeapDep.m3</A>
+<LI><A HREF="../FreeBSD/RTHeapDep.m3.html#TimeUsed">runtime/src/FreeBSD/RTHeapDep.m3</A>
+<LI><A HREF="../FreeBSD2/RTHeapDep.m3.html#TimeUsed">runtime/src/FreeBSD2/RTHeapDep.m3</A>
+<LI><A HREF="../HP300/RTHeapDep.m3.html#TimeUsed">runtime/src/HP300/RTHeapDep.m3</A>
+<LI><A HREF="../HPPA/RTHeapDep.m3.html#TimeUsed">runtime/src/HPPA/RTHeapDep.m3</A>
+<LI><A HREF="../IBMR2/RTHeapDep.m3.html#TimeUsed">runtime/src/IBMR2/RTHeapDep.m3</A>
+<LI><A HREF="../IBMRT/RTHeapDep.m3.html#TimeUsed">runtime/src/IBMRT/RTHeapDep.m3</A>
+<LI><A HREF="../IRIX5/RTHeapDep.m3.html#TimeUsed">runtime/src/IRIX5/RTHeapDep.m3</A>
+<LI><A HREF="../LINUX/RTHeapDep.m3.html#TimeUsed">runtime/src/LINUX/RTHeapDep.m3</A>
+<LI><A HREF="../LINUXELF/RTHeapDep.m3.html#TimeUsed">runtime/src/LINUXELF/RTHeapDep.m3</A>
+<LI><A HREF="../NEXT/RTHeapDep.m3.html#TimeUsed">runtime/src/NEXT/RTHeapDep.m3</A>
+<LI><A HREF="../NT386/RTHeapDep.m3.html#TimeUsed">runtime/src/NT386/RTHeapDep.m3</A>
+<LI><A HREF="../OKI/RTHeapDep.m3.html#TimeUsed">runtime/src/OKI/RTHeapDep.m3</A>
+<LI><A HREF="../SEQUENT/RTHeapDep.m3.html#TimeUsed">runtime/src/SEQUENT/RTHeapDep.m3</A>
+<LI><A HREF="../SOLgnu/RTHeapDep.m3.html#TimeUsed">runtime/src/SOLgnu/RTHeapDep.m3</A>
+<LI><A HREF="../SOLsun/RTHeapDep.m3.html#TimeUsed">runtime/src/SOLsun/RTHeapDep.m3</A>
+<LI><A HREF="../SPARC/RTHeapDep.m3.html#TimeUsed">runtime/src/SPARC/RTHeapDep.m3</A>
+<LI><A HREF="../SUN3/RTHeapDep.m3.html#TimeUsed">runtime/src/SUN3/RTHeapDep.m3</A>
+<LI><A HREF="../SUN386/RTHeapDep.m3.html#TimeUsed">runtime/src/SUN386/RTHeapDep.m3</A>
+<LI><A HREF="../UMAX/RTHeapDep.m3.html#TimeUsed">runtime/src/UMAX/RTHeapDep.m3</A>
+<LI><A HREF="../VAX/RTHeapDep.m3.html#TimeUsed">runtime/src/VAX/RTHeapDep.m3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x5">procedure RTHeapDep.VMFaultTime is in:
+</A><UL>
+<LI><A HREF="../AIX386/RTHeapDep.m3.html#VMFaultTime">runtime/src/AIX386/RTHeapDep.m3</A>
+<LI><A HREF="../ALPHA_OSF/RTHeapDep.m3.html#VMFaultTime">runtime/src/ALPHA_OSF/RTHeapDep.m3</A>
+<LI><A HREF="../AP3000/RTHeapDep.m3.html#VMFaultTime">runtime/src/AP3000/RTHeapDep.m3</A>
+<LI><A HREF="../ARM/RTHeapDep.m3.html#VMFaultTime">runtime/src/ARM/RTHeapDep.m3</A>
+<LI><A HREF="../DS3100/RTHeapDep.m3.html#VMFaultTime">runtime/src/DS3100/RTHeapDep.m3</A>
+<LI><A HREF="../FreeBSD/RTHeapDep.m3.html#VMFaultTime">runtime/src/FreeBSD/RTHeapDep.m3</A>
+<LI><A HREF="../FreeBSD2/RTHeapDep.m3.html#VMFaultTime">runtime/src/FreeBSD2/RTHeapDep.m3</A>
+<LI><A HREF="../HP300/RTHeapDep.m3.html#VMFaultTime">runtime/src/HP300/RTHeapDep.m3</A>
+<LI><A HREF="../HPPA/RTHeapDep.m3.html#VMFaultTime">runtime/src/HPPA/RTHeapDep.m3</A>
+<LI><A HREF="../IBMR2/RTHeapDep.m3.html#VMFaultTime">runtime/src/IBMR2/RTHeapDep.m3</A>
+<LI><A HREF="../IBMRT/RTHeapDep.m3.html#VMFaultTime">runtime/src/IBMRT/RTHeapDep.m3</A>
+<LI><A HREF="../IRIX5/RTHeapDep.m3.html#VMFaultTime">runtime/src/IRIX5/RTHeapDep.m3</A>
+<LI><A HREF="../LINUX/RTHeapDep.m3.html#VMFaultTime">runtime/src/LINUX/RTHeapDep.m3</A>
+<LI><A HREF="../LINUXELF/RTHeapDep.m3.html#VMFaultTime">runtime/src/LINUXELF/RTHeapDep.m3</A>
+<LI><A HREF="../NEXT/RTHeapDep.m3.html#VMFaultTime">runtime/src/NEXT/RTHeapDep.m3</A>
+<LI><A HREF="../NT386/RTHeapDep.m3.html#VMFaultTime">runtime/src/NT386/RTHeapDep.m3</A>
+<LI><A HREF="../OKI/RTHeapDep.m3.html#VMFaultTime">runtime/src/OKI/RTHeapDep.m3</A>
+<LI><A HREF="../SEQUENT/RTHeapDep.m3.html#VMFaultTime">runtime/src/SEQUENT/RTHeapDep.m3</A>
+<LI><A HREF="../SOLgnu/RTHeapDep.m3.html#VMFaultTime">runtime/src/SOLgnu/RTHeapDep.m3</A>
+<LI><A HREF="../SOLsun/RTHeapDep.m3.html#VMFaultTime">runtime/src/SOLsun/RTHeapDep.m3</A>
+<LI><A HREF="../SPARC/RTHeapDep.m3.html#VMFaultTime">runtime/src/SPARC/RTHeapDep.m3</A>
+<LI><A HREF="../SUN3/RTHeapDep.m3.html#VMFaultTime">runtime/src/SUN3/RTHeapDep.m3</A>
+<LI><A HREF="../SUN386/RTHeapDep.m3.html#VMFaultTime">runtime/src/SUN386/RTHeapDep.m3</A>
+<LI><A HREF="../UMAX/RTHeapDep.m3.html#VMFaultTime">runtime/src/UMAX/RTHeapDep.m3</A>
+<LI><A HREF="../VAX/RTHeapDep.m3.html#VMFaultTime">runtime/src/VAX/RTHeapDep.m3</A>
+</UL>
+<P>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

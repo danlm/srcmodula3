@@ -1,0 +1,58 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: smalldb/src/OSSupport.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>smalldb/src/OSSupport.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+
+INTERFACE <interface><A HREF="OSSupport.m3.html">OSSupport</A></interface>;
+
+IMPORT <A HREF="../../rw/src/Common/FileWr.i3.html">FileWr</A>, <A HREF="../../os/src/Common/OSError.i3.html">OSError</A>;
+
+TYPE
+  <A HREF="OSSupport.m3.html#T">T</A> &lt;: FileWr.T;
+</PRE> operating system dependent stuff for the smalldb package 
+
+<P><PRE>PROCEDURE <A HREF="OSSupport.m3.html#Sync">Sync</A>(wr: T) RAISES {OSError.E};
+   (* Flushes &quot;wr&quot;.  The attempt to write all modified data
+      to stable storage ... to whatever extent permitted by
+      the OS.  *)
+   (* &quot;wr&quot; must be a file writer *)
+
+PROCEDURE <A HREF="OSSupport.m3.html#Truncate">Truncate</A>(wr: T) RAISES {OSError.E};
+   (* Truncates the specified writer at the currernt position. *)
+   (* &quot;wr&quot; must be a file writer *)
+
+END OSSupport.
+</PRE>
+</inInterface>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

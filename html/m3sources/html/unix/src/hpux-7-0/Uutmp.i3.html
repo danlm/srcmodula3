@@ -1,0 +1,123 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: unix/src/hpux-7-0/Uutmp.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>unix/src/hpux-7-0/Uutmp.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE> File: Uutmp.i3                                             
+
+<P><PRE>INTERFACE <interface>Uutmp</interface>;
+
+FROM <A HREF="../../../C/src/Common/Ctypes.i3.html">Ctypes</A> IMPORT char, char_star, short, unsigned_long;
+FROM <A HREF="#x1">Utypes</A> IMPORT pid_t, u_short, time_t;
+</PRE>** &lt;utmp.h&gt; **
+
+<P>
+ * Structure of utmp and wtmp files.
+ *
+ 
+
+<P><PRE>TYPE
+    struct_utmp = RECORD
+	ut_name: ARRAY [0..7] OF char;		(* user id *)
+	ut_id:   ARRAY [0..3] OF char;		(* id *)
+	ut_line: ARRAY [0..11] OF char;		(* tty name *)
+	ut_pid:  pid_t;
+	ut_type: short;
+	ut_exit: RECORD e_termination, e_exit: short END;
+	ut_reserved1: u_short;
+	ut_time: time_t;			(* time on *)
+	ut_host: ARRAY [0..15] OF char;		(* host name, if remote *)
+	ut_addr: unsigned_long;
+     END;
+
+CONST
+   UTMP_FILE	= &quot;/etc/utmp&quot;;
+   WTMP_FILE	= &quot;/etc/wtmp&quot;;
+   BTMP_FILE	= &quot;/etc/btmp&quot;;
+</PRE>	Definitions for ut_type						
+
+<P>  <PRE>EMPTY =		0;
+  RUN_LVL =		1;
+  BOOT_TIME =		2;
+  OLD_TIME =		3;
+  NEW_TIME =		4;
+  INIT_PROCESS =	5;	(* Process spawned by &quot;init&quot; *)
+  LOGIN_PROCESS =	6;	(* A &quot;getty&quot; process waiting for login *)
+  USER_PROCESS =	7;	(* A user process *)
+  DEAD_PROCESS =	8;
+  ACCOUNTING =		9;
+  UTMAXTYPE =	ACCOUNTING;   (* Largest legal value of ut_type *)
+</PRE>	Special strings or formats used in the <CODE>ut_line</CODE> field when	
+	accounting for something other than a process.			
+	No string for the ut_line field can be more than 11 chars +	
+	a NULL in length.						
+
+<P>  <PRE>RUNLVL_MSG =	&quot;run-level %c&quot;;
+  BOOT_MSG =	&quot;system boot&quot;;
+  OTIME_MSG =	&quot;old time&quot;;
+  NTIME_MSG =	&quot;new time&quot;;
+</PRE>** getlogin(3) **
+
+<P><PRE>&lt;*EXTERNAL*&gt; PROCEDURE getlogin (): char_star;
+
+END Uutmp.
+</PRE>
+</inInterface>
+<HR>
+<A NAME="x1">interface Utypes is in:
+</A><UL>
+<LI><A HREF="../aix-3-2/Utypes.i3.html#0TOP0">unix/src/aix-3-2/Utypes.i3</A>
+<LI><A HREF="../aix-ps2-1-2/Utypes.i3.html#0TOP0">unix/src/aix-ps2-1-2/Utypes.i3</A>
+<LI><A HREF="../freebsd-1/Utypes.i3.html#0TOP0">unix/src/freebsd-1/Utypes.i3</A>
+<LI><A HREF="../freebsd-2/Utypes.i3.html#0TOP0">unix/src/freebsd-2/Utypes.i3</A>
+<LI><A HREF="Utypes.i3.html#0TOP0">unix/src/hpux-7-0/Utypes.i3</A>
+<LI><A HREF="../ibm-4-3/Utypes.i3.html#0TOP0">unix/src/ibm-4-3/Utypes.i3</A>
+<LI><A HREF="../irix-5.2/Utypes.i3.html#0TOP0">unix/src/irix-5.2/Utypes.i3</A>
+<LI><A HREF="../linux/Utypes.i3.html#0TOP0">unix/src/linux/Utypes.i3</A>
+<LI><A HREF="../osf-1.ALPHA_OSF/Utypes.i3.html#0TOP0">unix/src/osf-1.ALPHA_OSF/Utypes.i3</A>
+<LI><A HREF="../osf-1.DS3100/Utypes.i3.html#0TOP0">unix/src/osf-1.DS3100/Utypes.i3</A>
+<LI><A HREF="../solaris-2-x/Utypes.i3.html#0TOP0">unix/src/solaris-2-x/Utypes.i3</A>
+<LI><A HREF="../sunos-4-x/Utypes.i3.html#0TOP0">unix/src/sunos-4-x/Utypes.i3</A>
+<LI><A HREF="../sysv-4.0/Utypes.i3.html#0TOP0">unix/src/sysv-4.0/Utypes.i3</A>
+<LI><A HREF="../ultrix-3-1.AP3000/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.AP3000/Utypes.i3</A>
+<LI><A HREF="../ultrix-3-1.ARM/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.ARM/Utypes.i3</A>
+<LI><A HREF="../ultrix-3-1.DS3100/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.DS3100/Utypes.i3</A>
+<LI><A HREF="../ultrix-3-1.NEXT/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.NEXT/Utypes.i3</A>
+<LI><A HREF="../ultrix-3-1.SEQUENT/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.SEQUENT/Utypes.i3</A>
+<LI><A HREF="../ultrix-3-1.SUN3/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.SUN3/Utypes.i3</A>
+<LI><A HREF="../ultrix-3-1.SUN386/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.SUN386/Utypes.i3</A>
+<LI><A HREF="../ultrix-3-1.UMAX/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.UMAX/Utypes.i3</A>
+<LI><A HREF="../ultrix-3-1.VAX/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.VAX/Utypes.i3</A>
+</UL>
+<P>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

@@ -1,0 +1,62 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: Unix signals</TITLE>
+</HEAD>
+<BODY BGCOLOR="#ffffff" VLINK="#006633">
+
+<H2>Unix signals</H2>
+<P>
+
+On Unix the Modula-3 runtime catches seven signals:
+<TT>SIGHUP</TT>,
+<TT>SIGINT</TT>,
+<TT>SIGTERM</TT>,
+<TT>SIGQUIT</TT>,
+<TT>SIGSEGV</TT>,
+<TT>SIGPIPE</TT>,
+and
+<TT>SIGVTALRM</TT>.
+Otherwise, the runtime leaves the default Unix signal handlers unaltered.
+<P>
+
+<TT>SIGHUP</TT>(``hang up''), <TT>SIGINT</TT>(``interrupt''),
+and <TT>SIGTERM</TT>(``terminate'') all indicate that the
+program is to stop.  The Modula-3 runtime calls its usual
+clean-up routines and exits.
+<P>
+
+<TT>SIGQUIT</TT> is like the above, except the runtime
+prints the error message ``aborted'', and attempts
+to crash with a ``core file''.
+<P>
+
+<TT>SIGSEGV</TT> indicates a ``segmentation violation'' and is often
+signaled when a process dereferences <TT>NIL</TT>.
+The runtime catches <TT>SIGSEGV</TT>, prints an error message, and attempts
+to crash with a ``core file''.
+<P>
+
+<TT>SIGPIPE</TT> indicates a ``broken pipe''.  The runtime ignores the
+signal and when next accessed, any reader(writer) that was using the pipe
+will raise <TT>Rd.Failure</TT>(<TT>Wr.Failure</TT>).
+<P>
+
+<TT>SIGVTALRM</TT> is the ``virtual timer alarm''.  It is used to periodically
+preempt the running thread.
+<P>
+
+<HR>
+<A HREF="home.html">[Modula-3 home page]</A>
+<P>
+<A HREF="mailto:m3-request@src.dec.com">
+<ADDRESS>m3-request@src.dec.com</ADDRESS></A>
+<PRE>
+Last modified on Thu Jan  4 11:07:57 PST 1996 by heydon 
+     modified on Fri Apr 22 11:45:04 PDT 1994 by kalsow 
+     modified on Thu Jan  7 18:40:57 PST 1993 by muller 
+</PRE>
+
+Copyright (C) 1992, 1996, Digital Equipment Corporation. All rights reserved.<BR>
+See the <A HREF="http://www.research.digital.com/SRC/m3sources/html/COPYRIGHT.html">COPYRIGHT</A> for a full description.
+</BODY>
+</HTML>

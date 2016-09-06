@@ -1,0 +1,9 @@
+(* A client for DirServer. *)
+
+module DirClient;
+
+let dir = net_import("ObliqDirServer","");
+
+(* e.g.:
+text_explode("\n", dir.ls);
+*)

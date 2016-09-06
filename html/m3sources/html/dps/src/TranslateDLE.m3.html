@@ -1,0 +1,125 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: dps/src/TranslateDLE.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>dps/src/TranslateDLE.m3</H2></A><HR>
+<inModule>
+<PRE><A HREF="../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+
+MODULE <module><implements><A HREF="TranslateDLE.i3.html">TranslateDLE</A></implements></module>;
+
+IMPORT <A HREF="DisplayList.i3.html">DisplayList</A>, <A HREF="DPS.i3.html">DPS</A>, <A HREF="DPSWindow.i3.html">DPSWindow</A>, <A HREF="../../fmtlex/src/Fmt.i3.html">Fmt</A>;
+
+PROCEDURE <A NAME="Repaint"><procedure>Repaint</procedure></A> (t: T; box: DPS.Box; only: REFANY): TEXT =
+ VAR text: TEXT := &quot;&quot;;
+  BEGIN
+  IF (t.translationX = 0.0) AND (t.translationY = 0.0) THEN
+    RETURN DisplayList.Repaint (t, box, only);
+    END;
+  box.low.x := box.low.x - t.translationX;
+  box.low.y := box.low.y - t.translationY;
+  box.high.x := box.high.x - t.translationX;
+  box.high.y := box.high.y - t.translationY;
+  text := DisplayList.Repaint (t, box, only);
+  RETURN Xlate (t, text);
+  END Repaint;
+
+PROCEDURE <A NAME="Xlate"><procedure>Xlate</procedure></A> ( t: T; text: TEXT ): TEXT =
+  BEGIN
+  RETURN
+    &quot; gsave &quot;
+    &amp; Fmt.Real(t.translationX) &amp; &quot; &quot;
+    &amp; Fmt.Real(t.translationY) &amp; &quot; translate &quot;
+    &amp; text
+    &amp; &quot; grestore &quot;;
+  END Xlate;
+
+PROCEDURE <A NAME="PostScriptToParentTranslated"><procedure>PostScriptToParentTranslated</procedure></A> (e: E; script: TEXT) =
+ VAR p: DisplayList.T;
+  BEGIN
+  p := e.parent;
+  IF p # NIL THEN
+    p.ImmediatePostScript (Xlate (e, script));
+    END;
+  END PostScriptToParentTranslated;
+
+PROCEDURE <A NAME="DirtyToParentTranslated"><procedure>DirtyToParentTranslated</procedure></A> (e: E; box: DPS.Box; only: DisplayList.T := NIL) =
+ VAR p: DisplayList.T;
+  BEGIN
+  p := e.parent;
+  IF p # NIL THEN
+    box.low.x := box.low.x + e.translationX;
+    box.low.y := box.low.y + e.translationY;
+    box.high.x := box.high.x + e.translationX;
+    box.high.y := box.high.y + e.translationY;
+    p.Dirty (box, only);
+    END;
+  END DirtyToParentTranslated;
+
+PROCEDURE <A NAME="Mouse"><procedure>Mouse</procedure></A> (t: T; window: DPSWindow.T; event: DPS.MouseEvent): BOOLEAN =
+ VAR e: DisplayList.E;
+  BEGIN
+  IF t.useMouseRight
+   AND (event.whatChanged = DPS.Button.Right)
+   AND ((NOT t.onlyIfShifted) OR (DPS.Modifier.Shift IN event.modifiers)) THEN
+    CASE event.clickType OF
+    | DPS.ClickType.FirstDown =&gt; t.mouseDownPlace := event.place;
+    | DPS.ClickType.LastUp =&gt;
+       IF NOT t.fixedX THEN
+         t.translationX := t.translationX + event.place.x - t.mouseDownPlace.x;
+         END;
+       IF NOT t.fixedY THEN
+         t.translationY := t.translationY + event.place.y - t.mouseDownPlace.y;
+         END;
+       t.Dirty (DPS.EverywhereBox, NIL);
+     ELSE RETURN TRUE;
+      END; (* of CASE *)
+    RETURN TRUE;
+    END; (* of IF t.useMouseRight ... *)
+
+  event.place.x := event.place.x - t.translationX;
+  event.place.y := event.place.y - t.translationY;
+
+  e := t.Last();
+  WHILE e # NIL DO
+    IF e.Mouse (window, event) THEN RETURN TRUE; END;
+    e := e.Previous();
+    END;
+
+  RETURN FALSE;
+  END Mouse;
+
+  BEGIN
+
+  END TranslateDLE.
+</PRE>
+</inModule>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

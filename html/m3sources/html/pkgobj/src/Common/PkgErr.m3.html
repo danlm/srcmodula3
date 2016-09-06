@@ -1,0 +1,113 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: pkgobj/src/Common/PkgErr.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>pkgobj/src/Common/PkgErr.m3</H2></A><HR>
+<inModule>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM> PkgErr.m3 </EM></BLOCKQUOTE><PRE>
+
+MODULE <module><implements><A HREF="PkgErr.i3.html">PkgErr</A></implements></module>;
+
+IMPORT <A HREF="../../../atom/src/Atom.i3.html">Atom</A>, <A HREF="../../../libm3/DS/AtomList.i3.html">AtomList</A>, <A HREF="FileSys.i3.html">FileSys</A>, <A HREF="../../../os/src/Common/OSError.i3.html">OSError</A>;
+
+PROCEDURE <A NAME="Msg"><procedure>Msg</procedure></A>(a: AtomList.T) : TEXT =
+  VAR res: TEXT;
+  BEGIN
+    IF a.head = NIL THEN
+      res := &quot;&quot;;
+    ELSE
+      res := Atom.ToText(a.head);
+    END;
+    IF a.tail # NIL THEN
+      res := res &amp; &quot;(&quot; &amp; Msg(a.tail) &amp; &quot;)&quot;;
+    END;
+    RETURN res;
+  END Msg;
+
+PROCEDURE <A NAME="MapOSError"><procedure>MapOSError</procedure></A>(code: OSError.Code) : TL =
+  BEGIN
+    CASE FileSys.ClassifyError(code) OF
+    | FileSys.ErrorClass.Lookup =&gt; RETURN AtomList.Cons(NoSuchFile, code);
+    | FileSys.ErrorClass.NoRoomInFS =&gt; RETURN AtomList.Cons(NoRoomInFS, code);
+    | FileSys.ErrorClass.IO =&gt; RETURN AtomList.Cons(IOError, code);
+    | FileSys.ErrorClass.Access =&gt; RETURN AtomList.Cons(AccessViolation, code);
+    ELSE
+    END;
+    RETURN code;
+  END MapOSError;
+
+PROCEDURE <A NAME="Raise"><procedure>Raise</procedure></A>(a: Atom.T; e: TL := NIL) RAISES {E} =
+  BEGIN
+    RAISE E(AtomList.Cons(a, e));
+  END Raise;
+
+PROCEDURE <A NAME="MakeErr"><procedure>MakeErr</procedure></A>(t: TEXT) : Atom.T =
+  BEGIN
+    RETURN Atom.FromText(ErrPrefix &amp; t);
+  END MakeErr;
+
+BEGIN
+  AccessViolation := MakeErr(&quot;AccessViolation&quot;);
+  IOError := MakeErr(&quot;IOError&quot;);
+  NoRoomInFS := MakeErr(&quot;NoRoomInFS&quot;);
+  ImportError := MakeErr(&quot;ImportError&quot;);
+  InvalidCredentials := MakeErr(&quot;InvalidCredentials&quot;);
+  BadParameter := MakeErr(&quot;BadParameter&quot;);
+  ServerProblem := MakeErr(&quot;ServerProblem&quot;);
+  NoSuchPackage := MakeErr(&quot;NoSuchPackage&quot;);
+  NoSuchFile := MakeErr(&quot;NoSuchFile&quot;);
+  NoSuchDir := MakeErr(&quot;NoSuchDir&quot;);
+  Aborted := MakeErr(&quot;Aborted&quot;);
+
+  SourceFailed := MakeErr(&quot;SourceFailed&quot;);
+
+  NoSuchSite := MakeErr(&quot;NoSuchSite&quot;);
+  NoReplicas := MakeErr(&quot;NoReplicas&quot;);
+
+  PackageNameInUse := MakeErr(&quot;PackageNameInUse&quot;);
+  BadVersionStamp := MakeErr(&quot;BadVersionStamp&quot;);
+  StaleVersion := MakeErr(&quot;StaleVersionn&quot;);
+  OldLocalVersion := MakeErr(&quot;OldLocalVersion&quot;);
+  OutstandingVersion := MakeErr(&quot;OutstandingVersion&quot;);
+  PackageManagedRemotely := MakeErr(&quot;PackageManagedRemotely&quot;);
+  PackageNotManaged := MakeErr(&quot;PackageNotManaged&quot;);
+  PackageMultiplyManaged := MakeErr(&quot;PackageMultiplyManaged&quot;);
+  RemoteLockProblem := MakeErr(&quot;RemoteLockProblem&quot;);
+  LockServerDown := MakeErr(&quot;LockServerDown&quot;);
+  NoSuchDir := MakeErr(&quot;NoSuchDir&quot;);
+  DirNameInUse := MakeErr(&quot;DirNameInUse&quot;);
+  ParentDirExists := MakeErr(&quot;ParentDirExists&quot;);
+  DirNotEmpty := MakeErr(&quot;DirNotEmpty&quot;);
+END PkgErr.
+</PRE>
+</inModule>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

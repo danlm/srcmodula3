@@ -1,0 +1,10 @@
+# Host: Intel 386 running Linux
+
+XM_FILE= xm-linux.h
+XDEPFILES= 
+
+# Needed for frexp() in libiberty.
+XM_CLIBS= -lm
+
+NAT_FILE= nm-linux.h
+NATDEPFILES= infptrace.o inftarg.o fork-child.o coredep.o i386v-nat.o corelow.o

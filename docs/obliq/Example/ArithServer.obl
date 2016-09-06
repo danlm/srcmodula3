@@ -1,0 +1,16 @@
+(* A server for arithmetic operations. *)
+
+module ArithServer;
+
+let arithServer =
+  net_export("ObliqArithServer", "",
+    {add => meth(s,n,m) n+m end,
+     sub => meth(s,n,m) n-m end,
+     mul => meth(s,n,m) n*m end,
+     div => meth(s,n,m) n/m end,
+     mod => meth(s,n,m) n%m end
+    }
+  );
+
+
+     

@@ -1,0 +1,175 @@
+<html>
+<head>
+   <title>A Happy User Promotes SRC Modula-3</title>
+   <meta name="GENERATOR" content="Mozilla/2.0GoldB2 (Win32)">
+</head>
+<body>
+
+<h3><a href="http://www.research.digital.com/SRC/modula-3/html/srcm3.html">SRC
+Modula-3</a> 
+<br>An Elegant, Free, Open, Mature, High-Quality, Clean &amp; Modest 
+<br>Programming Language, System, Library &amp; Tool 
+<br>for Building Robust, Large-Scale, Multi-Threaded &amp; Distributed
+Programs </h3>
+
+<p>Farshad Nayeri
+<br>Cambridge, Massachusetts, USA. 
+<br><i>Revised:&nbsp;</i>1 April 1996.</p>
+
+<h3>Abstract</h3>
+
+<p>Despite its length and buzzword density, the subtitle above is one the
+shortest phrases that characterize the virtues of <a href="http://www.research.digital.com/SRC/modula-3/html/srcm3.html">SRC
+Modula-3</a>. The language designers' stated goal of &quot;consolidation,
+not innovation&quot; is a modest understatement for their wise, elegant,
+and inventive combination of features that are greatly needed by the modern
+programmer. Freely available in source and binary forms, SRC Modula-3 comes
+with a library of more than <a href="http://www.research.digital.com/SRC/m3sources/html/INDEX.html">1500
+interfaces</a> that run on <a href="http://www.research.digital.com/SRC/modula-3/html/platforms.html">12
+hardware platforms and 25 operating systems</a>--- all <a href="http://www.research.digital.com/SRC/m3defn/html/intro.html#idx.9">without
+#ifdef's</a>. The <a href="http://www.research.digital.com/SRC/m3sources/html/INDEX.html">libraries</a>
+and tools support much of what you might expect from a <a href="http://www.research.digital.com/SRC/m3defn/html/m3.html">solid
+programming language</a> and more: from <a href="http://www.research.digital.com/SRC/m3defn/html/types.html">run-time
+types</a> to <a href="http://www.research.digital.com/SRC/modula-3/html/bib.html#UsefulM3">portable
+operating system interfaces</a>, from <a href="http://www.research.digital.com/SRC/m3sources/html/tcp/src/common/TCP.i3.html">safe
+interfaces to TCP</a> to <a href="http://www.research.digital.com/SRC/modula-3/html/bib.html#Netobj">distributed
+</a>and persistent object systems, from animations to projective geometry,
+from X11 integration to OpenGL interfaces. </p>
+
+<p>With a royalty-free and open distribution <a href="http://www.research.digital.com/SRC/m3sources/html/COPYRIGHT.html">license
+</a>that is clearly designed to promote its use, adoption, and redistribution
+by others, SRC Modula-3 makes a great environment for both professional
+and academic development. The author has been a happy user of SRC Modula-3
+for the past 4 years and is amazed that a system so well-designed (with
+a price so right) is not being used more often. Hence, he is paying his
+dues by promoting <a href="http://www.research.digital.com/SRC/modula-3/html/srcm3.html">SRC
+Modula-3</a>. </p>
+
+<h3>Introduction</h3>
+
+<p>My <a href="http://gatekeeper.dec.com/pub/DEC/SRC/research-reports/abstracts/src-rr-052.html">first
+impression</a> of the language --- back when I learned about it in 1989
+--- was that it had elegantly combined the simplicity of Pascal with the
+power of C. Then I got lucky enough to use it for systems development for
+a few years. As I learned more about language design and implementation
+trade-offs, I came to the realization that I had underestimated the <a href="http://www.research.digital.com/SRC/m3defn/html/intro.html#idx.4">design's
+virtues</a> in my initial evaluation. I learned how Modula-3 mixes proven
+features for robust programming with sheer elegance: <a href="http://www.research.digital.com/SRC/m3defn/html/intro.html#idx.18">garbage
+collection</a> and closures from Lisp, objects from Simula and Smalltalk,
+threads from Mesa and Cedar, exceptions and abstractions from Clu, <a href="http://www.research.digital.com/SRC/m3defn/html/intro.html#idx.13">generics
+</a>from Ada, <a href="http://www.research.digital.com/SRC/m3defn/html/intro.html#idx.9">modules
+</a>from Modula-2, <a href="http://www.research.digital.com/SRC/m3defn/html/intro.html#idx.20">simplicity
+</a>from Pascal, and minimality and efficiency from C. It tops off these
+features with such novel concepts as strict <a href="http://www.research.digital.com/SRC/m3defn/html/intro.html#idx.17">isolation
+of safe and unsafe</a> code, and a powerful type system that supports <a href="http://www.research.digital.com/SRC/modula-3/html/partial-rev/index.html">layered
+abstractions</a> and <a href="http://www.research.digital.com/SRC/m3defn/html/types.html#idx.28">structural
+equivalence</a>, all absent from other languages of its class. Despite
+all this, I am happy to say that Modula-3 is quite <a href="http://www.research.digital.com/SRC/m3defn/html/intro.html#idx.20">immune
+to featuritis</a>! Its concise 50-page <a href="http://www.research.digital.com/SRC/m3defn/html/m3.html">language
+definition</a> puts as much care into supporting the programmer as making
+sure that an efficient implementation can be built without too much effort.
+</p>
+
+<p>Of course, all of this would be considered &quot;academic&quot; if it
+weren't for the case that, for the past 6 years or so, <a href="http://www.research.digital.com/SRC/">Digital
+Systems Research Center (SRC)</a> has been building a highly portable implementation
+of the language, the run-time and the library, and releasing their sources
+on the Internet to be used free of charge. Having released the compiler,
+run-time, libraries and tools, SRC went on to coordinate porting efforts
+to new and old operating systems, <a href="http://www.research.digital.com/SRC/modula-3/html/patches353.html">track
+bugs</a>, and advance the state of the compiler, the run-time system, and
+its high-quality libraries. Of course, all of this would have been impossible
+without the <a href="http://www.research.digital.com/SRC/modula-3/html/acks.html">help
+</a>of <a href="http://www.vlsi.polymtl.ca/m3/who/index.html">many volunteers</a>
+on the Internet. </p>
+
+<h3>Just the Facts, Ma'am</h3>
+
+<p>You may ask: What do I get with SRC Modula-3? The short answer is: a
+very full hard disk! Unfortunately the long answer goes well beyond a couple
+of pages of description. I will do my best to summarize. </p>
+
+<p>The language --- in its <a href="http://www.research.digital.com/SRC/m3defn/html/m3.html">50
+page definition</a> --- comes standard with support for strong types, garbage
+collection, modules and interfaces, portable threads, exceptions, isolation
+of safe and unsafe code, objects with single inheritance, run-time type
+identification, and generics. </p>
+
+<p>The SRC compiler generates native code and has an open back-end. Two
+families of code generators have been implemented: a portable back-end
+that generates gcc parse-trees, and a fast &quot;integrated&quot; back-end
+that directly generates code with &quot;Turbo-Pascal-like&quot; speed on
+Linux and Windows. Originally the back-end generated C, but a few years
+ago it was abandoned in favor of native compilation. </p>
+
+<p>The <a href="http://www.research.digital.com/SRC/modula-3/html/m3build/m3build.html">builder
+</a>performs minimal re-compilation. Only those units that depend on a
+modified item will be recompiled (no more hour-long compiles because you
+decided to add a comment line in a common interface). The builder uses
+declarative descriptions simpler and more portable than make's operational
+style. </p>
+
+<p>Two <a href="http://www.research.digital.com/SRC/modula-3/html/gc.html">garbage
+collectors</a> are supported: a virtual-memory-based, multi-threaded, incremental,
+conservative garbage collector, and a simple stop-and-copy collector to
+ease porting. </p>
+
+<p>Modula-3 comes with a <a href="http://gatekeeper.dec.com/pub/DEC/SRC/research-reports/abstracts/src-rr-113.html">large
+and well-documented standard library</a>, which supports the same interface
+across various flavors of Unix, NT, and Win/95. All standard library modules
+are thread-safe, and in many cases thread-friendly, and make consistent
+use of garbage collection and exception-handling. The portable libraries
+include string manipulation; generic containers such as sequences, lists,
+tables, and sets; Lisp-like atoms and symbolic expressions; an <a href="http://gatekeeper.dec.com/pub/DEC/SRC/research-reports/abstracts/src-rr-053.html">extensible
+thread-friendly I/O stream system</a> with file, memory, and network streams;
+persistent &quot;pickled&quot; objects; and portable operating system interfaces
+that look the same everywhere. </p>
+
+<p>A key package in the SRC distribution is <a href="http://gatekeeper.dec.com/pub/DEC/SRC/research-reports/abstracts/src-rr-115.html">Network
+Objects</a>. A state-of-the-art distributed object system, Network Objects
+eases the development of multi-threaded distributed applications, and is
+one of the few distributed object systems today that provides a practical
+distributed garbage collector. It is, in many ways, nicer than the equivalent
+<a href="http://www.omg.org/">CORBA systems costing thousands of dollars</a>.
+</p>
+
+<p><a href="http://www.research.digital.com/SRC/modula-3/html/bib.html#Trestle">Trestle</a>,
+a multi-threaded window system written in Modula-3, relieves the programmer
+of <a href="http://www.x.org/">event-loop hassles</a>. Having been ported
+to both X11 and Win32, Trestle comes with a large array of widgets and
+user interface creation tools. </p>
+
+<p>Finally, because Modula-3 provides for <a href="http://www.research.digital.com/SRC/m3defn/html/unsafe.html">restricted
+use of unsafe operations</a>, you can <a href="http://www.research.digital.com/SRC/modula-3/html/pragmas.html#EXTERNAL">link
+your code with &quot;legacy&quot; C code readily</a>. In fact, many popular
+C libraries, such as X11, Win32, OpenGL, Tcl, and TCP, are bound to Modula-3
+interfaces already. Calling Modula-3 from C is also generally straightforward.
+</p>
+
+<h3>Conclusion</h3>
+
+<p>If you are: </p>
+
+<ul>
+<li>searching for a fresh alternative to the tired C-based development,
+</li>
+
+<li>perplexed by the complexity of C++ or Ada95, </li>
+
+<li>want modern language features to address your modern programming needs,
+and </li>
+
+<li>want all of this for free, </li>
+</ul>
+
+<p>then you are in luck: <a href="http://www.research.digital.com/SRC/modula-3/html/srcm3.html">SRC
+Modula-3</a> is here for you! </p>
+
+<h3>Reference</h3>
+
+<p>Modula-3 Home Page: <tt><a href="http://www.research.digital.com/SRC/modula-3/html/">http://www.research.digital.com/SRC/modula-3/html/</a></tt>
+(where you will be able to find a link to the electronic version of this
+document.)</p>
+
+</body>
+</html>

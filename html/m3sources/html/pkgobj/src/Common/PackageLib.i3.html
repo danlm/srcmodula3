@@ -1,0 +1,79 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: pkgobj/src/Common/PackageLib.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>pkgobj/src/Common/PackageLib.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM> PackageLib.def </EM></BLOCKQUOTE><PRE>
+
+INTERFACE <interface><A HREF="PackageLib.m3.html">PackageLib</A></interface>;
+
+IMPORT <A HREF="FileSys.i3.html">FileSys</A>, <A HREF="../../../os/src/Common/OSError.i3.html">OSError</A>, <A HREF="PackageObj.i3.html">PackageObj</A>, <A HREF="../../../thread/src/Common/Thread.i3.html">Thread</A>;
+
+EXCEPTION Stop;
+
+TYPE
+  FN = FileSys.FN;
+
+  DiffType = {
+    Same, NoSrc, NoDest, SrcNewer, SrcOlder,
+    LinksDiffer, LengthsDiffer, TypesDiffer, ModesDiffer};
+
+  DiffClosure = OBJECT METHODS
+    report(dir: FN; diff: DiffType; elem: PackageObj.DirElem)
+      RAISES {Stop, Thread.Alerted};
+  END;
+
+  EnumClosure = OBJECT METHODS
+    acquire() : (*dir*) FileSys.FN;
+    release();
+  END;
+
+CONST
+  VersionFile = &quot;.version&quot;;
+  ExportLinkFile = &quot;.exportLinks&quot;;
+
+PROCEDURE <A HREF="PackageLib.m3.html#Enumerate">Enumerate</A> (e: EnumClosure): PackageObj.DirEnum
+    RAISES {OSError.E};
+
+PROCEDURE <A HREF="PackageLib.m3.html#Compare">Compare</A>(src, dest: PackageObj.DirEnum; cl: DiffClosure)
+    RAISES {Thread.Alerted};
+
+PROCEDURE <A HREF="PackageLib.m3.html#SetDirDates">SetDirDates</A>(dir: FN; enum: PackageObj.DirEnum)
+    RAISES {OSError.E};
+
+PROCEDURE <A HREF="PackageLib.m3.html#EmptySource">EmptySource</A>() : PackageObj.Source;
+
+END PackageLib.
+</PRE>
+</inInterface>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

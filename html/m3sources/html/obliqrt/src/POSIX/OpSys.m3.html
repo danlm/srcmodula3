@@ -1,0 +1,91 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: obliqrt/src/POSIX/OpSys.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>obliqrt/src/POSIX/OpSys.m3</H2></A><HR>
+<inModule>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+
+UNSAFE MODULE <module><implements><A HREF="#x1">OpSys</A></implements></module>;
+
+IMPORT <A HREF="../../../C/src/Common/M3toC.i3.html">M3toC</A>, <A HREF="#x2">Unix</A>;
+
+PROCEDURE <A NAME="GetHostName"><procedure>GetHostName</procedure></A> (): TEXT RAISES {Error} =
+  VAR
+    buffer: ARRAY [0..255] OF CHAR;
+  BEGIN
+    WITH nbytes = Unix.gethostname (ADR (buffer), BYTESIZE (buffer) - 1) DO
+      IF nbytes &lt; 0 THEN
+        RAISE Error;
+      END;
+    END;
+    RETURN M3toC.CopyStoT (ADR (buffer));
+  END GetHostName;
+
+BEGIN
+END OpSys.
+</PRE>
+</inModule>
+<HR>
+<A NAME="x1">interface OpSys is in:
+</A><UL>
+<LI><A HREF="../OpSys.i3.html#0TOP0">obliqrt/src/OpSys.i3</A>
+<LI><A HREF="../../../pkgobj/src/Common/OpSys.i3.html#0TOP0">pkgobj/src/Common/OpSys.i3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x2">interface Unix is in:
+</A><UL>
+<LI><A HREF="../../../unix/src/aix-3-2/Unix.i3.html#0TOP0">unix/src/aix-3-2/Unix.i3</A>
+<LI><A HREF="../../../unix/src/aix-ps2-1-2/Unix.i3.html#0TOP0">unix/src/aix-ps2-1-2/Unix.i3</A>
+<LI><A HREF="../../../unix/src/freebsd-1/Unix.i3.html#0TOP0">unix/src/freebsd-1/Unix.i3</A>
+<LI><A HREF="../../../unix/src/freebsd-2/Unix.i3.html#0TOP0">unix/src/freebsd-2/Unix.i3</A>
+<LI><A HREF="../../../unix/src/hpux-7-0/Unix.i3.html#0TOP0">unix/src/hpux-7-0/Unix.i3</A>
+<LI><A HREF="../../../unix/src/ibm-4-3/Unix.i3.html#0TOP0">unix/src/ibm-4-3/Unix.i3</A>
+<LI><A HREF="../../../unix/src/irix-5.2/Unix.i3.html#0TOP0">unix/src/irix-5.2/Unix.i3</A>
+<LI><A HREF="../../../unix/src/linux/Unix.i3.html#0TOP0">unix/src/linux/Unix.i3</A>
+<LI><A HREF="../../../unix/src/osf-1.ALPHA_OSF/Unix.i3.html#0TOP0">unix/src/osf-1.ALPHA_OSF/Unix.i3</A>
+<LI><A HREF="../../../unix/src/osf-1.DS3100/Unix.i3.html#0TOP0">unix/src/osf-1.DS3100/Unix.i3</A>
+<LI><A HREF="../../../unix/src/solaris-2-x/Unix.i3.html#0TOP0">unix/src/solaris-2-x/Unix.i3</A>
+<LI><A HREF="../../../unix/src/sunos-4-x/Unix.i3.html#0TOP0">unix/src/sunos-4-x/Unix.i3</A>
+<LI><A HREF="../../../unix/src/sysv-4.0/Unix.i3.html#0TOP0">unix/src/sysv-4.0/Unix.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.AP3000/Unix.i3.html#0TOP0">unix/src/ultrix-3-1.AP3000/Unix.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.ARM/Unix.i3.html#0TOP0">unix/src/ultrix-3-1.ARM/Unix.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.DS3100/Unix.i3.html#0TOP0">unix/src/ultrix-3-1.DS3100/Unix.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.NEXT/Unix.i3.html#0TOP0">unix/src/ultrix-3-1.NEXT/Unix.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.SEQUENT/Unix.i3.html#0TOP0">unix/src/ultrix-3-1.SEQUENT/Unix.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.SUN3/Unix.i3.html#0TOP0">unix/src/ultrix-3-1.SUN3/Unix.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.SUN386/Unix.i3.html#0TOP0">unix/src/ultrix-3-1.SUN386/Unix.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.UMAX/Unix.i3.html#0TOP0">unix/src/ultrix-3-1.UMAX/Unix.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.VAX/Unix.i3.html#0TOP0">unix/src/ultrix-3-1.VAX/Unix.i3</A>
+</UL>
+<P>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

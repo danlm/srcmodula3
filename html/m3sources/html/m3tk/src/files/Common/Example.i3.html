@@ -1,0 +1,83 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: m3tk/src/files/Common/Example.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>m3tk/src/files/Common/Example.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM>                                                                           </EM></BLOCKQUOTE><PRE>
+</PRE>                                                                           
+ The above lines, and this line, and all lines up 
+   to the first blank line, will be skipped by M3ToTex 
+
+<P> The <CODE>Example</CODE> interface shows how to use <CODE>m3totex</CODE>. 
+
+<P><PRE>INTERFACE <interface>Example</interface>;
+
+TYPE T &lt;: ROOT;
+</PRE> An <CODE>Example.T</CODE> is an opaque object type. 
+
+<P><PRE>PROCEDURE P(t: T; VAR (*OUT*) n: INTEGER);
+</PRE><BLOCKQUOTE><EM> Replace <CODE>t</CODE> by its hyperbolic completion and
+   store its specular index in <CODE>n</CODE>. </EM></BLOCKQUOTE><PRE>
+</PRE> Comments that do not start in the first column are
+   typeset like program text (for example, the comment
+   <CODE>OUT</CODE> in the signature of <CODE>P</CODE>).
+<P>
+   Comments that start in the first column and are not
+   preceded by a blank line are indented and slanted.
+   They are intended to be used for short summary procedure
+   specifications, like the one following the declaration
+   of <CODE>P</CODE>.
+<P>
+   Comments that start in the first column and are
+   preceded by a blank line are typeset in ordinary
+   roman text, except that quoted words are typeset
+   like program text (for example, <CODE>Example.T</CODE>). 
+<P>
+   If you want to include some verbatim material in a comment, precede
+   each verbatim line by a vertical-bar and a space.  For example,
+<P>
+<PRE>
+      VAR t := NEW(t); n: INTEGER; BEGIN	
+        WHILE n # 0 DO 
+          P(t, n);
+          <KBD>reduce the specular index of </KBD>t<KBD></KBD>.
+        END
+      END
+</PRE>
+Notice that you can escape into roman type by using 
+back-quotes. 
+
+<P><PRE>END Example.
+</PRE>
+</inInterface>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

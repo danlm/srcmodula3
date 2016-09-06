@@ -1,0 +1,215 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: gef/derived/gefeventIE.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>gef/derived/gefeventIE.m3</H2></A><HR>
+<inModule>
+<PRE><A HREF="../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE>********************************************************************
+<PRE>
+      *  NOTE: This file is generated automatically from the event 
+      *        definition file gefevent.evt.
+ </PRE>
+********************************************************************
+<PRE>&lt;* PRAGMA LL *&gt;
+
+MODULE <module><implements><A HREF="gefeventIE.i3.html">gefeventIE</A></implements></module>;
+
+&lt;* NOWARN *&gt; IMPORT <A HREF="../../libm3/derived/RefList.i3.html">RefList</A>;
+&lt;* NOWARN *&gt; IMPORT <A HREF="../../slisp/src/SLispClass.i3.html">SLispClass</A>;
+&lt;*NOWARN*&gt; IMPORT <A HREF="gefeventAlgClass.i3.html">gefeventAlgClass</A>, <A HREF="gefeventViewClass.i3.html">gefeventViewClass</A>;
+&lt;*NOWARN*&gt; IMPORT <A HREF="../../zeus/src/Algorithm.i3.html">Algorithm</A>, <A HREF="../../zeus/src/AlgorithmClass.i3.html">AlgorithmClass</A>, <A HREF="../../thread/src/Common/Thread.i3.html">Thread</A>, <A HREF="../../zeus/src/View.i3.html">View</A>, <A HREF="../../zeus/src/Zeus.i3.html">Zeus</A>, <A HREF="../../zeus/src/ZeusClass.i3.html">ZeusClass</A>;
+
+&lt;* FATAL Zeus.Error, Zeus.Locked *&gt;
+</PRE><BLOCKQUOTE><EM> If you get either of these errors, contact a Zeus implementor. </EM></BLOCKQUOTE><PRE>
+
+TYPE
+  InitArgs = BRANDED REF RECORD
+     files: RefList.T
+  END;
+
+  EventArgs = BRANDED REF RECORD
+     name: TEXT; args: RefList.T
+  END;
+
+  UpdateArgs = BRANDED REF RECORD
+     name: TEXT; args: RefList.T
+  END;
+
+  FeedbackArgs = BRANDED REF RECORD
+     name: TEXT; args: RefList.T
+  END;
+
+  PauseArgs = BRANDED REF RECORD
+
+  END;
+</PRE>  Zeus calls the following to invoke vbt v's event handler: 
+
+<P><PRE>&lt;*NOWARN*&gt; PROCEDURE <A NAME="OEDispatcher"><procedure>OEDispatcher</procedure></A>(v: ZeusClass.T; evt: REFANY) RAISES {Thread.Alerted} =
+  &lt;* LL &lt;= VBT.mu *&gt;
+  (* LL = {} if event style is output, LL = VBT.mu if event style is update. *)
+  BEGIN
+    TYPECASE v OF
+    | gefeventViewClass.T (view) =&gt; &lt;*NOWARN*&gt;
+      TYPECASE evt OF
+      | InitArgs(varInitArgs) =&gt; &lt;*NOWARN*&gt;
+          view.oeInit (
+              varInitArgs.files
+              )
+      | EventArgs(varEventArgs) =&gt; &lt;*NOWARN*&gt;
+          view.oeEvent (
+              varEventArgs.name
+                ,
+              varEventArgs.args
+              )
+      | PauseArgs(varPauseArgs) =&gt; &lt;*NOWARN*&gt;
+          view.oePause (
+              )
+      | UpdateArgs(varUpdateArgs) =&gt; &lt;*NOWARN*&gt;
+          view.ueUpdate (
+              varUpdateArgs.name
+                ,
+              varUpdateArgs.args
+              )
+      ELSE &lt;* ASSERT FALSE *&gt;
+      END;
+    ELSE (* this view isn't a gefeventViewClass, so just ignore *)
+    END
+  END OEDispatcher;
+
+&lt;*NOWARN*&gt; PROCEDURE <A NAME="FEDispatcher"><procedure>FEDispatcher</procedure></A>(v: ZeusClass.T; evt: REFANY) =
+  &lt;* LL = VBT.mu *&gt;
+  BEGIN
+    TYPECASE v OF
+    | gefeventAlgClass.T (alg) =&gt; &lt;*NOWARN*&gt;
+      TYPECASE evt OF
+      | FeedbackArgs(varFeedbackArgs) =&gt; &lt;*NOWARN*&gt;
+          alg.feFeedback (
+              varFeedbackArgs.name
+                ,
+              varFeedbackArgs.args
+              )
+      ELSE &lt;* ASSERT FALSE *&gt;
+      END;
+    ELSE (* this alg isn't a gefeventAlgClass, so just ignore *)
+    END
+  END FEDispatcher;
+
+PROCEDURE <A NAME="Init"><procedure>Init</procedure></A> (
+      initiator: Algorithm.T;
+       files: RefList.T
+    ) RAISES {Thread.Alerted} =
+  &lt;* LL = {} *&gt;
+  VAR zumeArgRec := NEW(InitArgs
+               , files := files
+      );
+      alg := NARROW(initiator, gefeventAlgClass.T);
+  BEGIN
+    LOCK alg.evtMu DO
+      INC(alg.eventDataRec.ctOfInit);
+      alg.stopAtEvent := alg.eventDataRec.stopAtInit;
+      alg.waitAtEvent := alg.eventDataRec.waitAtInit;
+      Zeus.Dispatch(initiator, Zeus.EventStyle.Output, 1,
+                    &quot;Init&quot;, OEDispatcher, zumeArgRec);
+    END;
+  END Init;
+
+PROCEDURE <A NAME="Event"><procedure>Event</procedure></A> (
+      initiator: Algorithm.T;
+       name: TEXT; args: RefList.T
+    ) RAISES {Thread.Alerted} =
+  &lt;* LL = {} *&gt;
+  VAR zumeArgRec := NEW(EventArgs
+               , name := name
+               , args := args
+      );
+      alg := NARROW(initiator, gefeventAlgClass.T);
+  BEGIN
+    LOCK alg.evtMu DO
+      INC(alg.eventDataRec.ctOfEvent);
+      alg.stopAtEvent := alg.eventDataRec.stopAtEvent;
+      alg.waitAtEvent := alg.eventDataRec.waitAtEvent;
+      Zeus.Dispatch(initiator, Zeus.EventStyle.Output, 1,
+                    &quot;Event&quot;, OEDispatcher, zumeArgRec);
+    END;
+  END Event;
+
+PROCEDURE <A NAME="Pause"><procedure>Pause</procedure></A> (
+      initiator: Algorithm.T;
+
+    ) RAISES {Thread.Alerted} =
+  &lt;* LL = {} *&gt;
+  VAR zumeArgRec := NEW(PauseArgs
+      );
+      alg := NARROW(initiator, gefeventAlgClass.T);
+  BEGIN
+    LOCK alg.evtMu DO
+      INC(alg.eventDataRec.ctOfPause);
+      alg.stopAtEvent := alg.eventDataRec.stopAtPause;
+      alg.waitAtEvent := alg.eventDataRec.waitAtPause;
+      Zeus.Dispatch(initiator, Zeus.EventStyle.Output, 1,
+                    &quot;Pause&quot;, OEDispatcher, zumeArgRec);
+    END;
+  END Pause;
+
+PROCEDURE <A NAME="Update"><procedure>Update</procedure></A> (
+      initiator: Algorithm.T;
+       name: TEXT; args: RefList.T
+    ) RAISES {Thread.Alerted} =
+  &lt;* LL = VBT.mu *&gt;
+  VAR zumeArgRec := NEW(UpdateArgs
+               , name := name
+               , args := args
+      );
+  BEGIN
+    Zeus.Dispatch(initiator, Zeus.EventStyle.Update, 1,
+                  &quot;Update&quot;, OEDispatcher, zumeArgRec);
+  END Update;
+
+PROCEDURE <A NAME="Feedback"><procedure>Feedback</procedure></A> (
+      initiator: View.T;
+       name: TEXT; args: RefList.T
+    ) RAISES {Thread.Alerted} =
+  &lt;* LL = VBT.mu *&gt;
+  VAR zumeArgRec := NEW(FeedbackArgs
+               , name := name
+               , args := args
+      );
+  BEGIN
+    Zeus.Dispatch(initiator, Zeus.EventStyle.Notify, 1,
+                  &quot;Feedback&quot;, FEDispatcher, zumeArgRec);
+  END Feedback;
+
+BEGIN
+END gefeventIE.
+</PRE>
+</inModule>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

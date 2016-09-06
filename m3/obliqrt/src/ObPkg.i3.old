@@ -1,0 +1,76 @@
+(* Copyright 1991 Digital Equipment Corporation.               *)
+(* Distributed only by permission.                             *)
+
+INTERFACE ObPkg;
+IMPORT SynLocation, ObErr, ObCommand, ObValue;
+
+TYPE
+
+  T = (* To be subtyped. *)
+    OBJECT
+      name: TEXT;
+        (* The one the obliq parser recognizes. *)
+
+      sortingName: TEXT;
+        (* Used to sort the help information lexicographically. *)
+
+      opCodes: REF ARRAY OF OpCode;
+        (* The array of all opcodes for the operations in this package. *)
+
+      Help: HelpProc := NIL;
+        (* Optional; the routine that displays help info for this package. *)
+
+    METHODS
+      Eval(code: OpCode; READONLY args: ObValue.ArgArray; 
+        location: SynLocation.T): ObValue.Val 
+          RAISES {ObValue.Error, ObValue.Exception};
+      (* To be overridden; the routine that evaluates opcodes given 
+         their arguments. *)
+
+      Encode(opName: TEXT; VAR(*out*)code: OpCode; 
+        location: SynLocation.T) RAISES {ObErr.Fail} := EncodeTermOp;
+      (* Not to be overridden. *)
+
+    END;
+
+  OpArity = INTEGER;
+  OpFixity = {Undefined, Qualified, Prefix, Infix};
+  
+  OpCode = (* To be subtyped *)
+    OBJECT 
+      name: TEXT; (* Name of an operation in a package. *)
+      arity: OpArity; (* Its expected number of arguments. *)
+      fixity: OpFixity:=OpFixity.Qualified; (* Its fixity. *)
+    END;
+
+  HelpProc = 
+    PROCEDURE(self: ObCommand.T; arg: TEXT);
+
+  Table = OBJECT
+    METHODS
+      Register(package: T);
+      (* Register a package. *)
+
+      RegisterHelp(uniqueName: TEXT; helpProc: HelpProc);
+      (* Register the Help proc with the package determined by "uniqueName",
+         if it was not registered already with the package. *)
+
+      Lookup(name: TEXT; VAR(*out*)pkg: T): BOOLEAN;
+
+      LookupFixity(opName: TEXT; VAR (*out*)pkgName: TEXT): OpFixity;
+
+    END;
+
+  VAR 
+    packageTable: Table;
+      (* The collection of all registered packages. *)
+    helpCommandSet: ObCommand.Set;
+      (* The collection of registered help commands. *)
+
+  PROCEDURE Setup();
+  (* To be called before any other use of this module *)
+
+  PROCEDURE EncodeTermOp(self: T; opName: TEXT; 
+      VAR(*out*)code: OpCode; location: SynLocation.T) RAISES {ObErr.Fail};
+
+END ObPkg.

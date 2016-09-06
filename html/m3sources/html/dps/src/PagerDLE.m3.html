@@ -1,0 +1,138 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: dps/src/PagerDLE.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>dps/src/PagerDLE.m3</H2></A><HR>
+<inModule>
+<PRE><A HREF="../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+
+MODULE <module><implements><A HREF="PagerDLE.i3.html">PagerDLE</A></implements></module>;
+
+IMPORT <A HREF="DisplayList.i3.html">DisplayList</A>, <A HREF="DPS.i3.html">DPS</A>, <A HREF="DPSWindow.i3.html">DPSWindow</A>;
+
+PROCEDURE <A NAME="Init"><procedure>Init</procedure></A> (t: T; pages: REF ARRAY OF DisplayList.T := NIL) =
+  BEGIN
+  IF t.initialized THEN RETURN; END;
+  t.pages := pages; (* NIL or not ... *)
+  IF pages=NIL THEN t.pageCount := 0;
+   ELSE t.pageCount := NUMBER(pages^);
+    END;
+  t.page := -1; (* None displayed. *)
+  t.box := DPS.EverywhereBox; (* Don't know how big children are. *)
+  t.initialized := TRUE;
+  IF pages#NIL THEN NthPage (t, 0); END;
+  END Init;
+
+PROCEDURE <A NAME="AppendPage"><procedure>AppendPage</procedure></A> ( t: T; page: DisplayList.T ) =
+ VAR new: REF ARRAY OF DisplayList.T;
+  BEGIN
+  Init (t, NIL);
+  IF t.pages = NIL THEN
+    t.pages := NEW (REF ARRAY OF DisplayList.T, 10);
+    END;
+  IF t.pageCount &gt;= NUMBER(t.pages^) THEN
+    new := NEW (REF ARRAY OF DisplayList.T, NUMBER(t.pages^) + 10);
+    FOR j := 0 TO NUMBER(t.pages^)-1 DO
+      new[j] := t.pages[j];
+      END;
+    t.pages := new;
+    END;
+  t.pages[t.pageCount] := page;
+  t.pageCount := t.pageCount + 1;
+  IF t.First()=NIL THEN NthPage (t, 0); END;
+  END AppendPage;
+
+PROCEDURE <A NAME="NthPage"><procedure>NthPage</procedure></A> (t: T; page: INTEGER) =
+ VAR first: DisplayList.T;
+ VAR haveFocus: BOOLEAN;
+  BEGIN
+  haveFocus := t.childWithInputFocus # NIL; (* Crude. *)
+  IF page &lt; 0 THEN RETURN; END;
+  IF page &gt; t.pageCount-1 THEN RETURN; END;
+  IF page = t.page THEN RETURN; END;
+  first := t.First();
+  IF first#NIL THEN first.Remove(); END;
+  t.Append (t.pages^[page]);
+  t.page := page;
+  IF haveFocus THEN t.GetInputFocus (t.First()); END;
+  t.Dirty (DPS.EverywhereBox);
+  END NthPage;
+
+PROCEDURE <A NAME="NextPage"><procedure>NextPage</procedure></A> (t: T) =
+  BEGIN
+  NthPage (t, t.page + 1);
+  END NextPage;
+
+PROCEDURE <A NAME="Mouse"><procedure>Mouse</procedure></A> (t: T; window: DPSWindow.T; event: DPS.MouseEvent): BOOLEAN =
+ VAR e: DisplayList.E;
+  BEGIN
+  Init (t);
+
+  IF t.canMouseChildren THEN
+    e := t.Last();
+    WHILE e # NIL DO
+      IF e.Mouse (window, event) THEN RETURN TRUE; END;
+      e := e.Previous();
+      END;
+    END;
+
+  IF event.clickType # DPS.ClickType.FirstDown THEN RETURN FALSE; END;
+  RETURN FALSE;
+
+  END Mouse;
+
+PROCEDURE <A NAME="Char"><procedure>Char</procedure></A> (e: E; window: DPSWindow.T; char: CHAR): BOOLEAN =
+ VAR ee: DisplayList.E;
+  BEGIN
+  Init (e);
+  ee := e.childWithInputFocus;
+  IF ee = NIL THEN RETURN FALSE; END;
+  IF ee.Char (window, char) THEN RETURN TRUE; END;
+  CASE char OF
+  | ' ' =&gt;  NextPage (e); RETURN TRUE;
+  | '!' =&gt;  NthPage (e, 0); RETURN TRUE;
+  | '@' =&gt;  NthPage (e, 1); RETURN TRUE;
+  | '#' =&gt;  NthPage (e, 2); RETURN TRUE;
+  | '$' =&gt;  NthPage (e, 3); RETURN TRUE;
+  | '%' =&gt;  NthPage (e, 4); RETURN TRUE;
+  | '^' =&gt;  NthPage (e, 5); RETURN TRUE;
+  | '&amp;' =&gt;  NthPage (e, 6); RETURN TRUE;
+  | '*' =&gt;  NthPage (e, 7); RETURN TRUE;
+  | '(' =&gt;  NthPage (e, 8); RETURN TRUE;
+   ELSE RETURN FALSE;
+    END; (* of CASE *)
+  END Char;
+
+BEGIN
+END PagerDLE.
+</PRE>
+</inModule>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

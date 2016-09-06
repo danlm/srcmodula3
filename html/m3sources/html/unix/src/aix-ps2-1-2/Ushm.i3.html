@@ -1,0 +1,252 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: unix/src/aix-ps2-1-2/Ushm.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>unix/src/aix-ps2-1-2/Ushm.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+
+INTERFACE <interface>Ushm</interface>;
+
+FROM <A HREF="../../../C/src/Common/Ctypes.i3.html">Ctypes</A> IMPORT char, short, int;
+FROM <A HREF="#x1">Utypes</A> IMPORT time_t, key_t, size_t, ushort, swblk_t;
+FROM <A HREF="#x2">Uipc</A>   IMPORT struct_ipc_perm;
+</PRE>** &lt;sys/shm.h&gt; **
+
+<P>
+**      IPC Shared Memory Facility.
+
+
+<P>
+**      Implementation Constants.
+
+
+<P><PRE>CONST
+                        (* segment low boundary address multiple *)
+                        (* (SMLBA must be a power of 2) *)
+  (* SMLBA = ctob(CLSIZE);   where does ctob come from ? - em *)
+
+                        (* for SYSTEM V compatibility           *)
+  (* SHMLBA = SMLBA;         see SMLBA - em *)
+</PRE><P>
+**      Permission Definitions.
+
+
+<P>  <PRE>SM_R = 8_0400; (* read permission *)
+  SM_W = 8_0200;  (* write permission *)
+
+                        (* for SYSTEM V compatibility           *)
+  SHM_R = SM_R;
+  SHM_W = SM_W;
+</PRE><P>
+**      ipc_perm Mode Definitions.
+
+
+<P>  <PRE>SM_CLEAR = 8_01000; (* clear segment on next attach *)
+  SM_DEST  = 8_02000; (* destroy seg when # attached = 0 *)
+
+                        (* for SYSTEM V compatibility           *)
+  SHM_INIT = SM_CLEAR;
+  SHM_DEST = SM_DEST;
+</PRE><P>
+**      Message Operation Flags.
+
+
+<P>  <PRE>SM_RDONLY = 8_010000;        (* attach read-only (else read-write) *)
+  SM_RND    = 8_020000;        (* round attach address to SHMLBA *)
+
+                        (* for SYSTEM V compatibility           *)
+  SHM_RDONLY = SM_RDONLY;
+  SHM_RND    = SM_RND;
+</PRE><P>
+ *  sizing constant (the balance are in /sys/h/param.h and /sys/conf/param.c.
+ 
+  <PRE>SMMNI = 100;        (* Max number SM segments in system *)
+</PRE><P>
+**      Structure Definitions.
+
+
+<P>
+<P>
+**      There is a shared mem id struct for each segment in the system.
+
+
+<P><PRE>TYPE
+  struct_smem = RECORD
+                                (* SM_PERM must be the first    *)
+                                (* element in the structure.    *)
+      sm_perm:    struct_ipc_perm;          (* permission struct *)
+      sm_daddr:   UNTRACED REF swblk_t;    (* disk addrs of DMTEXT page segs *)
+      sm_ptdaddr: swblk_t;                  (* disk address of page table *)
+      sm_size:    size_t ;                  (* segment size (bytes) *)
+</PRE>      sm_caddr:   UNTRACED REF struct_proc; (* ptr to linked proc, if loaded <PRE>*)
+      sm_caddr: ADDRESS;                    (* where is struct_proc ? - em *)
+</PRE>      sm_ptaddr:  UNTRACED REF struct_pte;  (* ptr to assoc page table  <PRE>*)
+      sm_ptaddr:  ADDRESS;                  (* where is struct_pte ? - em *)
+
+      sm_rssize:  size_t;                   (* SM resource set size (pages) *)
+      sm_lpid:    ushort;                   (* pid of last smop *)
+      sm_cpid:    ushort;                   (* pid of creator *)
+      sm_count:   char;                     (* reference count *)
+      sm_ccount:  char;                     (* number of loaded references *)
+      sm_lcount:  short;                  (* number of processes locking SMS *)
+      sm_flag:    short;                    (* traced, written flags *)
+      sm_poip:    short;                    (* page out in progress count *)
+      sm_atime:   time_t;                   (* last smat time *)
+      sm_dtime:   time_t;                   (* last smdt time *)
+      sm_ctime:   time_t;                   (* last change time *)
+    END;
+
+                        (* for SYSTEM V compatibility           *)
+  (*  key_t = long;     already defined in Utypes.i3 - em *)
+
+  struct_shmid_ds = RECORD
+                                (* SM_PERM must be the first    *)
+                                (* element in the structure.    *)
+      shm_perm:    struct_ipc_perm;          (* permission struct *)
+      sm_daddr:   UNTRACED REF swblk_t;    (* disk addrs of DMTEXT page segs *)
+      sm_ptdaddr: swblk_t;                  (* disk address of page table *)
+      shm_segsz:  size_t ;                  (* segment size (bytes) *)
+</PRE>      sm_caddr:   UNTRACED REF struct_proc; (* ptr to linked proc, if loaded <PRE>*)
+      sm_caddr: ADDRESS;                    (* where is struct_proc ? - em *)
+</PRE>      sm_ptaddr:  UNTRACED REF struct_pte;  (* ptr to assoc page table  <PRE>*)
+      sm_ptaddr:  ADDRESS;                  (* where is struct_pte ? - em *)
+
+      sm_rssize:  size_t;                   (* SM resource set size (pages) *)
+      shm_lpidL:  ushort;                   (* pid of last smop *)
+      shm_cpid:   ushort;                   (* pid of creator *)
+      shm_nattch: char;                     (* reference count *)
+      sm_ccount:  char;                     (* number of loaded references *)
+      sm_lcount:  short;                  (* number of processes locking SMS *)
+      sm_flag:    short;                    (* traced, written flags *)
+      sm_poip:    short;                    (* page out in progress count *)
+      shm_atime:  time_t;                   (* last smat time *)
+      shm_dtime:  time_t;                   (* last smdt time *)
+      shm_ctime:  time_t;                   (* last change time *)
+    END;
+
+CONST
+</PRE> NOTE:  These values must align with X* flag values in text.h 
+  <PRE>SMLOCK =  8_0010;           (* Being swapped in or out *)
+  SMWANT =  8_0020;           (* Wanted for swapping *)
+  SMNOSW =  8_0100;           (* Lock segment in memory *)
+</PRE> shared memory specific commands for shmctl syscall 
+  <PRE>SHM_LOCK   = 3;       (* Lock segment in memory *)
+  SHM_UNLOCK = 4;       (* Unlock segment in memory *)
+</PRE><P>
+ * sminfo structure is used by the system for bounds checking.  All of 
+ * the elements in this structure are initialized in /sys/conf/param.c.
+ *
+ * Three of the elements are configurable via the <CODE>config</CODE> program
+ * (smmax, smmin, smbrk).  If they are not config'ed, then they all
+ * have defaults.
+   
+
+<P><PRE>TYPE
+  struct_sminfo = RECORD
+      smmax: int;       (* max shared memory segment size *)
+      smmin: int;       (* min shared memory segment size *)
+      smmni: int;       (* # of shared memory identifiers *)
+      smseg: int;       (* max attached shared memory segs per proc *)
+      smbrk: int;       (* gap (in clicks) used between data and SM *)
+      smsmat: int;      (* max shmem attach addr (clicks) *)
+    END;
+
+                        (* for SYSTEM V compatibility *)
+  struct_shminfo = RECORD
+      shmmax: int;       (* max shared memory segment size *)
+      shmmin: int;       (* min shared memory segment size *)
+      shmmni: int;       (* # of shared memory identifiers *)
+      shmseg: int;       (* max attached shared memory segs per proc *)
+      shmbrk: int;       (* gap (in clicks) used between data and SM *)
+      smsmat: int;       (* max shmem attach addr (clicks) *)
+    END;
+</PRE>** shmctl(2) - shared memory control operations **
+
+<P><PRE>&lt;*EXTERNAL*&gt; PROCEDURE shmctl (shmid, cmd: int;
+                               buf: UNTRACED REF struct_shmid_ds): int;
+</PRE>** shmget(2) - get shared memory segment **
+
+<P><PRE>&lt;*EXTERNAL*&gt; PROCEDURE shmget (key: key_t; size, semflg: int): int;
+</PRE>** shmat(2), shmdt(2) - shared memory operations **
+
+<P><PRE>&lt;*EXTERNAL*&gt; PROCEDURE shmat (shmid: int; shmaddr: ADDRESS; shmflg: int): int;
+&lt;*EXTERNAL*&gt; PROCEDURE shmdt (shmaddr: ADDRESS): int;
+
+END Ushm.
+</PRE>
+</inInterface>
+<HR>
+<A NAME="x1">interface Utypes is in:
+</A><UL>
+<LI><A HREF="../aix-3-2/Utypes.i3.html#0TOP0">unix/src/aix-3-2/Utypes.i3</A>
+<LI><A HREF="Utypes.i3.html#0TOP0">unix/src/aix-ps2-1-2/Utypes.i3</A>
+<LI><A HREF="../freebsd-1/Utypes.i3.html#0TOP0">unix/src/freebsd-1/Utypes.i3</A>
+<LI><A HREF="../freebsd-2/Utypes.i3.html#0TOP0">unix/src/freebsd-2/Utypes.i3</A>
+<LI><A HREF="../hpux-7-0/Utypes.i3.html#0TOP0">unix/src/hpux-7-0/Utypes.i3</A>
+<LI><A HREF="../ibm-4-3/Utypes.i3.html#0TOP0">unix/src/ibm-4-3/Utypes.i3</A>
+<LI><A HREF="../irix-5.2/Utypes.i3.html#0TOP0">unix/src/irix-5.2/Utypes.i3</A>
+<LI><A HREF="../linux/Utypes.i3.html#0TOP0">unix/src/linux/Utypes.i3</A>
+<LI><A HREF="../osf-1.ALPHA_OSF/Utypes.i3.html#0TOP0">unix/src/osf-1.ALPHA_OSF/Utypes.i3</A>
+<LI><A HREF="../osf-1.DS3100/Utypes.i3.html#0TOP0">unix/src/osf-1.DS3100/Utypes.i3</A>
+<LI><A HREF="../solaris-2-x/Utypes.i3.html#0TOP0">unix/src/solaris-2-x/Utypes.i3</A>
+<LI><A HREF="../sunos-4-x/Utypes.i3.html#0TOP0">unix/src/sunos-4-x/Utypes.i3</A>
+<LI><A HREF="../sysv-4.0/Utypes.i3.html#0TOP0">unix/src/sysv-4.0/Utypes.i3</A>
+<LI><A HREF="../ultrix-3-1.AP3000/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.AP3000/Utypes.i3</A>
+<LI><A HREF="../ultrix-3-1.ARM/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.ARM/Utypes.i3</A>
+<LI><A HREF="../ultrix-3-1.DS3100/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.DS3100/Utypes.i3</A>
+<LI><A HREF="../ultrix-3-1.NEXT/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.NEXT/Utypes.i3</A>
+<LI><A HREF="../ultrix-3-1.SEQUENT/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.SEQUENT/Utypes.i3</A>
+<LI><A HREF="../ultrix-3-1.SUN3/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.SUN3/Utypes.i3</A>
+<LI><A HREF="../ultrix-3-1.SUN386/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.SUN386/Utypes.i3</A>
+<LI><A HREF="../ultrix-3-1.UMAX/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.UMAX/Utypes.i3</A>
+<LI><A HREF="../ultrix-3-1.VAX/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.VAX/Utypes.i3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x2">interface Uipc is in:
+</A><UL>
+<LI><A HREF="../aix-3-2/Uipc.i3.html#0TOP0">unix/src/aix-3-2/Uipc.i3</A>
+<LI><A HREF="Uipc.i3.html#0TOP0">unix/src/aix-ps2-1-2/Uipc.i3</A>
+<LI><A HREF="../freebsd-1/Uipc.i3.html#0TOP0">unix/src/freebsd-1/Uipc.i3</A>
+<LI><A HREF="../freebsd-2/Uipc.i3.html#0TOP0">unix/src/freebsd-2/Uipc.i3</A>
+<LI><A HREF="../hpux-7-0/Uipc.i3.html#0TOP0">unix/src/hpux-7-0/Uipc.i3</A>
+<LI><A HREF="../ibm-4-3/Uipc.i3.html#0TOP0">unix/src/ibm-4-3/Uipc.i3</A>
+<LI><A HREF="../irix-5.2/Uipc.i3.html#0TOP0">unix/src/irix-5.2/Uipc.i3</A>
+<LI><A HREF="../linux/Uipc.i3.html#0TOP0">unix/src/linux/Uipc.i3</A>
+<LI><A HREF="../osf-1.generic/Uipc.i3.html#0TOP0">unix/src/osf-1.generic/Uipc.i3</A>
+<LI><A HREF="../solaris-2-x/Uipc.i3.html#0TOP0">unix/src/solaris-2-x/Uipc.i3</A>
+<LI><A HREF="../sunos-4-x/Uipc.i3.html#0TOP0">unix/src/sunos-4-x/Uipc.i3</A>
+<LI><A HREF="../sysv-4.0/Uipc.i3.html#0TOP0">unix/src/sysv-4.0/Uipc.i3</A>
+<LI><A HREF="../ultrix-3-1.generic/Uipc.i3.html#0TOP0">unix/src/ultrix-3-1.generic/Uipc.i3</A>
+</UL>
+<P>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

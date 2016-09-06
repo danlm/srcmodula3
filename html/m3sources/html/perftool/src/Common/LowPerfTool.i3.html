@@ -1,0 +1,115 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: perftool/src/Common/LowPerfTool.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>perftool/src/Common/LowPerfTool.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM>                                                                           </EM></BLOCKQUOTE><PRE>
+</PRE> Last Modified On Wed Mar 23 08:50:50 PST 1994 by kalsow                   
+      Modified On Wed Feb  3 22:48:42 PST 1993 by mjordan                  
+      Modified On Fri May 29 16:46:51 PDT 1992 by muller                   
+
+<P>
+<P><PRE>INTERFACE <interface><A HREF="#x1">LowPerfTool</A></interface>;
+
+IMPORT <A HREF="../../../os/src/Common/File.i3.html">File</A>;
+</PRE> This interface provides procedures to start performance tools AND
+   get a low level communication channel to them. 
+
+<P><PRE>PROCEDURE <A HREF="#x2">Start</A> (name: TEXT; VAR r,w: File.T): BOOLEAN;
+  (* start the tool name.
+     If the operation is successful, return true;
+       r is a file handle connected to stdout of the tool;
+       w is a file handle connected to stdin of the tool.
+     If the operation fails, return false. *)
+
+PROCEDURE <A HREF="#x3">StartAndWait</A> (name: TEXT; VAR r,w: File.T): BOOLEAN;
+  (* start the tool name.
+     If the operation is successul,
+       wait until a byte is written by the tool on its stdout and return TRUE;
+       r is a file handle connected to stdout of the tool;
+       w is a file handle connected to stdin of the  tool.
+     If the operation fails, return FALSE. *)
+
+PROCEDURE <A HREF="#x4">ParamStart</A> (param: TEXT; VAR r,w: File.T): BOOLEAN;
+  (* If the Modula runtime parameter &quot;param&quot; is not set, just
+       return FALSE.
+     Otherwise, use the value of that parameter to determine the name
+       of the tool: it is the name of the parameter if its value is &quot;&quot;,
+       it is the value otherwise.  Return Start (name, r, w). *)
+
+PROCEDURE <A HREF="#x5">ParamStartAndWait</A> (param: TEXT; VAR r,w: File.T): BOOLEAN;
+  (* If the Modula runtime parameter &quot;param&quot; is not set, just
+       return FALSE.
+     Otherwise, use the value of that parameter to determine the name
+       of the tool: it is the name of the parameter if its value is &quot;&quot;,
+       it is the value otherwise.  Return StartAndWait (name, r,w). *)
+
+END LowPerfTool.
+</PRE>
+</inInterface>
+<HR>
+<A NAME="x1">LowPerfTool's implementation  is in:
+</A><UL>
+<LI><A HREF="../POSIX/LowPerfTool.m3.html#0TOP0">perftool/src/POSIX/LowPerfTool.m3</A>
+<LI><A HREF="../WIN32/LowPerfTool.m3.html#0TOP0">perftool/src/WIN32/LowPerfTool.m3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x2">procedure LowPerfTool.Start is in:
+</A><UL>
+<LI><A HREF="../POSIX/LowPerfTool.m3.html#Start">perftool/src/POSIX/LowPerfTool.m3</A>
+<LI><A HREF="../WIN32/LowPerfTool.m3.html#Start">perftool/src/WIN32/LowPerfTool.m3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x3">procedure LowPerfTool.StartAndWait is in:
+</A><UL>
+<LI><A HREF="../POSIX/LowPerfTool.m3.html#StartAndWait">perftool/src/POSIX/LowPerfTool.m3</A>
+<LI><A HREF="../WIN32/LowPerfTool.m3.html#StartAndWait">perftool/src/WIN32/LowPerfTool.m3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x4">procedure LowPerfTool.ParamStart is in:
+</A><UL>
+<LI><A HREF="../POSIX/LowPerfTool.m3.html#ParamStart">perftool/src/POSIX/LowPerfTool.m3</A>
+<LI><A HREF="../WIN32/LowPerfTool.m3.html#ParamStart">perftool/src/WIN32/LowPerfTool.m3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x5">procedure LowPerfTool.ParamStartAndWait is in:
+</A><UL>
+<LI><A HREF="../POSIX/LowPerfTool.m3.html#ParamStartAndWait">perftool/src/POSIX/LowPerfTool.m3</A>
+<LI><A HREF="../WIN32/LowPerfTool.m3.html#ParamStartAndWait">perftool/src/WIN32/LowPerfTool.m3</A>
+</UL>
+<P>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

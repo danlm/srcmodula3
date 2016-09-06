@@ -1,0 +1,72 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: vtext/src/VTVirtual.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>vtext/src/VTVirtual.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM>                                                                           </EM></BLOCKQUOTE><PRE>
+</PRE>      Modified On Mon Sep 14 22:51:21 1987 by jdd 
+
+<P> This module maintains the <CODE>virtual</CODE> screen structures. 
+
+<P><PRE>INTERFACE <interface><A HREF="VTVirtual.m3.html">VTVirtual</A></interface>;
+
+IMPORT <A HREF="../../rw/src/Common/Rd.i3.html">Rd</A>, <A HREF="../../thread/src/Common/Thread.i3.html">Thread</A>;
+IMPORT <A HREF="VTDef.i3.html">VTDef</A>;
+
+TYPE
+  T = VTDef.T;
+  View = VTDef.View;
+  I = VTDef.I;
+
+PROCEDURE <A HREF="VTVirtual.m3.html#Change">Change</A> (vt: T; begin, oEnd, nEnd: I) RAISES {Rd.EndOfFile, Rd.Failure, Thread.Alerted};
+
+PROCEDURE <A HREF="VTVirtual.m3.html#SetStart">SetStart</A> (view : View;
+                    from : I;
+                    n    : CARDINAL := 0;
+                    force: BOOLEAN  := FALSE)
+  RAISES {Rd.EndOfFile, Rd.Failure, Thread.Alerted};
+
+PROCEDURE <A HREF="VTVirtual.m3.html#Update">Update</A> (vt: T) RAISES {Rd.EndOfFile, Rd.Failure, Thread.Alerted};
+
+PROCEDURE <A HREF="VTVirtual.m3.html#UpdateView">UpdateView</A> (view: View) RAISES {Rd.EndOfFile, Rd.Failure, Thread.Alerted};
+
+PROCEDURE <A HREF="VTVirtual.m3.html#Init">Init</A> (view: View; start: I) RAISES {Rd.EndOfFile, Rd.Failure, Thread.Alerted};
+
+PROCEDURE <A HREF="VTVirtual.m3.html#Bad">Bad</A> (view: View) RAISES {Rd.EndOfFile, Rd.Failure, Thread.Alerted};
+
+PROCEDURE <A HREF="VTVirtual.m3.html#Resize">Resize</A> (view: View; n: CARDINAL) RAISES {};
+
+END VTVirtual.
+</PRE>
+</inInterface>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

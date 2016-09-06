@@ -1,0 +1,183 @@
+<HTML>
+<HEAD>
+<TITLE>Modula-3: m3pc home page</TITLE>
+</HEAD>
+<BODY BGCOLOR="#ffffff" VLINK="#006633">
+
+<H2>m3pc: an MSDOS implementation of Modula-3</H2>
+<P>
+
+<B>m3pc</B> is a port of
+<A HREF="srcm3.html">SRC Modula-3</A> version 2.09 to a PC running MSDOS.
+It is available via anonymous ftp from <tt>gatekeeper.dec.com</tt>
+and its <A HREF="ftp.html">mirrors</A> in
+<A HREF="ftp://gatekeeper.dec.com/pub/DEC/Modula-3/contrib/m3pc"><tt>pub/DEC/Modula-3/contrib/m3pc</tt></A>.
+Below are the announcements:
+<P>
+
+<HR>
+<PRE>
+From: charly@samsoef.ifi.uni-klu.ac.at (Karl-Heinz EDER)
+Newsgroups: comp.lang.modula3
+Subject: Announcement of M3PC-Klagenfurt
+Date: 18 Jan 1995 09:38:11 GMT
+Organization: Institut fuer Informatik  Universitaet KLAGENFURT
+
+ANNOUNCEMENT
+------------
+
+We have the pleasure to announce that the  newest release of M3PC-Klagenfurt
+is immediately available on the gatekeeper!
+
+What is M3PC-Klagenfurt ?
+--------------------------
+
+   M3PC-Klagenfurt  (previously called M3PC)  is  a  port  of  the  Modula-3
+   compiler release 2.09 to the MSDOS-PC.
+
+   It translates Modula-3 source into C soure. Therefore you have to install
+   the GNU C-compiler DJGPP as well,  which is distributed, too (see 4). You
+   may of course  use a newer  release of the  GNU C-compiler  or additional
+   compatible libraries.
+
+
+
+What's new ?
+-------------
+
+   The new M3PC-Klagenfurt release supports the following (new) features:
+
+          * library to access DOS files and directories
+          * threads
+          * pickles
+          * a shell
+            (incl. automatic compilation and UNIX like long filenames)
+
+
+Hard- and Software Requirements
+--------------------------------
+
+   (a) Hardware:
+       You will need a PC:
+           *  80486 or 80386 with floatingpoint-coprocessor,
+           *  at least 4 but preferable 8 MByte of RAM,
+           *  20 MByte disk space free at least.
+
+   (b) Software:
+           * DOS 5.00 or higher
+
+
+Necessary Files for Installation
+---------------------------------
+
+   The necessary  files  are  available  at  "gatekeeper.dec.com"  in  the
+   directory "pub/DEC/Modula-3/contrib/m3pc":
+
+              TAR      EXE        39,353 11-07-94  10:11a
+              INSTALL  TXT         5,325 11-10-94   4:57p
+              M3       TAR     6,799,360 11-07-94   4:26p
+              DJGPP    TAR     6,809,600 11-07-94  11:33a
+              M3SRC    TAR     6,871,040 11-07-94  11:36a
+              README               5,331 11-10-94   5:40p
+
+
+
+For further details please see the files README and INSTALL.TXT.
+
+
+What is still to come?
+-----------------------
+
+A  student-friendly environment  with integrated  editor-browser-compiler
+is in the test-phase and should be shipped in course of March.
+The main purpose of the system is to provide an environment for beginners
+and hide unnecessary details of the operating system and run-time support.
+
+It will also be the basis of the examples of the book
+"Programming in style -- An introduction into programming with Modula-3"
+which is also intended first of all for first- and second-semester
+computer science students.
+
+
+Enjoy
+
+     L.Böszörmenyi, C.Weich, K.-H.Eder
+     University of Klagenfurt / AUSTRIA
+     January, the 18th 1995
+
+</PRE>
+
+<HR>
+<PRE>
+From: laszlo@post.ifi.uni-klu.ac.at (Prof.Dr.Laszlo BOESZOERMENYI)
+Subject: M3 pn PC
+
+The Modula-3 system ported by us on the PC and available on the
+gatekeeper, runs with MSDOS, gnu c compiler and djgpp memory
+manager (detailed description in the read me file).
+
+The first version was ported by Klaus Preschern. Carsten Weich rewrote
+the handling of long filenames for the second version.
+
+You may compile, link and run Modula-3 programs, without threads.
+From the library modules only those are tested which are used by
+the compiler.  We are using the actual version for our beginners-course
+and we are working on "student-friendly" programming environmnents and
+a simple windowing graphic-library.
+</PRE>
+
+<HR>
+<PRE>
+From: carsten@post.ifi.uni-klu.ac.at (Carsten WEICH)
+Subject: New version of Modula-3/PC
+Date: 28 Jan 1994 13:25:28 GMT
+
+We have built a new version of Modula-3 running on a PC.
+You will need a PC:
+  *  80486 or 80386 with floatingpoint-coprocessor,
+  *  at least 4 but preferable 8 MByte of RAM,
+  *  20 MByte discspace free at least.
+
+You can run a modified Modula-3 version 2.09 without thread-
+support. Our version features:
+  *  support for Unix-like long filenames
+  *  automatic compilation (to substitute the lack of m3make)
+  *  library to access DOS-files and directories.
+
+We have built a little shell which translates the long filenames you
+type in into DOS-filenames. It has a unix-lookalike "ls"-command.
+There are commands to teach the system new long filenames.
+You can savely move such files around through DOS-directories
+(which was not possible with the first version).
+
+This version accesses DOS-files significantly faster than the first
+version. Especially linking large Modula-3 programs is much faster
+now. On a 50 MHz 80486 with 16 MByte of RAM we measured
+a turn-around time of 2 minutes for a 5 module, 500 lines program.
+If you want to compile only one module you will have to wait
+about one minute.
+
+The necessary files are available at "gatekeeper.dec.com" in
+/pub/DEC/Modula-3/contrib/m3pc:
+
+   Install.txt   please read this first!
+   djgpp.tar     the DJGPP-gnu-C-compiler
+   m3.tar        compiler binaries
+   m3src.tar     sources of the compiler (optional)
+   tar.exe       program to unpack these files
+</PRE>
+
+<HR>
+<A HREF="home.html">[Modula-3 home page]</A>
+<P>
+<A HREF="mailto:m3-request@src.dec.com">
+<ADDRESS>m3-request@src.dec.com</ADDRESS></A>
+<PRE>
+Last modified on Tue Mar 26 11:09:13 PST 1996 by heydon
+     modified on Wed Jan 18 15:37:10 PST 1995 by kalsow
+</PRE>
+
+Copyright (C) 1992, 1996, Digital Equipment Corporation. All rights reserved.<BR>
+See the <A HREF="http://www.research.digital.com/SRC/m3sources/html/COPYRIGHT.html">COPYRIGHT</A> for a full description.
+</BODY>
+</HTML>

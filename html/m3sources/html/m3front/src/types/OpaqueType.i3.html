@@ -1,0 +1,57 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: m3front/src/types/OpaqueType.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>m3front/src/types/OpaqueType.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE> File: OpaqueType.i3                                         
+ Last Modified On Tue Jun 28 10:18:16 PDT 1994 By kalsow     
+
+<P><PRE>INTERFACE <interface><A HREF="OpaqueType.m3.html">OpaqueType</A></interface>;
+
+IMPORT <A HREF="Type.i3.html">Type</A>, <A HREF="../values/Value.i3.html">Value</A>;
+
+PROCEDURE <A HREF="OpaqueType.m3.html#New">New</A> (super: Type.T;  decl: Value.T): Type.T;
+
+PROCEDURE <A HREF="OpaqueType.m3.html#Is">Is</A> (t: Type.T): BOOLEAN;
+
+PROCEDURE <A HREF="OpaqueType.m3.html#Super">Super</A> (t: Type.T): Type.T;
+
+PROCEDURE <A HREF="OpaqueType.m3.html#IsSubtype">IsSubtype</A> (a, b: Type.T): BOOLEAN;
+
+PROCEDURE <A HREF="OpaqueType.m3.html#UID">UID</A> (t: Type.T): INTEGER;
+</PRE><BLOCKQUOTE><EM> if t is an opaque type, return it's uid, otherwise return zero </EM></BLOCKQUOTE><PRE>
+
+END OpaqueType.
+</PRE>
+</inInterface>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

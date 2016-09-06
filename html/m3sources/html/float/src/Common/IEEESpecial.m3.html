@@ -1,0 +1,73 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: float/src/Common/IEEESpecial.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>float/src/Common/IEEESpecial.m3</H2></A><HR>
+<inModule>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM>                                                                           </EM></BLOCKQUOTE><PRE>
+
+UNSAFE MODULE <module><implements><A HREF="IEEESpecial.i3.html">IEEESpecial</A></implements></module>;
+
+IMPORT <A HREF="#x1">RealRep</A>, <A HREF="#x2">LongRealRep</A>;
+
+BEGIN
+  LOOPHOLE (RealNegInf, RealRep.T) := RealRep.NegInf;
+  LOOPHOLE (RealPosInf, RealRep.T) := RealRep.PosInf;
+  LOOPHOLE (RealNan,    RealRep.T) := RealRep.Nan;
+
+  LOOPHOLE (LongNegInf, LongRealRep.T) := LongRealRep.NegInf;
+  LOOPHOLE (LongPosInf, LongRealRep.T) := LongRealRep.PosInf;
+  LOOPHOLE (LongNan,    LongRealRep.T) := LongRealRep.Nan;
+
+  LOOPHOLE (ExtdNegInf, LongRealRep.T) := LongRealRep.NegInf;
+  LOOPHOLE (ExtdPosInf, LongRealRep.T) := LongRealRep.PosInf;
+  LOOPHOLE (ExtdNan,    LongRealRep.T) := LongRealRep.Nan;
+END IEEESpecial.
+</PRE>
+</inModule>
+<HR>
+<A NAME="x1">interface RealRep is in:
+</A><UL>
+<LI><A HREF="../IEEE-be/RealRep.i3.html#0TOP0">float/src/IEEE-be/RealRep.i3</A>
+<LI><A HREF="../IEEE-le/RealRep.i3.html#0TOP0">float/src/IEEE-le/RealRep.i3</A>
+<LI><A HREF="../VAX/RealRep.i3.html#0TOP0">float/src/VAX/RealRep.i3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x2">interface LongRealRep is in:
+</A><UL>
+<LI><A HREF="../IEEE-be/LongRealRep.i3.html#0TOP0">float/src/IEEE-be/LongRealRep.i3</A>
+<LI><A HREF="../IEEE-le/LongRealRep.i3.html#0TOP0">float/src/IEEE-le/LongRealRep.i3</A>
+<LI><A HREF="../VAX/LongRealRep.i3.html#0TOP0">float/src/VAX/LongRealRep.i3</A>
+</UL>
+<P>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

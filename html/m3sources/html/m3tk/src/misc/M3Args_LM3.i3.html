@@ -1,0 +1,245 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: m3tk/src/misc/M3Args_LM3.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>m3tk/src/misc/M3Args_LM3.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+
+INTERFACE <interface>M3Args_LM3</interface>;
+</PRE> \subsection{LM3 formal specification} 
+
+<P><PRE>&lt;* TRAITS M3Args(TEXT FOR S), Text(TEXT FOR S) *&gt;
+</PRE> The following two types are used only within the formal specification
+but must be declared at the M3 level because of current limitations in LM3.
+
+
+<P><PRE>TYPE Key &lt;: REFANY;
+TYPE RefTextArray = REF ARRAY OF TEXT;
+</PRE> The set of registered tools is modelled as the set <CODE>toolSet</CODE>, which
+is a global specification variable. The <CODE>keySet</CODE> specificationvariable
+contains the complete set of keys registered with all tools.  This is
+needed to specify the behaviour if the implementation does not permit
+duplicate keys, which is given by the specification variable
+<CODE>noDuplicates</CODE>.  In addition the {\it master} tool is denoted by
+<CODE>masterTool</CODE>. 
+
+<P><PRE>&lt;*
+  TYPE
+    ToolSet = ASET OF T;
+    KeySet = ASET OF Key;
+
+  VAR
+    toolSet: ToolSet;
+    masterTool: T;
+    currentTool: T;
+    noDuplicates: BOOLEAN;
+*&gt;
+</PRE> A tool is modelled with the following specification fields. 
+
+<P><PRE>&lt;* FIELDS OF T
+  name: TEXT;
+    (* The name of the tool. *)
+  keySet: KeySet;
+    (* The set of keys that have been registered. *)
+  nameToKeyMap: MAP TEXT TO Key;
+    (* A map from key names to keys. *)
+  flagMap: MAP TEXT TO BOOLEAN;
+    (* A map from &quot;Flag&quot; key names to key values. *)
+  stringMap: MAP TEXT TO TEXT;
+    (* A map from &quot;String&quot; key names to key values. *)
+  stringListMap: MAP TEXT TO RefTextArray;
+    (* A map from &quot;StringList&quot; key names to key values. *) *&gt;
+</PRE> The specifications fields of a <CODE>Key</CODE> correspond directly to the
+arguments to the various <CODE>Register</CODE> calls. 
+
+<P><PRE>&lt;* FIELDS OF Key
+  name: TEXT;
+  usage: TEXT;
+  shared: BOOLEAN;
+  opt: Opt; *&gt;
+
+&lt;* PROCEDURE New(toolName, toolDescription, version, master)
+  GLOBALS toolSet, masterTool
+  REQUIRES
+    ((toolName # NIL \and Length(toolName) &gt; 0) \and
+    (toolDescription # NIL \and Length(toolDescription) &gt; 0) \and
+    (version # NIL \and Length(version) &gt; 0))
+  ENSURES (RESULT \in toolSet) \and FRESH(RESULT) \and
+    (master \implies (masterTool = RESULT)) \and
+    RESULT.keySet = {}  \and RESULT.flagMap = {} \and
+    RESULT.stringMap = {} \and RESULT.stringListMap = {} \and
+    RESULT.nameToKeyMap = {} \and RESULT.name = toolName
+  EXCEPT
+    | EXISTS t: T; (t \in toolSet) \and (t.name = toolName) =&gt;
+        RAISEVAL = CHECKEDRTE
+
+PROCEDURE SetMaster(t)
+  GLOBALS masterTool
+  REQUIRES t # NIL
+  ENSURES (masterTool' = t) \and (RESULT = masterTool)
+
+PROCEDURE RegisterFlag(t, argName, usage, shared)
+  GLOBALS noDuplicates, toolSet
+  REQUIRES
+    (t # NIL) \and IsWF_Keyword(argName) \and
+    ((usage # NIL) \and (Length(usage) &gt;= 0))
+  ENSURES
+    EXISTS k: Key; (k \in t.keySet) \and (k.name = argName) \and
+                   (k.shared = shared) \and (k.usage = usage) \and
+                   t.nameToKeyMap = bind(t.nameToKeyMap, argName, k)
+
+  EXCEPT
+  | defined(t.nameToKeyMap, argName) =&gt;
+      RAISEVAL = CHECKEDRTE
+  | noDuplicates \and
+      (FORALL tx: T; (tx \in toolSet) \and
+          (EXISTS k: Key (k \in tx.keySet) \and (k.name = argName) \and
+          \not(k.shared \and shared))) =&gt;
+      RAISEVAL = CHECKEDRTE
+
+PROCEDURE RegisterString(t, argName, usage, opt, shared)
+  GLOBALS noDuplicates, toolSet
+  REQUIRES ((t # NIL) \and IsWF_Keyword(argName)) \and
+              ((usage # NIL) \and (Length(usage) &gt;= 0))
+  ENSURES
+    EXISTS k: Key; (k \in t.keySet) \and (k.name = argName) \and
+                  (k.shared = shared)
+
+  EXCEPT
+  | defined(t.nameToKeyMap, argName) =&gt;
+      RAISEVAL = CHECKEDRTE
+
+  | noDuplicates \and
+      (FORALL tx: T (tx \in toolSet) \and
+          (EXISTS k: Key (k \in tx.keySet) \and (k.name = argName) \and
+          \not(k.shared \and shared))) =&gt;
+      RAISEVAL = CHECKEDRTE
+
+PROCEDURE RegisterStringList(t, argName, usage, opt, shared)
+  GLOBALS noDuplicates, toolSet
+  REQUIRES ((t # NIL) \and IsWF_Keyword(argName)) \and
+           ((usage # NIL) \and (Length(usage) &gt;= 0))
+  ENSURES (EXISTS k: Key; (k \in t.keySet) \and (k.name = argName) \and
+                          (k.shared = shared))
+
+  EXCEPT
+  | defined(t.nameToKeyMap, argName) =&gt;
+      RAISEVAL = CHECKEDRTE
+
+  | noDuplicates \and
+        (FORALL tx: T; (tx \in toolSet) \and
+        (EXISTS k: Key (k \in tx.keySet) \and (k.name = argName) \and
+        \not(k.shared \and shared))) =&gt;
+      RAISEVAL = CHECKEDRTE
+
+PROCEDURE Find(t)
+  GLOBALS toolSet, currentTool
+  REQUIRES t \in toolSet
+  ENSURES (currentTool = t)
+
+  EXCEPT
+  | EXISTS k: Key; (k \in t.keySet) \and (k.opt = Opt.Required) \and
+                    \not(defined(t.flagMap, k.name)) =&gt;
+      RESULT = FALSE
+
+PROCEDURE GetFlag(t, argName)
+  GLOBALS toolSet
+  REQUIRES (t \in toolSet)
+  ENSURES
+    IF defined(t.flagMap, argName) THEN RESULT = t.flagMap[argName]
+    ELSE RESULT = FALSE
+
+  EXCEPT
+  | \not defined(t.nameToKeyMap, argName) =&gt;
+      RAISEVAL = CHECKEDRTE
+
+PROCEDURE GetString(t, argName)
+  GLOBALS toolSet
+  REQUIRES (t \in toolSet)
+  ENSURES
+    IF defined(t.stringMap, argName) THEN RESULT = t.stringMap[argName]
+    ELSE RESULT = NIL
+
+  EXCEPT
+  | \not defined(t.nameToKeyMap, argName) =&gt;
+       RAISEVAL = CHECKEDRTE
+
+PROCEDURE GetStringList(t, argName)
+  GLOBALS toolSet
+  REQUIRES (t \in toolSet)
+  ENSURES
+    IF defined(t.stringListMap, argName) THEN
+        RESULT = t.stringListMap[argName]
+    ELSE RESULT = NIL
+
+  EXCEPT
+  | \not defined(t.nameToKeyMap, argName) =&gt;
+      RAISEVAL = CHECKEDRTE
+
+PROCEDURE SetFlag(t, argName, f)
+  GLOBALS toolSet, noDuplicates
+  REQUIRES (t \in toolSet)
+  ENSURES t.flagMap' = bind(t.flagMap, argName, f) \and
+      (IF noDuplicates \and (t.nameToKeyMap[argName]).shared THEN
+         (FORALL tx: T;
+            (tx \in toolSet) \and defined(tx.flagMap, argName) \implies
+            tx.flagMap' = bind(tx.flagMap, argName, f))
+       ELSE TRUE)
+  EXCEPT
+  | \not defined(t.nameToKeyMap, argName) =&gt;
+      RAISEVAL = CHECKEDRTE
+
+PROCEDURE SetString(t, argName, val)
+  GLOBALS toolSet
+  REQUIRES (t \in toolSet)
+  ENSURES
+    IF val = NIL THEN t.stringMap = delete(t.stringMap, argName)
+    ELSE t.stringMap' = bind(t.stringMap, argName, val)
+  EXCEPT
+  | \not defined(t.nameToKeyMap, argName) =&gt;
+      RAISEVAL = CHECKEDRTE
+
+PROCEDURE SetStringList(t, argName, sl)
+  GLOBALS toolSet
+  REQUIRES (t \in toolSet)
+  ENSURES
+    IF sl = NIL THEN t.stringListMap = delete(t.stringListMap, argName)
+    ELSE t.stringListMap' = bind(t.stringListMap, argName, sl)
+  EXCEPT
+  | \not defined(t.nameToKeyMap, argName) =&gt;
+    RAISEVAL = CHECKEDRTE
+*&gt;
+
+END M3Args_LM3.
+</PRE>
+</inInterface>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

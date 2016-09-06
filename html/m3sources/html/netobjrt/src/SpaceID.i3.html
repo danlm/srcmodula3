@@ -1,0 +1,71 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: netobjrt/src/SpaceID.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>netobjrt/src/SpaceID.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM> SpaceID.i3 </EM></BLOCKQUOTE><PRE>
+</PRE> The <CODE>SpaceID</CODE> interface is used to generate values which uniquely 
+   identify address space instances across space and time. 
+
+<P><PRE>INTERFACE <interface><A HREF="SpaceID.m3.html">SpaceID</A></interface>;
+
+IMPORT <A HREF="../../fingerprint/src/Fingerprint.i3.html">Fingerprint</A>;
+
+TYPE T = Fingerprint.T;
+</PRE> A <CODE>SpaceID.T</CODE> is a value which is sufficiently distinct to
+   identify the address space which generated it among the set of all
+   such address spaces.  Each value contains both an address and
+   a time component, but the exact format is implementation dependent.
+
+
+<P><PRE>PROCEDURE <A HREF="SpaceID.m3.html#Mine">Mine</A>() : T;
+</PRE> <CODE>Mine</CODE> returns the <CODE>T</CODE> value for the current address space.  It is
+    distinct from all other such values in other address spaces.
+<P>
+   Implementation notes:
+<P>
+   The current implementation generates unique values by concatentating
+   the local hardware Ethernet address and the real time clock.
+<P>
+   Any given implementation should be able to support aggregate
+   <CODE>SpaceID.T</CODE> generation at sustained rate of at least one per second
+   per Ethernet address.
+   <P>
+   More detailed specification as to how values are generated
+   is required to ensure uniqueness across multiple implementations.
+
+
+<P><PRE>END SpaceID.
+</PRE>
+</inInterface>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

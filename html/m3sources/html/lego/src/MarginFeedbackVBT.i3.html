@@ -1,0 +1,70 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: lego/src/MarginFeedbackVBT.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>lego/src/MarginFeedbackVBT.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM> </EM></BLOCKQUOTE><PRE>
+&lt;* PRAGMA LL *&gt;
+&lt;* PRAGMA SUBTYPE *&gt;
+</PRE> A <CODE>MarginFeedbackVBT</CODE> is a multi-filter feedback that provides
+   visual feedback to the left of another VBT.  This interface
+   defines a handful of useful ``left-hand sides.'' 
+
+<P><PRE>INTERFACE <interface><A HREF="MarginFeedbackVBT.m3.html">MarginFeedbackVBT</A></interface>;
+
+IMPORT <A HREF="FeedbackVBT.i3.html">FeedbackVBT</A>, <A HREF="Shadow.i3.html">Shadow</A>, <A HREF="../../ui/src/vbt/VBT.i3.html">VBT</A>;
+
+TYPE
+  &lt;* SUBTYPE T &lt;: MultiFilter.T *&gt;
+  <A HREF="MarginFeedbackVBT.m3.html#T">T</A> &lt;: Public;
+  Public = FeedbackVBT.T OBJECT
+           METHODS
+             &lt;* LL.sup &lt;= VBT.mu *&gt;
+             init (ch, marginVBT: VBT.T): T
+           END;
+</PRE> The following procedures create some popular types of
+   <CODE>MarginFeedbackVBT</CODE>s. See Figure~\ref{fig:marginfeedbacks}. 
+
+<P><PRE>PROCEDURE <A HREF="MarginFeedbackVBT.m3.html#NewCheck">NewCheck</A>  (ch: VBT.T; shadow: Shadow.T := NIL): T;
+&lt;* LL.sup &lt;= VBT.mu *&gt;
+
+PROCEDURE <A HREF="MarginFeedbackVBT.m3.html#NewBox">NewBox</A> (ch: VBT.T; shadow: Shadow.T := NIL): T;
+&lt;* LL.sup &lt;= VBT.mu *&gt;
+
+PROCEDURE <A HREF="MarginFeedbackVBT.m3.html#NewBullet">NewBullet</A> (ch: VBT.T; shadow: Shadow.T := NIL): T;
+&lt;* LL.sup &lt;= VBT.mu *&gt;
+
+END MarginFeedbackVBT.
+</PRE>
+</inInterface>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

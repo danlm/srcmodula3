@@ -1,0 +1,68 @@
+This directory contains the html document "Trestle by Example."
+
+This directory can be set-up from the original tar file by
+    gtar --extract --ungzip --file tutorial.tar.gz
+producing
+    ./README
+    ./tutorial.html
+    ./*/tut-*.html
+    ./*/*.ppm.Z
+    ./*/*.ps
+    ./*/*.[im]3
+and a couple of other files in the subdirectories.  The root
+of the document is ./tutorial.html. Links to and in the
+subdirectories are all relative.
+
+However, Ryan named all of his Modula-3 sources with ".[im]3.html"
+extensions. For this files to be read by the
+srcweb/m3sources/src/rebuild script, they cannot have a ".html"
+extension. Hence, the sources have been renamed using the following
+simple csh program:
+
+  $ cd html
+  $ foreach i (*/*.[im][3g].html )
+  $ foreach? echo $i
+  $ foreach? mv $i $i:r
+  $ foreach? end
+  browser/Browser.m3.html
+  checkbox/Checkbox.m3.html
+  common/Colors.i3.html
+  common/Colors.m3.html
+  common/Main.m3.html
+  common/Picture.i3.html
+  common/Picture.m3.html
+  common/Pictures.i3.html
+  common/Pictures.m3.html
+  confirm/Confirm.m3.html
+  confirm/ConfirmVBT.i3.html
+  confirm/ConfirmVBT.m3.html
+  drag/Drag.m3.html
+  draw/Draw.m3.html
+  edit/Edit.m3.html
+  feedback/Feedback.m3.html
+  hello/Hello.m3.html
+  key/Key.m3.html
+  list/List.m3.html
+  menu1/Menu.m3.html
+  menu2/Menu2.m3.html
+  mouse/Mouse.m3.html
+  numeric/Numeric.m3.html
+  overlap/Overlap.m3.html
+  overlay/Overlay.m3.html
+  push/Push.m3.html
+  radio/RadioButtons.m3.html
+  react/React.m3.html
+  rubber/Rubber.m3.html
+  script/Script.m3.html
+  script/Script1.m3.html
+  script/Script2.m3.html
+  scroll/Scroll.m3.html
+  shadow/Main.m3.html
+  source/Source.m3.html
+  switches/Switches.m3.html
+  text/Main.m3.html
+  update/Update.m3.html
+
+This strips the ".html" extension from the Modula-3 sources.
+
+Ryan Stansifer (ryan@cs.unt.edu) at Mon Oct 24 08:28:06 1994

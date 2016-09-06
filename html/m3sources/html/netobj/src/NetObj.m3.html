@@ -1,0 +1,199 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: netobj/src/NetObj.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>netobj/src/NetObj.m3</H2></A><HR>
+<inModule>
+<PRE><A HREF="../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM> NetObj.m3 </EM></BLOCKQUOTE><PRE>
+
+MODULE <module>NetObj</module> EXPORTS <A HREF="../../netobjrt/src/NetObj.i3.html"><implements>NetObj</A></implements>, <A HREF="../../netobjrt/src/TransportRegistry.i3.html"><implements>TransportRegistry</A></implements>;
+
+IMPORT <A HREF="NetObjMon.i3.html">NetObjMon</A>, <A HREF="../../runtime/src/common/RTParams.i3.html">RTParams</A>;
+
+IMPORT <A HREF="../../atom/src/Atom.i3.html">Atom</A>, <A HREF="../../libm3/DS/AtomList.i3.html">AtomList</A>, <A HREF="../../tcp/src/common/IP.i3.html">IP</A>, <A HREF="../../netobjrt/src/SpecialObj.i3.html">SpecialObj</A>, <A HREF="../../netobjrt/src/Transport.i3.html">Transport</A>, <A HREF="../../netobjrt/src/NetObjInit.i3.html">NetObjInit</A>, <A HREF="NetObjMonInit.i3.html">NetObjMonInit</A>,
+       <A HREF="../../tcpnetobj/src/TCPNetObj.i3.html">TCPNetObj</A>, <A HREF="../../tcpnetobj/src/TCPTransport.i3.html">TCPTransport</A>, <A HREF="../../thread/src/Common/Thread.i3.html">Thread</A>;
+
+&lt;*NOWARN*&gt; IMPORT <A HREF="../../netobjrt/src/ListPkl.i3.html">ListPkl</A>;   (* remove when the special is added to List pkg *)
+&lt;*NOWARN*&gt; IMPORT <A HREF="../../netobjrt/src/AtomPkl.i3.html">AtomPkl</A>;   (* remove when the special is added to Atom pkg *)
+
+&lt;* PRAGMA LL *&gt;
+
+PROCEDURE <A NAME="Locate"><procedure>Locate</procedure></A>(host: TEXT) : Address
+    RAISES {Invalid, Error} =
+  VAR ep: IP.Endpoint;
+  BEGIN
+    TRY
+      IF NOT IP.GetHostByName(host, ep.addr) THEN RAISE Invalid; END;
+      ep.port := IP.NullPort;
+    EXCEPT
+    | IP.Error(ec) =&gt; RAISE Error(AtomList.Cons(CommFailure, ec));
+    END;
+    RETURN TCPNetObj.Locate(ep);
+  END Locate;
+
+PROCEDURE <A NAME="Export"><procedure>Export</procedure></A>(name: TEXT; obj: T; where: Address := NIL)
+    RAISES {Error, Thread.Alerted} =
+  BEGIN
+    CheckMonitorExport();
+    GetSpecial(where).put(name, obj);
+  END Export;
+
+PROCEDURE <A NAME="Import"><procedure>Import</procedure></A>(name: TEXT; where: Address := NIL) : T
+    RAISES {Error, Thread.Alerted} =
+  BEGIN
+    CheckMonitorExport();
+    RETURN GetSpecial(where).get(name);
+  END Import;
+</PRE> assume this is initialized in main body 
+ no mutex is needed 
+
+<P><PRE>CONST MaxTransports = 10;
+VAR transports: ARRAY [0..MaxTransports-1] OF Transport.T;
+VAR lastTransport: CARDINAL;
+
+PROCEDURE <A NAME="LocationFromAdr"><procedure>LocationFromAdr</procedure></A>(where: Address) : Transport.Location =
+  VAR loc: Transport.Location;
+  BEGIN
+    IF where # NIL THEN
+      FOR i := 0 TO lastTransport DO
+        FOR j := 0 TO LAST(where^) DO
+          loc := transports[i].fromEndpoint(where[j]);
+          IF loc # NIL THEN RETURN loc; END;
+        END;
+      END;
+    END;
+    RETURN NIL;
+  END LocationFromAdr;
+
+PROCEDURE <A NAME="LocalAdr"><procedure>LocalAdr</procedure></A>() : Address =
+  VAR
+    adr := NEW(Address, lastTransport+1);
+  BEGIN
+    FOR i := 0 TO lastTransport DO
+      adr[i] := transports[i].toEndpoint();
+    END;
+    RETURN adr;
+  END LocalAdr;
+
+REVEAL
+  <A NAME="Iterator">Iterator</A> = IteratorPublic BRANDED OBJECT
+    i: CARDINAL := 0;
+  OVERRIDES
+    next := IteratorNext;
+  END;
+
+EXCEPTION FatalError; &lt;* FATAL FatalError *&gt;
+
+PROCEDURE <A NAME="Iterate"><procedure>Iterate</procedure></A> (): Iterator =
+  BEGIN
+    RETURN NEW (Iterator);
+  END Iterate;
+
+PROCEDURE <A NAME="IteratorNext"><procedure>IteratorNext</procedure></A> (it: Iterator; VAR (*OUT*) tr: Transport.T): BOOLEAN =
+  BEGIN
+    IF it.i &gt; lastTransport + 1 THEN
+      RAISE FatalError
+    ELSIF it.i = lastTransport + 1 THEN
+      INC (it.i);
+      RETURN FALSE;
+    ELSE
+      tr := transports[it.i];
+      INC (it.i);
+      RETURN TRUE;
+    END;
+  END IteratorNext;
+
+VAR
+  mu := NEW(MUTEX);
+  localSpecialObj: SpecialObj.ST := NIL;
+
+PROCEDURE <A NAME="GetSpecial"><procedure>GetSpecial</procedure></A>(where: Address) : SpecialObj.ST
+    RAISES {Error} =
+  VAR loc: Transport.Location;
+  BEGIN
+    IF where = NIL THEN
+      LOCK mu DO
+        IF localSpecialObj # NIL THEN RETURN localSpecialObj; END;
+        loc := LocationFromAdr(TCPNetObj.Locate(IP.NullEndPoint));
+        &lt;* ASSERT loc # NIL *&gt;
+        localSpecialObj := SpecialObj.New(loc);
+        RETURN localSpecialObj;
+      END;
+    ELSE
+      loc := LocationFromAdr(where);
+      IF loc = NIL THEN RAISE Error(AtomList.List1(NoTransport)); END;
+      RETURN SpecialObj.New(loc);
+    END;
+  END GetSpecial;
+
+VAR &lt;* LL &gt;= {mu} *&gt;
+  exportMonitor   := RTParams.IsPresent(&quot;ngcmonitor&quot;);
+  monitorExported := FALSE;
+
+PROCEDURE <A NAME="CheckMonitorExport"><procedure>CheckMonitorExport</procedure></A> () =
+  BEGIN
+    LOCK mu DO
+      IF exportMonitor AND NOT monitorExported THEN
+      	EVAL Thread.Fork(NEW (Thread.Closure, apply := ExportMonitor));
+        monitorExported := TRUE;
+      END;
+    END;
+  END CheckMonitorExport;
+
+PROCEDURE <A NAME="ExportMonitor"><procedure>ExportMonitor</procedure></A> (&lt;*UNUSED*&gt; cl: Thread.Closure): REFANY =
+  BEGIN
+    NetObjMon.Register();
+      (* this export will fail silently if there is no listener on
+      	 the daemon port yet *)
+    RETURN NIL;
+  END ExportMonitor;
+
+BEGIN
+  CommFailure := Atom.FromText(&quot;NetObj.CommFailure&quot;);
+  MissingObject := Atom.FromText(&quot;NetObj.MissingObject&quot;);
+  NoResources := Atom.FromText(&quot;NetObj.NoResources&quot;);
+  NoTransport := Atom.FromText(&quot;NetObj.NoTransport&quot;);
+  UnsupportedDataRep := Atom.FromText(&quot;NetObj.UnsupportedDataRep&quot;);
+  Alerted := Atom.FromText(&quot;NetObj.Alerted&quot;);
+
+  transports[0] := TCPTransport.New();
+  lastTransport := 0;
+
+  NetObjInit.InitAgentStubs();
+  NetObjInit.InitVoucherStubs();
+  NetObjMonInit.InitMonitorStubs();
+  NetObjMonInit.InitRegistryStubs();
+
+END NetObj.
+</PRE>
+</inModule>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

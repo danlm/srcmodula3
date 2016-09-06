@@ -1,0 +1,15 @@
+(* A client for ComputeServer. *)
+
+module ComputeClient;
+
+let computeServer = 
+  net_import("ObliqComputeServer", "");
+
+(*
+let rexec = proc(p) computeServer.rexec(p) end;
+let lexec = proc(p) (computeServer.lexec)(p) end;
+
+var x = 0;
+rexec(proc() x:=x+1 end);
+lexec(proc() x:=x+1 end);
+*)

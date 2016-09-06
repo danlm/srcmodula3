@@ -1,0 +1,158 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: gef/src/GEFView.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>gef/src/GEFView.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+
+INTERFACE <interface><A HREF="GEFView.m3.html">GEFView</A></interface>;
+
+IMPORT <A HREF="../../zeus/src/Algorithm.i3.html">Algorithm</A>, <A HREF="../../bundleintf/src/Bundle.i3.html">Bundle</A>, <A HREF="../../libm3/DS/RefList.i3.html">RefList</A>, <A HREF="../../thread/src/Common/Thread.i3.html">Thread</A>, <A HREF="../../zeus/src/View.i3.html">View</A> AS ZeusView;
+</PRE> The simplest way to get a mentor algorithm is to create a pair of
+   of SLisp programs.  One implements the algorithm, the other the view.
+   Call the procedure <CODE>Create</CODE> in your main program 
+
+<P><PRE>PROCEDURE <A HREF="GEFView.m3.html#Create">Create</A>(sessionName: TEXT; views, algs, codeViews: RefList.T := NIL);
+  (* Creates a zeus session named &quot;sessionName&quot; with algorithms, views and
+     codeviews.
+
+     &quot;views&quot; is an association list of view names and GEF view file names.
+     &quot;algs&quot; is an association list of algorithm names and GEF algorithm file names.
+     &quot;codeview&quot; is an association list of codeview names and code view file names.
+
+     All of the files (algorithm, view and codeview) are looked for as
+     resources.
+
+     There will also be a transcript view for the session.
+  *)
+
+TYPE
+  <A HREF="GEFView.m3.html#ViewClass">ViewClass</A> &lt;: ZeusView.T;
+  <A HREF="GEFView.m3.html#View">View</A> &lt;: ViewPublic;
+  ViewPublic = ViewClass OBJECT
+  METHODS
+    init(): View;
+  END;
+
+TYPE
+  <A HREF="GEFView.m3.html#AlgClass">AlgClass</A> &lt;: Algorithm.T;
+  <A HREF="GEFView.m3.html#Alg">Alg</A> &lt;: AlgPublic;
+  AlgPublic = AlgClass OBJECT
+  METHODS
+    init(algFile: TEXT; viewFiles: RefList.T): Alg;
+
+    (* Initializes the algorithm to run using &quot;algFile&quot; and the views
+       to use &quot;viewFiles&quot;.
+
+       &quot;viewFiles&quot; is an association list of view name, view file name pairs.
+       Each view looks up its name in the list and initializes itself from
+       the associated GEF file.
+
+       Each view file is SLisp with the following  extensions:
+
+       (get element FieldName) Returns the value of the field &quot;FieldName&quot;
+                               of the GEF &quot;element&quot;.
+
+       (set element FieldName value) Sets the value of the field &quot;FieldName&quot;
+                               of GEF &quot;element&quot; to &quot;value&quot;.
+
+       (delete element) Deletes the GEF &quot;element&quot; from the view.
+
+       (Feedback name args) calls a function named &quot;name&quot; in the algorithm's
+                            SLisp code with &quot;args&quot;.  &quot;Feedback&quot; can only
+                            be called from the view's MouseFeedback function.
+                            &quot;Feedback&quot; produces a Zeus &quot;FEEDBACK&quot; event.
+
+       A view file can also include a number of graphics elements and
+       animation actions as defined in GEF.i3
+
+       If a view has a function named &quot;MouseFeedback&quot; it is called whenever
+       the user selects in the view with the mouse.  It takes 5 arguments.
+
+       pos - the world coordinate position of the selection (a list of
+             two real values, the horizontal and vertical positions)
+       vertices   - A list of the graphical elements (a different list for
+       highlights   each type) that are at the selected position.  If the
+       edges        list is NIL, then there are no elements of that type
+       polygons     at the selected point.
+
+       &quot;algFile&quot; must be a GEF algorithm file, which is SLisp with the following
+       extensions:
+
+       (Event name args)  call the event &quot;name&quot; with &quot;args&quot;.
+       (Update name args) &quot;name&quot; is a string giving the name of a function
+                          defined in the file given to &quot;Init&quot;.
+                          &quot;args&quot; is a list which is passed to the function.
+                          &quot;Event&quot; is a Zeus &quot;OUTPUT&quot; event while &quot;Update&quot;
+                          is a Zeus &quot;UPDATE&quot; event.  Their only difference
+                          is in the Zeus locking level.
+
+                          Note: each top-level element in args is evaluated
+                               before being passed
+                         ex: (Event &quot;growbox&quot; (&quot;BoxA&quot; (+ 3.3 i)))
+
+       (Pause)           call the event &quot;Pause&quot; which is a null event
+                         that is provided as a convenient stepping point
+
+       (CodeViewEvent line) display &quot;line&quot; (an integer) in the code view
+       (CodeViewProc proc)  display procedure &quot;proc&quot; (a string) in the code view
+       (CodeViewExit)       exit the current procedure in the code view
+
+       (StartFeedback)  calls the Zeus StartFeedback and EndFeedbac procedures
+       (EndFeedback)    so the algorithm can prompt the user for input.
+    *)
+  END;
+
+ PROCEDURE <A HREF="GEFView.m3.html#Init">Init</A> (alg: AlgClass; file: TEXT) RAISES {Thread.Alerted};
+</PRE><BLOCKQUOTE><EM> Initialize the GEFView with <CODE>file</CODE> (must be a file in gef format </EM></BLOCKQUOTE><PRE>
+
+PROCEDURE <A HREF="GEFView.m3.html#Event">Event</A> (alg: AlgClass; name: TEXT; data: RefList.T)
+  RAISES {Thread.Alerted};
+    (*Invoke the event &quot;name&quot; with &quot;data&quot; in the GEFView *)
+
+PROCEDURE <A HREF="GEFView.m3.html#Update">Update</A> (alg: AlgClass; name: TEXT; data: RefList.T)
+  RAISES {Thread.Alerted};
+ (* Invoke the update event &quot;name&quot; with &quot;data&quot; in the GEFView *)
+
+PROCEDURE <A HREF="GEFView.m3.html#Pause">Pause</A>(alg: AlgClass) RAISES {Thread.Alerted};
+ (* Invoke the &quot;pause&quot; event, a null event convenient for stepping *)
+
+PROCEDURE <A HREF="GEFView.m3.html#GetBundle">GetBundle</A>(): Bundle.T;
+ (* Returns a bundle containing GEF resources *)
+
+PROCEDURE <A HREF="GEFView.m3.html#RegisterSession">RegisterSession</A>();
+ (* Initialization code *)
+
+END GEFView.
+</PRE>
+</inInterface>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

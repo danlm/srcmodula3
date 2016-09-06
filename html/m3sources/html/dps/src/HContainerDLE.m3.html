@@ -1,0 +1,139 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: dps/src/HContainerDLE.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>dps/src/HContainerDLE.m3</H2></A><HR>
+<inModule>
+<PRE><A HREF="../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+
+MODULE <module><implements><A HREF="HContainerDLE.i3.html">HContainerDLE</A></implements></module>;
+
+IMPORT <A HREF="DisplayList.i3.html">DisplayList</A>, <A HREF="DPS.i3.html">DPS</A>, <A HREF="DPSWindow.i3.html">DPSWindow</A>, <A HREF="Linked2Tree.i3.html">Linked2Tree</A>, <A HREF="#x1">Err</A>;
+
+PROCEDURE <A NAME="Repaint"><procedure>Repaint</procedure></A> (e: E; box: DPS.Box; only: REFANY := NIL): TEXT =
+  BEGIN
+  TYPECASE only OF
+    NULL =&gt; RETURN DisplayList.Repaint (e, box, NIL);
+            (* Goal: paint my children. *)
+  | E(ee)=&gt;
+      IF ee = e THEN
+        RETURN DisplayList.Repaint (e, box, NIL);
+       ELSE
+        Err.Msg (&quot;ee # e in HContainerDLE.Repaint&quot;);
+        RETURN ee.Repaint (box, only);
+        END;
+    ELSE
+      &lt;*ASSERT FALSE*&gt;
+    END;
+  END Repaint;
+
+PROCEDURE <A NAME="Initialize"><procedure>Initialize</procedure></A> (e: E;  &lt;*UNUSED*&gt; window: DPSWindow.T) =
+  BEGIN
+  IF e.initialized THEN RETURN; END;
+  e.initialized := TRUE;
+  END Initialize;
+
+PROCEDURE <A NAME="Mouse"><procedure>Mouse</procedure></A> (e: E; window: DPSWindow.T; event: DPS.MouseEvent): BOOLEAN =
+  BEGIN
+  Initialize(e, window);
+  RETURN DisplayList.Mouse (e, window, event);
+  END Mouse;
+
+PROCEDURE <A NAME="Char"><procedure>Char</procedure></A> (t: T; window: DPSWindow.T; char: CHAR): BOOLEAN =
+ VAR e: E;
+  BEGIN
+  Initialize(t, window);
+  e := t.childWithInputFocus;
+  IF e#NIL THEN RETURN e.Char (window, char); END;
+  RETURN FALSE;
+  END Char;
+
+PROCEDURE <A NAME="Prepend"><procedure>Prepend</procedure></A> (t: Linked2Tree.T; e: Linked2Tree.E) =
+  BEGIN
+  Linked2Tree.Prepend (t, e);
+  Rearrange (t);
+  END Prepend;
+
+PROCEDURE <A NAME="Append"><procedure>Append</procedure></A> (t: Linked2Tree.T; e: Linked2Tree.E) =
+  BEGIN
+  Linked2Tree.Append (t, e);
+  Rearrange (t);
+  END Append;
+
+PROCEDURE <A NAME="Remove"><procedure>Remove</procedure></A> (e: Linked2Tree.E) =
+ VAR me: T;
+  BEGIN
+  me := e.parent;
+  Linked2Tree.Remove (e);
+  Rearrange (me);
+  END Remove;
+
+PROCEDURE <A NAME="MakeChildLast"><procedure>MakeChildLast</procedure></A> (t: Linked2Tree.T;
+                         &lt;*UNUSED*&gt; e: Linked2Tree.E): Linked2Tree.E =
+  BEGIN
+  (* Since our children are not overlapped, we can maintain their order. *)
+  (* Important as we use the ordering as the left-to-right order. *)
+  RETURN t.MoveToLast();
+  END MakeChildLast;
+
+PROCEDURE <A NAME="Rearrange"><procedure>Rearrange</procedure></A> (me: T) =
+ VAR ee: DisplayList.E;
+ VAR x, h, w, maxH: REAL;
+  BEGIN
+  maxH := 0.0;
+  x := me.box.low.x;
+  ee := me.First();
+  IF ee = NIL THEN me.box.high.x := x; RETURN; END;
+  WHILE ee # NIL DO
+    w := ee.box.high.x - ee.box.low.x;
+    h := ee.box.high.y - ee.box.low.y;
+    maxH := MAX (maxH, h);
+    ee.box.low.y := me.box.low.y; ee.box.high.y := ee.box.low.y + h;
+    ee.box.low.x := x; ee.box.high.x := x + w;
+    x := x + w + me.separation;
+    ee := ee.Next();
+    END;
+  me.box.high.x := x - me.separation;
+  me.box.high.y := me.box.low.y + maxH;
+  END Rearrange;
+
+  BEGIN
+  END HContainerDLE.
+</PRE>
+</inModule>
+<HR>
+<A NAME="x1">interface Err is in:
+</A><UL>
+<LI><A HREF="Err.i3.html#0TOP0">dps/src/Err.i3</A>
+<LI><A HREF="../../m3tk/src/misc/Err.i3.html#0TOP0">m3tk/src/misc/Err.i3</A>
+</UL>
+<P>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

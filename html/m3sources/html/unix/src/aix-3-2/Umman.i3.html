@@ -1,0 +1,147 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: unix/src/aix-3-2/Umman.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>unix/src/aix-3-2/Umman.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM>                                                                           </EM></BLOCKQUOTE><PRE>
+
+INTERFACE <interface>Umman</interface>;
+
+FROM <A HREF="../../../C/src/Common/Ctypes.i3.html">Ctypes</A> IMPORT int;
+FROM <A HREF="#x1">Utypes</A> IMPORT caddr_t, size_t, off_t;
+</PRE>** sys/mman.h **
+
+<P><PRE>CONST
+</PRE><BLOCKQUOTE><EM> protections are chosen from these bits, or-ed together </EM></BLOCKQUOTE><PRE>
+  PROT_NONE  = 0;		(* no access to these pages *)
+  PROT_READ  = 16_1;		(* pages can be read *)
+  PROT_WRITE = 16_2;		(* pages can be written *)
+  PROT_EXEC  = 16_4;		(* pages can be executed *)
+</PRE> flags contain sharing type, mapping type, and options 
+
+<P> mapping visibility: choose either SHARED or PRIVATE 
+  <PRE>MAP_SHARED  = 16_1;		(* share changes *)
+  MAP_PRIVATE = 16_2;		(* changes are private *)
+</PRE> mapping region: choose either FILE or ANONYMOUS 
+  <PRE>MAP_FILE    = 16_00;		(* map from a file *)
+  MAP_ANONYMOUS = 16_10;	(* map an unnamed region *)
+  MAP_ANON    = 16_10;		(* map an unnamed region *)
+  MAP_TYPE    = 16_f0;		(* the type of the region *)
+</PRE> mapping placement: choose either FIXED or VARIABLE 
+  <PRE>MAP_FIXED   = 16_100;		(* map addr must be exactly as specified *)
+  MAP_VARIABLE = 16_0;		(* system can place new region *)
+</PRE> advice to madvise 
+  <PRE>MADV_NORMAL     = 0;		(* no further special treatment *)
+  MADV_RANDOM     = 1;		(* expect random page references *)
+  MADV_SEQUENTIAL = 2;		(* expect sequential page references *)
+  MADV_WILLNEED   = 3;		(* will need these pages *)
+  MADV_DONTNEED   = 4;		(* dont need these pages *)
+  MADV_SPACEAVAIL = 5;		(* ensure that resources are available *)
+</PRE> msem conditions and structure 
+<PRE>TYPE msemaphore = RECORD
+  msem_state: int;		(* The semaphore is locked if non-zero. *)
+  msem_wanted: int;		(* Processes are waiting on the semaphore. *)
+END;
+
+CONST
+  MSEM_UNLOCKED = 0;		(* Initialize the semaphore to unlocked *)
+  MSEM_LOCKED = 1;		(* Initialize the semaphore to locked *)
+  MSEM_IF_NOWAIT = 2;		(* Do not wait if semaphore is locked *)
+  MSEM_IF_WAITERS = 3;		(* Unlock only if there are waiters *)
+
+  MS_ASYNC        = 1;		(* Asynchronous cache flush *)
+  MS_SYNC         = 3;		(* Synchronous cache flush *)
+  MS_INVALIDATE   = 4;		(* Invalidate cached pages *)
+
+&lt;*EXTERNAL*&gt;
+PROCEDURE madvise (addr: caddr_t; len: size_t; behav: int): int;
+
+&lt;*EXTERNAL*&gt;
+PROCEDURE mmap (addr: caddr_t; len: size_t; prot,flags,fd: int; off: off_t)
+  : caddr_t;
+
+&lt;*EXTERNAL*&gt;
+PROCEDURE msync (addr: caddr_t; len: size_t; flags: int): int;
+
+&lt;*EXTERNAL*&gt;
+PROCEDURE munmap (addr: caddr_t; len: size_t): int;
+
+&lt;*EXTERNAL*&gt;
+PROCEDURE mprotect (addr: caddr_t; len: size_t; prot: int): int;
+
+&lt;*EXTERNAL*&gt;
+PROCEDURE mincore (addr: caddr_t; len: size_t; vec: ADDRESS): int;
+
+&lt;*EXTERNAL*&gt;
+PROCEDURE msem_init (sem: REF msemaphore; initial_value: int): REF msemaphore;
+
+&lt;*EXTERNAL*&gt;
+PROCEDURE msem_lock (sem: REF msemaphore; condition: int): int;
+
+&lt;*EXTERNAL*&gt;
+PROCEDURE msem_remove (sem: REF msemaphore): int;
+
+&lt;*EXTERNAL*&gt;
+PROCEDURE msem_unlock (sem: REF msemaphore; condition: int): int;
+
+END Umman.
+</PRE>
+</inInterface>
+<HR>
+<A NAME="x1">interface Utypes is in:
+</A><UL>
+<LI><A HREF="Utypes.i3.html#0TOP0">unix/src/aix-3-2/Utypes.i3</A>
+<LI><A HREF="../aix-ps2-1-2/Utypes.i3.html#0TOP0">unix/src/aix-ps2-1-2/Utypes.i3</A>
+<LI><A HREF="../freebsd-1/Utypes.i3.html#0TOP0">unix/src/freebsd-1/Utypes.i3</A>
+<LI><A HREF="../freebsd-2/Utypes.i3.html#0TOP0">unix/src/freebsd-2/Utypes.i3</A>
+<LI><A HREF="../hpux-7-0/Utypes.i3.html#0TOP0">unix/src/hpux-7-0/Utypes.i3</A>
+<LI><A HREF="../ibm-4-3/Utypes.i3.html#0TOP0">unix/src/ibm-4-3/Utypes.i3</A>
+<LI><A HREF="../irix-5.2/Utypes.i3.html#0TOP0">unix/src/irix-5.2/Utypes.i3</A>
+<LI><A HREF="../linux/Utypes.i3.html#0TOP0">unix/src/linux/Utypes.i3</A>
+<LI><A HREF="../osf-1.ALPHA_OSF/Utypes.i3.html#0TOP0">unix/src/osf-1.ALPHA_OSF/Utypes.i3</A>
+<LI><A HREF="../osf-1.DS3100/Utypes.i3.html#0TOP0">unix/src/osf-1.DS3100/Utypes.i3</A>
+<LI><A HREF="../solaris-2-x/Utypes.i3.html#0TOP0">unix/src/solaris-2-x/Utypes.i3</A>
+<LI><A HREF="../sunos-4-x/Utypes.i3.html#0TOP0">unix/src/sunos-4-x/Utypes.i3</A>
+<LI><A HREF="../sysv-4.0/Utypes.i3.html#0TOP0">unix/src/sysv-4.0/Utypes.i3</A>
+<LI><A HREF="../ultrix-3-1.AP3000/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.AP3000/Utypes.i3</A>
+<LI><A HREF="../ultrix-3-1.ARM/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.ARM/Utypes.i3</A>
+<LI><A HREF="../ultrix-3-1.DS3100/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.DS3100/Utypes.i3</A>
+<LI><A HREF="../ultrix-3-1.NEXT/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.NEXT/Utypes.i3</A>
+<LI><A HREF="../ultrix-3-1.SEQUENT/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.SEQUENT/Utypes.i3</A>
+<LI><A HREF="../ultrix-3-1.SUN3/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.SUN3/Utypes.i3</A>
+<LI><A HREF="../ultrix-3-1.SUN386/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.SUN386/Utypes.i3</A>
+<LI><A HREF="../ultrix-3-1.UMAX/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.UMAX/Utypes.i3</A>
+<LI><A HREF="../ultrix-3-1.VAX/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.VAX/Utypes.i3</A>
+</UL>
+<P>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

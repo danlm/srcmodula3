@@ -1,0 +1,92 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: pkgobj/src/Common/PkgErr.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>pkgobj/src/Common/PkgErr.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM> PkgErr.i3 </EM></BLOCKQUOTE><PRE>
+
+INTERFACE <interface><A HREF="PkgErr.m3.html">PkgErr</A></interface>;
+
+IMPORT <A HREF="../../../atom/src/Atom.i3.html">Atom</A>, <A HREF="../../../libm3/DS/AtomList.i3.html">AtomList</A>, <A HREF="../../../os/src/Common/OSError.i3.html">OSError</A>;
+
+CONST ErrPrefix = &quot;PkgErr.&quot;;
+
+TYPE T = Atom.T;       (* includes OSError.E and NetObj.T codes as well *)
+                       (* MapError converts to local form where possible *)
+     TL = AtomList.T;
+
+VAR  (* errors for all interfaces *)
+  IOError, NoRoomInFS, ImportError, Aborted,
+  InvalidCredentials,  BadParameter, ServerProblem,
+  AccessViolation, NoSuchPackage, NoSuchFile, NoSuchDir: T;
+
+VAR (* PackageObj errors *)
+  SourceFailed: T;
+</PRE> Siphon errors 
+
+<P><PRE>VAR NoSuchSite, NoReplicas: T;
+</PRE> Lock errors 
+
+<P><PRE>VAR
+    (* errors raised by PackageDB implementation *)
+  PackageNameInUse,       (* can't create, package exists *)
+  BadVersionStamp,        (* version timestamps didn't agree !! *)
+  StaleVersion,           (* can't commit, (ver &lt; curVer) *)
+  OldLocalVersion,        (* can't lock, local version not up to date *)
+  OutstandingVersion,     (* can't unlock, local version # last *)
+    (* errors specific to PackageLock.def *)
+  PackageManagedRemotely, (* Remove,Unlock: package not managed here *)
+    (* errors specific to siphon installations *)
+  PackageNotManaged,      (* no managing site - database inconsistency *)
+  PackageMultiplyManaged, (* multiple managing site - database inconsistency *)
+  RemoteLockProblem,      (* problem with lock server at remote site *)
+  LockServerDown,         (* problem with lock server somewhere *)
+  DirNameInUse,           (* can't create, parent dir exists *)
+  ParentDirExists,        (* can't create, parent directory exists *)
+  DirNotEmpty : T;        (* can't delete, directory not empty *)
+
+EXCEPTION E(TL);
+
+PROCEDURE <A HREF="PkgErr.m3.html#MapOSError">MapOSError</A>(code: OSError.Code) : TL;
+   (* maps several OS errors into a machine-independent form *)
+
+PROCEDURE <A HREF="PkgErr.m3.html#Msg">Msg</A>(t: TL) : TEXT;
+   (* produces a message suitable for user consumption *)
+
+PROCEDURE <A HREF="PkgErr.m3.html#Raise">Raise</A>(a: T; e: TL := NIL) RAISES {E};
+   (* raise the supplied error &quot;a&quot;, appending &quot;e&quot; *)
+
+END PkgErr.
+</PRE>
+</inInterface>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

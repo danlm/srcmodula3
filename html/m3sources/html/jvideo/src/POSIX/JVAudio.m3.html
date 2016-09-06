@@ -1,0 +1,119 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: jvideo/src/POSIX/JVAudio.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>jvideo/src/POSIX/JVAudio.m3</H2></A><HR>
+<inModule>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE> this is the <CODE>nice</CODE> interface to Jva.i3 which provides connections to the
+   local audio server.  These Ts are shared if possible and the connection
+   only closed if the T has no more clients. 
+
+<P><PRE>MODULE <module><implements><A HREF="JVAudio.i3.html">JVAudio</A></implements></module>;
+
+IMPORT <A HREF="../../../libm3/DS/AtomList.i3.html">AtomList</A>, <A HREF="Jv.i3.html">Jv</A>, <A HREF="#x1">Jva</A>, <A HREF="../../../os/src/Common/OSError.i3.html">OSError</A>, <A HREF="../../../types/src/Refany.i3.html">Refany</A>, <A HREF="../../../text/src/Text.i3.html">Text</A>, <A HREF="../../../libm3/DS/TextRefTbl.i3.html">TextRefTbl</A>, <A HREF="../../../thread/src/Common/Thread.i3.html">Thread</A>, <A HREF="../../../weakref/src/WeakRef.i3.html">WeakRef</A>;
+
+REVEAL
+  <A NAME="T">T</A> = Jva.T BRANDED OBJECT
+        hostname: TEXT;
+        count   : CARDINAL := 0;
+        open               := FALSE;
+      OVERRIDES
+        close := Close;
+      END;
+
+PROCEDURE <A NAME="Close"><procedure>Close</procedure></A> (t: T) =
+  VAR ref: Refany.T;
+  BEGIN
+    LOCK t DO
+      IF t.count &gt; 1 THEN
+        DEC(t.count);
+      ELSIF t.count = 1 THEN
+        DEC(t.count);
+        IF t.open THEN
+          Jv.T.close(t);
+          LOCK mutex DO
+            EVAL tbl.delete(t.hostname, ref); END;
+        END;
+      END;
+    END;
+  END Close;
+
+PROCEDURE <A NAME="New"><procedure>New</procedure></A> (hostname: TEXT): T RAISES {OSError.E, Thread.Alerted} =
+  VAR
+    ref: Refany.T;
+    res: T;
+  BEGIN
+    IF hostname = NIL OR Text.Empty(hostname) THEN
+      RAISE OSError.E(AtomList.List1(Jva.invalidHostname));
+    END;
+    LOCK mutex DO
+      IF tbl.get(hostname, ref) THEN
+        res := NARROW(ref, T);
+      ELSE
+        (* create a new one *)
+        res := NEW(T).init();
+        res.connect(hostname);
+        EVAL WeakRef.FromRef(res, CleanUp);
+        EVAL tbl.put(hostname, res);
+      END;
+    END;
+    LOCK res DO
+      res.open := TRUE;
+      res.hostname := hostname;
+      INC(res.count);
+    END;
+    RETURN res;
+  END New;
+</PRE> -- weak ref stuff -- 
+<PRE>PROCEDURE <A NAME="CleanUp"><procedure>CleanUp</procedure></A> (&lt;*UNUSED*&gt; READONLY w: WeakRef.T; r: REFANY) =
+  BEGIN
+    WITH t = NARROW(r, T) DO
+      (* don't need to lock t now *)
+      IF t.open THEN Jv.T.close(t); END;
+    END;
+  END CleanUp;
+
+VAR
+  mutex := NEW(Thread.Mutex);
+  tbl   := NEW(TextRefTbl.Default).init(3);
+BEGIN
+END JVAudio.
+</PRE>
+</inModule>
+<HR>
+<A NAME="x1">interface Jva is in:
+</A><UL>
+<LI><A HREF="Jva.i3.html#0TOP0">jvideo/src/POSIX/Jva.i3</A>
+<LI><A HREF="../WIN32/Jva.i3.html#0TOP0">jvideo/src/WIN32/Jva.i3</A>
+</UL>
+<P>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

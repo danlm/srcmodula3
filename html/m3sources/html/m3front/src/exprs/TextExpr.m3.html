@@ -1,0 +1,222 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: m3front/src/exprs/TextExpr.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>m3front/src/exprs/TextExpr.m3</H2></A><HR>
+<inModule>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE> File: TextExpr.m3                                           
+
+<P><PRE>MODULE <module><implements><A HREF="TextExpr.i3.html">TextExpr</A></implements></module>;
+
+IMPORT <A HREF="../misc/M3.i3.html">M3</A>, <A HREF="../misc/CG.i3.html">CG</A>, <A HREF="Expr.i3.html">Expr</A>, <A HREF="ExprRep.i3.html">ExprRep</A>, <A HREF="../misc/M3String.i3.html">M3String</A>, <A HREF="../builtinTypes/Textt.i3.html">Textt</A>, <A HREF="../types/Type.i3.html">Type</A>, <A HREF="../../../m3middle/src/M3Buf.i3.html">M3Buf</A>;
+IMPORT <A HREF="../../../m3middle/src/Target.i3.html">Target</A>, <A HREF="../values/Module.i3.html">Module</A>, <A HREF="../../../m3middle/src/M3RT.i3.html">M3RT</A>;
+
+TYPE
+  P = Expr.T OBJECT
+        value : M3String.T;
+      OVERRIDES
+        typeOf       := ExprRep.NoType;
+        check        := ExprRep.NoCheck;
+        need_addr    := ExprRep.NotAddressable;
+        prep         := ExprRep.NoPrep;
+        compile      := Compile;
+        prepLV       := ExprRep.NotLValue;
+        compileLV    := ExprRep.NotLValue;
+        prepBR       := ExprRep.NotBoolean;
+        compileBR    := ExprRep.NotBoolean;
+        evaluate     := ExprRep.Self;
+        isEqual      := EqCheck;
+        getBounds    := ExprRep.NoBounds;
+        isWritable   := ExprRep.IsNever;
+        isDesignator := ExprRep.IsNever;
+	isZeroes     := IsZeroes;
+	genFPLiteral := GenFPLiteral;
+	prepLiteral  := PrepLiteral;
+	genLiteral   := GenLiteral;
+        note_write   := ExprRep.NotWritable;
+      END;
+
+TYPE
+  LiteralTable = REF ARRAY OF INTEGER;
+
+VAR nextID      : INTEGER := 0;
+VAR literals    : LiteralTable := NIL;
+VAR global_data : CG.Var := NIL;
+
+PROCEDURE <A NAME="Reset"><procedure>Reset</procedure></A> () =
+  BEGIN
+    nextID := 0;
+    global_data := NIL;
+    (* literals := NIL; *)
+    IF (literals # NIL) THEN
+      FOR i := FIRST (literals^) TO LAST (literals^) DO literals[i] := 0; END;
+    END;
+  END Reset;
+
+PROCEDURE <A NAME="New"><procedure>New</procedure></A> (value: M3String.T): Expr.T =
+  VAR p := NEW (P);
+  BEGIN
+    ExprRep.Init (p);
+    p.value   := value;
+    p.type    := Textt.T;
+    p.checked := TRUE;
+    RETURN p;
+  END New;
+
+PROCEDURE <A NAME="EqCheck"><procedure>EqCheck</procedure></A> (a: P;  e: Expr.T;  &lt;*UNUSED*&gt; x: M3.EqAssumption): BOOLEAN =
+  BEGIN
+    TYPECASE e OF
+    | NULL =&gt; RETURN FALSE;
+    | P(b) =&gt; RETURN (a.value = b.value);
+    ELSE      RETURN FALSE;
+    END;
+  END EqCheck;
+
+PROCEDURE <A NAME="SetUID"><procedure>SetUID</procedure></A> (p: P): INTEGER =
+  VAR
+    Header_offset  := 0;
+    Pointer_offset := Header_offset  + Target.Address.pack;
+    Length_offset  := Pointer_offset + Target.Address.pack;
+    Chars_offset   := Length_offset  + Target.Integer.pack;
+  VAR
+    uid  := M3String.GetUID (p.value);
+    len  : INTEGER;
+    x    : INTEGER;
+  BEGIN
+    (* assign this value a unique ID *)
+    IF (uid &lt; 0) THEN
+      uid := nextID;  INC (nextID);
+      M3String.SetUID (p.value, uid);
+    END;
+
+    (* make sure there's room in the table *)
+    IF (literals = NIL) OR (LAST (literals^) &lt; uid) THEN ExpandLiterals () END;
+
+    x := literals [uid];
+    IF (x # 0) THEN RETURN uid END;
+
+    IF (global_data = NIL) THEN
+      global_data := Module.GlobalData (NIL);
+    END;
+
+    len := M3String.Length (p.value) + 1;
+
+    (* allocate the variable *)
+    x := Module.Allocate (Chars_offset + len * Target.Char.size,
+                           Target.Address.align, &quot;*TEXT literal*&quot;);
+    literals[uid] := x;
+
+    (* initialize the variable *)
+    CG.Init_intt (x+Header_offset + M3RT.RH_typecode_offset,
+                  M3RT.RH_typecode_size, M3RT.TEXT_typecode);
+    CG.Init_var  (x+Pointer_offset, global_data, x+Chars_offset);
+    CG.Init_intt (x+Length_offset, Target.Integer.size, len);
+    M3String.Init_chars (x+Chars_offset, p.value);
+
+    RETURN uid;
+  END SetUID;
+
+PROCEDURE <A NAME="ExpandLiterals"><procedure>ExpandLiterals</procedure></A> () =
+  VAR new: LiteralTable;
+  BEGIN
+    IF (literals = NIL) THEN
+      new := NEW (LiteralTable, 200);
+    ELSE
+      new := NEW (LiteralTable, 2 * NUMBER (literals^));
+      SUBARRAY (new^, 0, NUMBER (literals^)) := literals^;
+    END;
+    literals := new;
+  END ExpandLiterals;
+
+PROCEDURE <A NAME="Compile"><procedure>Compile</procedure></A> (p: P) =
+  VAR uid := SetUID (p);
+  BEGIN
+    CG.Load_addr_of (global_data, literals[uid] + Target.Address.pack,
+                     Target.Address.align);
+  END Compile;
+
+PROCEDURE <A NAME="Split"><procedure>Split</procedure></A> (e: Expr.T;  VAR value: M3String.T): BOOLEAN =
+  BEGIN
+    TYPECASE e OF
+    | NULL =&gt; RETURN FALSE;
+    | P(p) =&gt; value := p.value;  RETURN TRUE;
+    ELSE      RETURN FALSE;
+    END;
+  END Split;
+
+PROCEDURE <A NAME="Cat"><procedure>Cat</procedure></A> (a, b: Expr.T;  VAR c: Expr.T): BOOLEAN =
+  VAR sa, sb: M3String.T;
+  BEGIN
+    TYPECASE a OF
+    | NULL =&gt; RETURN FALSE;
+    | P(p) =&gt; sa := p.value;
+    ELSE      RETURN FALSE;
+    END;
+    TYPECASE b OF
+    | NULL =&gt; RETURN FALSE;
+    | P(p) =&gt; sb := p.value;
+    ELSE      RETURN FALSE;
+    END;
+    c := New (M3String.Concat (sa, sb));
+    RETURN TRUE;
+  END Cat;
+
+PROCEDURE <A NAME="IsZeroes"><procedure>IsZeroes</procedure></A> (&lt;*UNUSED*&gt;p: P): BOOLEAN =
+  BEGIN
+    RETURN FALSE;
+  END IsZeroes;
+
+PROCEDURE <A NAME="GenFPLiteral"><procedure>GenFPLiteral</procedure></A> (p: P;  buf: M3Buf.T) =
+  BEGIN
+    M3Buf.PutText (buf, &quot;TEXT&lt;&quot;);
+    M3Buf.PutInt  (buf, M3String.Length (p.value));
+    M3Buf.PutChar (buf, ',');
+    M3String.Put  (buf, p.value);
+    M3Buf.PutChar (buf, '&gt;');
+  END GenFPLiteral;
+
+PROCEDURE <A NAME="PrepLiteral"><procedure>PrepLiteral</procedure></A> (p: P;  &lt;*UNUSED*&gt;type: Type.T) =
+  BEGIN
+    EVAL SetUID (p);
+  END PrepLiteral;
+
+PROCEDURE <A NAME="GenLiteral"><procedure>GenLiteral</procedure></A> (p: P;  offset: INTEGER;  &lt;*UNUSED*&gt;type: Type.T) =
+  VAR uid := SetUID (p);
+  BEGIN
+    CG.Init_var (offset, global_data, literals[uid] + Target.Address.pack);
+  END GenLiteral;
+
+BEGIN
+END TextExpr.
+</PRE>
+</inModule>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

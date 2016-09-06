@@ -1,0 +1,307 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: timed/src/Timed.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>timed/src/Timed.m3</H2></A><HR>
+<PRE></PRE> Copyright 93 Digital Equipment Corporation.
+   Digital Internal Use Only
+<P>
+MODULE Timed;
+<P>
+IMPORT Time, Thread, Word;
+<P>
+CONST TimeoutSlop = 0.1D0;
+  (* No attempt is made to time out waits at a finer grain than this. 
+
+<P><PRE>CONST MaxSleep = 60.0D0 * 60.0D0 * 24.0D0 * 365.0D0;
+  (* 365 days *)
+
+TYPE
+  Entry = REF RECORD
+                (* Protected by ts.mu *)
+                next, prev  : Entry;
+                timeout     : Time.T;
+                onList      : BOOLEAN;
+                broadcasting: BOOLEAN;
+
+                (* Only for Timed.Fork *)
+                thread: Thread.T;
+
+                (* Only for Timed.Wait and AlertWait *)
+                cond        : Thread.Condition;
+                mu          : MUTEX;
+
+                (* Protected by mu *)
+                doneBroadcasting: BOOLEAN;
+              END;
+
+VAR
+  ts := NEW(
+          MUTEX OBJECT
+            wakeUp: Time.T;
+            (* When timer thread is scheduled to wake up. *)
+            head  : Entry      := NIL;
+            thread: Thread.T;
+            free  : Entry      := NIL;
+            minTimeout := MaxSleep;
+            (* Minimum timeout specified during last Pause of timer thread *)
+          END,
+          wakeUp := Time.Now(),
+          thread := Thread.Fork(NEW(Thread.Closure, apply := Timer)));
+
+  stats: RECORD
+           calls, broadcasts, wakeUps, races, stillOnList: INTEGER := 0;
+         END;
+
+&lt;*INLINE*&gt; PROCEDURE UnsINC (VAR v: INTEGER; inc: INTEGER := 1) =
+  BEGIN
+    v := Word.Plus(v, inc);
+  END UnsINC;
+
+PROCEDURE Timer (&lt;*UNUSED*&gt; closure: Thread.Closure): REFANY =
+  VAR entry: Entry;
+  BEGIN
+    LOCK ts DO
+      LOOP
+        WITH now = Time.Now() DO
+          IF ts.head # NIL AND ts.head.timeout &lt;= now THEN
+            entry := ts.head;
+
+            IF entry.mu # NIL THEN
+              entry.broadcasting := TRUE;
+              UnsINC(stats.broadcasts);
+              Thread.Release(ts);
+              LOCK entry.mu DO
+                Thread.Acquire(ts);
+                &lt;*ASSERT entry.onList *&gt;
+                Thread.Broadcast(entry.cond);
+                entry.doneBroadcasting := TRUE
+              END;
+            ELSE
+              Thread.Alert(entry.thread);
+            END;
+            DeleteEntry(entry);
+          ELSE
+            VAR wakeUp := MAX(TimeoutSlop, ts.minTimeout) + now;
+            BEGIN
+              IF ts.head # NIL THEN
+                wakeUp := MIN(ts.head.timeout + TimeoutSlop, wakeUp);
+              END;
+              ts.wakeUp := wakeUp;
+              ts.minTimeout := MaxSleep;
+              TRY
+                Thread.Release(ts);
+                TRY
+                  Thread.AlertPause(wakeUp - now);
+                FINALLY
+                  Thread.Acquire(ts);
+                END;
+                IF ts.wakeUp # wakeUp THEN
+                  (* We've been alerted but haven't noticed it yet *)
+                  EVAL Thread.TestAlert();
+                END;
+              EXCEPT
+              | Thread.Alerted =&gt;
+              END;
+            END;
+          END;
+        END;
+      END;
+    END;
+  END Timer;
+
+PROCEDURE InsertEntry (entry: Entry) =
+  (* Called with ts held *)
+  VAR prev, cur: Entry;
+  BEGIN
+    prev := NIL;
+    cur := ts.head;
+    WHILE cur # NIL AND cur.timeout &lt; entry.timeout DO
+      prev := cur;
+      cur := cur.next;
+    END;
+    entry.next := cur;
+    entry.prev := prev;
+    IF prev = NIL THEN
+      (* Insert at head *)
+      ts.head := entry;
+    ELSE
+      prev.next := entry;
+    END;
+    IF cur # NIL THEN cur.prev := entry; END;
+    entry.onList := TRUE;
+    WITH now = Time.Now() DO
+      ts.minTimeout := MIN(ts.minTimeout, entry.timeout - now);
+      IF ts.wakeUp &gt; ts.head.timeout + TimeoutSlop THEN
+        UnsINC(stats.wakeUps);
+        ts.wakeUp := now;
+        Thread.Alert(ts.thread);
+      END;
+    END;
+  END InsertEntry;
+
+PROCEDURE DeleteEntry (entry: Entry) =
+  (* Called with ts held *)
+  BEGIN
+    &lt;* ASSERT entry.onList *&gt;
+    IF entry.prev = NIL THEN
+      &lt;*ASSERT ts.head = entry *&gt;
+      ts.head := entry.next;
+    ELSE
+      entry.prev.next := entry.next;
+    END;
+    IF entry.next # NIL THEN entry.next.prev := entry.prev; END;
+    entry.onList := FALSE;
+  END DeleteEntry;
+
+PROCEDURE GenWait (alertable: BOOLEAN;
+                   m        : Thread.Mutex;
+                   c        : Thread.Condition;
+                   timeout  : Time.T            ) RAISES {Thread.Alerted} =
+  VAR entry: Entry;
+  BEGIN
+    LOCK ts DO
+      UnsINC(stats.calls);
+      IF ts.free # NIL THEN
+        entry := ts.free;
+        ts.free := entry.next;
+      ELSE
+        entry := NEW(Entry);
+      END;
+      entry.mu := m;
+      entry.cond := c;
+      entry.thread := NIL;
+      entry.timeout := timeout;
+      entry.broadcasting := FALSE;
+      entry.doneBroadcasting := FALSE;
+      InsertEntry(entry);
+    END;
+    TRY
+      IF alertable THEN
+        Thread.AlertWait(m, c);
+      ELSE
+        Thread.Wait(m, c);
+      END;
+    FINALLY
+      LOCK ts DO
+        IF entry.broadcasting AND NOT entry.doneBroadcasting THEN
+          (* Timer thread is trying to get entry.mu so that it can
+             broadcast the condition.  Wait for it to do its job. *)
+          UnsINC(stats.races);
+          &lt;* ASSERT entry.onList *&gt;
+          Thread.Release(ts);
+          TRY
+            WHILE NOT entry.doneBroadcasting DO Thread.Wait(m, c); END;
+          FINALLY
+            Thread.Acquire(ts);
+          END;
+          &lt;* ASSERT NOT entry.onList *&gt;
+        ELSIF entry.onList THEN
+          &lt;* ASSERT NOT entry.doneBroadcasting *&gt;
+          UnsINC(stats.stillOnList);
+          DeleteEntry(entry);
+        ELSE
+          &lt;*ASSERT entry.doneBroadcasting *&gt;
+        END;
+        entry.next := ts.free;
+        entry.prev := NIL;
+        entry.mu := NIL;
+        entry.cond := NIL;
+        ts.free := entry;
+      END;
+    END;
+  END GenWait;
+
+PROCEDURE Wait (m: MUTEX; c: Thread.Condition; timeout: Time.T) =
+  &lt;*FATAL Thread.Alerted*&gt;
+  BEGIN
+    GenWait(FALSE, m, c, timeout);
+  END Wait;
+
+PROCEDURE AlertWait (m: MUTEX; c: Thread.Condition; timeout: Time.T)
+  RAISES {Thread.Alerted} =
+  BEGIN
+    GenWait(TRUE, m, c, timeout);
+  END AlertWait;
+
+TYPE
+  MyClosure = Thread.Closure OBJECT
+                userClosure: Thread.Closure;
+                entry      : Entry
+              OVERRIDES
+                apply := MyApply
+              END;
+
+PROCEDURE Fork (closure: Thread.Closure; timeout: Time.T): Thread.T =
+  VAR entry: Entry;
+  BEGIN
+    LOCK ts DO
+      UnsINC(stats.calls);
+      IF ts.free # NIL THEN
+        entry := ts.free;
+        ts.free := entry.next;
+      ELSE
+        entry := NEW(Entry);
+      END;
+      entry.cond := NIL;
+      entry.mu := NIL;
+      entry.timeout := timeout;
+      WITH closure = NEW(MyClosure, entry := entry, userClosure := closure) DO
+        entry.thread := Thread.Fork(closure);
+      END;
+      InsertEntry(entry);
+      RETURN entry.thread;
+    END;
+  END Fork;
+
+PROCEDURE MyApply (cl: MyClosure): REFANY =
+  BEGIN
+    WITH rv    = cl.userClosure.apply(),
+         entry = cl.entry                DO
+      LOCK ts DO
+        IF entry.onList THEN
+          UnsINC(stats.stillOnList);
+          DeleteEntry(entry);
+        END;
+        entry.next := ts.free;
+        entry.prev := NIL;
+        entry.thread := NIL;
+        ts.free := entry;
+      END;
+      RETURN rv;
+    END;
+  END MyApply;
+
+BEGIN
+END Timed.
+</PRE>
+</inInterface>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

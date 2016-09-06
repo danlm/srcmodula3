@@ -1,0 +1,529 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: gef/src/GEFA.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>gef/src/GEFA.m3</H2></A><HR>
+<inModule>
+<PRE><A HREF="../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM>                                                                           </EM></BLOCKQUOTE><PRE>
+
+MODULE <module>GEFA</module> EXPORTS <A HREF="GEF.i3.html"><implements>GEF</A></implements>, <A HREF="GEFInternal.i3.html"><implements>GEFInternal</A></implements>;
+
+IMPORT <A HREF="../../mg/src/Animate.i3.html">Animate</A>, <A HREF="../../mgkit/src/AnimationPath.i3.html">AnimationPath</A>, <A HREF="../../fmtlex/src/Fmt.i3.html">Fmt</A>, <A HREF="GEFClass.i3.html">GEFClass</A>, <A HREF="GEFError.i3.html">GEFError</A>, <A HREF="../../mgkit/src/GraphAnim.i3.html">GraphAnim</A>,
+       <A HREF="../../mgkit/src/GraphVBT.i3.html">GraphVBT</A>, <A HREF="../../libm3/DS/RefList.i3.html">RefList</A>, <A HREF="../../formsvbt/src/RefListUtils.i3.html">RefListUtils</A>, <A HREF="#x1">Math</A>, <A HREF="../../mg/src/R2.i3.html">R2</A>, <A HREF="../../thread/src/Common/Thread.i3.html">Thread</A>;
+
+&lt;* PRAGMA LL *&gt;
+
+&lt;* FATAL Fatal *&gt;
+EXCEPTION Fatal;
+
+TYPE
+  ParseObject = GEFClass.ParseObject;
+
+TYPE
+  FramePO = ParseObject OBJECT
+            OVERRIDES
+              create  := FrameCreate;
+              delete  := FrameDelete;
+              getId   := FrameGetId;
+              setElem := FrameSetElem;
+              setReal := FrameSetReal;
+              finish  := FrameFinish;
+              isType  := FrameIsType;
+            END;
+
+TYPE
+  FrameFieldType = {Time, Actions};
+
+  Frame = OBJECT
+    id: INTEGER;
+    start, end: REAL;
+  END;
+
+PROCEDURE <A NAME="FrameCreate"><procedure>FrameCreate</procedure></A> (&lt;* UNUSED *&gt; po: ParseObject;
+                       &lt;* UNUSED *&gt; t : T;
+                                    id: INTEGER      ): REFANY =
+  BEGIN
+    RETURN NEW(Frame, id := id);
+  END FrameCreate;
+
+PROCEDURE <A NAME="FrameDelete"><procedure>FrameDelete</procedure></A> (&lt;* UNUSED *&gt; po: ParseObject;
+                       &lt;* UNUSED *&gt; t : T;
+                       &lt;* UNUSED *&gt; elem: GEFClass.Elem) =
+  BEGIN
+  END FrameDelete;
+
+PROCEDURE <A NAME="FrameGetId"><procedure>FrameGetId</procedure></A> (&lt;* UNUSED *&gt; po  : ParseObject;
+                      &lt;* UNUSED *&gt; t   : T;
+                                   elem: REFANY       ): INTEGER =
+  BEGIN
+    RETURN NARROW(elem, Frame).id
+  END FrameGetId;
+
+PROCEDURE <A NAME="FrameFinish"><procedure>FrameFinish</procedure></A> (&lt;* UNUSED *&gt; po: ParseObject; t: T; elem: REFANY)
+  RAISES {Thread.Alerted} =
+  VAR frame := NARROW(elem, Frame);
+  BEGIN
+    Animate.ResetATime();
+    t.animate(frame.start, frame.end);
+  END FrameFinish;
+
+PROCEDURE <A NAME="FrameIsType"><procedure>FrameIsType</procedure></A> (&lt;* UNUSED *&gt; po: ParseObject; elem: REFANY):
+  BOOLEAN =
+  BEGIN
+    RETURN ISTYPE(elem, Frame);
+  END FrameIsType;
+
+PROCEDURE <A NAME="FrameSetReal"><procedure>FrameSetReal</procedure></A> (&lt;* UNUSED *&gt; po    : ParseObject;
+                        &lt;* UNUSED *&gt; t     : T;
+                                     elem  : REFANY;
+                                     field : INTEGER;
+                                     values: GEFClass.Reals)
+  RAISES {GEFError.T} =
+  VAR frame := NARROW(elem, Frame);
+  BEGIN
+    CASE VAL(field, FrameFieldType) OF
+    | FrameFieldType.Time =&gt;
+        frame.start := values[0];
+        frame.end := values[1];
+    ELSE
+      RAISE Fatal;
+    END;
+  END FrameSetReal;
+
+PROCEDURE <A NAME="FrameSetElem"><procedure>FrameSetElem</procedure></A> (&lt;* UNUSED *&gt; po    : ParseObject;
+                        &lt;* UNUSED *&gt; t     : T;
+                        &lt;* UNUSED *&gt; elem  : REFANY;
+                        &lt;* UNUSED *&gt; field : INTEGER;
+                        &lt;* UNUSED *&gt; values: GEFClass.Elems)
+  RAISES {GEFError.T} =
+  BEGIN
+  END FrameSetElem;
+
+TYPE
+  MovePO = ParseObject OBJECT
+           OVERRIDES
+             create  := MoveCreate;
+             delete  := MoveDelete;
+             getId   := MoveGetId;
+             setElem := MoveSetElem;
+             setReal := MoveSetReal;
+             setBool := MoveSetBool;
+             finish  := MoveFinish;
+             isType  := MoveIsType;
+           END;
+
+TYPE
+  MoveFieldType = {Elements, Pos, Animate, Path};
+
+  Move = OBJECT
+    id: INTEGER;
+    vertices: RefList.T (* OF GraphVBT.Vertex *);
+    pos: R2.T;
+    animate: BOOLEAN;
+    edges: RefList.T (* OF GraphVBT.Edge *)
+  END;
+
+PROCEDURE <A NAME="MoveCreate"><procedure>MoveCreate</procedure></A> (&lt;* UNUSED *&gt; po: ParseObject;
+                       &lt;* UNUSED *&gt; t : T;
+                                    id: INTEGER      ): REFANY =
+  BEGIN
+    RETURN NEW(Move, id := id);
+  END MoveCreate;
+
+PROCEDURE <A NAME="MoveDelete"><procedure>MoveDelete</procedure></A> (&lt;* UNUSED *&gt; po: ParseObject;
+                       &lt;* UNUSED *&gt; t : T;
+                       &lt;* UNUSED *&gt; elem: GEFClass.Elem) =
+  BEGIN
+  END MoveDelete;
+
+PROCEDURE <A NAME="MoveGetId"><procedure>MoveGetId</procedure></A> (&lt;* UNUSED *&gt; po  : ParseObject;
+                     &lt;* UNUSED *&gt; t   : T;
+                                  elem: REFANY       ): INTEGER =
+  BEGIN
+    RETURN NARROW(elem, Move).id
+  END MoveGetId;
+
+PROCEDURE <A NAME="MoveFinish"><procedure>MoveFinish</procedure></A> (&lt;* UNUSED *&gt; po  : ParseObject;
+                      &lt;* UNUSED *&gt; t   : T;
+                                   elem: REFANY       )
+  RAISES {GEFError.T} =
+  VAR
+    move                                   := NARROW(elem, Move);
+    l     : RefList.T;
+    vertex: GraphVBT.Vertex;
+    path  : AnimationPath.MultipleEdgePath;
+  BEGIN
+    IF move.vertices = NIL THEN
+      RAISE GEFError.T(&quot;No elements given to \&quot;Move\&quot;&quot;);
+    END;
+    IF move.animate AND move.edges # NIL THEN
+      GraphAnim.MoveAlongEdges(move.edges, move.vertices);
+    ELSE
+      IF move.edges # NIL THEN
+        path := NEW(AnimationPath.MultipleEdgePath).init(move.edges)
+      ELSE
+        path := NIL;
+      END;
+      l := move.vertices;
+      WHILE l # NIL DO
+        vertex := RefListUtils.Pop(l);
+        vertex.move(move.pos, move.animate, path := path);
+      END;
+    END;
+  END MoveFinish;
+
+PROCEDURE <A NAME="MoveIsType"><procedure>MoveIsType</procedure></A> (&lt;* UNUSED *&gt; po: ParseObject; elem: REFANY):
+  BOOLEAN =
+  BEGIN
+    RETURN ISTYPE(elem, Move);
+  END MoveIsType;
+
+PROCEDURE <A NAME="MoveSetBool"><procedure>MoveSetBool</procedure></A> (&lt;* UNUSED *&gt; po    : ParseObject;
+                       &lt;* UNUSED *&gt; t     : T;
+                                    elem  : REFANY;
+                                    field : INTEGER;
+                                    values: GEFClass.Bools)
+  RAISES {GEFError.T} =
+  VAR move := NARROW(elem, Move);
+  BEGIN
+    CASE VAL(field, MoveFieldType) OF
+    | MoveFieldType.Animate =&gt; move.animate := values[0]
+    ELSE
+      RAISE Fatal;
+    END;
+  END MoveSetBool;
+
+PROCEDURE <A NAME="MoveSetReal"><procedure>MoveSetReal</procedure></A> (&lt;* UNUSED *&gt; po    : ParseObject;
+                       &lt;* UNUSED *&gt; t     : T;
+                                    elem  : REFANY;
+                                    field : INTEGER;
+                                    values: GEFClass.Reals)
+  RAISES {GEFError.T} =
+  VAR move := NARROW(elem, Move);
+  BEGIN
+    CASE VAL(field, MoveFieldType) OF
+    | MoveFieldType.Pos =&gt; move.pos := R2.T{values[0], values[1]};
+    ELSE
+      RAISE Fatal;
+    END;
+  END MoveSetReal;
+
+PROCEDURE <A NAME="PushEdge"><procedure>PushEdge</procedure></A> (VAR l: RefList.T; edge: GraphVBT.Edge) =
+  BEGIN
+    RefListUtils.Push(l, edge.vertex0);
+    RefListUtils.Push(l, edge.vertex1);
+    IF edge.control0 # NIL THEN
+      RefListUtils.Push(l, edge.control0);
+      RefListUtils.Push(l, edge.control1);
+    END;
+  END PushEdge;
+
+PROCEDURE <A NAME="VertexList"><procedure>VertexList</procedure></A> (values: GEFClass.Elems): RefList.T RAISES {GEFError.T} =
+  VAR l: RefList.T;
+  BEGIN
+    FOR i := 0 TO LAST(values^) DO
+      TYPECASE values[i] OF
+      | GraphVBT.Vertex (v) =&gt; RefListUtils.Push(l, v);
+      | GraphVBT.Edge (e) =&gt; PushEdge(l, e);
+      | GraphVBT.Polygon (p) =&gt;
+          l := RefList.Append(l, p.vertices);
+      | Arc (a) =&gt;
+          FOR i := 0 TO LAST(a.edges^) DO
+            PushEdge(l, a.edges[i]);
+          END;
+      ELSE
+        RAISE
+          GEFError.T(
+            &quot;Element of unknown type found in \&quot;Move\&quot; or \&quot; Rotate\&quot;&quot;);
+      END;
+    END;
+    RETURN l;
+  END VertexList;
+
+PROCEDURE <A NAME="MoveSetElem"><procedure>MoveSetElem</procedure></A> (&lt;* UNUSED *&gt; po    : ParseObject;
+                       &lt;* UNUSED *&gt; t     : T;
+                                    elem  : REFANY;
+                                    field : INTEGER;
+                                    values: GEFClass.Elems)
+  RAISES {GEFError.T} =
+  VAR
+    move         := NARROW(elem, Move);
+    l   : RefList.T;
+  BEGIN
+    CASE VAL(field, MoveFieldType) OF
+    | MoveFieldType.Elements =&gt;
+        move.vertices := VertexList(values);
+    | MoveFieldType.Path =&gt;
+        CASE NUMBER(values^) OF
+        | 0 =&gt; RETURN
+        | 1 =&gt;
+            TYPECASE values[0] OF
+            | NULL =&gt; RAISE GEFError.T(&quot;Path given to Move is NIL&quot;);
+            | GraphVBT.Edge (e) =&gt;
+                RefListUtils.Push(l, e);
+                move.edges := l;
+                move.pos := e.vertex1.pos;
+            | Arc (arc) =&gt;
+                FOR i := LAST(arc.edges^) TO 0 BY -1 DO
+                  RefListUtils.Push(l, arc.edges[i]);
+                END;
+                move.pos := NARROW(arc.edges[LAST(arc.edges^)],
+                                   GraphVBT.Edge).vertex1.pos;
+                move.edges := l;
+            ELSE
+              RAISE GEFError.T(&quot;Path given to Move is not an edge&quot;);
+            END;
+        ELSE
+          FOR i := NUMBER(values^) - 1 TO 0 BY -1 DO
+            TYPECASE values[i] OF
+            | NULL =&gt; RAISE GEFError.T(&quot;Path given to Move is NIL&quot;);
+            | GraphVBT.Edge (e) =&gt; RefListUtils.Push(l, e);
+            | Arc (arc) =&gt;
+                FOR i := LAST(arc.edges^) TO 0 BY -1 DO
+                  RefListUtils.Push(l, arc.edges[i]);
+                END;
+            ELSE
+              RAISE GEFError.T(&quot;Path given to Move is not an edge&quot;);
+            END;
+          END;
+          move.pos :=
+            NARROW(values[LAST(values^)], GraphVBT.Edge).vertex1.pos;
+          move.edges := l;
+        END;
+    ELSE
+      RAISE Fatal;
+    END;
+  END MoveSetElem;
+
+TYPE
+  RotatePO = ParseObject OBJECT
+             OVERRIDES
+               create  := RotateCreate;
+               delete  := RotateDelete;
+               getId   := RotateGetId;
+               setElem := RotateSetElem;
+               setReal := RotateSetReal;
+               setBool := RotateSetBool;
+               finish  := RotateFinish;
+               isType  := RotateIsType;
+             END;
+
+TYPE
+  RotateFieldType = {Center, Elements, Angle, Ends, Clockwise};
+
+  Rotate = OBJECT
+             id         : INTEGER;
+             vertices   : RefList.T (* OF GraphVBT.Vertex *);
+             center     : GraphVBT.Vertex;
+             angle      : REAL;
+             clockwise  : BOOLEAN;
+             start, stop: GraphVBT.Vertex;
+           END;
+
+PROCEDURE <A NAME="RotateCreate"><procedure>RotateCreate</procedure></A> (&lt;* UNUSED *&gt; po: ParseObject;
+                       &lt;* UNUSED *&gt; t : T;
+                                    id: INTEGER      ): REFANY =
+  BEGIN
+    RETURN NEW(Rotate, id := id);
+  END RotateCreate;
+
+PROCEDURE <A NAME="RotateDelete"><procedure>RotateDelete</procedure></A> (&lt;* UNUSED *&gt; po: ParseObject;
+                       &lt;* UNUSED *&gt; t : T;
+                       &lt;* UNUSED *&gt; elem: GEFClass.Elem) =
+  BEGIN
+  END RotateDelete;
+
+PROCEDURE <A NAME="RotateGetId"><procedure>RotateGetId</procedure></A> (&lt;* UNUSED *&gt; po  : ParseObject;
+                     &lt;* UNUSED *&gt; t   : T;
+                                  elem: REFANY       ): INTEGER =
+  BEGIN
+    RETURN NARROW(elem, Rotate).id
+  END RotateGetId;
+
+PROCEDURE <A NAME="Angle"><procedure>Angle</procedure></A> (center, pt: Vertex): REAL =
+  VAR
+    angle := 180.0 * FLOAT(
+               Math.atan2(FLOAT(pt.pos[0] - center.pos[0], LONGREAL),
+                          FLOAT(pt.pos[1] - center.pos[1], LONGREAL)))
+               / Math.Pi;
+  BEGIN
+    RETURN angle
+  END Angle;
+
+PROCEDURE <A NAME="RotateFinish"><procedure>RotateFinish</procedure></A> (&lt;* UNUSED *&gt; po  : ParseObject;
+                        &lt;* UNUSED *&gt; t   : T;
+                                     elem: REFANY       )
+  RAISES {GEFError.T} =
+  VAR
+    rotate       := NARROW(elem, Rotate);
+    angle : REAL;
+  BEGIN
+    IF rotate.center = NIL THEN
+      RAISE GEFError.T(&quot;No center give for rotation&quot;);
+    END;
+    IF rotate.start # NIL THEN
+      IF rotate.stop = NIL THEN RAISE GEFError.T(&quot;Stop endpoint to \&quot;Rotate\&quot; is NIL&quot;); END;
+      WITH start = Angle(rotate.center, rotate.start),
+           stop  = Angle(rotate.center, rotate.stop)   DO
+        angle := stop - start;
+        IF rotate.clockwise THEN
+          IF angle &gt; 0.0 THEN angle := angle - 360.0 END;
+          GraphAnim.Rotate(rotate.center, angle, rotate.vertices);
+        ELSE
+          IF angle &lt; 0.0 THEN angle := angle + 360.0 END;
+          GraphAnim.Rotate(rotate.center, angle, rotate.vertices);
+        END;
+      END;
+    ELSE
+      IF rotate.stop # NIL THEN RAISE GEFError.T(&quot;Start endpoint to \&quot;Rotate\&quot; is NIL&quot;); END;
+      GraphAnim.Rotate(rotate.center, rotate.angle, rotate.vertices);
+    END;
+  END RotateFinish;
+
+PROCEDURE <A NAME="RotateIsType"><procedure>RotateIsType</procedure></A> (&lt;* UNUSED *&gt; po: ParseObject; elem: REFANY):
+  BOOLEAN =
+  BEGIN
+    RETURN ISTYPE(elem, Rotate);
+  END RotateIsType;
+
+PROCEDURE <A NAME="RotateSetReal"><procedure>RotateSetReal</procedure></A> (&lt;* UNUSED *&gt; po    : ParseObject;
+                         &lt;* UNUSED *&gt; t     : T;
+                                      elem  : REFANY;
+                                      field : INTEGER;
+                                      values: GEFClass.Reals)
+  RAISES {GEFError.T} =
+  VAR rotate := NARROW(elem, Rotate);
+  BEGIN
+    CASE VAL(field, RotateFieldType) OF
+    | RotateFieldType.Angle =&gt; rotate.angle := values[0]
+    ELSE
+      RAISE Fatal;
+    END;
+  END RotateSetReal;
+
+PROCEDURE <A NAME="RotateSetBool"><procedure>RotateSetBool</procedure></A> (&lt;* UNUSED *&gt; po    : ParseObject;
+                         &lt;* UNUSED *&gt; t     : T;
+                                      elem  : REFANY;
+                                      field : INTEGER;
+                                      values: GEFClass.Bools)
+  RAISES {GEFError.T} =
+  VAR rotate := NARROW(elem, Rotate);
+  BEGIN
+    CASE VAL(field, RotateFieldType) OF
+    | RotateFieldType.Clockwise =&gt; rotate.clockwise := values[0]
+    ELSE
+      RAISE Fatal;
+    END;
+  END RotateSetBool;
+
+PROCEDURE <A NAME="RotateSetElem"><procedure>RotateSetElem</procedure></A> (&lt;* UNUSED *&gt; po    : ParseObject;
+                         &lt;* UNUSED *&gt; t     : T;
+                                      elem  : REFANY;
+                                      field : INTEGER;
+                                      values: GEFClass.Elems)
+  RAISES {GEFError.T} =
+  VAR
+    rotate         := NARROW(elem, Rotate);
+  BEGIN
+    CASE VAL(field, RotateFieldType) OF
+    | RotateFieldType.Elements =&gt;
+        rotate.vertices := VertexList(values);
+    | RotateFieldType.Center =&gt;
+        TYPECASE values[0] OF
+        | NULL =&gt; RAISE GEFError.T(&quot;Center given to Rotate is NIL&quot;);
+        | GraphVBT.Vertex (v) =&gt; rotate.center := v;
+        ELSE
+          RAISE GEFError.T(&quot;Center given to Rotate is not a vertex&quot;);
+        END;
+    | RotateFieldType.Ends =&gt;
+        TYPECASE values[0] OF
+        | NULL =&gt;
+        | GraphVBT.Vertex (v) =&gt; rotate.start := v;
+        ELSE
+          RAISE GEFError.T(&quot;Endpoint given to Rotate is not a vertex&quot;);
+        END;
+        TYPECASE values[1] OF
+        | NULL =&gt;
+        | GraphVBT.Vertex (v) =&gt; rotate.stop:= v;
+        ELSE
+          RAISE GEFError.T(&quot;Endpoint given to Rotate is not a vertex&quot;);
+        END;
+    ELSE
+      RAISE Fatal;
+    END;
+  END RotateSetElem;
+
+BEGIN
+  GEFClass.RegisterParseObject(
+    NEW(FramePO,
+        args := &quot;((Name Frame)&quot;
+                  &amp; Fmt.F(&quot;(Field %s Time Real 2 (start stop) (0.0 1.0))&quot;,
+                          Fmt.Int(ORD(FrameFieldType.Time)))
+                  &amp; Fmt.F(&quot;(Field %s Actions Elem Infinity () ()))&quot;,
+                          Fmt.Int(ORD(FrameFieldType.Actions)))));
+
+  GEFClass.RegisterParseObject(
+    NEW(
+      MovePO, args := &quot;((Name Move)&quot;
+                        &amp; Fmt.F(&quot;(Field %s Elements Elem Infinity () ())&quot;,
+                                Fmt.Int(ORD(MoveFieldType.Elements)))
+                        &amp; Fmt.F(&quot;(Field %s Pos Real 2 (x y) (0.0 0.0))&quot;,
+                                Fmt.Int(ORD(MoveFieldType.Pos)))
+                        &amp; Fmt.F(&quot;(Field %s Animate Boolean 1 () (TRUE))&quot;,
+                                Fmt.Int(ORD(MoveFieldType.Animate)))
+                        &amp; Fmt.F(&quot;(Field %s Path Elem Infinity () ()))&quot;,
+                                Fmt.Int(ORD(MoveFieldType.Path)))));
+
+  GEFClass.RegisterParseObject(
+    NEW(RotatePO,
+        args :=
+          &quot;((Name Rotate)&quot; &amp; Fmt.F(&quot;(Field %s Center Elem 1 () ())&quot;,
+                                   Fmt.Int(ORD(RotateFieldType.Center)))
+            &amp; Fmt.F(&quot;(Field %s Angle Real 1 () (360))&quot;,
+                    Fmt.Int(ORD(RotateFieldType.Angle)))
+            &amp; Fmt.F(&quot;(Field %s Ends Elem 2 (start stop) ())&quot;,
+                    Fmt.Int(ORD(RotateFieldType.Ends)))
+            &amp; Fmt.F(&quot;(Field %s Clockwise Boolean 1 () (TRUE))&quot;,
+                    Fmt.Int(ORD(RotateFieldType.Clockwise)))
+            &amp; Fmt.F(&quot;(Field %s Elements Elem Infinity () ()))&quot;,
+                    Fmt.Int(ORD(RotateFieldType.Elements)))));
+END GEFA.
+</PRE>
+</inModule>
+<HR>
+<A NAME="x1">interface Math is in:
+</A><UL>
+<LI><A HREF="../../arith/src/POSIX/Math.i3.html#0TOP0">arith/src/POSIX/Math.i3</A>
+<LI><A HREF="../../arith/src/WIN32/Math.i3.html#0TOP0">arith/src/WIN32/Math.i3</A>
+</UL>
+<P>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

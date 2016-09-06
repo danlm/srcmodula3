@@ -1,0 +1,73 @@
+/* Copyright (C) 1993, Digital Equipment Corporation                         */
+/* All rights reserved.                                                      */
+/* See the file COPYRIGHT for a full description.                            */
+
+/* Last modified on Thu Jun 10 09:28:50 PDT 1993 by wobber                   */
+/*      modified on Wed May 19 12:35:20 PDT 1993 by mjordan                  */
+
+/* STUBGEN = stubgen-ip */
+STUBGEN = /udir/owicki/m3pkg/stubgen-ip/DSC/stubgen-ip
+
+proc _v_netobjv1(intf, type, v, useintf) is
+  local si = intf & "_" & type & "_v1" & ".i3"
+  local sm = intf & "_" & type & "_v1" & ".m3"
+  local intf_pn = _path_of(intf & ".i3")
+  local netobjuse = ""
+  local fudge = _Pkg("") /* force setting of THIS_PACKAGE (quake bug) */
+
+  if useintf
+    netobjuse = "-i"
+  end
+
+% The generated sources are in the build directory of THIS_PACKAGE
+% 
+
+  INTERFACE_SOURCES += si
+  void = _put(INTERFACE_SOURCES, si, [THIS_PACKAGE, BUILD_DIR, v, L])
+  COMPILE_SOURCES += si
+  void = _put(COMPILE_SOURCES, si, [THIS_PACKAGE, BUILD_DIR])
+
+  MODULE_SOURCES += sm
+  void = _put(MODULE_SOURCES, sm, [THIS_PACKAGE, BUILD_DIR, HIDDEN, L])
+  COMPILE_SOURCES += sm
+  void = _put(COMPILE_SOURCES, sm, [THIS_PACKAGE, BUILD_DIR])
+
+  if _stale(_build_dir_path() & / & si, intf_pn)
+    _generate_tfile()
+    exec([STUBGEN, "-sno", intf & "." & type, netobjuse, useintf,
+          M3SEARCH_TABLES])
+  end
+    
+end
+
+proc netobjv1(intf, type) is
+  _v_netobjv1(intf, type, HIDDEN, "")
+end
+
+proc Netobjv1(intf, type) is
+  _v_netobjv1(intf, type, VISIBLE, "")
+end
+
+proc Netobj(intf, type) is
+  Netobjv1(intf, type)
+end
+
+proc netobj(intf, type) is
+  netobjv1(intf, type)
+end
+
+proc netobjrv1(intf, type, useintf) is
+  _v_netobjv1(intf, type, HIDDEN, useintf)
+end
+
+proc Netobjrv1(intf, type, useintf) is
+  _v_netobjv1(intf, type, VISIBLE, useintf)
+end
+
+proc Netobjr(intf, type, useintf) is
+  Netobjrv1(intf, type, useintf)
+end
+
+proc netobjr(intf, type, useintf) is
+  netobjrv1(intf, type, useintf)
+end

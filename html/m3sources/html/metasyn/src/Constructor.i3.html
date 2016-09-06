@@ -1,0 +1,53 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: metasyn/src/Constructor.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>metasyn/src/Constructor.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+
+INTERFACE <interface><A HREF="Constructor.m3.html">Constructor</A></interface>;
+IMPORT <A HREF="../../synex/src/SynParse.i3.html">SynParse</A>, <A HREF="MetaParser.i3.html">MetaParser</A>;
+
+VAR
+  grammar : SynParse.NonTerminal ;
+  metaParser: SynParse.T;
+  (* The meta-grammar used to parse the client grammars. *)
+
+PROCEDURE <A HREF="Constructor.m3.html#Setup">Setup</A>() RAISES {SynParse.Fail};
+</PRE><BLOCKQUOTE><EM> To be called before any other use of this module. </EM></BLOCKQUOTE><PRE>
+
+PROCEDURE <A HREF="Constructor.m3.html#LinkInSelects">LinkInSelects</A>(table: MetaParser.ActionTable) ;
+
+END Constructor.
+</PRE>
+</inInterface>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

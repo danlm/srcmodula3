@@ -1,0 +1,70 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: anim3D/src/Prop.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>anim3D/src/Prop.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM> Digital Internal Use Only                                                 </EM></BLOCKQUOTE><PRE>
+</PRE>                                                                           
+       Created on Thu May 19 09:12:23 PDT 1994 by najork                   
+
+<P>
+<P><PRE>INTERFACE <interface><A HREF="Prop.m3.html">Prop</A></interface>;
+
+IMPORT <A HREF="ProxiedObj.i3.html">ProxiedObj</A>;
+
+CONST
+  Brand = &quot;Prop&quot;;
+
+TYPE
+  <A HREF="Prop.m3.html#T">T</A>    &lt;: ProxiedObj.T;
+  <A HREF="Prop.m3.html#Name">Name</A> &lt;: ProxiedObj.T;
+  <A HREF="Prop.m3.html#Val">Val</A>  &lt;: ProxiedObj.T;
+  <A HREF="Prop.m3.html#Beh">Beh</A>  &lt;: ProxiedObj.T;
+
+  <A HREF="Prop.m3.html#Request">Request</A> &lt;: PublicRequest;
+  PublicRequest = ProxiedObj.T OBJECT
+    start : REAL;
+    dur   : REAL;
+  METHODS
+    init (start, dur : REAL) : Request;
+  END;
+
+EXCEPTION BadMethod (TEXT);
+EXCEPTION BadInterval;
+
+PROCEDURE <A HREF="Prop.m3.html#Equal">Equal</A> (a, b : T) : BOOLEAN;  (* tests just for pointer equality *)
+
+END Prop.
+</PRE>
+</inInterface>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

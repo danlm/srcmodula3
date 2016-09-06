@@ -1,0 +1,246 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: unix/src/linux/Usem.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>unix/src/linux/Usem.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM>                                                                    </EM></BLOCKQUOTE><PRE>
+
+UNSAFE INTERFACE <interface>Usem</interface>;
+
+FROM <A HREF="../../../C/src/Common/Ctypes.i3.html">Ctypes</A> IMPORT short, int;
+FROM <A HREF="#x1">Utypes</A> IMPORT ushort, time_t;
+FROM <A HREF="#x2">Uexec</A>  IMPORT wait_queue_star;
+FROM <A HREF="#x3">Uipc</A>   IMPORT struct_ipc_perm;
+</PRE>** &lt;sys/sem.h&gt; **
+
+<P>
+**      IPC Semaphore Facility.
+
+
+<P>
+**      Implementation Constants.
+
+
+<P><PRE>CONST
+
+  PZERO = 25;                     (* I got this value from param.h; em *)
+
+  PSEMN = (PZERO + 3);     (* sleep priority waiting for greater value *)
+  PSEMZ = (PZERO + 2);     (* sleep priority waiting for zero *)
+</PRE><P>
+**      Permission Definitions.
+
+
+<P>  <PRE>SEM_A = 8_0200;    (* alter permission *)
+  SEM_R = 8_0400;    (* read permission *)
+</PRE><P>
+**      Semaphore Operation Flags.
+
+
+<P>  <PRE>SEM_UNDO = 8_010000;  (* set up adjust on exit entry *)
+</PRE><P>
+**      Semctl Command Definitions.  (from /usr/include/linux/sem.h)
+
+
+<P>  <PRE>GETPID  = 11;       (* get sempid *)
+  GETVAL  = 12;       (* get semval *)
+  GETALL  = 13;       (* get all semval's *)
+  GETNCNT = 14;       (* get semncnt *)
+  GETZCNT = 15;       (* get semzcnt *)
+  SETVAL  = 16;       (* set semval *)
+  SETALL  = 17;       (* set all semval's *)
+</PRE><P>
+**      Structure Definitions.
+
+
+<P>
+**      There is one semaphore id data structure for each set of semaphores
+**              in the system.
+
+
+<P><PRE>TYPE
+  struct_semid_ds = RECORD
+    sem_perm  : struct_ipc_perm;           (* operation permission struct *)
+    sem_otime : time_t;                    (* last semop time *)
+    sem_ctime : time_t;                    (* last change time *)
+    sem_base  : UNTRACED REF struct_sem;   (* ptr to first semaphore in set *)
+    eventn    : wait_queue_star;
+    eventz    : wait_queue_star;
+    undo      : UNTRACED REF struct_sem_undo;
+    sem_nsems : ushort;                    (* # of semaphores in set *)
+  END;
+</PRE><P>
+**      There is one semaphore structure for each semaphore in the system.
+
+
+<P>  <PRE>struct_sem = RECORD
+    sempid  : short;         (* pid of last operation *)
+    semval  : ushort;        (* semaphore text map address *)
+    semncnt : short;         (* # awaiting semval &gt; cval *)
+    semzcnt : ushort;        (* # awaiting semval = 0 *)
+  END;
+</PRE><P>
+**      There is one undo structure per process in the system.
+
+
+<P>  <PRE>struct_sem_undo = RECORD
+    proc_next : UNTRACED REF struct_sem_undo;
+    id_next   : UNTRACED REF struct_sem_undo;
+    semid     : int;
+    semadj    : short;
+    sem_num   : ushort;
+  END;
+</PRE><P>
+** semaphore information structure
+
+
+<P>  <PRE>struct_seminfo = RECORD
+    semmap: int;         (* # of entries in semaphore map *)
+    semmni: int;         (* # of = semaphore; identifiers *)
+    semmns: int;         (* # of semaphores in system *)
+    semmnu: int;         (* # of undo structures in system *)
+    semmsl: int;         (* max # of semaphores per id *)
+    semopm: int;         (* max # of operations per semop call *)
+    semume: int;         (* max # of undo entries per process *)
+    semusz: int;         (* size in bytes of undo structure *)
+    semvmx: int;         (* semaphore maximum value *)
+    semaem: int;         (* adjust on exit max value *)
+  END;
+</PRE><P>
+**      User semaphore template for semop system calls.
+
+
+<P>  <PRE>struct_sembuf = RECORD
+      sem_num: ushort;        (* semaphore # *)
+      sem_op:  short;         (* semaphore operation *)
+      sem_flg: short;         (* operation flags *)
+    END;
+</PRE><P>
+ * Sizing constants
+ 
+
+<P><PRE>CONST
+
+  SEMMNI = 128; (* Was 10 - rrw *)
+  SEMMSL = 32;  (* Was 25 - rrw *)
+  SEMMNS = (SEMMNI * SEMMSL);
+  SEMMNU = SEMMNS;
+  SEMOPM = 32; (* Was 10 - rrw *)
+  SEMUME = SEMOPM;
+  SEMVMX = 32767;
+  SEMAEM = 16384; (* SEMVMX &gt;&gt; 1 *)
+  SEMUSZ = 20;
+  SEMMAP = SEMMNS;
+
+TYPE
+   union = union_val;
+
+   union_val = int;
+   union_buf = UNTRACED REF struct_semid_ds;
+</PRE><BLOCKQUOTE><EM> union_array = ARRAY OF ushort </EM></BLOCKQUOTE><PRE>
+
+END Usem.
+</PRE>
+</inInterface>
+<HR>
+<A NAME="x1">interface Utypes is in:
+</A><UL>
+<LI><A HREF="../aix-3-2/Utypes.i3.html#0TOP0">unix/src/aix-3-2/Utypes.i3</A>
+<LI><A HREF="../aix-ps2-1-2/Utypes.i3.html#0TOP0">unix/src/aix-ps2-1-2/Utypes.i3</A>
+<LI><A HREF="../freebsd-1/Utypes.i3.html#0TOP0">unix/src/freebsd-1/Utypes.i3</A>
+<LI><A HREF="../freebsd-2/Utypes.i3.html#0TOP0">unix/src/freebsd-2/Utypes.i3</A>
+<LI><A HREF="../hpux-7-0/Utypes.i3.html#0TOP0">unix/src/hpux-7-0/Utypes.i3</A>
+<LI><A HREF="../ibm-4-3/Utypes.i3.html#0TOP0">unix/src/ibm-4-3/Utypes.i3</A>
+<LI><A HREF="../irix-5.2/Utypes.i3.html#0TOP0">unix/src/irix-5.2/Utypes.i3</A>
+<LI><A HREF="Utypes.i3.html#0TOP0">unix/src/linux/Utypes.i3</A>
+<LI><A HREF="../osf-1.ALPHA_OSF/Utypes.i3.html#0TOP0">unix/src/osf-1.ALPHA_OSF/Utypes.i3</A>
+<LI><A HREF="../osf-1.DS3100/Utypes.i3.html#0TOP0">unix/src/osf-1.DS3100/Utypes.i3</A>
+<LI><A HREF="../solaris-2-x/Utypes.i3.html#0TOP0">unix/src/solaris-2-x/Utypes.i3</A>
+<LI><A HREF="../sunos-4-x/Utypes.i3.html#0TOP0">unix/src/sunos-4-x/Utypes.i3</A>
+<LI><A HREF="../sysv-4.0/Utypes.i3.html#0TOP0">unix/src/sysv-4.0/Utypes.i3</A>
+<LI><A HREF="../ultrix-3-1.AP3000/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.AP3000/Utypes.i3</A>
+<LI><A HREF="../ultrix-3-1.ARM/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.ARM/Utypes.i3</A>
+<LI><A HREF="../ultrix-3-1.DS3100/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.DS3100/Utypes.i3</A>
+<LI><A HREF="../ultrix-3-1.NEXT/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.NEXT/Utypes.i3</A>
+<LI><A HREF="../ultrix-3-1.SEQUENT/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.SEQUENT/Utypes.i3</A>
+<LI><A HREF="../ultrix-3-1.SUN3/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.SUN3/Utypes.i3</A>
+<LI><A HREF="../ultrix-3-1.SUN386/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.SUN386/Utypes.i3</A>
+<LI><A HREF="../ultrix-3-1.UMAX/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.UMAX/Utypes.i3</A>
+<LI><A HREF="../ultrix-3-1.VAX/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.VAX/Utypes.i3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x2">interface Uexec is in:
+</A><UL>
+<LI><A HREF="../aix-3-2/Uexec.i3.html#0TOP0">unix/src/aix-3-2/Uexec.i3</A>
+<LI><A HREF="../aix-ps2-1-2/Uexec.i3.html#0TOP0">unix/src/aix-ps2-1-2/Uexec.i3</A>
+<LI><A HREF="../freebsd-1/Uexec.i3.html#0TOP0">unix/src/freebsd-1/Uexec.i3</A>
+<LI><A HREF="../freebsd-2/Uexec.i3.html#0TOP0">unix/src/freebsd-2/Uexec.i3</A>
+<LI><A HREF="../hpux-7-0/Uexec.i3.html#0TOP0">unix/src/hpux-7-0/Uexec.i3</A>
+<LI><A HREF="../ibm-4-3/Uexec.i3.html#0TOP0">unix/src/ibm-4-3/Uexec.i3</A>
+<LI><A HREF="../irix-5.2/Uexec.i3.html#0TOP0">unix/src/irix-5.2/Uexec.i3</A>
+<LI><A HREF="Uexec.i3.html#0TOP0">unix/src/linux/Uexec.i3</A>
+<LI><A HREF="../osf-1.generic/Uexec.i3.html#0TOP0">unix/src/osf-1.generic/Uexec.i3</A>
+<LI><A HREF="../solaris-2-x/Uexec.i3.html#0TOP0">unix/src/solaris-2-x/Uexec.i3</A>
+<LI><A HREF="../sunos-4-x/Uexec.i3.html#0TOP0">unix/src/sunos-4-x/Uexec.i3</A>
+<LI><A HREF="../sysv-4.0/Uexec.i3.html#0TOP0">unix/src/sysv-4.0/Uexec.i3</A>
+<LI><A HREF="../ultrix-3-1.AP3000/Uexec.i3.html#0TOP0">unix/src/ultrix-3-1.AP3000/Uexec.i3</A>
+<LI><A HREF="../ultrix-3-1.ARM/Uexec.i3.html#0TOP0">unix/src/ultrix-3-1.ARM/Uexec.i3</A>
+<LI><A HREF="../ultrix-3-1.DS3100/Uexec.i3.html#0TOP0">unix/src/ultrix-3-1.DS3100/Uexec.i3</A>
+<LI><A HREF="../ultrix-3-1.NEXT/Uexec.i3.html#0TOP0">unix/src/ultrix-3-1.NEXT/Uexec.i3</A>
+<LI><A HREF="../ultrix-3-1.SEQUENT/Uexec.i3.html#0TOP0">unix/src/ultrix-3-1.SEQUENT/Uexec.i3</A>
+<LI><A HREF="../ultrix-3-1.SUN3/Uexec.i3.html#0TOP0">unix/src/ultrix-3-1.SUN3/Uexec.i3</A>
+<LI><A HREF="../ultrix-3-1.SUN386/Uexec.i3.html#0TOP0">unix/src/ultrix-3-1.SUN386/Uexec.i3</A>
+<LI><A HREF="../ultrix-3-1.UMAX/Uexec.i3.html#0TOP0">unix/src/ultrix-3-1.UMAX/Uexec.i3</A>
+<LI><A HREF="../ultrix-3-1.VAX/Uexec.i3.html#0TOP0">unix/src/ultrix-3-1.VAX/Uexec.i3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x3">interface Uipc is in:
+</A><UL>
+<LI><A HREF="../aix-3-2/Uipc.i3.html#0TOP0">unix/src/aix-3-2/Uipc.i3</A>
+<LI><A HREF="../aix-ps2-1-2/Uipc.i3.html#0TOP0">unix/src/aix-ps2-1-2/Uipc.i3</A>
+<LI><A HREF="../freebsd-1/Uipc.i3.html#0TOP0">unix/src/freebsd-1/Uipc.i3</A>
+<LI><A HREF="../freebsd-2/Uipc.i3.html#0TOP0">unix/src/freebsd-2/Uipc.i3</A>
+<LI><A HREF="../hpux-7-0/Uipc.i3.html#0TOP0">unix/src/hpux-7-0/Uipc.i3</A>
+<LI><A HREF="../ibm-4-3/Uipc.i3.html#0TOP0">unix/src/ibm-4-3/Uipc.i3</A>
+<LI><A HREF="../irix-5.2/Uipc.i3.html#0TOP0">unix/src/irix-5.2/Uipc.i3</A>
+<LI><A HREF="Uipc.i3.html#0TOP0">unix/src/linux/Uipc.i3</A>
+<LI><A HREF="../osf-1.generic/Uipc.i3.html#0TOP0">unix/src/osf-1.generic/Uipc.i3</A>
+<LI><A HREF="../solaris-2-x/Uipc.i3.html#0TOP0">unix/src/solaris-2-x/Uipc.i3</A>
+<LI><A HREF="../sunos-4-x/Uipc.i3.html#0TOP0">unix/src/sunos-4-x/Uipc.i3</A>
+<LI><A HREF="../sysv-4.0/Uipc.i3.html#0TOP0">unix/src/sysv-4.0/Uipc.i3</A>
+<LI><A HREF="../ultrix-3-1.generic/Uipc.i3.html#0TOP0">unix/src/ultrix-3-1.generic/Uipc.i3</A>
+</UL>
+<P>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

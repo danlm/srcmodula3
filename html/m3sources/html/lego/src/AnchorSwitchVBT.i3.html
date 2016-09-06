@@ -1,0 +1,63 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: lego/src/AnchorSwitchVBT.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>lego/src/AnchorSwitchVBT.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM>                                                                           </EM></BLOCKQUOTE><PRE>
+
+INTERFACE <interface><A HREF="AnchorSwitchVBT.m3.html">AnchorSwitchVBT</A></interface>;
+</PRE> A <CODE>AnchorSwitchVBT.T</CODE> is a switch version of AnchorBtnVBT.T.  
+
+<P><PRE>IMPORT <A HREF="../../ui/src/split/AnchorBtnVBT.i3.html">AnchorBtnVBT</A>, <A HREF="FeedbackVBT.i3.html">FeedbackVBT</A>, <A HREF="SwitchVBT.i3.html">SwitchVBT</A>, <A HREF="../../ui/src/vbt/VBT.i3.html">VBT</A>;
+
+TYPE
+  <A HREF="AnchorSwitchVBT.m3.html#T">T</A> &lt;: Public;
+  Public = AnchorBtnVBT.T OBJECT
+           METHODS
+             init (f             : FeedbackVBT.T;
+                   menu          : VBT.T;
+                   n             : CARDINAL        := 0;
+                   anchorParent  : VBT.T           := NIL;
+                   hfudge, vfudge                  := 0.0  ): T
+           OVERRIDES
+             pre    := SwitchVBT.Pre;
+             post   := SwitchVBT.Post;
+             cancel := SwitchVBT.Cancel;
+           END;
+
+  MC = SwitchVBT.MC;
+
+END AnchorSwitchVBT.
+</PRE>
+</inInterface>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

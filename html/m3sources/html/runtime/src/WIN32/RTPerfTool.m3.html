@@ -1,0 +1,88 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: runtime/src/WIN32/RTPerfTool.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>runtime/src/WIN32/RTPerfTool.m3</H2></A><HR>
+<inModule>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM> Last Modified On Fri Jun 11 14:52:25 PDT 1993 by kalsow                   </EM></BLOCKQUOTE><PRE>
+</PRE>      Modified On Sat Feb  6 11:41:23 PST 1993 by mjordan                  
+      Modified On Fri May 29 17:37:42 PDT 1992 by muller                   
+
+<P><PRE>UNSAFE MODULE <module><implements><A HREF="#x1">RTPerfTool</A></implements></module>;
+
+IMPORT <A HREF="../common/RTParams.i3.html">RTParams</A>, <A HREF="../../../text/src/Text.i3.html">Text</A>;
+
+PROCEDURE <A NAME="Start"><procedure>Start</procedure></A> (param: TEXT;  VAR w: Handle): BOOLEAN =
+  VAR value: TEXT;  r: Handle;
+  BEGIN
+    value := RTParams.Value (param);
+    IF value = NIL THEN  RETURN FALSE; END;
+    IF Text.Length (value) = 0 THEN  value := param;  END;
+    IF NOT StartTool (value, r, w) THEN  RETURN FALSE; END;
+    &lt;*ASSERT FALSE*&gt;
+  END Start;
+
+PROCEDURE <A NAME="Close"><procedure>Close</procedure></A> (w: Handle) =
+  BEGIN
+    EVAL w;
+    &lt;*ASSERT FALSE*&gt;
+  END Close;
+
+PROCEDURE <A NAME="Send"><procedure>Send</procedure></A> (w: Handle;  at: ADDRESS;  len: CARDINAL): BOOLEAN =
+  BEGIN
+    EVAL w;
+    EVAL at;
+    EVAL len;
+    &lt;*ASSERT FALSE*&gt;
+  END Send;
+</PRE>-------------------------------------------------------------- internal ---
+
+<P><PRE>PROCEDURE <A NAME="StartTool"><procedure>StartTool</procedure></A> (name: TEXT; VAR r, w: Handle): BOOLEAN =
+  BEGIN
+    EVAL name;
+    EVAL r;
+    EVAL w;
+    RETURN FALSE;
+  END StartTool;
+
+BEGIN
+END RTPerfTool.
+</PRE>
+</inModule>
+<HR>
+<A NAME="x1">interface RTPerfTool is in:
+</A><UL>
+<LI><A HREF="../POSIX/RTPerfTool.i3.html#0TOP0">runtime/src/POSIX/RTPerfTool.i3</A>
+<LI><A HREF="RTPerfTool.i3.html#0TOP0">runtime/src/WIN32/RTPerfTool.i3</A>
+</UL>
+<P>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

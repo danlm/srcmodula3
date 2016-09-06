@@ -1,0 +1,146 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: runtime/src/WIN32/RTOS.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>runtime/src/WIN32/RTOS.m3</H2></A><HR>
+<inModule>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+
+UNSAFE MODULE <module><implements><A HREF="../common/RTOS.i3.html">RTOS</A></implements></module>;
+
+IMPORT <A HREF="../../../win32/src/WinBase.i3.html">WinBase</A>, <A HREF="../../../win32/src/WinNT.i3.html">WinNT</A>, <A HREF="../../../win32/src/WinCon.i3.html">WinCon</A>, <A HREF="../../../win32/src/WinDef.i3.html">WinDef</A>;
+</PRE>--------------------------------------------------- process termination ---
+
+<P><PRE>PROCEDURE <A NAME="Exit"><procedure>Exit</procedure></A> (n: INTEGER) =
+  BEGIN
+    WinBase.ExitProcess (n);
+  END Exit;
+
+PROCEDURE <A NAME="Crash"><procedure>Crash</procedure></A> () =
+  VAR ptr := LOOPHOLE(-99, UNTRACED REF INTEGER);
+  BEGIN
+    ptr^ := 99; (* try to get to the debugger... *)
+    WinBase.FatalExit (-1);
+  END Crash;
+</PRE>------------------------------------------------------------- allocator ---
+
+<P><PRE>PROCEDURE <A NAME="GetMemory"><procedure>GetMemory</procedure></A> (size: INTEGER): ADDRESS =
+  (* Return the address of &quot;size&quot; bytes of unused storage *)
+  BEGIN
+    RETURN LOOPHOLE(WinBase.LocalAlloc(WinBase.LMEM_FIXED, size), ADDRESS);
+  END GetMemory;
+</PRE>------------------------------------------------------------- collector ---
+ These procedures provide synchronization primitives for the allocator
+   and collector.  This is the Windows/NT version, and depends on the NT
+   thread implementation. 
+
+<P> LockHeap() enters a critical section; the same thread may enter the
+   critical section multiple times.  It could be written at user level
+   as:
+<P>
+<PRE>
+      VAR
+        mutex    : MUTEX            := NEW(MUTEX);
+        condition: Thread.Condition := NEW(Thread.Condition);
+        thread   : Thread.T         := NIL;
+        count    : CARDINAL         := 0;
+</PRE>
+<PRE>
+      PROCEDURE LockHeap () =
+        BEGIN
+          LOCK mutex DO
+            IF count = 0 THEN
+              thread := Thread.Self();
+              INC(count);
+            ELSIF thread = Thread.Self() THEN
+              INC(count);
+            ELSE
+              Thread.Wait(mutex, condition);
+            END;
+          END;
+        END LockHeap;
+</PRE>
+   However, it must be possible to call it from anywhere in the
+   collector. 
+
+<P><PRE>VAR
+  cs: WinBase.LPCRITICAL_SECTION := NIL;
+  csstorage: WinNT.RTL_CRITICAL_SECTION;
+
+PROCEDURE <A NAME="LockHeap"><procedure>LockHeap</procedure></A> () =
+  BEGIN
+    IF (cs = NIL) THEN
+      cs := ADR(csstorage);
+      WinBase.InitializeCriticalSection(cs);
+    END;
+    WinBase.EnterCriticalSection(cs);
+  END LockHeap;
+</PRE> UnlockHeap() leaves the critical section.  It could be written at user
+   level as:
+<P>
+<PRE>
+      PROCEDURE UnlockHeap () =
+        BEGIN
+          LOCK mutex DO DEC(count); END;
+          IF count = 0 THEN Thread.Signal(condition); END;
+        END UnlockHeap;
+</PRE>
+   However, it must be possible to call it from anywhere inside the
+   collector. 
+
+<P><PRE>PROCEDURE <A NAME="UnlockHeap"><procedure>UnlockHeap</procedure></A> () =
+  BEGIN
+    WinBase.LeaveCriticalSection(cs);
+  END UnlockHeap;
+</PRE>------------------------------------------------------------------- I/O ---
+
+<P><PRE>VAR
+  ready  := FALSE;
+  stderr : WinDef.HANDLE;
+  (* Perhaps we should explicitly open CONERR$ et al,
+     in case of redirection by parent? *)
+
+PROCEDURE <A NAME="Write"><procedure>Write</procedure></A> (a: ADDRESS;  n: INTEGER) =
+  VAR nWritten: INTEGER;
+  BEGIN
+    IF NOT ready THEN
+      EVAL WinCon.AllocConsole(); (* make sure we've got one! *)
+      stderr := WinBase.GetStdHandle(WinBase.STD_ERROR_HANDLE);
+      ready := TRUE;
+    END;
+    EVAL WinBase.WriteFile(stderr, a, n, ADR(nWritten), NIL);
+  END Write;
+
+BEGIN
+END RTOS.
+</PRE>
+</inModule>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

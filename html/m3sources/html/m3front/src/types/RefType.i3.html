@@ -1,0 +1,67 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: m3front/src/types/RefType.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>m3front/src/types/RefType.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE> File: RefType.i3                                            
+ Last Modified On Mon Jul 25 08:37:37 PDT 1994 By kalsow     
+
+<P><PRE>INTERFACE <interface><A HREF="RefType.m3.html">RefType</A></interface>;
+
+IMPORT <A HREF="Type.i3.html">Type</A>, <A HREF="../exprs/Expr.i3.html">Expr</A>, <A HREF="../misc/M3String.i3.html">M3String</A>;
+
+PROCEDURE <A HREF="RefType.m3.html#Parse">Parse</A> (): Type.T;
+
+PROCEDURE <A HREF="RefType.m3.html#ParseBrand">ParseBrand</A> (): Expr.T;
+
+PROCEDURE <A HREF="RefType.m3.html#New">New</A> (target: Type.T;  traced: BOOLEAN;  brand: Expr.T): Type.T;
+
+PROCEDURE <A HREF="RefType.m3.html#Is">Is</A> (t: Type.T): BOOLEAN;
+
+PROCEDURE <A HREF="RefType.m3.html#IsBranded">IsBranded</A> (t: Type.T): BOOLEAN;
+
+PROCEDURE <A HREF="RefType.m3.html#Split">Split</A> (t: Type.T;  VAR target: Type.T): BOOLEAN;
+
+PROCEDURE <A HREF="RefType.m3.html#NoteBrand">NoteBrand</A> (t: Type.T;  b: M3String.T);
+
+PROCEDURE <A HREF="RefType.m3.html#NoteRefName">NoteRefName</A> (t: Type.T;  name: TEXT);
+</PRE><BLOCKQUOTE><EM> record a user name for the ref type 't' </EM></BLOCKQUOTE><PRE>
+
+PROCEDURE <A HREF="RefType.m3.html#InitTypecell">InitTypecell</A> (t: Type.T;  offset, prev: INTEGER);
+
+PROCEDURE <A HREF="RefType.m3.html#Reset">Reset</A> ();
+
+END RefType.
+</PRE>
+</inInterface>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

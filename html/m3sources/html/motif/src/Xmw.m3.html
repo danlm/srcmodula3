@@ -1,0 +1,184 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: motif/src/Xmw.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>motif/src/Xmw.m3</H2></A><HR>
+<inModule>
+<PRE><A HREF="../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM>                                                           </EM></BLOCKQUOTE><PRE>
+</PRE>                                                           
+ Contributed by Harry George (hgeorge@eskimo.com), 5/16/95 
+
+<P><PRE>UNSAFE MODULE <module><implements><A HREF="Xmw.i3.html">Xmw</A></implements></module>;
+</PRE><BLOCKQUOTE><EM><P>
+Abstract:  Macros for Xm widgets
+<P>
+8/4/94     H. George
+           Initial version.
+</EM></BLOCKQUOTE><PRE>
+
+IMPORT <A HREF="../../X11R4/src/Common/Xt.i3.html">Xt</A>;
+</PRE>=======================
+  Template:
+<P>
+(*----------------
+<PRE>PROCEDURE IsXXX(w:Xt.Widget):Xt.Boolean =
+BEGIN
+  RETURN Xt.IsSubclass(w,xmXXXWidgetClass);
+END IsXXX;
+
+========================*)
+</PRE>----------------
+<PRE>PROCEDURE <A NAME="IsArrowButton"><procedure>IsArrowButton</procedure></A>(w:Xt.Widget):Xt.Boolean =
+BEGIN
+  RETURN Xt.IsSubclass(w,xmArrowButtonWidgetClass);
+END IsArrowButton;
+</PRE>----------------
+<PRE>PROCEDURE <A NAME="IsBulletinBoard"><procedure>IsBulletinBoard</procedure></A>(w:Xt.Widget):Xt.Boolean =
+BEGIN
+  RETURN Xt.IsSubclass(w,xmBulletinBoardWidgetClass);
+END IsBulletinBoard;
+</PRE>----------------
+<PRE>PROCEDURE <A NAME="IsCascadeButton"><procedure>IsCascadeButton</procedure></A>(w:Xt.Widget):Xt.Boolean =
+BEGIN
+  RETURN Xt.IsSubclass(w,xmCascadeButtonWidgetClass);
+END IsCascadeButton;
+</PRE>----------------
+<PRE>PROCEDURE <A NAME="IsDialogShell"><procedure>IsDialogShell</procedure></A>(w:Xt.Widget):Xt.Boolean =
+BEGIN
+  RETURN Xt.IsSubclass(w,xmDialogShellWidgetClass);
+END IsDialogShell;
+</PRE>----------------
+<PRE>PROCEDURE <A NAME="IsDrawingArea"><procedure>IsDrawingArea</procedure></A>(w:Xt.Widget):Xt.Boolean =
+BEGIN
+  RETURN Xt.IsSubclass(w,xmDrawingAreaWidgetClass);
+END IsDrawingArea;
+</PRE>----------------
+<PRE>PROCEDURE <A NAME="IsDrawnButton"><procedure>IsDrawnButton</procedure></A>(w:Xt.Widget):Xt.Boolean =
+BEGIN
+  RETURN Xt.IsSubclass(w,xmDrawnButtonWidgetClass);
+END IsDrawnButton;
+</PRE>----------------
+<PRE>PROCEDURE <A NAME="IsForm"><procedure>IsForm</procedure></A>(w:Xt.Widget):Xt.Boolean =
+BEGIN
+  RETURN Xt.IsSubclass(w,xmFormWidgetClass);
+END IsForm;
+</PRE>----------------
+<PRE>PROCEDURE <A NAME="IsFrame"><procedure>IsFrame</procedure></A>(w:Xt.Widget):Xt.Boolean =
+BEGIN
+  RETURN Xt.IsSubclass(w,xmFrameWidgetClass);
+END IsFrame;
+</PRE>----------------
+<PRE>PROCEDURE <A NAME="IsLabel"><procedure>IsLabel</procedure></A>(w:Xt.Widget):Xt.Boolean =
+BEGIN
+  RETURN Xt.IsSubclass(w,xmLabelWidgetClass);
+END IsLabel;
+</PRE>----------------
+<PRE>PROCEDURE <A NAME="IsList"><procedure>IsList</procedure></A>(w:Xt.Widget):Xt.Boolean =
+BEGIN
+  RETURN Xt.IsSubclass(w,xmListWidgetClass);
+END IsList;
+</PRE>----------------
+<PRE>PROCEDURE <A NAME="IsMainWindow"><procedure>IsMainWindow</procedure></A>(w:Xt.Widget):Xt.Boolean =
+BEGIN
+  RETURN Xt.IsSubclass(w,xmMainWindowWidgetClass);
+END IsMainWindow;
+</PRE>----------------
+<PRE>PROCEDURE <A NAME="IsMenuShell"><procedure>IsMenuShell</procedure></A>(w:Xt.Widget):Xt.Boolean =
+BEGIN
+  RETURN Xt.IsSubclass(w,xmMenuShellWidgetClass);
+END IsMenuShell;
+</PRE>----------------
+<PRE>PROCEDURE <A NAME="IsMessageBox"><procedure>IsMessageBox</procedure></A>(w:Xt.Widget):Xt.Boolean =
+BEGIN
+  RETURN Xt.IsSubclass(w,xmMessageBoxWidgetClass);
+END IsMessageBox;
+</PRE>----------------
+<PRE>PROCEDURE <A NAME="IsPanedWindow"><procedure>IsPanedWindow</procedure></A>(w:Xt.Widget):Xt.Boolean =
+BEGIN
+  RETURN Xt.IsSubclass(w,xmPanedWindowWidgetClass);
+END IsPanedWindow;
+</PRE>----------------
+<PRE>PROCEDURE <A NAME="IsPushButton"><procedure>IsPushButton</procedure></A>(w:Xt.Widget):Xt.Boolean =
+BEGIN
+  RETURN Xt.IsSubclass(w,xmPushButtonWidgetClass);
+END IsPushButton;
+</PRE>----------------
+<PRE>PROCEDURE <A NAME="IsRowColumn"><procedure>IsRowColumn</procedure></A>(w:Xt.Widget):Xt.Boolean =
+BEGIN
+  RETURN Xt.IsSubclass(w,xmRowColumnWidgetClass);
+END IsRowColumn;
+</PRE>----------------
+<PRE>PROCEDURE <A NAME="IsScale"><procedure>IsScale</procedure></A>(w:Xt.Widget):Xt.Boolean =
+BEGIN
+  RETURN Xt.IsSubclass(w,xmScaleWidgetClass);
+END IsScale;
+</PRE>----------------
+<PRE>PROCEDURE <A NAME="IsScrollBar"><procedure>IsScrollBar</procedure></A>(w:Xt.Widget):Xt.Boolean =
+BEGIN
+  RETURN Xt.IsSubclass(w,xmScrollBarWidgetClass);
+END IsScrollBar;
+</PRE>----------------
+<PRE>PROCEDURE <A NAME="IsScrolledWindow"><procedure>IsScrolledWindow</procedure></A>(w:Xt.Widget):Xt.Boolean =
+BEGIN
+  RETURN Xt.IsSubclass(w,xmScrolledWindowWidgetClass);
+END IsScrolledWindow;
+</PRE>----------------
+<PRE>PROCEDURE <A NAME="IsSelectionBox"><procedure>IsSelectionBox</procedure></A>(w:Xt.Widget):Xt.Boolean =
+BEGIN
+  RETURN Xt.IsSubclass(w,xmSelectionBoxWidgetClass);
+END IsSelectionBox;
+</PRE>----------------
+<PRE>PROCEDURE <A NAME="IsSeparator"><procedure>IsSeparator</procedure></A>(w:Xt.Widget):Xt.Boolean =
+BEGIN
+  RETURN Xt.IsSubclass(w,xmSeparatorWidgetClass);
+END IsSeparator;
+</PRE>----------------
+<PRE>PROCEDURE <A NAME="IsText"><procedure>IsText</procedure></A>(w:Xt.Widget):Xt.Boolean =
+BEGIN
+  RETURN Xt.IsSubclass(w,xmTextWidgetClass);
+END IsText;
+</PRE>----------------
+<PRE>PROCEDURE <A NAME="IsTextField"><procedure>IsTextField</procedure></A>(w:Xt.Widget):Xt.Boolean =
+BEGIN
+  RETURN Xt.IsSubclass(w,xmTextFieldWidgetClass);
+END IsTextField;
+</PRE>----------------
+<PRE>PROCEDURE <A NAME="IsToggleButton"><procedure>IsToggleButton</procedure></A>(w:Xt.Widget):Xt.Boolean =
+BEGIN
+  RETURN Xt.IsSubclass(w,xmToggleButtonWidgetClass);
+END IsToggleButton;
+</PRE>----------------
+<PRE>BEGIN
+END Xmw.
+</PRE>
+</inModule>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

@@ -1,0 +1,66 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: Installation dependencies</TITLE>
+</HEAD>
+<BODY BGCOLOR="#ffffff" VLINK="#006633">
+
+<H2>Installation dependencies</H2>
+<P>
+
+Most of the source packages included in the distribution depend
+on others.  To successfully build one, you may need to build
+and install several others.  Here's a list of the known
+dependencies:
+<PRE>
+   archive               dependencies
+   --------------        ---------------------------
+   boot-XYZ              -none-
+   html                  -none-
+
+   m3utils               boot-XYZ
+   m3cc                  boot-XYZ
+   m3gdb                 boot-XYZ
+   libm3                 boot-XYZ
+
+   compiler              libm3
+   tools                 libm3
+   misc                  libm3
+   m3tk                  libm3
+   trestle               libm3
+
+   netobj                m3tk
+
+   games                 trestle
+   vbtkit                trestle, tools (m3bundle)
+
+   formsvbt              vbtkit
+
+   vbtapps               formsvbt
+   zeus                  formsvbt
+   postcard              formsvbt
+
+   mentor                zeus
+   obliq                 zeus, netobj (stubgen)
+
+   visualobliq           obliq
+
+   pkgtools              netobj
+</PRE>
+
+<HR>
+<A HREF="home.html">[Modula-3 home page]</A>
+<P>
+<A HREF="mailto:m3-request@src.dec.com">
+<ADDRESS>m3-request@src.dec.com</ADDRESS></A>
+<PRE>
+Last modified on Thu Jan  4 11:08:08 PST 1996 by heydon                    .
+     modified on Fri Jun  3 14:13:03 PDT 1994 by kalsow                    .
+     modified on Thu Jan  7 18:40:11 PST 1993 by muller                    .
+</PRE>
+
+Copyright (C) 1992, 1996, Digital Equipment Corporation. All rights reserved.<BR>
+See the <A HREF="http://www.research.digital.com/SRC/m3sources/html/COPYRIGHT.html">COPYRIGHT</A> for a full description.
+</BODY>
+</HTML>
+
+

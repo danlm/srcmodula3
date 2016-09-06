@@ -1,0 +1,66 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: perftool/src/Common/PerfComm.mg</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>perftool/src/Common/PerfComm.mg</H2></A><HR>
+<inModule>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM>                                                                           </EM></BLOCKQUOTE><PRE>
+
+GENERIC MODULE <genericModule><A HREF="PerfComm.ig.html">PerfComm</A></genericModule> (Event);
+
+IMPORT <A HREF="../../../rw/src/Common/Rd.i3.html">Rd</A>, <A HREF="../../../rw/src/Common/Wr.i3.html">Wr</A>;
+
+CONST
+  Chars = (BITSIZE (Event.T) + BITSIZE (CHAR) - 1) DIV BITSIZE (CHAR);
+
+TYPE
+  Bug = ARRAY[0..Chars-1] OF CHAR;
+
+PROCEDURE <A NAME="Send"><procedure>Send</procedure></A> (wr: Wr.T; READONLY e: Event.T) =
+  &lt;*FATAL ANY*&gt;
+  BEGIN
+    Wr.PutString (wr, LOOPHOLE (e, Bug));
+  END Send;
+
+PROCEDURE <A NAME="Receive"><procedure>Receive</procedure></A> (rd: Rd.T): Event.T =
+  VAR e: Event.T;
+  &lt;*FATAL ANY*&gt;
+  BEGIN
+    EVAL Rd.GetSub (rd, LOOPHOLE (e, Bug));
+    RETURN e;
+  END Receive;
+
+BEGIN
+END PerfComm.
+</PRE>
+</inModule>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

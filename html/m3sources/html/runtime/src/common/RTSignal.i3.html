@@ -1,0 +1,140 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: runtime/src/common/RTSignal.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>runtime/src/common/RTSignal.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM>                                                           </EM></BLOCKQUOTE><PRE>
+
+INTERFACE <interface><A HREF="#x1">RTSignal</A></interface>;
+
+PROCEDURE <A HREF="#x2">InstallHandlers</A> ();
+</PRE><BLOCKQUOTE><EM> Install some basic signal handlers. </EM></BLOCKQUOTE><PRE>
+
+PROCEDURE <A HREF="#x3">RestoreHandlers</A> ();
+</PRE><BLOCKQUOTE><EM> Restore the signal handlers modified by <CODE>InstallHandlers</CODE> to
+   their initial state. </EM></BLOCKQUOTE><PRE>
+
+END RTSignal.
+</PRE>
+</inInterface>
+<HR>
+<A NAME="x1">RTSignal's implementation  is in:
+</A><UL>
+<LI><A HREF="../AIX386/RTSignal.m3.html#0TOP0">runtime/src/AIX386/RTSignal.m3</A>
+<LI><A HREF="../ALPHA_OSF/RTSignal.m3.html#0TOP0">runtime/src/ALPHA_OSF/RTSignal.m3</A>
+<LI><A HREF="../AP3000/RTSignal.m3.html#0TOP0">runtime/src/AP3000/RTSignal.m3</A>
+<LI><A HREF="../ARM/RTSignal.m3.html#0TOP0">runtime/src/ARM/RTSignal.m3</A>
+<LI><A HREF="../DS3100/RTSignal.m3.html#0TOP0">runtime/src/DS3100/RTSignal.m3</A>
+<LI><A HREF="../FreeBSD/RTSignal.m3.html#0TOP0">runtime/src/FreeBSD/RTSignal.m3</A>
+<LI><A HREF="../FreeBSD2/RTSignal.m3.html#0TOP0">runtime/src/FreeBSD2/RTSignal.m3</A>
+<LI><A HREF="../HP300/RTSignal.m3.html#0TOP0">runtime/src/HP300/RTSignal.m3</A>
+<LI><A HREF="../HPPA/RTSignal.m3.html#0TOP0">runtime/src/HPPA/RTSignal.m3</A>
+<LI><A HREF="../IBMR2/RTSignal.m3.html#0TOP0">runtime/src/IBMR2/RTSignal.m3</A>
+<LI><A HREF="../IBMRT/RTSignal.m3.html#0TOP0">runtime/src/IBMRT/RTSignal.m3</A>
+<LI><A HREF="../IRIX5/RTSignal.m3.html#0TOP0">runtime/src/IRIX5/RTSignal.m3</A>
+<LI><A HREF="../LINUX/RTSignal.m3.html#0TOP0">runtime/src/LINUX/RTSignal.m3</A>
+<LI><A HREF="../LINUXELF/RTSignal.m3.html#0TOP0">runtime/src/LINUXELF/RTSignal.m3</A>
+<LI><A HREF="../NEXT/RTSignal.m3.html#0TOP0">runtime/src/NEXT/RTSignal.m3</A>
+<LI><A HREF="../NT386/RTSignal.m3.html#0TOP0">runtime/src/NT386/RTSignal.m3</A>
+<LI><A HREF="../OKI/RTSignal.m3.html#0TOP0">runtime/src/OKI/RTSignal.m3</A>
+<LI><A HREF="../SEQUENT/RTSignal.m3.html#0TOP0">runtime/src/SEQUENT/RTSignal.m3</A>
+<LI><A HREF="../SOLgnu/RTSignal.m3.html#0TOP0">runtime/src/SOLgnu/RTSignal.m3</A>
+<LI><A HREF="../SOLsun/RTSignal.m3.html#0TOP0">runtime/src/SOLsun/RTSignal.m3</A>
+<LI><A HREF="../SPARC/RTSignal.m3.html#0TOP0">runtime/src/SPARC/RTSignal.m3</A>
+<LI><A HREF="../SUN3/RTSignal.m3.html#0TOP0">runtime/src/SUN3/RTSignal.m3</A>
+<LI><A HREF="../SUN386/RTSignal.m3.html#0TOP0">runtime/src/SUN386/RTSignal.m3</A>
+<LI><A HREF="../UMAX/RTSignal.m3.html#0TOP0">runtime/src/UMAX/RTSignal.m3</A>
+<LI><A HREF="../VAX/RTSignal.m3.html#0TOP0">runtime/src/VAX/RTSignal.m3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x2">procedure RTSignal.InstallHandlers is in:
+</A><UL>
+<LI><A HREF="../AIX386/RTSignal.m3.html#InstallHandlers">runtime/src/AIX386/RTSignal.m3</A>
+<LI><A HREF="../ALPHA_OSF/RTSignal.m3.html#InstallHandlers">runtime/src/ALPHA_OSF/RTSignal.m3</A>
+<LI><A HREF="../AP3000/RTSignal.m3.html#InstallHandlers">runtime/src/AP3000/RTSignal.m3</A>
+<LI><A HREF="../ARM/RTSignal.m3.html#InstallHandlers">runtime/src/ARM/RTSignal.m3</A>
+<LI><A HREF="../DS3100/RTSignal.m3.html#InstallHandlers">runtime/src/DS3100/RTSignal.m3</A>
+<LI><A HREF="../FreeBSD/RTSignal.m3.html#InstallHandlers">runtime/src/FreeBSD/RTSignal.m3</A>
+<LI><A HREF="../FreeBSD2/RTSignal.m3.html#InstallHandlers">runtime/src/FreeBSD2/RTSignal.m3</A>
+<LI><A HREF="../HP300/RTSignal.m3.html#InstallHandlers">runtime/src/HP300/RTSignal.m3</A>
+<LI><A HREF="../HPPA/RTSignal.m3.html#InstallHandlers">runtime/src/HPPA/RTSignal.m3</A>
+<LI><A HREF="../IBMR2/RTSignal.m3.html#InstallHandlers">runtime/src/IBMR2/RTSignal.m3</A>
+<LI><A HREF="../IBMRT/RTSignal.m3.html#InstallHandlers">runtime/src/IBMRT/RTSignal.m3</A>
+<LI><A HREF="../IRIX5/RTSignal.m3.html#InstallHandlers">runtime/src/IRIX5/RTSignal.m3</A>
+<LI><A HREF="../LINUX/RTSignal.m3.html#InstallHandlers">runtime/src/LINUX/RTSignal.m3</A>
+<LI><A HREF="../LINUXELF/RTSignal.m3.html#InstallHandlers">runtime/src/LINUXELF/RTSignal.m3</A>
+<LI><A HREF="../NEXT/RTSignal.m3.html#InstallHandlers">runtime/src/NEXT/RTSignal.m3</A>
+<LI><A HREF="../NT386/RTSignal.m3.html#InstallHandlers">runtime/src/NT386/RTSignal.m3</A>
+<LI><A HREF="../OKI/RTSignal.m3.html#InstallHandlers">runtime/src/OKI/RTSignal.m3</A>
+<LI><A HREF="../SEQUENT/RTSignal.m3.html#InstallHandlers">runtime/src/SEQUENT/RTSignal.m3</A>
+<LI><A HREF="../SOLgnu/RTSignal.m3.html#InstallHandlers">runtime/src/SOLgnu/RTSignal.m3</A>
+<LI><A HREF="../SOLsun/RTSignal.m3.html#InstallHandlers">runtime/src/SOLsun/RTSignal.m3</A>
+<LI><A HREF="../SPARC/RTSignal.m3.html#InstallHandlers">runtime/src/SPARC/RTSignal.m3</A>
+<LI><A HREF="../SUN3/RTSignal.m3.html#InstallHandlers">runtime/src/SUN3/RTSignal.m3</A>
+<LI><A HREF="../SUN386/RTSignal.m3.html#InstallHandlers">runtime/src/SUN386/RTSignal.m3</A>
+<LI><A HREF="../UMAX/RTSignal.m3.html#InstallHandlers">runtime/src/UMAX/RTSignal.m3</A>
+<LI><A HREF="../VAX/RTSignal.m3.html#InstallHandlers">runtime/src/VAX/RTSignal.m3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x3">procedure RTSignal.RestoreHandlers is in:
+</A><UL>
+<LI><A HREF="../AIX386/RTSignal.m3.html#RestoreHandlers">runtime/src/AIX386/RTSignal.m3</A>
+<LI><A HREF="../ALPHA_OSF/RTSignal.m3.html#RestoreHandlers">runtime/src/ALPHA_OSF/RTSignal.m3</A>
+<LI><A HREF="../AP3000/RTSignal.m3.html#RestoreHandlers">runtime/src/AP3000/RTSignal.m3</A>
+<LI><A HREF="../ARM/RTSignal.m3.html#RestoreHandlers">runtime/src/ARM/RTSignal.m3</A>
+<LI><A HREF="../DS3100/RTSignal.m3.html#RestoreHandlers">runtime/src/DS3100/RTSignal.m3</A>
+<LI><A HREF="../FreeBSD/RTSignal.m3.html#RestoreHandlers">runtime/src/FreeBSD/RTSignal.m3</A>
+<LI><A HREF="../FreeBSD2/RTSignal.m3.html#RestoreHandlers">runtime/src/FreeBSD2/RTSignal.m3</A>
+<LI><A HREF="../HP300/RTSignal.m3.html#RestoreHandlers">runtime/src/HP300/RTSignal.m3</A>
+<LI><A HREF="../HPPA/RTSignal.m3.html#RestoreHandlers">runtime/src/HPPA/RTSignal.m3</A>
+<LI><A HREF="../IBMR2/RTSignal.m3.html#RestoreHandlers">runtime/src/IBMR2/RTSignal.m3</A>
+<LI><A HREF="../IBMRT/RTSignal.m3.html#RestoreHandlers">runtime/src/IBMRT/RTSignal.m3</A>
+<LI><A HREF="../IRIX5/RTSignal.m3.html#RestoreHandlers">runtime/src/IRIX5/RTSignal.m3</A>
+<LI><A HREF="../LINUX/RTSignal.m3.html#RestoreHandlers">runtime/src/LINUX/RTSignal.m3</A>
+<LI><A HREF="../LINUXELF/RTSignal.m3.html#RestoreHandlers">runtime/src/LINUXELF/RTSignal.m3</A>
+<LI><A HREF="../NEXT/RTSignal.m3.html#RestoreHandlers">runtime/src/NEXT/RTSignal.m3</A>
+<LI><A HREF="../NT386/RTSignal.m3.html#RestoreHandlers">runtime/src/NT386/RTSignal.m3</A>
+<LI><A HREF="../OKI/RTSignal.m3.html#RestoreHandlers">runtime/src/OKI/RTSignal.m3</A>
+<LI><A HREF="../SEQUENT/RTSignal.m3.html#RestoreHandlers">runtime/src/SEQUENT/RTSignal.m3</A>
+<LI><A HREF="../SOLgnu/RTSignal.m3.html#RestoreHandlers">runtime/src/SOLgnu/RTSignal.m3</A>
+<LI><A HREF="../SOLsun/RTSignal.m3.html#RestoreHandlers">runtime/src/SOLsun/RTSignal.m3</A>
+<LI><A HREF="../SPARC/RTSignal.m3.html#RestoreHandlers">runtime/src/SPARC/RTSignal.m3</A>
+<LI><A HREF="../SUN3/RTSignal.m3.html#RestoreHandlers">runtime/src/SUN3/RTSignal.m3</A>
+<LI><A HREF="../SUN386/RTSignal.m3.html#RestoreHandlers">runtime/src/SUN386/RTSignal.m3</A>
+<LI><A HREF="../UMAX/RTSignal.m3.html#RestoreHandlers">runtime/src/UMAX/RTSignal.m3</A>
+<LI><A HREF="../VAX/RTSignal.m3.html#RestoreHandlers">runtime/src/VAX/RTSignal.m3</A>
+</UL>
+<P>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

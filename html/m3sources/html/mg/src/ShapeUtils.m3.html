@@ -1,0 +1,77 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: mg/src/ShapeUtils.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>mg/src/ShapeUtils.m3</H2></A><HR>
+<inModule>
+<PRE><A HREF="../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM>                                                                           </EM></BLOCKQUOTE><PRE>
+</PRE> by Stephen Harrison and Steve Glassman 
+                                                                           
+
+<P><PRE>MODULE <module><implements><A HREF="ShapeUtils.i3.html">ShapeUtils</A></implements></module>;
+
+IMPORT <A HREF="R2Path.i3.html">R2Path</A>, <A HREF="#x1">Math</A>, <A HREF="R2.i3.html">R2</A>;
+
+PROCEDURE <A NAME="RegularPolygon"><procedure>RegularPolygon</procedure></A>(sides: CARDINAL := 3; radius := 1.0): R2Path.T =
+  VAR
+    path := NEW(R2Path.T);
+  BEGIN
+    path.init();
+    FOR i := 1 TO sides DO
+      WITH theta = 2.0 * Math.Pi * FLOAT(i) / FLOAT(sides),
+           x = radius * FLOAT(Math.cos(FLOAT(theta, LONGREAL))),
+           y = radius * FLOAT(Math.sin(FLOAT(theta, LONGREAL))),
+           p = R2.T{x, y} DO
+        IF i = 1 THEN
+          path.moveTo(p);
+	ELSE
+          path.lineTo(p);
+	END;
+      END;
+    END;
+    path.close();
+
+    RETURN path;
+  END RegularPolygon;
+
+BEGIN
+END ShapeUtils.
+</PRE>
+</inModule>
+<HR>
+<A NAME="x1">interface Math is in:
+</A><UL>
+<LI><A HREF="../../arith/src/POSIX/Math.i3.html#0TOP0">arith/src/POSIX/Math.i3</A>
+<LI><A HREF="../../arith/src/WIN32/Math.i3.html#0TOP0">arith/src/WIN32/Math.i3</A>
+</UL>
+<P>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

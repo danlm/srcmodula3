@@ -1,0 +1,334 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: formsvbt/src/FormsCache.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>formsvbt/src/FormsCache.m3</H2></A><HR>
+<inModule>
+<PRE><A HREF="../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM>                                                                           </EM></BLOCKQUOTE><PRE>
+&lt;* PRAGMA LL *&gt;
+
+MODULE <module><implements><A HREF="FormsCache.i3.html">FormsCache</A></implements></module>;
+
+IMPORT <A HREF="FormsVBT.i3.html">FormsVBT</A>, <A HREF="../../libm3/DS/RefList.i3.html">RefList</A>, <A HREF="../../rw/src/Common/Rd.i3.html">Rd</A>, <A HREF="../../rw/src/Common/RdUtils.i3.html">RdUtils</A>, <A HREF="../../rw/src/Common/Stdio.i3.html">Stdio</A>, <A HREF="../../text/src/Text.i3.html">Text</A>, <A HREF="../../thread/src/Common/Thread.i3.html">Thread</A>, <A HREF="../../libm3/DS/TextRefTbl.i3.html">TextRefTbl</A>,
+       <A HREF="../../libm3/DS/TextTextTbl.i3.html">TextTextTbl</A>, <A HREF="../../ui/src/vbt/VBT.i3.html">VBT</A>, <A HREF="../../rw/src/Common/Wr.i3.html">Wr</A>;
+
+TYPE
+  Worker = Thread.Closure OBJECT
+             handle: Thread.T;
+             name               := &quot;&quot;;
+             flush              := FALSE;
+           OVERRIDES
+             apply := WorkerThread
+           END;
+
+  Closure = REF RECORD name: TEXT;  END;
+
+VAR
+  nonempty := NEW (Thread.Condition); (* synchronizes workers *)
+  mu       := NEW (MUTEX);
+
+  &lt;* LL = mu *&gt;
+  threadCt := -1;               (* number of worker threads *)
+
+  forms    := NEW (TextRefTbl.T);
+  (* &lt;name, RefList.T of FormsVBT.T&gt; *)
+
+  bodies := NEW (TextTextTbl.T);
+  (* &lt;name, body&gt; iff Assoc(name,body) prev called *)
+
+  workers    : RefList.T;          (* of Worker *)
+  formsToPrep: RefList.T;          (* of TEXT *)
+
+PROCEDURE <A NAME="Resolve"><procedure>Resolve</procedure></A> (v: VBT.T): Closure =
+  BEGIN
+    RETURN NARROW (VBT.GetProp (v, TYPECODE (Closure)), Closure);
+  END Resolve;
+
+PROCEDURE <A NAME="ActiveThreads"><procedure>ActiveThreads</procedure></A> (ct: CARDINAL) =
+  &lt;* LL = 0 *&gt;
+  BEGIN
+    LOCK mu DO
+      ActiveThreadsWLock (ct);
+    END
+  END ActiveThreads;
+
+PROCEDURE <A NAME="ActiveThreadsWLock"><procedure>ActiveThreadsWLock</procedure></A> (ct: CARDINAL) =
+  &lt;* LL = mu *&gt;
+  VAR worker: Worker;
+  BEGIN
+    IF threadCt = -1 THEN threadCt := 0 END;
+    IF ct &gt; threadCt THEN
+      WHILE ct # threadCt DO
+        worker := NEW (Worker);
+        RefList.Push (workers, worker);
+        worker.handle := Thread.Fork (worker);
+        INC (threadCt);
+      END;
+    ELSIF ct &lt; threadCt THEN
+      WHILE ct # threadCt DO
+        worker := RefList.Pop (workers);
+        Thread.Alert (worker.handle);
+        DEC (threadCt);
+      END;
+    END;
+  END ActiveThreadsWLock;
+
+PROCEDURE <A NAME="WorkerThread"><procedure>WorkerThread</procedure></A> (worker: Worker): REFANY =
+  &lt;* LL = 0 *&gt;
+  VAR
+    name: TEXT;
+    form: FormsVBT.T;
+  BEGIN
+    LOOP
+      TRY
+        name := Consume ()
+      EXCEPT
+      | Thread.Alerted =&gt; RETURN NIL;
+      END;
+      LOCK mu DO worker.name := name; END;
+      TRY
+        form := GenerateForm (name, FALSE);
+        LOCK mu DO
+          IF Thread.TestAlert () THEN RETURN NIL; END;
+          IF NOT worker.flush THEN
+            AddForm (worker.name, form);
+          END;
+          worker.name := &quot;&quot;;
+        END;
+      EXCEPT
+      | FormsVBT.Error =&gt;
+      END;
+    END;
+  END WorkerThread;
+
+PROCEDURE <A NAME="Prepare"><procedure>Prepare</procedure></A> (name: TEXT; copies: CARDINAL := 1) =
+  &lt;* LL = 0 *&gt;
+  BEGIN
+    LOCK mu DO
+      IF threadCt = -1 THEN
+	ActiveThreadsWLock (DefaultNumberOfWorkers)
+      END;
+    END;
+    WHILE copies &gt; 0 DO Produce(name); DEC(copies); END;
+  END Prepare;
+
+PROCEDURE <A NAME="Get"><procedure>Get</procedure></A> (name: TEXT; restock: BOOLEAN := FALSE): FormsVBT.T
+  RAISES {FormsVBT.Error} =
+  &lt;* LL = 0 *&gt;
+  VAR
+    value: REFANY;
+    list : RefList.T;
+    fv   : FormsVBT.T;
+    cl   : Closure;
+  BEGIN
+    LOCK mu DO
+      IF forms.in (name, value) THEN
+        list := value;
+        fv := RefList.Pop (list);
+        IF list = NIL THEN
+          EVAL forms.delete (name, value);
+        ELSE
+          EVAL forms.put (name, list);
+        END;
+      ELSE
+        list := NIL;
+        IgnoreInWaiting (name);
+        IgnoreInProgress (name);
+        fv := GenerateForm (name);
+      END;
+      cl := NEW (Closure);
+      cl.name := name;
+      VBT.PutProp (fv, cl);
+    END;
+    IF list = NIL AND restock THEN Produce (name); END;
+    RETURN fv;
+  END Get;
+
+PROCEDURE <A NAME="Assoc"><procedure>Assoc</procedure></A> (name: TEXT; body: TEXT) =
+  &lt;* LL = 0 *&gt;
+  BEGIN
+    LOCK mu DO EVAL bodies.put(name, body); END;
+  END Assoc;
+
+PROCEDURE <A NAME="Return"><procedure>Return</procedure></A> (fv: FormsVBT.T) RAISES {BadForm} =
+  &lt;* LL = 0 *&gt;
+  VAR cl := Resolve (fv);
+  BEGIN
+    IF cl = NIL THEN RAISE BadForm; END;
+    LOCK mu DO AddForm (cl.name, fv); END;
+  END Return;
+
+PROCEDURE <A NAME="Flush"><procedure>Flush</procedure></A> (name: TEXT := &quot;&quot;) =
+  &lt;* LL = 0 *&gt;
+  VAR rest: RefList.T;
+  BEGIN
+    LOCK mu DO
+      IF NOT Text.Empty (name) THEN
+        Flush1 (name)
+      ELSE
+        rest :=
+          RefList.NoDuplicates (RefList.Append (forms.toKeyList (),
+                                          bodies.toKeyList ()));
+        WHILE rest # NIL DO
+          Flush1 (rest.first);
+          rest := rest.tail;
+        END;
+      END;
+    END;
+  END Flush;
+
+PROCEDURE <A NAME="Flush1"><procedure>Flush1</procedure></A> (name: TEXT) =
+  &lt;* LL = mu *&gt;
+  VAR
+    body: TEXT;
+    form: REFANY;
+  BEGIN
+    Message (&quot;Flushing &quot;, name);
+    EVAL bodies.delete (name, body);
+    EVAL forms.delete (name, form);
+    IgnoreInWaiting (name);
+    IgnoreInProgress (name);
+  END Flush1;
+
+PROCEDURE <A NAME="IgnoreInWaiting"><procedure>IgnoreInWaiting</procedure></A> (name: TEXT) =
+  &lt;* LL = mu *&gt;
+  (* Remove all instances of name from the waiting list. *)
+  BEGIN
+    formsToPrep := RefList.Delete(formsToPrep, name);
+  END IgnoreInWaiting;
+
+PROCEDURE <A NAME="IgnoreInProgress"><procedure>IgnoreInProgress</procedure></A> (name: TEXT) =
+  &lt;* LL = mu *&gt;
+  (* If any threads are currently working on name, then mark the
+     worker to ignore the results. *)
+  VAR
+    rest  : RefList.T;
+    worker: Worker;
+  BEGIN
+    rest := workers;
+    WHILE rest # NIL DO
+      worker := RefList.Pop (rest);
+      IF Text.Equal (worker.name, name) THEN
+        worker.flush := TRUE;
+      END
+    END;
+  END IgnoreInProgress;
+
+PROCEDURE <A NAME="GenerateForm"><procedure>GenerateForm</procedure></A> (name: TEXT; locked := TRUE): FormsVBT.T
+  RAISES {FormsVBT.Error} =
+  (* IF locked THEN LL=mu ELSE LL=0 *)
+  VAR
+    found: BOOLEAN;
+    value: TEXT;
+  BEGIN
+    Message (&quot;Generating &quot;, name);
+    IF locked THEN
+      found := bodies.in (name, value);
+    ELSE
+      LOCK mu DO found := bodies.in (name, value); END;
+    END;
+    IF found THEN
+      RETURN NEW (FormsVBT.T).init (value)
+    ELSE
+      TRY
+        RETURN FormsVBT.NewFromFile (name)
+      EXCEPT
+      | Rd.Failure (ref) =&gt;
+          RAISE FormsVBT.Error (RdUtils.FailureText (ref))
+      | Thread.Alerted =&gt; RAISE FormsVBT.Error (&quot;Thread.Alerted&quot;)
+      END
+    END
+  END GenerateForm;
+
+PROCEDURE <A NAME="AddForm"><procedure>AddForm</procedure></A> (name: TEXT; fv: FormsVBT.T) =
+  &lt;* LL = mu *&gt;
+  VAR
+    value: REFANY;
+    list : RefList.T;
+  BEGIN
+    IF fv = NIL THEN RETURN END;
+    Message (&quot;Adding &quot;, name);
+    IF forms.in (name, value) THEN
+      list := value;
+      RefList.Push (list, fv)
+    ELSE
+      list := RefList.List1 (fv)
+    END;
+    EVAL forms.put (name, list)
+  END AddForm;
+
+PROCEDURE <A NAME="Produce"><procedure>Produce</procedure></A> (name: TEXT) =
+  &lt;* LL = 0 *&gt;
+  BEGIN
+    LOCK mu DO
+      Message (&quot;Producing&quot;, name);
+      RefList.Push (formsToPrep, name);
+    END;
+    Thread.Broadcast (nonempty);
+  END Produce;
+
+PROCEDURE <A NAME="Consume"><procedure>Consume</procedure></A> (): TEXT RAISES {Thread.Alerted} =
+  &lt;* LL = 0 *&gt;
+  VAR name: TEXT;
+  BEGIN
+    LOCK mu DO
+      WHILE RefList.Length (formsToPrep) = 0 DO
+        Thread.AlertWait (mu, nonempty);
+      END;
+      IF Thread.TestAlert () THEN RAISE Thread.Alerted END;
+      name := RefList.Pop (formsToPrep);
+      Message (&quot;Consuming &quot;, name);
+      RETURN name;
+    END;
+  END Consume;
+
+VAR
+  verbose   := FALSE;
+  verboseMu := NEW (MUTEX);
+
+PROCEDURE <A NAME="Message"><procedure>Message</procedure></A> (t1, t2, t3, t4: TEXT := &quot;&quot;) =
+  &lt;* FATAL Wr.Failure, Thread.Alerted *&gt;
+  BEGIN
+    IF verbose THEN
+      LOCK verboseMu DO
+        Wr.PutText (Stdio.stderr,
+                    &quot;FormsCache: &quot; &amp; t1 &amp; t2 &amp; t3 &amp; t4 &amp; &quot;\n&quot;);
+        Wr.Flush (Stdio.stderr);
+      END
+    END
+  END Message;
+
+BEGIN
+END FormsCache.
+</PRE>
+</inModule>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

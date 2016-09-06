@@ -1,0 +1,111 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: obliqlibanim/src/ObLibAnim.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>obliqlibanim/src/ObLibAnim.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+
+INTERFACE <interface><A HREF="ObLibAnim.m3.html">ObLibAnim</A></interface>;
+IMPORT <A HREF="../../obliqrt/src/ObValue.i3.html">ObValue</A>, <A HREF="../../obliqlibui/src/ObLibUI.i3.html">ObLibUI</A>, <A HREF="../../ui/src/vbt/VBT.i3.html">VBT</A>, <A HREF="../../mgkit/src/GraphVBT.i3.html">GraphVBT</A>, <A HREF="../../mgkit/src/PaintOpAnim.i3.html">PaintOpAnim</A>;
+
+  PROCEDURE <A HREF="ObLibAnim.m3.html#PackageSetup">PackageSetup</A>();
+  (* To be called at least once before any other use of the obliqlibanim package. *)
+</PRE> ============ <CODE>rects</CODE> package ============ 
+  <PRE>TYPE
+    ValRects = ObLibUI.ValVBT BRANDED OBJECT
+        n: INTEGER;
+        shown: BOOLEAN;
+      END;
+</PRE> ============ <CODE>graph</CODE> package ============ 
+
+<P>  <PRE>TYPE
+    ValGraph = ObLibUI.ValVBT BRANDED OBJECT
+        shown: BOOLEAN;
+      END;
+
+    Graph = GraphVBT.T OBJECT
+        valGraph: ValGraph;
+        clickAction, clickReleaseAction, doubleClickAction: ObValue.ValFun;
+      OVERRIDES
+        mouse := Mouse;
+      END;
+
+    ValVertex =
+      ObValue.ValAnything BRANDED OBJECT
+        vertex: GraphVBT.Vertex;
+      OVERRIDES Is := IsVertex;
+      END;
+
+    ValVertexHiLi =
+      ObValue.ValAnything BRANDED OBJECT
+        vertexHiLi: GraphVBT.VertexHighlight;
+      OVERRIDES Is := IsVertexHiLi;
+      END;
+
+    ValEdge =
+      ObValue.ValAnything BRANDED OBJECT
+        edge: GraphVBT.Edge;
+      OVERRIDES Is := IsEdge;
+      END;
+
+    ValPolygon =
+      ObValue.ValAnything BRANDED OBJECT
+        polygon: GraphVBT.Polygon;
+      OVERRIDES Is := IsPolygon;
+      END;
+
+    ValFont =
+      ObValue.ValAnything BRANDED OBJECT
+        font: GraphVBT.WorldFont;
+      OVERRIDES Is := IsFont;
+      END;
+
+    ValSpectrum =
+      ObValue.ValAnything BRANDED OBJECT
+        graph: Graph;
+        spectrum: PaintOpAnim.T;
+      OVERRIDES Is := IsSpectrum;
+      END;
+
+  PROCEDURE <A HREF="ObLibAnim.m3.html#Mouse">Mouse</A>(self: Graph; READONLY cd: VBT.MouseRec);
+
+  PROCEDURE <A HREF="ObLibAnim.m3.html#IsVertex">IsVertex</A>(self: ValVertex; other: ObValue.ValAnything): BOOLEAN;
+  PROCEDURE <A HREF="ObLibAnim.m3.html#IsVertexHiLi">IsVertexHiLi</A>(self: ValVertexHiLi; other: ObValue.ValAnything): BOOLEAN;
+  PROCEDURE <A HREF="ObLibAnim.m3.html#IsEdge">IsEdge</A>(self: ValEdge; other: ObValue.ValAnything): BOOLEAN;
+  PROCEDURE <A HREF="ObLibAnim.m3.html#IsPolygon">IsPolygon</A>(self: ValPolygon; other: ObValue.ValAnything): BOOLEAN;
+  PROCEDURE <A HREF="ObLibAnim.m3.html#IsFont">IsFont</A>(self: ValFont; other: ObValue.ValAnything): BOOLEAN;
+  PROCEDURE <A HREF="ObLibAnim.m3.html#IsSpectrum">IsSpectrum</A>(self: ValSpectrum; other: ObValue.ValAnything): BOOLEAN;
+
+END ObLibAnim.
+</PRE>
+</inInterface>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

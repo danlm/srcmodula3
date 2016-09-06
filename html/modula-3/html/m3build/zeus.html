@@ -1,0 +1,61 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: m3build support for Zeus animations</TITLE>
+</HEAD>
+<BODY BGCOLOR="#ffffff" VLINK="#006633">
+
+<H2>Zeus animations</H2>
+<P>
+
+The following procedures support building Zeus animations.
+<P>
+
+<B> zume(X) </B>  
+      run the Zeus event processor m3zume on the source file <TT>X.evt</TT>
+      to produce Modula-3 sources and other resources needed to build an
+      animation.  The resulting sources are included in any subsequent
+      compilation.
+<P>
+
+<B> zume3D(X) </B>
+      like <TT>zume</TT> but with the additional support for using
+      the 3D libraries.
+<P>
+
+<B> oblume(X,O) </B>
+      Like <TT>zume</TT>, runs the Zeus event processor on <TT>X.evt</TT>
+      and also bundles the source file <TT>O.obl</TT> which is assumed
+      to contain Obliq code.
+<P>
+
+<B> oblume3D(X,O) </B>
+      like <TT>oblume</TT> but with the additional support for using
+      the 3D libraries.
+<P>
+
+<B> junozume(X,V) </B>
+     Runs the Zeus event processor on <TT>X.evt</TT> to produce stubs
+     to connect to a Juno(1) animation server run with the <B>-zeus</B>
+     option. There can be at most one Juno view per Zeus animation.
+     <TT>V</TT> is the name of the view installed in the Zeus <I>Views</I>
+     menu. See the Juno(1) man page for a more complete
+     description of how to write a Juno animation view for
+     Zeus. See the README file in the junozeus package
+     for instructions on how to run an example view.
+<P>
+
+<HR>
+<A HREF="../home.html">[Modula-3 home page]</A>
+<P>
+<A HREF="mailto:m3-request@src.dec.com">
+<ADDRESS>m3-request@src.dec.com</ADDRESS></A>
+<PRE>
+Last modified on Thu Jan  4 11:07:49 PST 1996 by heydon 
+     modified on Fri Jul 22 15:21:12 PDT 1994 by kalsow 
+     modified on Thu Jan  7 18:40:57 PST 1993 by muller 
+</PRE>
+
+Copyright (C) 1992, 1996, Digital Equipment Corporation. All rights reserved.<BR>
+See the <A HREF="http://www.research.digital.com/SRC/m3sources/html/COPYRIGHT.html">COPYRIGHT</A> for a full description.
+</BODY>
+</HTML>

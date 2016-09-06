@@ -1,0 +1,92 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: unix/src/irix-5.2/Utime.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>unix/src/irix-5.2/Utime.m3</H2></A><HR>
+<inModule>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+
+MODULE <module><implements><A HREF="#x1">Utime</A></implements></module>;
+
+IMPORT <A HREF="#x2">Unix</A>;
+
+BEGIN
+  CLK_TCK := Unix.sysconf( Unix.SC_CLK_TCK );
+END Utime.
+</PRE>
+</inModule>
+<HR>
+<A NAME="x1">interface Utime is in:
+</A><UL>
+<LI><A HREF="../aix-3-2/Utime.i3.html#0TOP0">unix/src/aix-3-2/Utime.i3</A>
+<LI><A HREF="../aix-ps2-1-2/Utime.i3.html#0TOP0">unix/src/aix-ps2-1-2/Utime.i3</A>
+<LI><A HREF="../freebsd-1/Utime.i3.html#0TOP0">unix/src/freebsd-1/Utime.i3</A>
+<LI><A HREF="../freebsd-2/Utime.i3.html#0TOP0">unix/src/freebsd-2/Utime.i3</A>
+<LI><A HREF="../hpux-7-0/Utime.i3.html#0TOP0">unix/src/hpux-7-0/Utime.i3</A>
+<LI><A HREF="../ibm-4-3/Utime.i3.html#0TOP0">unix/src/ibm-4-3/Utime.i3</A>
+<LI><A HREF="Utime.i3.html#0TOP0">unix/src/irix-5.2/Utime.i3</A>
+<LI><A HREF="../linux/Utime.i3.html#0TOP0">unix/src/linux/Utime.i3</A>
+<LI><A HREF="../osf-1.ALPHA_OSF/Utime.i3.html#0TOP0">unix/src/osf-1.ALPHA_OSF/Utime.i3</A>
+<LI><A HREF="../osf-1.DS3100/Utime.i3.html#0TOP0">unix/src/osf-1.DS3100/Utime.i3</A>
+<LI><A HREF="../solaris-2-x/Utime.i3.html#0TOP0">unix/src/solaris-2-x/Utime.i3</A>
+<LI><A HREF="../sunos-4-x/Utime.i3.html#0TOP0">unix/src/sunos-4-x/Utime.i3</A>
+<LI><A HREF="../sysv-4.0/Utime.i3.html#0TOP0">unix/src/sysv-4.0/Utime.i3</A>
+<LI><A HREF="../ultrix-3-1.generic/Utime.i3.html#0TOP0">unix/src/ultrix-3-1.generic/Utime.i3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x2">interface Unix is in:
+</A><UL>
+<LI><A HREF="../aix-3-2/Unix.i3.html#0TOP0">unix/src/aix-3-2/Unix.i3</A>
+<LI><A HREF="../aix-ps2-1-2/Unix.i3.html#0TOP0">unix/src/aix-ps2-1-2/Unix.i3</A>
+<LI><A HREF="../freebsd-1/Unix.i3.html#0TOP0">unix/src/freebsd-1/Unix.i3</A>
+<LI><A HREF="../freebsd-2/Unix.i3.html#0TOP0">unix/src/freebsd-2/Unix.i3</A>
+<LI><A HREF="../hpux-7-0/Unix.i3.html#0TOP0">unix/src/hpux-7-0/Unix.i3</A>
+<LI><A HREF="../ibm-4-3/Unix.i3.html#0TOP0">unix/src/ibm-4-3/Unix.i3</A>
+<LI><A HREF="Unix.i3.html#0TOP0">unix/src/irix-5.2/Unix.i3</A>
+<LI><A HREF="../linux/Unix.i3.html#0TOP0">unix/src/linux/Unix.i3</A>
+<LI><A HREF="../osf-1.ALPHA_OSF/Unix.i3.html#0TOP0">unix/src/osf-1.ALPHA_OSF/Unix.i3</A>
+<LI><A HREF="../osf-1.DS3100/Unix.i3.html#0TOP0">unix/src/osf-1.DS3100/Unix.i3</A>
+<LI><A HREF="../solaris-2-x/Unix.i3.html#0TOP0">unix/src/solaris-2-x/Unix.i3</A>
+<LI><A HREF="../sunos-4-x/Unix.i3.html#0TOP0">unix/src/sunos-4-x/Unix.i3</A>
+<LI><A HREF="../sysv-4.0/Unix.i3.html#0TOP0">unix/src/sysv-4.0/Unix.i3</A>
+<LI><A HREF="../ultrix-3-1.AP3000/Unix.i3.html#0TOP0">unix/src/ultrix-3-1.AP3000/Unix.i3</A>
+<LI><A HREF="../ultrix-3-1.ARM/Unix.i3.html#0TOP0">unix/src/ultrix-3-1.ARM/Unix.i3</A>
+<LI><A HREF="../ultrix-3-1.DS3100/Unix.i3.html#0TOP0">unix/src/ultrix-3-1.DS3100/Unix.i3</A>
+<LI><A HREF="../ultrix-3-1.NEXT/Unix.i3.html#0TOP0">unix/src/ultrix-3-1.NEXT/Unix.i3</A>
+<LI><A HREF="../ultrix-3-1.SEQUENT/Unix.i3.html#0TOP0">unix/src/ultrix-3-1.SEQUENT/Unix.i3</A>
+<LI><A HREF="../ultrix-3-1.SUN3/Unix.i3.html#0TOP0">unix/src/ultrix-3-1.SUN3/Unix.i3</A>
+<LI><A HREF="../ultrix-3-1.SUN386/Unix.i3.html#0TOP0">unix/src/ultrix-3-1.SUN386/Unix.i3</A>
+<LI><A HREF="../ultrix-3-1.UMAX/Unix.i3.html#0TOP0">unix/src/ultrix-3-1.UMAX/Unix.i3</A>
+<LI><A HREF="../ultrix-3-1.VAX/Unix.i3.html#0TOP0">unix/src/ultrix-3-1.VAX/Unix.i3</A>
+</UL>
+<P>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

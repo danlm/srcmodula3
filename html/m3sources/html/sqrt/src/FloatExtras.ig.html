@@ -1,0 +1,118 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: sqrt/src/FloatExtras.ig</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>sqrt/src/FloatExtras.ig</H2></A><HR>
+<inInterface>
+<PRE></PRE><P>
+     FloatExtras.ig
+        Some useful routines for floating-point
+        David Goldberg, Xerox PARC
+        goldberg@parc.xerox.com
+        November, 1993
+
+
+<P> Copyright (c) 1993 Xerox Corporation.  All rights reserved.
+<P>
+   Use and copying of this software and preparation of derivative works
+   based upon this software are permitted.  Any distribution of this
+   software or derivative works must comply with all applicable United
+   States export control laws.  This software is made available AS IS, and
+   Xerox Corporation makes no warranty about the software, its performance
+   or its conformity to any specification. 
+
+<P>
+<P><PRE>GENERIC INTERFACE <genericInterface><A HREF="FloatExtras.mg.html">FloatExtras</A></genericInterface>(Real);
+
+IMPORT <A HREF="#x1">FloatMode</A>;
+
+TYPE T = Real.T;
+</PRE><P>
+ *  Contains miscellaneous functions useful for Float arithmetic
+ 
+
+<P><PRE>TYPE
+  (* represents (bits[0] . bits[1] bits[2] ...) * 2^exp *)
+  Binary = RECORD
+             exp : INTEGER;
+             bits: REF ARRAY OF [0..1];
+           END;
+
+PROCEDURE <A HREF="FloatExtras.mg.html#ToBinary">ToBinary</A> (x: T): Binary RAISES {FloatMode.Trap};
+</PRE><P>
+ * The following procedures raise an IEEE exception, and return the
+ *  value prescribed by the standard.  Whether or not they raise a
+ *  Modula-3 exception depends on FloatMode.GetBehavior()
+ 
+
+<P> returns NaN 
+<PRE>PROCEDURE <A HREF="FloatExtras.mg.html#RaiseInvalid">RaiseInvalid</A> (): T RAISES {FloatMode.Trap};
+</PRE> returns inf 
+<PRE>PROCEDURE <A HREF="FloatExtras.mg.html#RaiseDivByZero">RaiseDivByZero</A> (sign: [-1 .. 1] := 1): T RAISES {FloatMode.Trap};
+</PRE><P>
+ * Overflow trap handlers can correct for large overflows.  Call
+ * RaiseLargeOverflow when the result is so large that the exponent
+ * has wrapped around more than once.  When overflow handlers are enabled
+ * this routine will call the handler with a NaN instead of the wrapped result
+ 
+<PRE>PROCEDURE <A HREF="FloatExtras.mg.html#RaiseLargeOverflow">RaiseLargeOverflow</A> (sign: [-1 .. 1] := 1): T
+  RAISES {FloatMode.Trap};
+
+PROCEDURE <A HREF="FloatExtras.mg.html#RaiseLargeUnderflow">RaiseLargeUnderflow</A> (sign: [-1 .. 1] := 1): T
+  RAISES {FloatMode.Trap};
+
+PROCEDURE <A HREF="FloatExtras.mg.html#Round">Round</A> (x: T): INTEGER;
+</PRE><BLOCKQUOTE><EM> rounds according to the current rounding mode </EM></BLOCKQUOTE><PRE>
+
+PROCEDURE <A HREF="FloatExtras.mg.html#SetFlag">SetFlag</A> (f: FloatMode.Flag) RAISES {FloatMode.Failure};
+</PRE><BLOCKQUOTE><EM> Set a flag.  Potentially more efficient than SetFlags(GetFlags() + SET
+   OF Flag{f}) </EM></BLOCKQUOTE><PRE>
+
+PROCEDURE <A HREF="FloatExtras.mg.html#SetBehaviors">SetBehaviors</A> (f: SET OF FloatMode.Flag; b: FloatMode.Behavior)
+  RAISES {FloatMode.Failure};
+</PRE><BLOCKQUOTE><EM> set behavior for a set of flags </EM></BLOCKQUOTE><PRE>
+
+END FloatExtras.
+</PRE>
+</inInterface>
+<HR>
+<A NAME="x1">interface FloatMode is in:
+</A><UL>
+<LI><A HREF="../../float/src/DS3100/FloatMode.i3.html#0TOP0">float/src/DS3100/FloatMode.i3</A>
+<LI><A HREF="../../float/src/IEEE-default/FloatMode.i3.html#0TOP0">float/src/IEEE-default/FloatMode.i3</A>
+<LI><A HREF="../../float/src/IRIX5/FloatMode.i3.html#0TOP0">float/src/IRIX5/FloatMode.i3</A>
+<LI><A HREF="../../float/src/SOLsun/FloatMode.i3.html#0TOP0">float/src/SOLsun/FloatMode.i3</A>
+<LI><A HREF="../../float/src/SPARC/FloatMode.i3.html#0TOP0">float/src/SPARC/FloatMode.i3</A>
+<LI><A HREF="../../float/src/SUN386/FloatMode.i3.html#0TOP0">float/src/SUN386/FloatMode.i3</A>
+<LI><A HREF="../../float/src/VAX/FloatMode.i3.html#0TOP0">float/src/VAX/FloatMode.i3</A>
+</UL>
+<P>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

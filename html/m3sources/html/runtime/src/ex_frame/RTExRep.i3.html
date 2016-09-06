@@ -1,0 +1,138 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: runtime/src/ex_frame/RTExRep.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>runtime/src/ex_frame/RTExRep.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM>                                                             </EM></BLOCKQUOTE><PRE>
+
+UNSAFE INTERFACE <interface><A HREF="#x1">RTExRep</A></interface>;
+
+IMPORT <A HREF="#x2">Csetjmp</A>;
+</PRE> This interface defines the low-level routines and data structures
+   used by the exception runtime.
+
+
+<P>----------------------------------------- compiler generated descriptors --
+
+<P><PRE>TYPE
+  ScopeKind = { Except, ExceptElse,
+                Finally, FinallyProc,
+                Raises, RaisesNone,
+                Lock };
+
+TYPE
+  Frame = UNTRACED REF EF;
+
+TYPE (* RaisesNone *)
+  EF = RECORD
+    next  : Frame;
+    class : INTEGER;    (* ORD(ScopeKind) *)
+  END;
+
+TYPE (* Except, ExceptElse, Finally *)
+  PF1 = UNTRACED REF EF1;
+  EF1 = RECORD
+    next      : Frame;
+    class     : INTEGER;    (* ORD(ScopeKind) *)
+    handles   : ADDRESS;    (* NIL-terminated list of exceptions handled *)
+    exception : ADDRESS;    (* current exception being dispatched *)
+    arg       : ADDRESS;    (* current argument *)
+    jmpbuf    : Csetjmp.jmp_buf;
+  END;
+
+TYPE (* FinallyProc *)
+  PF2 = UNTRACED REF EF2;
+  EF2 = RECORD
+    next    : Frame;
+    class   : INTEGER;      (* ORD(ScopeKind) *)
+    handler : ADDRESS;      (* the procedure *)
+    frame   : ADDRESS;      (* static link for the handler *)
+  END;
+
+TYPE (* Raises *)
+  PF3 = UNTRACED REF EF3;
+  EF3 = RECORD
+    next    : Frame;
+    class   : INTEGER;  (* ORD(ScopeKind) *)
+    raises  : ADDRESS;  (*  NIL-terminated list of exceptions allowed *)
+  END;
+
+TYPE (* Lock *)
+  PF4 = UNTRACED REF EF4;
+  EF4 = RECORD
+    next    : Frame;
+    class   : INTEGER;  (* ORD(ScopeKind) *)
+    mutex   : MUTEX;    (* the locked mutex *)
+  END;
+
+END RTExRep.
+</PRE>
+</inInterface>
+<HR>
+<A NAME="x1">RTExRep's implementation  is in:
+</A><UL>
+<LI><A HREF="RTException.m3.html#0TOP0">runtime/src/ex_frame/RTException.m3</A>
+<LI><A HREF="../ex_stack/RTException.m3.html#0TOP0">runtime/src/ex_stack/RTException.m3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x2">interface Csetjmp is in:
+</A><UL>
+<LI><A HREF="../../../C/src/AIX386/Csetjmp.i3.html#0TOP0">C/src/AIX386/Csetjmp.i3</A>
+<LI><A HREF="../../../C/src/ALPHA_OSF/Csetjmp.i3.html#0TOP0">C/src/ALPHA_OSF/Csetjmp.i3</A>
+<LI><A HREF="../../../C/src/AP3000/Csetjmp.i3.html#0TOP0">C/src/AP3000/Csetjmp.i3</A>
+<LI><A HREF="../../../C/src/ARM/Csetjmp.i3.html#0TOP0">C/src/ARM/Csetjmp.i3</A>
+<LI><A HREF="../../../C/src/DS3100/Csetjmp.i3.html#0TOP0">C/src/DS3100/Csetjmp.i3</A>
+<LI><A HREF="../../../C/src/FreeBSD/Csetjmp.i3.html#0TOP0">C/src/FreeBSD/Csetjmp.i3</A>
+<LI><A HREF="../../../C/src/FreeBSD2/Csetjmp.i3.html#0TOP0">C/src/FreeBSD2/Csetjmp.i3</A>
+<LI><A HREF="../../../C/src/HP300/Csetjmp.i3.html#0TOP0">C/src/HP300/Csetjmp.i3</A>
+<LI><A HREF="../../../C/src/HPPA/Csetjmp.i3.html#0TOP0">C/src/HPPA/Csetjmp.i3</A>
+<LI><A HREF="../../../C/src/IBMR2/Csetjmp.i3.html#0TOP0">C/src/IBMR2/Csetjmp.i3</A>
+<LI><A HREF="../../../C/src/IBMRT/Csetjmp.i3.html#0TOP0">C/src/IBMRT/Csetjmp.i3</A>
+<LI><A HREF="../../../C/src/IRIX5/Csetjmp.i3.html#0TOP0">C/src/IRIX5/Csetjmp.i3</A>
+<LI><A HREF="../../../C/src/LINUX/Csetjmp.i3.html#0TOP0">C/src/LINUX/Csetjmp.i3</A>
+<LI><A HREF="../../../C/src/LINUXELF/Csetjmp.i3.html#0TOP0">C/src/LINUXELF/Csetjmp.i3</A>
+<LI><A HREF="../../../C/src/NEXT/Csetjmp.i3.html#0TOP0">C/src/NEXT/Csetjmp.i3</A>
+<LI><A HREF="../../../C/src/NT386/Csetjmp.i3.html#0TOP0">C/src/NT386/Csetjmp.i3</A>
+<LI><A HREF="../../../C/src/OKI/Csetjmp.i3.html#0TOP0">C/src/OKI/Csetjmp.i3</A>
+<LI><A HREF="../../../C/src/SEQUENT/Csetjmp.i3.html#0TOP0">C/src/SEQUENT/Csetjmp.i3</A>
+<LI><A HREF="../../../C/src/SOLgnu/Csetjmp.i3.html#0TOP0">C/src/SOLgnu/Csetjmp.i3</A>
+<LI><A HREF="../../../C/src/SOLsun/Csetjmp.i3.html#0TOP0">C/src/SOLsun/Csetjmp.i3</A>
+<LI><A HREF="../../../C/src/SPARC/Csetjmp.i3.html#0TOP0">C/src/SPARC/Csetjmp.i3</A>
+<LI><A HREF="../../../C/src/SUN3/Csetjmp.i3.html#0TOP0">C/src/SUN3/Csetjmp.i3</A>
+<LI><A HREF="../../../C/src/SUN386/Csetjmp.i3.html#0TOP0">C/src/SUN386/Csetjmp.i3</A>
+<LI><A HREF="../../../C/src/UMAX/Csetjmp.i3.html#0TOP0">C/src/UMAX/Csetjmp.i3</A>
+<LI><A HREF="../../../C/src/VAX/Csetjmp.i3.html#0TOP0">C/src/VAX/Csetjmp.i3</A>
+</UL>
+<P>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

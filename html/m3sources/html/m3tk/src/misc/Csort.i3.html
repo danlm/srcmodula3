@@ -1,0 +1,50 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: m3tk/src/misc/Csort.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>m3tk/src/misc/Csort.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+
+&lt;*EXTERNAL*&gt; INTERFACE <interface>Csort</interface>;
+
+IMPORT <A HREF="../../../C/src/Common/Ctypes.i3.html">Ctypes</A>;
+
+TYPE
+  CompareProc = PROCEDURE(x,y: Ctypes.void_star): Ctypes.int;
+
+PROCEDURE qsort(base: Ctypes.void_star; nel, width: Ctypes.unsigned_int;
+  p: CompareProc);
+
+END Csort.
+</PRE>
+</inInterface>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

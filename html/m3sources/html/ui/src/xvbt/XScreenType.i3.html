@@ -1,0 +1,73 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: ui/src/xvbt/XScreenType.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>ui/src/xvbt/XScreenType.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM> </EM></BLOCKQUOTE><PRE>
+</PRE> by Steve Glassman, Mark Manasse and Greg Nelson 
+
+<P><PRE>&lt;*PRAGMA LL*&gt;
+
+UNSAFE INTERFACE <interface><A HREF="XScreenType.m3.html">XScreenType</A></interface>;
+
+IMPORT <A HREF="../../../X11R4/src/Common/X.i3.html">X</A>, <A HREF="../vbt/VBT.i3.html">VBT</A>, <A HREF="../../../geometry/src/Rect.i3.html">Rect</A>, <A HREF="XClient.i3.html">XClient</A>;
+
+PROCEDURE <A HREF="XScreenType.m3.html#New">New</A> (trsl: XClient.T; dpy: X.DisplayStar; i: INTEGER): T;
+</PRE><BLOCKQUOTE><EM> Create a screentype for the ith screen of dpy, which is the X connection
+   underlying trsl.  LL &lt;= VBT.mu. </EM></BLOCKQUOTE><PRE>
+
+TYPE
+  <A HREF="XScreenType.m3.html#T">T</A> &lt;: Public;
+  Public =
+    VBT.ScreenType OBJECT
+      trsl: XClient.T;
+      (* Remaining fields protected by the .trsl field. *)
+      root: X.Window;
+      (* root window for this screentype *)
+      rootDom : Rect.T;
+      screenID: CARDINAL;
+      (* X screen ID of root window. *)
+      visual: X.VisualStar;
+      (* visual for root window. *)
+      backing_store                      := X.NotUseful;
+      captureGC, noExposeCaptureGC: X.GC := NIL;
+      (* used for implementing capture *)
+      imageGC: X.GC := NIL;
+      (* used for putting &amp; getting images *)
+      nullCursor: X.Cursor := X.None; (* for peekaboo mode, set on cage *)
+    END;
+
+END XScreenType.
+</PRE>
+</inInterface>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

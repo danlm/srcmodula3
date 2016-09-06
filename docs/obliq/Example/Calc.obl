@@ -1,0 +1,34 @@
+(* A calculator. *)
+
+module Calc;
+
+let calc =
+  { arg => 0.0,
+    acc => 0.0,
+    enter => meth(s, n) s.arg := n; s end,
+    add => 
+      meth(s) s.acc := s.equals; s.equals := meth(s) s.acc+s.arg end; s end,
+    sub => 
+      meth(s) s.acc := s.equals; s.equals := meth(s) s.acc-s.arg end; s end,
+    equals => meth(s) s.arg end,
+    reset =>
+      meth(s) s.arg:=0.0; s.acc:=0.0; s.equals:=meth(s) s.arg end; s end
+   };
+
+(* Now here is a "functional" version of the same calculator, matching the 
+   version in M.Abadi, L.Cardelli: "A Theory of Primitive Objects". All the 
+   updating is replaced by updating clones. *)
+
+let argUpd =  proc(o, n) let o1=clone(o); o1.arg:=n; o1 end;
+let accUpd = proc(o, n) let o1=clone(o); o1.acc:=n; o1 end;
+let eqUpd = proc(o, f) let o1=clone(o); o1.equals:=f; o1 end;
+
+let calc1 =
+  { arg => 0,
+    acc => 0,
+    enter => meth(s, n) s argUpd n end,
+    add => meth(s) (s accUpd s.equals) eqUpd meth(s) s.acc+s.arg end end,
+    sub => meth(s) (s accUpd s.equals) eqUpd meth(s) s.acc-s.arg end end,
+    equals => meth(s) s.arg end,
+   };
+

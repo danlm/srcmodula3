@@ -1,0 +1,76 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: netobj/src/NetObjMon.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>netobj/src/NetObjMon.m3</H2></A><HR>
+<inModule>
+<PRE><A HREF="../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM> NetObjMonLocal.m3 </EM></BLOCKQUOTE><PRE>
+
+MODULE <module><implements><A HREF="NetObjMon.i3.html">NetObjMon</A></implements></module>;
+
+IMPORT <A HREF="../../netobjrt/src/NetObj.i3.html">NetObj</A>, <A HREF="../../netobjrt/src/NGCMonitor.i3.html">NGCMonitor</A>, <A HREF="../../fmtlex/src/Fmt.i3.html">Fmt</A>, <A HREF="../../params/src/Params.i3.html">Params</A>, <A HREF="../../os/src/Common/Process.i3.html">Process</A>, <A HREF="../../libm3/DS/RefList.i3.html">RefList</A>, <A HREF="../../thread/src/Common/Thread.i3.html">Thread</A>;
+
+TYPE
+  TT = T OBJECT OVERRIDES
+    dump      := Dump;
+    dumpNames := DumpNames;
+  END;
+
+PROCEDURE <A NAME="Register"><procedure>Register</procedure></A> () =
+  VAR reg: Registry;
+  BEGIN
+    TRY
+      reg := NetObj.Import(RegistryServiceName);
+      IF reg # NIL THEN
+        reg.register(NEW(TT),
+	   Fmt.F(&quot;%s(%s)&quot;, Params.Get(0), Fmt.Int(Process.GetMyID())));
+      END;
+    EXCEPT
+    | NetObj.Error, Thread.Alerted =&gt; (* skip *)
+    END;
+  END Register;
+
+PROCEDURE <A NAME="Dump"><procedure>Dump</procedure></A>(&lt;*UNUSED*&gt;m: TT) : REFANY =
+  BEGIN
+    RETURN NGCMonitor.MonitorDump();
+  END Dump;
+
+PROCEDURE <A NAME="DumpNames"><procedure>DumpNames</procedure></A>(&lt;*UNUSED*&gt;m: TT) : RefList.T =
+  BEGIN
+    RETURN NGCMonitor.MonitorDumpNames();
+  END DumpNames;
+
+BEGIN
+END NetObjMon.
+</PRE>
+</inModule>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

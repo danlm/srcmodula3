@@ -1,0 +1,66 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: ui/src/winvbt/WinTrestle.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>ui/src/winvbt/WinTrestle.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM> Digital Internal Use Only                                                 </EM></BLOCKQUOTE><PRE>
+</PRE>                                                                           
+       Created on Mon Jan 16 10:06:59 PST 1995 by najork                   
+
+<P>
+<P><PRE>INTERFACE <interface><A HREF="WinTrestle.m3.html">WinTrestle</A></interface>;
+
+IMPORT <A HREF="../split/ProperSplit.i3.html">ProperSplit</A>, <A HREF="../vbt/Trestle.i3.html">Trestle</A>, <A HREF="../vbt/TrestleClass.i3.html">TrestleClass</A>, <A HREF="../vbt/VBT.i3.html">VBT</A>, <A HREF="../../../win32/src/WinDef.i3.html">WinDef</A>;
+
+TYPE
+  <A HREF="WinTrestle.m3.html#T">T</A> &lt;: Trestle.T;
+
+REVEAL
+  TrestleClass.RootVBT &lt;: ProperSplit.T;
+</PRE> A Child object serves as the mediator between a top-level VBT.T and
+   a Trestle.T.  Calling <CODE>trsl.beChild(v)</CODE> creates a <CODE>Child</CODE> object which
+   contains Windows-specific data for the top-level VBT.T (such as its 
+   window handle). The <CODE>Child</CODE> object is stored in <CODE>v.upRef</CODE>. 
+
+<P><PRE>TYPE
+  <A HREF="WinTrestle.m3.html#Child">Child</A> &lt;: ProperSplit.Child;   (* created by WinTrestle.BeChild *)
+
+PROCEDURE <A HREF="WinTrestle.m3.html#WindowHandle">WindowHandle</A> (v: VBT.T): WinDef.HWND;
+</PRE><BLOCKQUOTE><EM> Return the window handle associated with a VBT (or NIL) </EM></BLOCKQUOTE><PRE>
+
+PROCEDURE <A HREF="WinTrestle.m3.html#Init">Init</A>();
+
+END WinTrestle.
+</PRE>
+</inInterface>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

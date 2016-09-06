@@ -1,0 +1,34 @@
+(* How to migrate an object between sites, consistently. *)
+
+module ObjectMigration;
+
+let migrateProc =
+  proc(obj, engineName)
+    let engine = net_importEngine(engineName, "");
+    let remoteObj = engine(proc(arg) clone(obj) end);
+    delegate obj to remoteObj end;
+    remoteObj;
+  end;
+
+(* Here is an object with a migrate method. *)
+
+let o1 = 
+  { protected, serialized,
+    x=>3, 
+    migrate => 
+      meth(s,n) migrateProc(s,n) end
+  };
+
+(* 
+First do this at another site:
+  net_exportEngine("engine", "", ok);
+      
+Then:
+  let o2 = o1.migrate("engine");
+  o1.x;
+
+Now go kill the engine's site. Then:
+   o1;     Fine
+   o1.x;   Net error 
+*)
+

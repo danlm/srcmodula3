@@ -1,0 +1,67 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: pkgobj/src/Common/SiteObj.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>pkgobj/src/Common/SiteObj.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM> SiteObj.i3 </EM></BLOCKQUOTE><PRE>
+
+INTERFACE <interface><A HREF="#x1">SiteObj</A></interface>;
+
+IMPORT <A HREF="../../../netobjrt/src/NetObj.i3.html">NetObj</A>, <A HREF="Site.i3.html">Site</A>, <A HREF="../../../thread/src/Common/Thread.i3.html">Thread</A>;
+
+CONST
+  SiteObjName = &quot;SiphonSite&quot;;
+
+TYPE
+  ST = NetObj.T OBJECT METHODS
+    get() : Site.T  RAISES {NetObj.Error, Thread.Alerted};
+  END;
+
+PROCEDURE <A HREF="Site.m3.html#Import">Import</A>(loc: TEXT) : ST RAISES {Site.Error, Thread.Alerted};
+  (* See the description of Site.EnvVarName to understand
+     how &quot;loc&quot; is interpreted. *)
+
+PROCEDURE <A HREF="Site.m3.html#SetServerST">SetServerST</A>(st: ST);
+  (* Forces Site.Get to use &quot;st&quot; in lieu of Import(Site.EnvVarName). *)
+
+END SiteObj.
+</PRE>
+</inInterface>
+<HR>
+<A NAME="x1">SiteObj's implementation  is in:
+</A><UL>
+<LI><A HREF="../../DS/SiteObj_ST_v1.m3.html#0TOP0">pkgobj/DS/SiteObj_ST_v1.m3</A>
+<LI><A HREF="Site.m3.html#0TOP0">pkgobj/src/Common/Site.m3</A>
+</UL>
+<P>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

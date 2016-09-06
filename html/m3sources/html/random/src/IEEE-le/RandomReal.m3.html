@@ -1,0 +1,133 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: random/src/IEEE-le/RandomReal.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>random/src/IEEE-le/RandomReal.m3</H2></A><HR>
+<inModule>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+
+UNSAFE MODULE <module><implements><A HREF="../Common/RandomReal.i3.html">RandomReal</A></implements></module>;
+
+IMPORT <A HREF="../../../word/src/Word.i3.html">Word</A>, <A HREF="../Common/Random.i3.html">Random</A>;
+</PRE>  <P>
+  Implements Random.Real and Random.LongReal for IEEE floating-point
+  format, as available on the following little-endian machines:
+        Acorn RISC,
+        Apollo DN3000, DN4000,
+        DECstation 3100 (pmax),
+        Encore Multimax,
+        IBM PC/386,  PC/RT,  R6000,
+        HP 9000/300,
+        Sun 3,
+
+
+<P><PRE>PROCEDURE <A NAME="Real"><procedure>Real</procedure></A> (r: Random.T): REAL =
+  TYPE RealInt = ARRAY [0..BYTESIZE(INTEGER) DIV BYTESIZE(REAL) - 1] OF REAL;
+  CONST ExponentBias = 127;  (* Exponent bias for REAL *)
+        FractionBits = 23;   (* Number of explicit fraction bits *)
+        WordSize = 32;       (* Size of INTEGER in bits *)
+  VAR frac, exp: INTEGER;  result: INTEGER;
+  BEGIN
+    (* Generate a random fraction and get its first non-zero word: *)
+    exp := ExponentBias - 1;
+    frac := r.integer ();
+    WHILE (frac = 0) AND (exp &gt;= WordSize) DO
+      (* This loop is (almost) never executed: *)
+      DEC (exp, WordSize);
+      frac := r.integer ();
+    END;
+
+    (* Normalize: *)
+    WHILE (frac &gt; 0) AND (exp &gt; 0) DO
+      (* This loop is executed about once on the average. *)
+      frac := Word.Shift (frac, 1);
+      DEC (exp);
+    END;
+    IF ((ExponentBias - 1 - exp) MOD WordSize) &gt;  WordSize - FractionBits THEN
+      (* Needs more random bits *)
+      frac := r.integer ();
+    END;
+
+    (* Repack as REAL: *)
+    result := Word.Or (Word.Shift (exp, FractionBits),
+                       Word.Shift (Word.And (frac, 16_7fffffff),
+                                   -(WordSize - 1 - FractionBits))
+                      );
+    RETURN LOOPHOLE (result, RealInt)[0];
+  END Real;
+
+PROCEDURE <A NAME="Longreal"><procedure>Longreal</procedure></A> (r: Random.T): LONGREAL =
+  TYPE Int32 = BITS 32 FOR [-16_7fffffff-1..16_7fffffff];
+  TYPE XX = ARRAY [0..1] OF Int32;
+  CONST ExponentBias = 1023; (* Exponent bias for LONGREAL *)
+        FractionBits = 20;   (* Number of fraction bits in high half *)
+        WordSize = 32;       (* Size of INTEGER in bits *)
+  VAR frac, exp: INTEGER;  ans: LONGREAL;
+  BEGIN
+    (* Generate a random fraction and get the first non-zero word: *)
+    exp := ExponentBias - 1;
+    frac := r.integer ();
+    WHILE (frac = 0) AND (exp &gt;= WordSize) DO
+      (* This loop is (almost) never executed: *)
+      DEC (exp, WordSize);
+      frac := r.integer ();
+    END;
+
+    (* Normalize: *)
+    WHILE (frac &gt; 0) AND (exp &gt; 0) DO
+      (* This loop is executed about once on the average. *)
+      frac := Word.Shift (frac, 1);
+      DEC (exp);
+    END;
+    IF ((ExponentBias - 1 - exp) MOD WordSize) &gt;  WordSize - FractionBits THEN
+      (* Needs more random bits *)
+      frac := r.integer ();
+    END;
+
+    (* Repack as LONGREAL: *)
+    LOOPHOLE (ans, XX)[0] := r.integer ();(* Low-order fraction bits *)
+    LOOPHOLE (ans, XX)[1] := Word.Or (
+      Word.Shift (exp, FractionBits),
+      Word.Shift (Word.And (frac, 16_7fffffff), -(WordSize - 1 - FractionBits))
+    );
+    RETURN ans;
+  END Longreal;
+
+PROCEDURE <A NAME="Extended"><procedure>Extended</procedure></A> (r: Random.T): EXTENDED =
+  BEGIN
+    RETURN LOOPHOLE (Longreal (r), EXTENDED);
+  END Extended;
+
+BEGIN
+END RandomReal.
+</PRE>
+</inModule>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

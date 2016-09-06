@@ -1,0 +1,693 @@
+	.file	"RTTipe.ic"
+	.version	"01.01"
+gcc2_compiled.:
+
+.section	.text
+.L_text_b:
+	.previous
+
+.section	.data
+.L_data_b:
+	.previous
+
+.section	.rodata
+.L_rodata_b:
+	.previous
+
+.section	.bss
+.L_bss_b:
+	.previous
+
+.section	.debug_sfnames
+.L_sfnames_b:
+	.string	"/tmp_mnt/swindle/r/misc1/m3-export/new/boot-LINUXELF/m3core/LINUXELF/"
+	.previous
+
+.section	.line
+.L_line_b:
+	.4byte	.L_line_e-.L_line_b
+	.4byte	.L_text_b
+	.previous
+
+.section	.debug_srcinfo
+.L_srcinfo_b:
+	.4byte	.L_line_b
+	.4byte	.L_sfnames_b
+	.4byte	.L_text_b
+	.4byte	.L_text_e
+	.4byte	0xffffffff
+	.previous
+
+.section	.debug_pubnames
+	.4byte	.L_debug_b
+	.previous
+
+.section	.debug_aranges
+	.4byte	.L_debug_b
+	.previous
+
+.section	.debug
+.L_debug_b:
+.L_D1:
+	.4byte	.L_D1_e-.L_D1
+	.2byte	0x11
+	.2byte	0x12
+	.4byte	.L_D2
+	.2byte	0x38
+	.string	"RTTipe.ic"
+	.2byte	0x258
+	.string	"SRC Modula-3 2.6.3"
+	.2byte	0x136
+	.4byte	0x1
+	.2byte	0x111
+	.4byte	.L_text_b
+	.2byte	0x121
+	.4byte	.L_text_e
+	.2byte	0x106
+	.4byte	.L_line_b
+	.2byte	0x1b8
+	.string	"/tmp_mnt/swindle/r/misc1/m3-export/new/boot-LINUXELF/m3core/LINUXELF"
+	.2byte	0x8006
+	.4byte	.L_sfnames_b
+	.2byte	0x8016
+	.4byte	.L_srcinfo_b
+.L_D1_e:
+	.previous
+
+.globl MI_RTTipe
+.data
+	.align 4
+	.type	 MI_RTTipe,@object
+	.size	 MI_RTTipe,1532
+MI_RTTipe:
+	.long MI_RTTipe+1192
+	.long MI_RTTipe+44
+	.zero	44
+	.long -307175135
+.byte 128
+.byte 247
+.byte 54
+.byte 251
+.byte 161
+.byte 22
+.byte 134
+.byte 22
+	.long 1
+	.zero	4
+	.long 12
+	.long 4
+	.zero	4
+	.long 0
+	.zero	12
+	.long MI_RTTipe+1510
+	.zero	4
+	.long MI_RTTipe+1515
+	.zero	8
+	.long -1651526519
+	.zero	16
+	.long MI_RTTipe+1522
+	.long MI_RTTipe+148
+	.zero	8
+	.long 1190547157
+.byte 64
+.byte 255
+.byte 40
+.byte 69
+.byte 149
+.byte 177
+.byte 222
+.byte 3
+	.long 1
+	.zero	4
+	.long 0
+	.long 1
+	.zero	4
+	.long 0
+	.zero	20
+	.long MI_RTTipe+1492
+	.zero	8
+	.long -307175135
+	.zero	16
+	.long MI_RTTipe+1495
+	.long MI_RTTipe+252
+	.zero	8
+	.long -1738775955
+.byte 89
+.byte 133
+.byte 18
+.byte 138
+.byte 52
+.byte 231
+.byte 78
+.byte 18
+	.long 1
+	.zero	4
+	.long 12
+	.long 4
+	.zero	4
+	.long 0
+	.zero	12
+	.long MI_RTTipe+1462
+	.long MI_RTTipe+1466
+	.long MI_RTTipe+1469
+	.zero	8
+	.long -307175135
+	.zero	16
+	.long MI_RTTipe+1479
+	.long MI_RTTipe+356
+	.zero	8
+	.long 2064731599
+.byte 81
+.byte 6
+.byte 43
+.byte 120
+.byte 158
+.byte 75
+.byte 58
+.byte 3
+	.long 1
+	.zero	4
+	.long 4
+	.long 4
+	.zero	4
+	.long 0
+	.zero	12
+	.long MI_RTTipe+1444
+	.zero	4
+	.long MI_RTTipe+1446
+	.zero	8
+	.long -307175135
+	.zero	16
+	.long MI_RTTipe+1450
+	.long MI_RTTipe+460
+	.zero	8
+	.long -2101500047
+.byte 237
+.byte 139
+.byte 162
+.byte 158
+.byte 156
+.byte 44
+.byte 31
+.byte 28
+	.long 1
+	.zero	4
+	.long 16
+	.long 4
+	.zero	4
+	.long 0
+	.zero	12
+	.long MI_RTTipe+1407
+	.long MI_RTTipe+1412
+	.long MI_RTTipe+1415
+	.zero	8
+	.long -307175135
+	.zero	16
+	.long MI_RTTipe+1430
+	.long MI_RTTipe+564
+	.zero	8
+	.long -1320086116
+.byte 65
+.byte 228
+.byte 204
+.byte 162
+.byte 221
+.byte 241
+.byte 157
+.byte 19
+	.long 1
+	.zero	4
+	.long 12
+	.long 4
+	.zero	20
+	.long MI_RTTipe+1373
+	.long MI_RTTipe+1377
+	.long MI_RTTipe+1380
+	.zero	28
+	.long MI_RTTipe+1394
+	.long MI_RTTipe+668
+	.zero	8
+	.long 1101661198
+.byte 59
+.byte 254
+.byte 63
+.byte 90
+.byte 53
+.byte 250
+.byte 149
+.byte 27
+	.long 1
+	.zero	4
+	.long 12
+	.long 4
+	.zero	4
+	.long 0
+	.zero	12
+	.long MI_RTTipe+1339
+	.long MI_RTTipe+1343
+	.long MI_RTTipe+1346
+	.zero	8
+	.long -307175135
+	.zero	16
+	.long MI_RTTipe+1356
+	.long MI_RTTipe+772
+	.zero	8
+	.long -1183876889
+.byte 199
+.byte 29
+.byte 157
+.byte 168
+.byte 32
+.byte 101
+.byte 242
+.byte 17
+	.long 1
+	.zero	4
+	.long 8
+	.long 4
+	.zero	4
+	.long 0
+	.zero	12
+	.long MI_RTTipe+1310
+	.long MI_RTTipe+1313
+	.long MI_RTTipe+1316
+	.zero	8
+	.long -307175135
+	.zero	16
+	.long MI_RTTipe+1325
+	.long MI_RTTipe+876
+	.zero	8
+	.long 160083678
+.byte 244
+.byte 34
+.byte 177
+.byte 23
+.byte 42
+.byte 140
+.byte 59
+.byte 30
+	.long 1
+	.zero	4
+	.long 4
+	.long 4
+	.zero	4
+	.long 0
+	.zero	12
+	.long MI_RTTipe+1284
+	.long MI_RTTipe+1286
+	.long MI_RTTipe+1288
+	.zero	8
+	.long -307175135
+	.zero	16
+	.long MI_RTTipe+1296
+	.long MI_RTTipe+980
+	.zero	8
+	.long -460255276
+.byte 16
+.byte 237
+.byte 97
+.byte 234
+.byte 196
+.byte 226
+.byte 240
+.byte 14
+	.long 1
+	.zero	4
+	.long 12
+	.long 4
+	.zero	4
+	.long 0
+	.zero	12
+	.long MI_RTTipe+1258
+	.zero	4
+	.long MI_RTTipe+1263
+	.zero	8
+	.long -307175135
+	.zero	16
+	.long MI_RTTipe+1273
+	.long MI_RTTipe+1084
+	.zero	8
+	.long 243314224
+.byte 253
+.byte 43
+.byte 204
+.byte 31
+.byte 205
+.byte 133
+.byte 76
+.byte 17
+	.long 1
+	.zero	4
+	.long 8
+	.long 4
+	.zero	4
+	.long 0
+	.zero	12
+	.long MI_RTTipe+1234
+	.zero	4
+	.long MI_RTTipe+1237
+	.zero	8
+	.long -307175135
+	.zero	16
+	.long MI_RTTipe+1242
+	.zero	8
+	.ascii	"/proj/m3/pkg/runtime/src/common/RTTipe.i3"
+	.zero	1
+.byte 14
+.byte 14
+.byte 0
+.byte 3
+.byte 10
+.byte 2
+.byte 7
+.byte 23
+	.ascii	"RTTipe.Subrange"
+	.zero	1
+.byte 16
+.byte 36
+.byte 14
+.byte 5
+.byte 0
+.byte 4
+.byte 10
+.byte 3
+.byte 2
+.byte 7
+.byte 20
+.byte 31
+.byte 37
+.byte 114
+.byte 96
+	.ascii	"RTTipe.Ref"
+	.zero	1
+.byte 4
+.byte 0
+.byte 4
+.byte 0
+.byte 2
+.byte 10
+.byte 1
+.byte 16
+.byte 156
+.byte 21
+.byte 81
+.byte 177
+	.ascii	"RTTipe.Record"
+	.zero	1
+.byte 14
+.byte 4
+.byte 0
+.byte 37
+.byte 4
+.byte 0
+.byte 3
+.byte 10
+.byte 2
+.byte 7
+.byte 16
+.byte 33
+.byte 225
+.byte 176
+.byte 237
+	.ascii	"RTTipe.Packed"
+	.zero	1
+.byte 14
+.byte 4
+.byte 14
+.byte 0
+.byte 37
+.byte 4
+.byte 0
+.byte 4
+.byte 10
+.byte 3
+.byte 7
+.byte 16
+.byte 33
+.byte 225
+.byte 176
+.byte 237
+.byte 23
+	.ascii	"RTTipe.OpenArray"
+	.zero	1
+.byte 4
+.byte 4
+.byte 14
+.byte 0
+.byte 4
+.byte 4
+.byte 0
+.byte 4
+.byte 15
+.byte 3
+.byte 16
+.byte 33
+.byte 225
+.byte 176
+.byte 237
+.byte 16
+.byte 156
+.byte 21
+.byte 81
+.byte 177
+.byte 7
+	.ascii	"RTTipe.Field"
+	.zero	1
+.byte 5
+.byte 4
+.byte 14
+.byte 14
+.byte 0
+.byte 37
+.byte 4
+.byte 0
+.byte 5
+.byte 10
+.byte 4
+.byte 20
+.byte 31
+.byte 37
+.byte 114
+.byte 96
+.byte 16
+.byte 156
+.byte 21
+.byte 81
+.byte 177
+.byte 7
+.byte 25
+	.ascii	"RTTipe.Object"
+	.zero	1
+.byte 14
+.byte 0
+.byte 2
+.byte 10
+.byte 1
+.byte 7
+	.ascii	"RTTipe.Enum"
+	.zero	1
+.byte 14
+.byte 4
+.byte 14
+.byte 0
+.byte 37
+.byte 4
+.byte 0
+.byte 4
+.byte 10
+.byte 3
+.byte 7
+.byte 16
+.byte 33
+.byte 225
+.byte 176
+.byte 237
+.byte 23
+	.ascii	"RTTipe.Array"
+	.zero	1
+.byte 1
+.byte 10
+.byte 0
+	.ascii	"RTTipe.Builtin"
+	.zero	1
+.byte 16
+.byte 36
+.byte 14
+.byte 14
+.byte 0
+.byte 4
+.byte 10
+.byte 3
+.byte 5
+.byte 21
+.byte 7
+.byte 24
+	.ascii	"RTTipe.T"
+	.zero	2
+
+.section	.debug_pubnames
+	.4byte	.L_P0
+	.string	"MI_RTTipe"
+	.previous
+
+.section	.debug
+.L_D3:
+	.4byte	.L_D3_e-.L_D3
+	.2byte	0x13
+	.2byte	0x12
+	.4byte	.L_D4
+	.set	.L_T65,.L_D3
+	.2byte	0xb6
+	.4byte	0x5fc
+.L_D3_e:
+.L_D5:
+	.4byte	0x4
+.L_P0:
+.L_D4:
+	.4byte	.L_D4_e-.L_D4
+	.2byte	0x7
+	.2byte	0x12
+	.4byte	.L_D6
+	.2byte	0x38
+	.string	"MI_RTTipe"
+	.2byte	0x72
+	.4byte	.L_T65
+	.2byte	0x23
+	.2byte	.L_l4_e-.L_l4
+.L_l4:
+	.byte	0x3
+	.4byte	MI_RTTipe
+.L_l4_e:
+.L_D4_e:
+	.previous
+
+.section	.debug
+.L_D6:
+	.4byte	.L_D6_e-.L_D6
+	.2byte	0x13
+	.2byte	0x12
+	.4byte	.L_D7
+	.set	.L_T35,.L_D6
+	.2byte	0xb6
+	.4byte	0x68
+.L_D6_e:
+.L_D8:
+	.4byte	0x4
+.L_P1:
+.L_D7:
+	.4byte	.L_D7_e-.L_D7
+	.2byte	0x7
+	.2byte	0x12
+	.4byte	.L_D9
+	.2byte	0x38
+	.string	"MI_RTPacking"
+	.2byte	0x72
+	.4byte	.L_T35
+.L_D7_e:
+	.previous
+
+.section	.debug
+.L_D9:
+	.4byte	.L_D9_e-.L_D9
+	.2byte	0x13
+	.2byte	0x12
+	.4byte	.L_D10
+	.set	.L_T36,.L_D9
+	.2byte	0xb6
+	.4byte	0x2d0
+.L_D9_e:
+.L_D11:
+	.4byte	0x4
+.L_P2:
+.L_D10:
+	.4byte	.L_D10_e-.L_D10
+	.2byte	0x7
+	.2byte	0x12
+	.4byte	.L_D12
+	.2byte	0x38
+	.string	"MI_RT0"
+	.2byte	0x72
+	.4byte	.L_T36
+.L_D10_e:
+	.previous
+
+.section	.debug
+.L_D12:
+	.4byte	.L_D12_e-.L_D12
+	.2byte	0x13
+	.2byte	0x12
+	.4byte	.L_D13
+	.set	.L_T37,.L_D12
+	.2byte	0xb6
+	.4byte	0x38c
+.L_D12_e:
+.L_D14:
+	.4byte	0x4
+.L_P3:
+.L_D13:
+	.4byte	.L_D13_e-.L_D13
+	.2byte	0x7
+	.2byte	0x12
+	.4byte	.L_D15
+	.2byte	0x38
+	.string	"MI_RTHooks"
+	.2byte	0x72
+	.4byte	.L_T37
+.L_D13_e:
+	.previous
+
+.section	.debug
+.L_D15:
+	.4byte	.L_D15_e-.L_D15
+	.align 4
+.L_D15_e:
+.L_D2:
+	.previous
+
+.section	.text
+.L_text_e:
+	.previous
+
+.section	.data
+.L_data_e:
+	.previous
+
+.section	.rodata
+.L_rodata_e:
+	.previous
+
+.section	.bss
+.L_bss_e:
+	.previous
+
+.section	.line
+.L_line_last:
+	.4byte	0x0
+	.2byte	0xffff
+	.4byte	.L_text_e-.L_text_b
+.L_line_e:
+	.previous
+
+.section	.debug_srcinfo
+	.4byte	.L_line_last-.L_line_b
+	.4byte	0xffffffff
+	.previous
+
+.section	.debug_pubnames
+	.4byte	0x0
+	.string	""
+	.previous
+
+.section	.debug_aranges
+	.4byte	.L_text_b
+	.4byte	.L_text_e-.L_text_b
+	.4byte	.L_data_b
+	.4byte	.L_data_e-.L_data_b
+	.4byte	.L_rodata_b
+	.4byte	.L_rodata_e-.L_rodata_b
+	.4byte	.L_bss_b
+	.4byte	.L_bss_e-.L_bss_b
+	.4byte	0x0
+	.4byte	0x0
+	.previous
+	.ident	"GCC: (GNU) 2.6.3"

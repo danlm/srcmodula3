@@ -1,0 +1,266 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: perftool/src/POSIX/LowPerfTool.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>perftool/src/POSIX/LowPerfTool.m3</H2></A><HR>
+<inModule>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM>                                                                           </EM></BLOCKQUOTE><PRE>
+</PRE> Last Modified On Wed Mar 23 08:58:00 PST 1994 by kalsow                   
+      Modified On Sat Feb  6 11:41:23 PST 1993 by mjordan                  
+      Modified On Fri May 29 17:37:42 PDT 1992 by muller                   
+
+<P><PRE>UNSAFE MODULE <module><implements><A HREF="../Common/LowPerfTool.i3.html">LowPerfTool</A></implements></module>;
+
+IMPORT <A HREF="../../../C/src/Common/Ctypes.i3.html">Ctypes</A>, <A HREF="../../../os/src/Common/File.i3.html">File</A>, <A HREF="#x1">Unix</A>, <A HREF="../../../text/src/Text.i3.html">Text</A>, <A HREF="../../../C/src/Common/M3toC.i3.html">M3toC</A>, <A HREF="#x2">Uexec</A>, <A HREF="#x3">Uuio</A>, <A HREF="../../../runtime/src/common/RTParams.i3.html">RTParams</A>, <A HREF="#x4">Utime</A>;
+IMPORT <A HREF="../../../os/src/POSIX/FilePosix.i3.html">FilePosix</A>, <A HREF="../../../os/src/Common/OSError.i3.html">OSError</A>;
+
+CONST
+  readPort = 0;
+  writePort = 1;
+
+TYPE
+  Pipe = ARRAY [0..1] OF Ctypes.int;
+
+PROCEDURE <A NAME="ClosePipe"><procedure>ClosePipe</procedure></A> (READONLY p: Pipe) =
+  BEGIN
+    EVAL Unix.close (p[readPort]);
+    EVAL Unix.close (p[writePort]);
+  END ClosePipe;
+
+PROCEDURE <A NAME="Start"><procedure>Start</procedure></A> (name: Text.T; VAR r, w: File.T): BOOLEAN =
+  VAR toTool, fromTool: Pipe;  oit: Utime.struct_itimerval;
+  BEGIN
+    (* open a pipe to send bytes to the performance tool *)
+    IF Unix.pipe (toTool) = -1 THEN RETURN FALSE; END;
+
+    (* open a pipe to get bytes from the performance tool *)
+    IF Unix.pipe (fromTool) = -1 THEN  ClosePipe (toTool); RETURN FALSE; END;
+
+    (* disable the virtual timer used for thread preemption *)
+    VAR nit: Utime.struct_itimerval; BEGIN
+      nit.it_interval.tv_sec := 0;
+      nit.it_interval.tv_usec := 0;
+      nit.it_value.tv_sec := 0;
+      nit.it_value.tv_usec := 0;
+      IF Utime.setitimer (Utime.ITIMER_VIRTUAL, nit, oit) = -1 THEN
+        ClosePipe (toTool);
+        ClosePipe (fromTool);
+        RETURN FALSE;
+      END;
+    END;
+
+    (* Create the tool process *)
+    CASE Unix.vfork () OF
+
+    | -1 =&gt; (* vfork failed *)
+      ClosePipe (fromTool);
+      ClosePipe (toTool);
+      RETURN FALSE;
+
+    | 0  =&gt; (* in the child *)
+
+      (* close the unused ends of the pipes *)
+      EVAL Unix.close (toTool [writePort]);
+      EVAL Unix.close (fromTool [readPort]);
+
+      (* connect the useful ends to stdin and stdout *)
+      IF toTool [readPort] # 0 THEN
+        IF Unix.dup2 (toTool [readPort], 0) = -1 THEN RETURN FALSE; END;
+        EVAL Unix.close (toTool [readPort]);
+      END;
+      IF fromTool [writePort] # 1 THEN
+        IF Unix.dup2 (fromTool [writePort], 1) = -1 THEN RETURN FALSE; END;
+        EVAL Unix.close (fromTool [writePort]);
+      END;
+
+      (* execute the perf tool *)
+      VAR args: ARRAY [0..1] OF Ctypes.char_star; BEGIN
+        args [0] := M3toC.TtoS (name);
+        args [1] := NIL;
+        EVAL Uexec.execvp (args [0], ADR (args [0]));
+      END;
+
+      RETURN FALSE;
+
+    ELSE (* in the parent, after the child has been forked *)
+
+      (* disable the virtual timer used for thread preemption *)
+      VAR nit: Utime.struct_itimerval;
+          status := Utime.setitimer (Utime.ITIMER_VIRTUAL, oit, nit); BEGIN
+        &lt;* ASSERT status # -1 *&gt;
+      END;
+
+      (* close the unused ends of the pipes *)
+      EVAL Unix.close (toTool [readPort]);
+      EVAL Unix.close (fromTool [writePort]);
+
+      TRY
+        (* update r and w *)
+        r := FilePosix.New (fromTool [readPort], FilePosix.Read);
+        w := FilePosix.New (toTool [writePort], FilePosix.Write);
+      EXCEPT OSError.E =&gt;
+        r := NIL;  w := NIL;
+        RETURN FALSE;
+      END;
+
+    END; (*CASE*)
+
+    RETURN TRUE;
+  END Start;
+
+PROCEDURE <A NAME="StartAndWait"><procedure>StartAndWait</procedure></A> (name: Text.T; VAR r,w: File.T): BOOLEAN =
+  VAR c: Ctypes.char;
+  BEGIN
+    IF NOT Start (name, r, w) THEN RETURN FALSE; END;
+    EVAL Uuio.read (r.fd, ADR (c), 1);
+    RETURN TRUE;
+  END StartAndWait;
+
+PROCEDURE <A NAME="ParamStart"><procedure>ParamStart</procedure></A> (param: Text.T; VAR r,w: File.T): BOOLEAN =
+  VAR value := RTParams.Value (param);
+  BEGIN
+    IF value = NIL THEN
+      RETURN FALSE;
+    ELSIF Text.Length (value) = 0 THEN
+      RETURN Start (param, r, w);
+    ELSE
+      RETURN Start (value, r, w);
+    END;
+  END ParamStart;
+
+PROCEDURE <A NAME="ParamStartAndWait"><procedure>ParamStartAndWait</procedure></A> (param: Text.T; VAR r,w: File.T): BOOLEAN =
+  VAR value := RTParams.Value (param);
+  BEGIN
+    IF value = NIL THEN
+      RETURN FALSE;
+    ELSIF Text.Length (value) = 0 THEN
+      RETURN StartAndWait (param, r, w);
+    ELSE
+      RETURN StartAndWait (value, r, w);
+    END;
+  END ParamStartAndWait;
+
+BEGIN
+END LowPerfTool.
+</PRE>
+</inModule>
+<HR>
+<A NAME="x1">interface Unix is in:
+</A><UL>
+<LI><A HREF="../../../unix/src/aix-3-2/Unix.i3.html#0TOP0">unix/src/aix-3-2/Unix.i3</A>
+<LI><A HREF="../../../unix/src/aix-ps2-1-2/Unix.i3.html#0TOP0">unix/src/aix-ps2-1-2/Unix.i3</A>
+<LI><A HREF="../../../unix/src/freebsd-1/Unix.i3.html#0TOP0">unix/src/freebsd-1/Unix.i3</A>
+<LI><A HREF="../../../unix/src/freebsd-2/Unix.i3.html#0TOP0">unix/src/freebsd-2/Unix.i3</A>
+<LI><A HREF="../../../unix/src/hpux-7-0/Unix.i3.html#0TOP0">unix/src/hpux-7-0/Unix.i3</A>
+<LI><A HREF="../../../unix/src/ibm-4-3/Unix.i3.html#0TOP0">unix/src/ibm-4-3/Unix.i3</A>
+<LI><A HREF="../../../unix/src/irix-5.2/Unix.i3.html#0TOP0">unix/src/irix-5.2/Unix.i3</A>
+<LI><A HREF="../../../unix/src/linux/Unix.i3.html#0TOP0">unix/src/linux/Unix.i3</A>
+<LI><A HREF="../../../unix/src/osf-1.ALPHA_OSF/Unix.i3.html#0TOP0">unix/src/osf-1.ALPHA_OSF/Unix.i3</A>
+<LI><A HREF="../../../unix/src/osf-1.DS3100/Unix.i3.html#0TOP0">unix/src/osf-1.DS3100/Unix.i3</A>
+<LI><A HREF="../../../unix/src/solaris-2-x/Unix.i3.html#0TOP0">unix/src/solaris-2-x/Unix.i3</A>
+<LI><A HREF="../../../unix/src/sunos-4-x/Unix.i3.html#0TOP0">unix/src/sunos-4-x/Unix.i3</A>
+<LI><A HREF="../../../unix/src/sysv-4.0/Unix.i3.html#0TOP0">unix/src/sysv-4.0/Unix.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.AP3000/Unix.i3.html#0TOP0">unix/src/ultrix-3-1.AP3000/Unix.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.ARM/Unix.i3.html#0TOP0">unix/src/ultrix-3-1.ARM/Unix.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.DS3100/Unix.i3.html#0TOP0">unix/src/ultrix-3-1.DS3100/Unix.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.NEXT/Unix.i3.html#0TOP0">unix/src/ultrix-3-1.NEXT/Unix.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.SEQUENT/Unix.i3.html#0TOP0">unix/src/ultrix-3-1.SEQUENT/Unix.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.SUN3/Unix.i3.html#0TOP0">unix/src/ultrix-3-1.SUN3/Unix.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.SUN386/Unix.i3.html#0TOP0">unix/src/ultrix-3-1.SUN386/Unix.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.UMAX/Unix.i3.html#0TOP0">unix/src/ultrix-3-1.UMAX/Unix.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.VAX/Unix.i3.html#0TOP0">unix/src/ultrix-3-1.VAX/Unix.i3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x2">interface Uexec is in:
+</A><UL>
+<LI><A HREF="../../../unix/src/aix-3-2/Uexec.i3.html#0TOP0">unix/src/aix-3-2/Uexec.i3</A>
+<LI><A HREF="../../../unix/src/aix-ps2-1-2/Uexec.i3.html#0TOP0">unix/src/aix-ps2-1-2/Uexec.i3</A>
+<LI><A HREF="../../../unix/src/freebsd-1/Uexec.i3.html#0TOP0">unix/src/freebsd-1/Uexec.i3</A>
+<LI><A HREF="../../../unix/src/freebsd-2/Uexec.i3.html#0TOP0">unix/src/freebsd-2/Uexec.i3</A>
+<LI><A HREF="../../../unix/src/hpux-7-0/Uexec.i3.html#0TOP0">unix/src/hpux-7-0/Uexec.i3</A>
+<LI><A HREF="../../../unix/src/ibm-4-3/Uexec.i3.html#0TOP0">unix/src/ibm-4-3/Uexec.i3</A>
+<LI><A HREF="../../../unix/src/irix-5.2/Uexec.i3.html#0TOP0">unix/src/irix-5.2/Uexec.i3</A>
+<LI><A HREF="../../../unix/src/linux/Uexec.i3.html#0TOP0">unix/src/linux/Uexec.i3</A>
+<LI><A HREF="../../../unix/src/osf-1.generic/Uexec.i3.html#0TOP0">unix/src/osf-1.generic/Uexec.i3</A>
+<LI><A HREF="../../../unix/src/solaris-2-x/Uexec.i3.html#0TOP0">unix/src/solaris-2-x/Uexec.i3</A>
+<LI><A HREF="../../../unix/src/sunos-4-x/Uexec.i3.html#0TOP0">unix/src/sunos-4-x/Uexec.i3</A>
+<LI><A HREF="../../../unix/src/sysv-4.0/Uexec.i3.html#0TOP0">unix/src/sysv-4.0/Uexec.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.AP3000/Uexec.i3.html#0TOP0">unix/src/ultrix-3-1.AP3000/Uexec.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.ARM/Uexec.i3.html#0TOP0">unix/src/ultrix-3-1.ARM/Uexec.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.DS3100/Uexec.i3.html#0TOP0">unix/src/ultrix-3-1.DS3100/Uexec.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.NEXT/Uexec.i3.html#0TOP0">unix/src/ultrix-3-1.NEXT/Uexec.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.SEQUENT/Uexec.i3.html#0TOP0">unix/src/ultrix-3-1.SEQUENT/Uexec.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.SUN3/Uexec.i3.html#0TOP0">unix/src/ultrix-3-1.SUN3/Uexec.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.SUN386/Uexec.i3.html#0TOP0">unix/src/ultrix-3-1.SUN386/Uexec.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.UMAX/Uexec.i3.html#0TOP0">unix/src/ultrix-3-1.UMAX/Uexec.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.VAX/Uexec.i3.html#0TOP0">unix/src/ultrix-3-1.VAX/Uexec.i3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x3">interface Uuio is in:
+</A><UL>
+<LI><A HREF="../../../unix/src/aix-3-2/Uuio.i3.html#0TOP0">unix/src/aix-3-2/Uuio.i3</A>
+<LI><A HREF="../../../unix/src/aix-ps2-1-2/Uuio.i3.html#0TOP0">unix/src/aix-ps2-1-2/Uuio.i3</A>
+<LI><A HREF="../../../unix/src/freebsd-1/Uuio.i3.html#0TOP0">unix/src/freebsd-1/Uuio.i3</A>
+<LI><A HREF="../../../unix/src/freebsd-2/Uuio.i3.html#0TOP0">unix/src/freebsd-2/Uuio.i3</A>
+<LI><A HREF="../../../unix/src/hpux-7-0/Uuio.i3.html#0TOP0">unix/src/hpux-7-0/Uuio.i3</A>
+<LI><A HREF="../../../unix/src/ibm-4-3/Uuio.i3.html#0TOP0">unix/src/ibm-4-3/Uuio.i3</A>
+<LI><A HREF="../../../unix/src/irix-5.2/Uuio.i3.html#0TOP0">unix/src/irix-5.2/Uuio.i3</A>
+<LI><A HREF="../../../unix/src/linux/Uuio.i3.html#0TOP0">unix/src/linux/Uuio.i3</A>
+<LI><A HREF="../../../unix/src/osf-1.generic/Uuio.i3.html#0TOP0">unix/src/osf-1.generic/Uuio.i3</A>
+<LI><A HREF="../../../unix/src/solaris-2-x/Uuio.i3.html#0TOP0">unix/src/solaris-2-x/Uuio.i3</A>
+<LI><A HREF="../../../unix/src/sunos-4-x/Uuio.i3.html#0TOP0">unix/src/sunos-4-x/Uuio.i3</A>
+<LI><A HREF="../../../unix/src/sysv-4.0/Uuio.i3.html#0TOP0">unix/src/sysv-4.0/Uuio.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.generic/Uuio.i3.html#0TOP0">unix/src/ultrix-3-1.generic/Uuio.i3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x4">interface Utime is in:
+</A><UL>
+<LI><A HREF="../../../unix/src/aix-3-2/Utime.i3.html#0TOP0">unix/src/aix-3-2/Utime.i3</A>
+<LI><A HREF="../../../unix/src/aix-ps2-1-2/Utime.i3.html#0TOP0">unix/src/aix-ps2-1-2/Utime.i3</A>
+<LI><A HREF="../../../unix/src/freebsd-1/Utime.i3.html#0TOP0">unix/src/freebsd-1/Utime.i3</A>
+<LI><A HREF="../../../unix/src/freebsd-2/Utime.i3.html#0TOP0">unix/src/freebsd-2/Utime.i3</A>
+<LI><A HREF="../../../unix/src/hpux-7-0/Utime.i3.html#0TOP0">unix/src/hpux-7-0/Utime.i3</A>
+<LI><A HREF="../../../unix/src/ibm-4-3/Utime.i3.html#0TOP0">unix/src/ibm-4-3/Utime.i3</A>
+<LI><A HREF="../../../unix/src/irix-5.2/Utime.i3.html#0TOP0">unix/src/irix-5.2/Utime.i3</A>
+<LI><A HREF="../../../unix/src/linux/Utime.i3.html#0TOP0">unix/src/linux/Utime.i3</A>
+<LI><A HREF="../../../unix/src/osf-1.ALPHA_OSF/Utime.i3.html#0TOP0">unix/src/osf-1.ALPHA_OSF/Utime.i3</A>
+<LI><A HREF="../../../unix/src/osf-1.DS3100/Utime.i3.html#0TOP0">unix/src/osf-1.DS3100/Utime.i3</A>
+<LI><A HREF="../../../unix/src/solaris-2-x/Utime.i3.html#0TOP0">unix/src/solaris-2-x/Utime.i3</A>
+<LI><A HREF="../../../unix/src/sunos-4-x/Utime.i3.html#0TOP0">unix/src/sunos-4-x/Utime.i3</A>
+<LI><A HREF="../../../unix/src/sysv-4.0/Utime.i3.html#0TOP0">unix/src/sysv-4.0/Utime.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.generic/Utime.i3.html#0TOP0">unix/src/ultrix-3-1.generic/Utime.i3</A>
+</UL>
+<P>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

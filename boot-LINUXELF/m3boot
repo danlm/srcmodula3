@@ -1,0 +1,48 @@
+#! /bin/sh
+#
+# top-level bootstrap build script
+#
+ 
+TOP=`pwd`
+QUAKE=$TOP/quake/LINUXELF/quake
+CONFIG=$TOP/m3build/templates/LINUXELF
+BUILD="$QUAKE -D_bootstrap $CONFIG make.boot"
+ 
+if [ ! -d m3cc ]; then
+  echo "Unpack \(gunzip, tar -x\) a copy of m3cc.tar.gz first."
+  exit 1
+fi
+ 
+echo ------------------------------------------
+cat COPYRIGHT
+echo ------------------------------------------
+ 
+echo ---- building quake ----
+(cd quake/LINUXELF; make -f ../src/makefile TARGET=LINUXELF)
+ 
+echo ---- building m3build ----
+(cd m3build/LINUXELF; $QUAKE -D_bootstrap -D_all -DBUILD_DIR=LINUXELF -DPACKAGE=m3build -DPACKAGE_DIR=$TOP/m3build $CONFIG $TOP/m3build/src/m3makefile) || exit 1
+ 
+echo ---- building m3core ----
+(cd m3core/LINUXELF; $BUILD) || exit 1
+ 
+echo ---- building libm3 ----
+(cd libm3/LINUXELF; $BUILD) || exit 1
+ 
+echo ---- building m3middle ----
+(cd m3middle/LINUXELF; $BUILD) || exit 1
+ 
+echo ---- building m3front ----
+(cd m3front/LINUXELF; $BUILD) || exit 1
+ 
+echo ---- building m3linker ----
+(cd m3linker/LINUXELF; $BUILD) || exit 1
+ 
+echo ---- building m3 ----
+(cd m3/LINUXELF; $BUILD) || exit 1
+ 
+echo ---- building m3cc ----
+if [ ! -d m3cc/LINUXELF ]; then
+  mkdir m3cc/LINUXELF
+fi
+(cd m3cc/LINUXELF; $QUAKE $CONFIG ../src/m3makefile)

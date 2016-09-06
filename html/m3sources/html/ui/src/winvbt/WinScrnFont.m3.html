@@ -1,0 +1,968 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: ui/src/winvbt/WinScrnFont.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>ui/src/winvbt/WinScrnFont.m3</H2></A><HR>
+<inModule>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM> Digital Internal Use Only                                                 </EM></BLOCKQUOTE><PRE>
+</PRE>                                                                           
+       Created on Tue Jan 17 16:36:36 PST 1995 by najork                   
+
+<P>
+<P><PRE>UNSAFE MODULE <module><implements><A HREF="WinScrnFont.i3.html">WinScrnFont</A></implements></module>;
+
+IMPORT <A HREF="../../../C/src/Common/Ctypes.i3.html">Ctypes</A>, <A HREF="../../../fingerprint/src/Fingerprint.i3.html">Fingerprint</A>, <A HREF="#x1">FloatMode</A>, <A HREF="../../../fmtlex/src/Fmt.i3.html">Fmt</A>, <A HREF="../vbt/Font.i3.html">Font</A>, <A HREF="../../../fmtlex/src/Lex.i3.html">Lex</A>, <A HREF="../../../C/src/Common/M3toC.i3.html">M3toC</A>, <A HREF="../vbt/PaintPrivate.i3.html">PaintPrivate</A>,
+       <A HREF="../../../geometry/src/Rect.i3.html">Rect</A>, <A HREF="../../../fmtlex/src/Scan.i3.html">Scan</A>, <A HREF="../vbt/ScrnFont.i3.html">ScrnFont</A>, <A HREF="../../../text/src/Text.i3.html">Text</A>, <A HREF="../../../win32/src/WinDef.i3.html">WinDef</A>, <A HREF="../../../win32/src/WinGDI.i3.html">WinGDI</A>, <A HREF="../../../win32/src/WinUser.i3.html">WinUser</A>, <A HREF="../../../word/src/Word.i3.html">Word</A>;
+
+EXCEPTION FatalError; &lt;* FATAL FatalError *&gt;
+</PRE><P>
+<P>
+The WinScrnFont module implements Windows-specific subclasses to
+screen-fonts and screen font oracles. The client can ask for all
+available fonts that match a certain, and can request a specific
+font. Unfortunately, the attributes used by Trestle to characterize a
+font are modeled very closely after the corresponding X attributes,
+and do not quite match the attributes Windows uses for characterizing
+a font.  A second problem is that Windows has no function for looking
+up a font that matches a pattern with <CODE>wildcards</CODE>.
+<P>
+There are three formats for describing fonts:
+  - X font description strings
+  - Trestle ScrnFont.Metrics records
+  - Windows WinGDI.LOGFONT records
+<P>
+An X font specification string has the following format:
+  -fndry-fmly-wght-slant-sWdth-adstyl-pxlsz-ptsz-resx-resy-spc-avgWdth-rgstry-encdng
+<P>
+The following attributes are (more or less) common to X, Trestle, and Windows:
+<P>
+  X Logigal Font Description    ScrnFont.Metrics field:  WinGDI.LOGFONT field:
+  Foundry                         foundry                  -----
+  Family                          family                   lfFaceName
+  Weight                          weightName               lfWeight
+  Slant                           slant                    lfItalic
+  sWidth                          width                    -----
+  adstyl                          -----                    -----
+  Pixel Size                      pixelsize                -----
+  Point Size                      pointSize                lfHeight
+  Hor. Resolution                 hres                     -----
+  Ver. Resolution                 vres                     -----
+  Spacing                         spacing                  lfPitchAndFamily
+  Avg. Width                      averageWidth             lfWidth
+  CharSet Registry                charsetRegistry          -----
+  CharSet Enconding               charsetEncoding          lfCharSet
+<P>
+There is a way to enumerate all installed Windows fonts, but this method does 
+not return all the available point sizes for a TrueType font (I don't know if
+it simplifies anything else).
+<P>
+We adopt the following policies:
+  (1) The following 7 attributes are used to map a font description string to a
+      Windows font: 
+      Family, Weight, Slant, Point Size, Spacing, Width, and Character Set
+  (2) At startup, we enumerate all available fonts and build up a list of 
+      font description strings. For all the X attributes that are unspecified 
+      in Windows world, we fill in a <CODE>*</CODE>. In addition, if the font is a 
+      TrueType font, we set the Point Size to <CODE>*</CODE>.
+
+
+<P>
+<P>
+<P><PRE>PROCEDURE <A NAME="NewOracle"><procedure>NewOracle</procedure></A> (): ScrnFont.Oracle =
+  BEGIN
+    RETURN NEW (Oracle);
+  END NewOracle;
+
+TYPE
+  Oracle = ScrnFont.Oracle BRANDED OBJECT
+  OVERRIDES
+    list    := List;
+    match   := Match;
+    lookup  := Lookup;
+    builtIn := BuiltIn;
+  END;
+
+PROCEDURE <A NAME="List"><procedure>List</procedure></A> (&lt;*UNUSED*&gt; self      : Oracle;
+                           pat       : TEXT;
+                           maxResults: INTEGER): REF ARRAY OF TEXT =
+  &lt;* FATAL BadFontName *&gt;
+  VAR
+    res := NEW (REF ARRAY OF TEXT, maxResults);
+    cnt := 0;
+  BEGIN
+    FOR i := FIRST (FontNames^) TO LAST (FontNames^) DO
+      IF MatchingNames (pat, FontNames[i]) THEN
+        res[cnt] := FontNames[i];
+        INC (cnt);
+        IF cnt &gt; maxResults THEN
+          EXIT;
+        END;
+      END;
+    END;
+    IF cnt &gt; maxResults THEN
+      RETURN res;
+    ELSE
+      WITH tmp = NEW (REF ARRAY OF TEXT, cnt) DO
+        tmp^ := SUBARRAY (res^, 0, cnt);
+        RETURN tmp;
+      END;
+    END;
+  END List;
+</PRE><P>
+ * <CODE>Match</CODE> is almost an exact copy of the <CODE>XScrnFont.FontMatch</CODE> procedure. 
+ 
+<PRE>PROCEDURE <A NAME="Match"><procedure>Match</procedure></A> (self           : Oracle;
+                 family         : TEXT;
+                 pointSize      : INTEGER;
+                 slant          : ScrnFont.Slant;
+                 maxResults     : CARDINAL;
+                 weightName     : TEXT;
+                 version        : TEXT;
+                 foundry        : TEXT;
+                 width          : TEXT;
+                 pixelsize      : INTEGER;
+                 hres, vres     : INTEGER;
+                 spacing        : ScrnFont.Spacing;
+                 averageWidth   : INTEGER;
+                 charsetRegistry: TEXT;
+                 charsetEncoding: TEXT): REF ARRAY OF TEXT =
+
+  PROCEDURE Num (n: INTEGER): TEXT =
+    BEGIN
+      IF n &lt; 0 THEN
+        RETURN &quot;*-&quot;
+      ELSE
+        RETURN Fmt.Int(n) &amp; &quot;-&quot;
+      END;
+    END Num;
+
+  VAR
+    fname: TEXT;
+  BEGIN
+    IF Text.Length(version) # 0 THEN
+      fname := &quot;+&quot; &amp; version
+    ELSE
+      fname := &quot;&quot;
+    END;
+    fname := fname &amp; &quot;-&quot; &amp; foundry &amp; &quot;-&quot; &amp; family &amp; &quot;-&quot; &amp; weightName &amp; &quot;-&quot;;
+    CASE slant OF
+      ScrnFont.Slant.Roman =&gt; fname := fname &amp; &quot;R&quot;
+    | ScrnFont.Slant.Italic =&gt; fname := fname &amp; &quot;I&quot;
+    | ScrnFont.Slant.Oblique =&gt; fname := fname &amp; &quot;O&quot;
+    | ScrnFont.Slant.ReverseItalic =&gt; fname := fname &amp; &quot;RI&quot;
+    | ScrnFont.Slant.ReverseOblique =&gt; fname := fname &amp; &quot;RO&quot;
+    | ScrnFont.Slant.Other =&gt; fname := fname &amp; &quot;OT&quot;
+    | ScrnFont.Slant.Any =&gt; fname := fname &amp; &quot;*&quot;
+    END;
+    fname := fname &amp; &quot;-&quot; &amp; width &amp; &quot;-*-&quot; &amp; Num(pixelsize) &amp; Num(pointSize)
+               &amp; Num(hres) &amp; Num(vres);
+    CASE spacing OF
+      ScrnFont.Spacing.Proportional =&gt; fname := fname &amp; &quot;P&quot;
+    | ScrnFont.Spacing.Monospaced =&gt; fname := fname &amp; &quot;M&quot;
+    | ScrnFont.Spacing.CharCell =&gt; fname := fname &amp; &quot;C&quot;
+    | ScrnFont.Spacing.Any =&gt; fname := fname &amp; &quot;*&quot;
+    END;
+    fname := fname &amp; &quot;-&quot; &amp; Num(averageWidth) &amp; charsetRegistry &amp; &quot;-&quot;
+               &amp; charsetEncoding;
+    RETURN List (self, fname, maxResults)
+  END Match;
+
+PROCEDURE <A NAME="Lookup"><procedure>Lookup</procedure></A> (&lt;* UNUSED *&gt; self: Oracle; name: TEXT): ScrnFont.T
+    RAISES {ScrnFont.Failure} =
+  BEGIN
+    TRY
+      WITH res = NameToScrnFont (name) DO
+        IF res = NIL THEN
+          RAISE ScrnFont.Failure;
+        ELSE
+          RETURN res;
+        END;
+      END;
+    EXCEPT
+      BadFontName =&gt; RAISE ScrnFont.Failure;
+    END;
+  END Lookup;
+</PRE>*****************************************************************************
+ *
+ * <CODE>BuiltIn</CODE> returns a default screen font. The xvbt implementation goes 
+ * through an array of hardwired font patterns, determines if the X server 
+ * offers any of these fonts, takes the first match, converts it into a 
+ * <CODE>ScrnFont.T</CODE>, and returns it. If there is no match, it raises a fatal 
+ * error. The font selection is protected by the <CODE>trsl</CODE> mutex. 
+ *
+ * The Windows implementation first checks if one of the fonts from a list
+ * of preferred fonts is available, and picks the first match. If there is
+ * no match, it will pick any font. (Note that there is always at least one
+ * font -- Windows must have some fonts to draw window frames and menu bars). 
+ * It then converts the Windows font into a <CODE>ScrnFont.T</CODE>, and returns it.
+ *
+ ****************************************************************************
+
+<P><PRE>CONST
+  Preferred = &quot;-*-Arial-Normal-R-*-*-*-12-*-*-P-*-iso8859-ANSI&quot;;
+
+PROCEDURE <A NAME="BuiltIn"><procedure>BuiltIn</procedure></A> (self: Oracle; id: Font.Predefined): ScrnFont.T =
+  BEGIN
+    IF id # Font.BuiltIn.fnt THEN
+      RAISE FatalError
+    END;
+    TRY
+      (*
+       * Once &quot;list&quot; is implemented, we should allow for an array of
+       * preferred fonts.
+       *)
+      RETURN Lookup (self, Preferred);
+    EXCEPT
+    | ScrnFont.Failure =&gt;
+      RETURN NEW(ScrnFont.T,
+                 id := 0,
+                 metrics := NEW(NullMetrics,
+                                minBounds := ScrnFont.CharMetric{0,Rect.Empty},
+                                maxBounds := ScrnFont.CharMetric{0,Rect.Empty},
+                                firstChar := 0,
+                                lastChar := 0,
+                                selfClearing := TRUE,
+                                charMetrics := NIL));
+    END;
+  END BuiltIn;
+
+CONST
+  False = 0;
+  True  = 1;
+
+PROCEDURE <A NAME="FromFont"><procedure>FromFont</procedure></A> (font: PaintPrivate.Font): WinDef.HFONT =
+  BEGIN
+    RETURN LOOPHOLE (font, WinDef.HFONT);
+  END FromFont;
+</PRE>***************************************************************************
+ DetermineFontNames                                                        
+                                                                           
+ This procedure is called by Init. It enumerates all the available Windows 
+ fonts, converts them into font names (font description strings), and      
+ stores these names in an array.                                           
+***************************************************************************
+
+<P><PRE>TYPE
+  EnumRec = RECORD
+    hdc: WinDef.HDC;
+    ctr: INTEGER := 0;
+  END;
+  EnumRecPtr = UNTRACED REF EnumRec;
+
+VAR
+  FontNames : REF ARRAY OF TEXT;
+
+PROCEDURE <A NAME="DetermineFontNames"><procedure>DetermineFontNames</procedure></A> () =
+  VAR
+    er    : EnumRec;
+    status: WinDef.BOOL;
+  BEGIN
+    er.ctr := 0;
+
+    WITH hwnd = WinUser.GetDesktopWindow() DO
+      er.hdc := WinUser.GetDC(hwnd);
+      &lt;* ASSERT er.hdc # NIL *&gt;
+
+      (* First, count how many fonts are installed *)
+      EVAL WinGDI.EnumFontFamilies(er.hdc,
+                                   NIL,
+                                   LOOPHOLE(CountFamProc, WinGDI.FONTENUMPROC),
+                                   LOOPHOLE(ADR(er), WinDef.LPARAM));
+
+      (* Create space for them *)
+      FontNames := NEW (REF ARRAY OF TEXT, er.ctr);
+
+      (* Reset the counter and fill in the fonts *)
+      er.ctr := 0;
+      EVAL WinGDI.EnumFontFamilies(er.hdc,
+                                   NIL,
+                                   LOOPHOLE (InitFamProc, WinGDI.FONTENUMPROC),
+                                   LOOPHOLE (ADR(er), WinDef.LPARAM));
+
+      (* release the desktop device context *)
+      status := WinUser.ReleaseDC (hwnd, er.hdc);
+      &lt;* ASSERT status = 1 *&gt;
+    END;
+  END DetermineFontNames;
+
+&lt;* CALLBACK *&gt;
+PROCEDURE <A NAME="InitFamProc"><procedure>InitFamProc</procedure></A> (             lpelf : WinGDI.LPENUMLOGFONT;
+                       &lt;* UNUSED *&gt; lpntm : WinGDI.LPNEWTEXTMETRIC;
+                       &lt;* UNUSED *&gt; type  : Ctypes.int;
+                                    lparam: WinDef.LPARAM): Ctypes.int =
+  VAR
+    erp := LOOPHOLE (lparam, EnumRecPtr);
+  BEGIN
+    EVAL WinGDI.EnumFontFamilies (erp.hdc,
+                                  LOOPHOLE (ADR (lpelf.elfLogFont.lfFaceName),
+                                            Ctypes.char_star),
+                                  LOOPHOLE (InitFontProc, WinGDI.FONTENUMPROC),
+                                  lparam);
+    RETURN 1;
+  END InitFamProc;
+
+&lt;* CALLBACK *&gt;
+PROCEDURE <A NAME="InitFontProc"><procedure>InitFontProc</procedure></A> (             lpelf : WinGDI.LPENUMLOGFONT;
+                        &lt;* UNUSED *&gt; lpntm : WinGDI.LPNEWTEXTMETRIC;
+                                     type  : Ctypes.int;
+                                     lparam: WinDef.LPARAM): Ctypes.int =
+  VAR
+    erp := LOOPHOLE (lparam, EnumRecPtr);
+  BEGIN
+    IF Word.And (type, WinGDI.TRUETYPE_FONTTYPE) # 0 THEN
+      FontNames[erp.ctr] := LogFontToName (lpelf.elfLogFont);
+      INC (erp.ctr);
+    END;
+    RETURN 1;
+  END InitFontProc;
+
+&lt;* CALLBACK *&gt;
+PROCEDURE <A NAME="CountFamProc"><procedure>CountFamProc</procedure></A> (             lpelf : WinGDI.LPENUMLOGFONT;
+                        &lt;* UNUSED *&gt; lpntm : WinGDI.LPNEWTEXTMETRIC;
+                        &lt;* UNUSED *&gt; type  : Ctypes.int;
+                                     lparam: WinDef.LPARAM): Ctypes.int =
+  VAR
+    erp := LOOPHOLE (lparam, EnumRecPtr);
+  BEGIN
+    EVAL WinGDI.EnumFontFamilies(erp.hdc,
+                                 LOOPHOLE (ADR (lpelf.elfLogFont.lfFaceName),
+                                           Ctypes.char_star),
+                                 LOOPHOLE (CountFontProc, WinGDI.FONTENUMPROC),
+                                 lparam);
+    RETURN 1;
+  END CountFamProc;
+
+&lt;* CALLBACK *&gt;
+PROCEDURE <A NAME="CountFontProc"><procedure>CountFontProc</procedure></A> (&lt;* UNUSED *&gt; lpelf : WinGDI.LPENUMLOGFONT;
+                         &lt;* UNUSED *&gt; lpntm : WinGDI.LPNEWTEXTMETRIC;
+                                      type  : Ctypes.int;
+                                      lparam: WinDef.LPARAM): Ctypes.int =
+  VAR
+    erp := LOOPHOLE (lparam, EnumRecPtr);
+  BEGIN
+    IF Word.And (type, WinGDI.TRUETYPE_FONTTYPE) # 0 THEN
+      INC (erp.ctr);
+    END;
+    RETURN 1;
+  END CountFontProc;
+
+PROCEDURE <A NAME="LogFontToName"><procedure>LogFontToName</procedure></A> (READONLY lf: WinGDI.LOGFONT): TEXT =
+
+  PROCEDURE ToRegistry (READONLY lf: WinGDI.LOGFONT): TEXT =
+    BEGIN
+      IF lf.lfCharSet = WinGDI.ANSI_CHARSET THEN
+        RETURN &quot;iso8859&quot;;
+      ELSE
+        RETURN &quot;Unknown&quot;;
+      END;
+    END ToRegistry;
+
+  BEGIN
+    RETURN &quot;&quot;                     &amp;   (* Version          *)
+           &quot;-*&quot;                   &amp;   (* Foundry          *)
+           &quot;-&quot; &amp; ToFamily (lf)    &amp;   (* Family Name      *)
+           &quot;-&quot; &amp; ToWeight (lf)    &amp;   (* Weight Name      *)
+           &quot;-&quot; &amp; ToSlant (lf)     &amp;   (* Slant            *)
+           &quot;-*&quot;                   &amp;   (* Setwidth Name    *)
+           &quot;-*&quot;                   &amp;   (* Add Style Name   *)
+           &quot;-*&quot;                   &amp;   (* Pixel Size       *)
+           &quot;-&quot; &amp; ToPointSize (lf) &amp;   (* Point Size       *)
+           &quot;-*&quot;                   &amp;   (* Resolution X     *)
+           &quot;-*&quot;                   &amp;   (* Resolution Y     *)
+           &quot;-&quot; &amp; ToSpacing (lf)   &amp;   (* Spacing          *)
+           &quot;-&quot; &amp; ToWidth (lf)     &amp;   (* Average Width    *)
+           &quot;-&quot; &amp; ToRegistry (lf)  &amp;   (* Charset Registry *)
+           &quot;-&quot; &amp; ToEncoding (lf);     (* Charset Encoding *)
+  END LogFontToName;
+
+PROCEDURE <A NAME="NameToLogFont"><procedure>NameToLogFont</procedure></A> (name: TEXT): WinGDI.LOGFONT RAISES {BadFontName} =
+  VAR
+    parts: ARRAY [1..15] OF TEXT;
+  BEGIN
+    FanoutName (name, parts);
+    RETURN WinGDI.LOGFONT {lfHeight        := FromPointSize (parts[9]),
+                           lfWidth         := FromWidth (parts[13]),
+                           lfEscapement    := 0,
+                           lfOrientation   := 0,
+                           lfWeight        := FromWeight (parts[4]),
+                           lfItalic        := FromSlant (parts[5]),
+                           lfUnderline     := False,
+                           lfStrikeOut     := False,
+                           lfCharSet       := FromEncoding (parts[15]),
+                           lfOutPrecision  := WinGDI.OUT_DEFAULT_PRECIS,
+                           lfClipPrecision := WinGDI.CLIP_DEFAULT_PRECIS,
+                           lfQuality       := WinGDI.DEFAULT_QUALITY,
+                           lfPitchAndFamily:= FromSpacing (parts[12]),
+                           lfFaceName      := FromFamily (parts[3])};
+  END NameToLogFont;
+
+PROCEDURE <A NAME="NameToScrnFont"><procedure>NameToScrnFont</procedure></A> (name: TEXT): ScrnFont.T
+    RAISES {BadFontName} =
+  BEGIN
+    RETURN LogFontToScrnFont (NameToLogFont (name));
+  END NameToScrnFont;
+
+PROCEDURE <A NAME="LogFontToScrnFont"><procedure>LogFontToScrnFont</procedure></A> (READONLY lf: WinGDI.LOGFONT): ScrnFont.T =
+
+  PROCEDURE ToSlant (READONLY lf: WinGDI.LOGFONT): ScrnFont.Slant =
+    BEGIN
+      IF lf.lfItalic = True THEN
+        RETURN ScrnFont.Slant.Italic;
+      ELSE
+        RETURN ScrnFont.Slant.Roman;
+      END;
+    END ToSlant;
+
+  PROCEDURE ToSpacing (READONLY lf: WinGDI.LOGFONT): ScrnFont.Spacing =
+    BEGIN
+      IF Word.And (lf.lfPitchAndFamily, WinGDI.FIXED_PITCH) # 0 THEN
+        RETURN ScrnFont.Spacing.Monospaced
+      ELSIF Word.And (lf.lfPitchAndFamily, WinGDI.VARIABLE_PITCH) # 0 THEN
+        RETURN ScrnFont.Spacing.Proportional
+      ELSE
+        RETURN ScrnFont.Spacing.Any
+      END
+    END ToSpacing;
+
+  PROCEDURE ToCharsetEncoding (READONLY lf: WinGDI.LOGFONT): TEXT =
+    BEGIN
+      CASE lf.lfCharSet OF
+      | WinGDI.ANSI_CHARSET =&gt;
+        RETURN &quot;ANSI&quot;;
+      | WinGDI.UNICODE_CHARSET =&gt;
+        RETURN &quot;UNICODE&quot;;
+      | WinGDI.SYMBOL_CHARSET =&gt;
+        RETURN &quot;SYMBOL&quot;;
+      | WinGDI.SHIFTJIS_CHARSET =&gt;
+        RETURN &quot;SHIFTJIS&quot;;
+      | WinGDI.HANGEUL_CHARSET =&gt;
+        RETURN &quot;HANGEUL&quot;;
+      | WinGDI.CHINESEBIG5_CHARSET =&gt;
+        RETURN &quot;CHINESEBIG5&quot;;
+      | WinGDI.OEM_CHARSET =&gt;
+        RETURN &quot;OEM&quot;;
+      ELSE
+        RETURN &quot;Unknown&quot;;
+      END;
+    END ToCharsetEncoding;
+
+  PROCEDURE ToCharMetric (abc       : WinGDI.ABC;
+                          READONLY m: ScrnFont.Metrics;
+                          VAR cm    : ScrnFont.CharMetric) =
+    BEGIN
+      cm.printWidth := abc.abcA + abc.abcB + abc.abcC;
+      WITH bb = cm.boundingBox DO
+        bb.west  := abc.abcA;
+        bb.east  := abc.abcA + abc.abcB;
+        bb.north := -m.ascent;
+        bb.south := m.descent;
+        IF bb.west &gt;= bb.east OR bb.north &gt;= bb.south THEN
+          bb := Rect.Empty;
+        END;
+      END;
+    END ToCharMetric;
+
+  PROCEDURE MinMaxMetric (READONLY cm  : ScrnFont.CharMetric;
+                          VAR min, max : ScrnFont.CharMetric) =
+    BEGIN
+      min.printWidth := MIN (min.printWidth, cm.printWidth);
+      max.printWidth := MAX (max.printWidth, cm.printWidth);
+      min.boundingBox.west := MAX (min.boundingBox.west, cm.boundingBox.west);
+      max.boundingBox.west := MIN (max.boundingBox.west, cm.boundingBox.west);
+      min.boundingBox.east := MIN (min.boundingBox.east, cm.boundingBox.east);
+      max.boundingBox.east := MAX (max.boundingBox.east, cm.boundingBox.east);
+    END MinMaxMetric;
+
+  VAR
+    hfont   := WinGDI.CreateFontIndirect (ADR(lf));
+    res := NEW (ScrnFont.T,
+                id := LOOPHOLE (hfont, INTEGER),
+                metrics := NEW (NullMetrics));
+    tm   : WinGDI.NEWTEXTMETRIC;  (* superset of TEXTMETRIC *)
+    abcs : REF ARRAY OF WinGDI.ABC;
+    cms  : REF ARRAY OF ScrnFont.CharMetric;
+  BEGIN
+    IF hfont = NIL THEN
+      RETURN NIL;
+    END;
+
+    (* Get the TEXTMETRIC or NEWTEXTMETRIC record for the font *)
+    VAR
+      hdc    : WinDef.HDC;
+      oldFont: WinDef.HFONT;
+      status : Ctypes.int;
+    BEGIN
+      WITH hwnd = WinUser.GetDesktopWindow() DO
+        hdc := WinUser.GetDC(hwnd);
+        &lt;* ASSERT hdc # NIL *&gt;
+        oldFont := WinGDI.SelectObject (hdc, hfont);
+        &lt;* ASSERT oldFont # NIL *&gt;
+        status := WinGDI.GetTextMetrics (hdc, LOOPHOLE (ADR(tm),
+                                                        WinGDI.LPTEXTMETRIC));
+        &lt;* ASSERT status = True *&gt;
+
+        WITH first = tm.tmFirstChar, last = tm.tmLastChar DO
+          abcs := NEW (REF ARRAY OF WinGDI.ABC, last - first + 1);
+          status := WinGDI.GetCharABCWidths (hdc, first, last, ADR(abcs[0]));
+          &lt;* ASSERT status = True *&gt;
+        END;
+
+        oldFont := WinGDI.SelectObject (hdc, oldFont);
+        &lt;* ASSERT oldFont = hfont *&gt;
+        status := WinUser.ReleaseDC (hwnd, hdc);
+        &lt;* ASSERT status = 1 *&gt;
+      END;
+    END;
+
+    WITH m = res.metrics DO
+      m.family := M3toC.CopyStoT (LOOPHOLE (ADR (lf.lfFaceName),
+                                            Ctypes.char_star));
+        (* In X, instances of &quot;family&quot; are &quot;Times&quot; or &quot;Helvetica&quot;.
+           In Windows, the closest counterpart is the &quot;typeface&quot;. *)
+      m.pointSize := lf.lfHeight;
+        (* The Windows documentation is vague about point sizes (although it
+           uses the term). From what I could make out, the point size of a
+           font is equivalent to the height of the font. *)
+      m.slant := ToSlant (lf);
+        (* X has 6 different &quot;slant&quot; codes (&quot;Roman&quot;, &quot;Italic&quot;, &quot;Oblique&quot;,
+           &quot;Reverse Italic&quot;, &quot;Reverse Oblique&quot;, &quot;Other&quot;). Trestle has those
+           six codes plus a 7th (&quot;Any&quot;). It seems that Windows only
+           distinguishes between &quot;Roman&quot; and &quot;Italic&quot;. *)
+      m.weightName := ToWeight(lf);
+        (* In Trestle and X, instances of &quot;weight&quot; name are &quot;Bold&quot;, &quot;DemiBold&quot;,
+           and &quot;Medium&quot;. Windows has the concept of weights, and predefined
+           constants for some weights. *)
+      m.version := &quot;&quot;;
+        (* &quot;version&quot; was intended to indicate the version of the &quot;X Logical
+           Font Description Conventions&quot;. A blank is ok here. *)
+      m.foundry := &quot;Windows&quot;;
+        (* In X, the &quot;foundry&quot; indicates the manufacturer of a font (e.g.
+           &quot;Adobe&quot; or &quot;DEC&quot;). There is no foundry field in a Windows &quot;LOGFONT&quot;
+           record (although there is a &quot;Vendor ID&quot; in the &quot;EXTLOGFONT&quot; record).
+           Trestle doesn't actually care about the value of foundry. *)
+      m.width := &quot;Unknown&quot;;
+        (* In X, &quot;width&quot; can have values such as &quot;Narrow&quot; or &quot;Condensed&quot;.
+           Windows &quot;LOGFONT&quot; structures don't have anything similar.
+           Trestle doesn't actually seem to care. *)
+      m.pixelsize := 0;
+      m.hres := 0;
+      m.vres := 0;
+        (* In X, the pixel size, horizontal resolution, and vertical resolution
+           of a font are known. This is not true for Windows logical fonts.
+           Trestle does not actually care. *)
+      m.spacing := ToSpacing (lf);
+        (* The X term &quot;spacing&quot; and the Windows term &quot;pitch&quot; are roughly
+           synonymous. X knows three spacings (&quot;Proportional&quot;, &quot;Monospaced&quot;,
+           and &quot;CharCell&quot;); Windows knows three pitches (&quot;DEFAULT&quot;, &quot;FIXED&quot;,
+           and &quot;VARIABLE&quot;. Trestle does not care about spacings; they are used
+           only for font matching. *)
+      m.averageWidth := lf.lfWidth;
+        (* X &quot;average width&quot; and Windows LOGFONT &quot;width&quot; seem to be pretty
+           much the same. *)
+      m.charsetRegistry := &quot;Unknown&quot;;
+        (* In X, &quot;charsetRegistry&quot; identifies the registration authority
+           for the character set. There is no such concept in Windows.
+           Trestle doesn't actually care. *)
+      m.charsetEncoding := ToCharsetEncoding(lf);
+        (* In X, &quot;charsetEncoding&quot; is a text property defined by the authority
+           that issued the font. Trestle does not care about the content; it is
+           used only for font matching. We use it to encode the LOGFONT
+           &quot;lfCharSet&quot; field. *)
+      m.isAscii := lf.lfCharSet = WinGDI.ANSI_CHARSET;
+        (* True if the character set is the aka ANSI, aka ISO8859 character
+           set. &quot;isAscii&quot; is actually a misnomor, ASCII is a 7-bit code,
+           whereas ANSI and ISO8859 are 8-bit codes. *)
+      m.firstChar   := tm.tmFirstChar;
+      m.lastChar    := tm.tmLastChar;
+      m.defaultChar := tm.tmDefaultChar;
+      m.ascent      := tm.tmAscent;
+      m.descent     := tm.tmDescent;
+
+      (* Fill in the character metrics. *)
+      cms := NEW (REF ARRAY OF ScrnFont.CharMetric,
+                  m.lastChar - m.firstChar + 1);
+      FOR i := 0 TO LAST (abcs^) DO
+        ToCharMetric (abcs[i], m, cms[i]);
+      END;
+
+      (* Compute the meet and the join of the CharMetric bounding boxes *)
+      m.minBounds := cms[0];
+      m.maxBounds := cms[0];
+      FOR i := 1 TO LAST (cms^) DO
+        MinMaxMetric (cms[i], m.minBounds, m.maxBounds);
+      END;
+
+      (* Determine kerning and self-clearing property *)
+      m.rightKerning := FALSE;
+      m.leftKerning := FALSE;
+      FOR i := 0 TO LAST(cms^) DO
+        WITH bd = cms[i], bb = bd.boundingBox DO
+          IF bd.printWidth &gt;= 0 THEN
+            m.rightKerning := m.rightKerning OR bb.east &gt; bd.printWidth;
+            m.leftKerning  := m.leftKerning  OR bb.west &lt; 0;
+          ELSE
+            m.rightKerning := m.rightKerning OR bb.east &gt; 0;
+            m.leftKerning  := m.leftKerning  OR bb.west &lt; bd.printWidth;
+          END;
+        END;
+      END;
+      m.selfClearing := NOT (m.rightKerning OR m.leftKerning);
+        (* This is risky; we don't actually know anything about per-character
+           ascent and descent ... *)
+
+      (* Save the char metrics array if it contains any non-trivial data. *)
+      IF m.minBounds = m.maxBounds THEN
+        m.charMetrics := NIL;
+      ELSE
+        m.charMetrics := cms;
+      END;
+
+      m.fprint := Fingerprint.Zero;
+        (* The fingerprint is used only by &quot;JoinScreen.MungeBatch&quot;.
+           I suspect that it is used only when two trestles watch
+           the same VBT, in other words, in &quot;Shared Trestle&quot;.
+           If this is the case, there is no need for fingerprinting
+           in Windows world. *)
+
+    END;
+    RETURN res;
+  END LogFontToScrnFont;
+</PRE>***************************************************************************
+ Procedure MatchingNames                                                   
+***************************************************************************
+
+<P><PRE>EXCEPTION BadFontName;
+
+PROCEDURE <A NAME="FanoutName"><procedure>FanoutName</procedure></A> (t: TEXT; VAR ts: ARRAY [1..15] OF TEXT)
+    RAISES {BadFontName} =
+  VAR
+    start := 0;
+  BEGIN
+    FOR i := 1 TO 14 DO
+      WITH pos = Text.FindChar (t, '-', start) DO
+        IF pos = -1 THEN
+          RAISE BadFontName;
+        END;
+        ts[i] := Text.Sub (t, start, pos - start);
+        start := pos + 1;
+      END;
+    END;
+    ts[15] := Text.Sub (t, start, Text.Length(t) - start);
+  END FanoutName;
+
+PROCEDURE <A NAME="MatchingNames"><procedure>MatchingNames</procedure></A> (a, b: TEXT): BOOLEAN RAISES {BadFontName} =
+
+  (* This procedure is simplified. According to the Trestle
+     specification, it should also deal with &quot;?&quot; patterns. *)
+  PROCEDURE PatMatch (a, b: TEXT): BOOLEAN =
+    BEGIN
+      RETURN Text.Equal (a, &quot;*&quot;) OR Text.Equal (b, &quot;*&quot;) OR Text.Equal (a, b);
+    END PatMatch;
+
+  VAR
+    as, bs : ARRAY [1..15] OF TEXT;
+  BEGIN
+    FanoutName (a, as);
+    FanoutName (b, bs);
+    FOR i := 1 TO 15 DO
+      IF NOT PatMatch (as[i], bs[i]) THEN
+        RETURN FALSE;
+      END;
+    END;
+    RETURN TRUE;
+  END MatchingNames;
+</PRE>***************************************************************************
+ Conversion Functions                                                      
+***************************************************************************
+
+<P>
+<P><PRE>PROCEDURE <A NAME="ToFamily"><procedure>ToFamily</procedure></A> (READONLY lf: WinGDI.LOGFONT): TEXT =
+  BEGIN
+    WITH string = LOOPHOLE (ADR (lf.lfFaceName), Ctypes.char_star),
+         text   = M3toC.StoT (string),
+         chars  = NEW (REF ARRAY OF CHAR, Text.Length (text)) DO
+      Text.SetChars (chars^, text);
+      FOR i := FIRST (chars^) TO LAST (chars^) DO
+        IF chars[i] = '-' THEN
+          chars[i] := '_';
+        END;
+      END;
+      RETURN Text.FromChars (chars^);
+    END;
+  END ToFamily;
+
+TYPE FaceName = ARRAY [0 .. WinGDI.LF_FACESIZE - 1] OF Ctypes.char;
+
+PROCEDURE <A NAME="FromFamily"><procedure>FromFamily</procedure></A> (family: TEXT): FaceName =
+  VAR
+    res: FaceName;
+  BEGIN
+    WITH chars = NEW (REF ARRAY OF CHAR, Text.Length (family)) DO
+      Text.SetChars (chars^, family);
+      FOR i := FIRST (chars^) TO LAST (chars^) DO
+        IF chars[i] = '_' THEN
+          chars[i] := '-';
+        END;
+      END;
+      WITH text = Text.FromChars (chars^),
+           len  = Text.Length (text) DO
+        FOR i := 0 TO MIN (len - 1, LAST(res)) DO
+          res[i] := ORD (Text.GetChar (text, i));
+        END;
+        FOR i := len TO LAST (res) DO
+          res[i] := ORD (' ');
+        END;
+      END;
+    END;
+    RETURN res;
+  END FromFamily;
+
+PROCEDURE <A NAME="ToWeight"><procedure>ToWeight</procedure></A> (READONLY lf: WinGDI.LOGFONT): TEXT =
+  BEGIN
+    WITH w = lf.lfWeight DO
+      IF    w = 0   THEN RETURN &quot;Unknown&quot;
+      ELSIF w &lt; 150 THEN RETURN &quot;Thin&quot;
+      ELSIF w &lt; 250 THEN RETURN &quot;ExtraLight&quot;
+      ELSIF w &lt; 350 THEN RETURN &quot;Light&quot;
+      ELSIF w &lt; 450 THEN RETURN &quot;Normal&quot;
+      ELSIF w &lt; 550 THEN RETURN &quot;Medium&quot;
+      ELSIF w &lt; 650 THEN RETURN &quot;SemiBold&quot;
+      ELSIF w &lt; 750 THEN RETURN &quot;Bold&quot;
+      ELSIF w &lt; 850 THEN RETURN &quot;ExtraBold&quot;
+      ELSE               RETURN &quot;Heavy&quot;
+      END;
+    END;
+  END ToWeight;
+
+PROCEDURE <A NAME="FromWeight"><procedure>FromWeight</procedure></A> (weight: TEXT): WinDef.LONG RAISES {BadFontName} =
+  BEGIN
+    IF    Text.Equal (weight, &quot;Unknown&quot;   ) THEN RETURN 0;
+    ELSIF Text.Equal (weight, &quot;Thin&quot;      ) THEN RETURN 100;
+    ELSIF Text.Equal (weight, &quot;ExtraLight&quot;) THEN RETURN 200;
+    ELSIF Text.Equal (weight, &quot;Light&quot;     ) THEN RETURN 300;
+    ELSIF Text.Equal (weight, &quot;Normal&quot;    ) THEN RETURN 400;
+    ELSIF Text.Equal (weight, &quot;Medium&quot;    ) THEN RETURN 500;
+    ELSIF Text.Equal (weight, &quot;SemiBold&quot;  ) THEN RETURN 600;
+    ELSIF Text.Equal (weight, &quot;Bold&quot;      ) THEN RETURN 700;
+    ELSIF Text.Equal (weight, &quot;ExtraBold&quot; ) THEN RETURN 800;
+    ELSIF Text.Equal (weight, &quot;Heavy&quot;     ) THEN RETURN 900;
+    ELSE
+      RAISE BadFontName;
+    END;
+  END FromWeight;
+
+PROCEDURE <A NAME="ToSlant"><procedure>ToSlant</procedure></A> (READONLY lf: WinGDI.LOGFONT): TEXT =
+  BEGIN
+    IF lf.lfItalic = True THEN
+      RETURN &quot;I&quot;;
+    ELSE
+      RETURN &quot;R&quot;;
+    END;
+  END ToSlant;
+
+PROCEDURE <A NAME="FromSlant"><procedure>FromSlant</procedure></A> (slant: TEXT): WinDef.BYTE =
+  BEGIN
+    IF Text.Equal (slant, &quot;I&quot;) THEN
+      RETURN True
+    ELSE
+      RETURN False;
+    END;
+  END FromSlant;
+
+PROCEDURE <A NAME="ToSpacing"><procedure>ToSpacing</procedure></A> (READONLY lf: WinGDI.LOGFONT): TEXT =
+  BEGIN
+    IF Word.And (lf.lfPitchAndFamily, WinGDI.FIXED_PITCH) # 0 THEN
+      RETURN &quot;M&quot;;
+    ELSIF Word.And (lf.lfPitchAndFamily, WinGDI.VARIABLE_PITCH) # 0 THEN
+      RETURN &quot;P&quot;;
+    ELSE
+      RETURN &quot;*&quot;;
+    END;
+  END ToSpacing;
+
+PROCEDURE <A NAME="FromSpacing"><procedure>FromSpacing</procedure></A> (spacing: TEXT): WinDef.BYTE RAISES {BadFontName} =
+  BEGIN
+    IF Text.Equal (spacing, &quot;M&quot;) THEN
+      RETURN WinGDI.FIXED_PITCH + WinGDI.FF_DONTCARE;
+    ELSIF Text.Equal (spacing, &quot;P&quot;) THEN
+      RETURN WinGDI.VARIABLE_PITCH + WinGDI.FF_DONTCARE;
+    ELSIF Text.Equal (spacing, &quot;*&quot;) THEN
+      RETURN WinGDI.DEFAULT_PITCH + WinGDI.FF_DONTCARE;
+    ELSE
+      RAISE BadFontName;
+    END;
+  END FromSpacing;
+
+PROCEDURE <A NAME="ToPointSize"><procedure>ToPointSize</procedure></A> (READONLY lf: WinGDI.LOGFONT): TEXT =
+  BEGIN
+    IF TRUE THEN (* Simplification; need to check if lf is a TrueType font *)
+      RETURN &quot;*&quot;;
+    ELSE
+      RETURN Fmt.Int (lf.lfHeight);
+    END;
+  END ToPointSize;
+
+PROCEDURE <A NAME="FromPointSize"><procedure>FromPointSize</procedure></A> (pointSize: TEXT): WinDef.LONG RAISES {BadFontName} =
+  BEGIN
+    IF Text.Equal (pointSize, &quot;*&quot;) THEN
+      RETURN 0;
+    ELSE
+      TRY
+        RETURN -ABS (Scan.Int (pointSize));
+      EXCEPT
+        Lex.Error, FloatMode.Trap =&gt; RAISE BadFontName;
+      END;
+    END;
+  END FromPointSize;
+
+PROCEDURE <A NAME="ToEncoding"><procedure>ToEncoding</procedure></A> (READONLY lf: WinGDI.LOGFONT): TEXT =
+  BEGIN
+    CASE lf.lfCharSet OF
+    | WinGDI.ANSI_CHARSET =&gt;
+      RETURN &quot;ANSI&quot;;
+    | WinGDI.UNICODE_CHARSET =&gt;
+      RETURN &quot;UNICODE&quot;;
+    | WinGDI.SYMBOL_CHARSET =&gt;
+      RETURN &quot;SYMBOL&quot;;
+    | WinGDI.SHIFTJIS_CHARSET =&gt;
+      RETURN &quot;SHIFTJIS&quot;;
+    | WinGDI.HANGEUL_CHARSET =&gt;
+      RETURN &quot;HANGEUL&quot;;
+    | WinGDI.CHINESEBIG5_CHARSET =&gt;
+      RETURN &quot;CHINESEBIG5&quot;;
+    | WinGDI.OEM_CHARSET =&gt;
+      RETURN &quot;OEM&quot;;
+    ELSE
+      RETURN &quot;Unknown&quot;;
+    END;
+  END ToEncoding;
+
+PROCEDURE <A NAME="FromEncoding"><procedure>FromEncoding</procedure></A> (encoding: TEXT): WinDef.BYTE RAISES {BadFontName} =
+  BEGIN
+    IF Text.Equal (encoding, &quot;ANSI&quot;) THEN
+      RETURN WinGDI.ANSI_CHARSET
+    ELSIF Text.Equal (encoding, &quot;UNICODE&quot;) THEN
+      RETURN WinGDI.UNICODE_CHARSET
+    ELSIF Text.Equal (encoding, &quot;SYMBOL&quot;) THEN
+      RETURN WinGDI.SYMBOL_CHARSET
+    ELSIF Text.Equal (encoding, &quot;SHIFTJIS&quot;) THEN
+      RETURN WinGDI.SHIFTJIS_CHARSET
+    ELSIF Text.Equal (encoding, &quot;HANGEUL&quot;) THEN
+      RETURN WinGDI.HANGEUL_CHARSET
+    ELSIF Text.Equal (encoding, &quot;CHINESEBIG5&quot;) THEN
+      RETURN WinGDI.CHINESEBIG5_CHARSET
+    ELSIF Text.Equal (encoding, &quot;OEM&quot;) THEN
+      RETURN WinGDI.OEM_CHARSET
+    ELSE
+      RAISE BadFontName;
+    END;
+  END FromEncoding;
+
+PROCEDURE <A NAME="ToWidth"><procedure>ToWidth</procedure></A> (READONLY lf: WinGDI.LOGFONT): TEXT =
+  BEGIN
+    IF lf.lfWidth = 0 THEN
+      RETURN &quot;*&quot;;
+    ELSE
+      RETURN Fmt.Int (lf.lfWidth);
+    END;
+  END ToWidth;
+
+PROCEDURE <A NAME="FromWidth"><procedure>FromWidth</procedure></A> (width: TEXT): WinDef.LONG RAISES {BadFontName} =
+  BEGIN
+    IF Text.Equal (width, &quot;*&quot;) THEN
+      RETURN 0;
+    ELSE
+      TRY
+        RETURN Scan.Int (width);
+      EXCEPT
+        Lex.Error, FloatMode.Trap =&gt; RAISE BadFontName;
+      END;
+    END;
+  END FromWidth;
+</PRE>***************************************************************************
+
+<P><PRE>TYPE
+  NullMetrics = ScrnFont.Metrics BRANDED OBJECT
+  OVERRIDES
+    intProp  := NullIntProp;
+    textProp := NullTextProp;
+  END;
+</PRE>-----------------------------------------------------------------------------
+   The spec in ScrnFont.i3 states:
+<P>
+       The method call <CODE>m.intProp(nm)</CODE> returns the integer value of the
+       font attribute named <CODE>nm</CODE>, or raises <CODE>Failure</CODE> if this attribute is
+       not defined for <CODE>m</CODE>.  The method call <CODE>m.intProp(nm, ORD(ch))</CODE>
+       returns the integer value of the font attribute named <CODE>nm</CODE> for the
+       character <CODE>ch</CODE>, or raises <CODE>Failure</CODE> if this attribute is not defined
+       for <CODE>(m, ch)</CODE>.  The <CODE>textProp</CODE> method is similar.
+<P>
+   The X implementation (XScrnFont.NullIntProp and XScrnFont.NullTextProp),
+   however, always raises <CODE>Failure</CODE>. For now, we do the same ...
+<P>
+-----------------------------------------------------------------------------
+
+<P>
+<P><PRE>PROCEDURE <A NAME="NullIntProp"><procedure>NullIntProp</procedure></A> (&lt;*UNUSED*&gt; self: NullMetrics;
+                       &lt;*UNUSED*&gt; name: TEXT;
+                       &lt;*UNUSED*&gt; ch  : INTEGER): INTEGER
+    RAISES {ScrnFont.Failure} =
+  BEGIN
+    RAISE ScrnFont.Failure
+  END NullIntProp;
+
+PROCEDURE <A NAME="NullTextProp"><procedure>NullTextProp</procedure></A> (&lt;*UNUSED*&gt; self: NullMetrics;
+                        &lt;*UNUSED*&gt; name: TEXT;
+                        &lt;*UNUSED*&gt; ch  : INTEGER): TEXT
+    RAISES {ScrnFont.Failure} =
+  BEGIN
+    RAISE ScrnFont.Failure
+  END NullTextProp;
+
+BEGIN
+  DetermineFontNames();
+END WinScrnFont.
+</PRE>
+</inModule>
+<HR>
+<A NAME="x1">interface FloatMode is in:
+</A><UL>
+<LI><A HREF="../../../float/src/DS3100/FloatMode.i3.html#0TOP0">float/src/DS3100/FloatMode.i3</A>
+<LI><A HREF="../../../float/src/IEEE-default/FloatMode.i3.html#0TOP0">float/src/IEEE-default/FloatMode.i3</A>
+<LI><A HREF="../../../float/src/IRIX5/FloatMode.i3.html#0TOP0">float/src/IRIX5/FloatMode.i3</A>
+<LI><A HREF="../../../float/src/SOLsun/FloatMode.i3.html#0TOP0">float/src/SOLsun/FloatMode.i3</A>
+<LI><A HREF="../../../float/src/SPARC/FloatMode.i3.html#0TOP0">float/src/SPARC/FloatMode.i3</A>
+<LI><A HREF="../../../float/src/SUN386/FloatMode.i3.html#0TOP0">float/src/SUN386/FloatMode.i3</A>
+<LI><A HREF="../../../float/src/VAX/FloatMode.i3.html#0TOP0">float/src/VAX/FloatMode.i3</A>
+</UL>
+<P>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

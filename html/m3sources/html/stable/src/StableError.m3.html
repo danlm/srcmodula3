@@ -1,0 +1,67 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: stable/src/StableError.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>stable/src/StableError.m3</H2></A><HR>
+<inModule>
+<PRE><A HREF="../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM>                                                             </EM></BLOCKQUOTE><PRE>
+</PRE> Created by Carsten Weich                                    
+                                                             
+
+<P> Stable object exceptions 
+
+<P><PRE>MODULE <module><implements><A HREF="StableError.i3.html">StableError</A></implements></module>;
+
+IMPORT <A HREF="../../rw/src/Common/RdUtils.i3.html">RdUtils</A>, <A HREF="../../rw/src/Common/Stdio.i3.html">Stdio</A>, <A HREF="../../rw/src/Common/Wr.i3.html">Wr</A>, <A HREF="../../thread/src/Common/Thread.i3.html">Thread</A>, <A HREF="../../os/src/Common/Process.i3.html">Process</A>;
+
+PROCEDURE <A NAME="ToText"><procedure>ToText</procedure></A>(code: Code): TEXT =
+</PRE><BLOCKQUOTE><EM> <CODE>RdUtils.FailureText</CODE> does the same conversion for Rd/Wr Excpetions. We can use it here: </EM></BLOCKQUOTE><PRE>
+  BEGIN
+    RETURN RdUtils.FailureText(code);
+  END ToText;
+
+PROCEDURE <A NAME="Halt"><procedure>Halt</procedure></A> (msg: TEXT) =
+  &lt;*FATAL Wr.Failure, Thread.Alerted*&gt;
+  BEGIN
+    Wr.PutText(Stdio.stderr, &quot;****\n&quot;);
+    Wr.PutText(Stdio.stderr, &quot;**** fatal stable object error\n&quot;);
+    Wr.PutText(Stdio.stderr, &quot;****\n&quot;);
+    Wr.PutText(Stdio.stderr, &quot;****       &quot; &amp; msg &amp; &quot;\n&quot;);
+    Wr.PutText(Stdio.stderr, &quot;****\n\n\nProgram aborted\n&quot;);
+    Process.Exit(1);
+  END Halt;
+
+BEGIN
+END StableError.
+</PRE>
+</inModule>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

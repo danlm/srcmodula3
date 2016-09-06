@@ -1,0 +1,418 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: ui/src/xvbt/XClientF.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>ui/src/xvbt/XClientF.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM> </EM></BLOCKQUOTE><PRE>
+</PRE> by Steve Glassman, Mark Manasse and Greg Nelson 
+
+<P>
+<P><PRE>&lt;*PRAGMA LL*&gt;
+</PRE> Partitioning following the efforts of
+   Steve.Freeman@computer-lab.cambridge.ac.uk - 92-05-13 
+
+<P><PRE>UNSAFE INTERFACE <interface><A HREF="#x1">XClientF</A></interface>;
+
+IMPORT <A HREF="XClient.i3.html">XClient</A>, <A HREF="TrestleOnX.i3.html">TrestleOnX</A>, <A HREF="../vbt/TrestleClass.i3.html">TrestleClass</A>, <A HREF="../vbt/Trestle.i3.html">Trestle</A>, <A HREF="../../../geometry/src/Rect.i3.html">Rect</A>, <A HREF="../split/ProperSplit.i3.html">ProperSplit</A>,
+       <A HREF="../../../libm3/DS/IntRefTbl.i3.html">IntRefTbl</A>, <A HREF="../../../libm3/DS/IntTextTbl.i3.html">IntTextTbl</A>, <A HREF="../../../libm3/DS/TextIntTbl.i3.html">TextIntTbl</A>, <A HREF="../../../X11R4/src/Common/X.i3.html">X</A>, <A HREF="XEventQueue.i3.html">XEventQueue</A>, <A HREF="../../../thread/src/Common/Thread.i3.html">Thread</A>,
+       <A HREF="XScreenType.i3.html">XScreenType</A>, <A HREF="../vbt/VBT.i3.html">VBT</A>, <A HREF="../../../geometry/src/Point.i3.html">Point</A>, <A HREF="../../../C/src/Common/Ctypes.i3.html">Ctypes</A>, <A HREF="XScrollQueue.i3.html">XScrollQueue</A>, <A HREF="../../../geometry/src/Region.i3.html">Region</A>, <A HREF="../vbt/TrestleComm.i3.html">TrestleComm</A>,
+       <A HREF="../vbt/ScrnPixmap.i3.html">ScrnPixmap</A>;
+
+REVEAL
+  TrestleClass.RootVBT &lt;: ProperSplit.T;
+  TrestleOnX.Display &lt;: T_Abs;
+
+TYPE
+  <A HREF="#x2">T_Abs</A> &lt;: T_Ext;                (* T_Ext revealed in XClientExt.i3 *)
+  <A HREF="XClientExt.i3.html#T_Ext">T_Ext</A> &lt;: T_Rel;
+  T_Rel =
+    XClient.T_Public OBJECT
+      (* protection = self *)
+      dead (*, hasMessenger, hasXFilter, hasSelectThread *) := FALSE;
+      vbts : IntRefTbl.T;
+      atoms: IntTextTbl.T;
+      names: TextIntTbl.T;
+      ungrab: ARRAY [0 .. 12] (*FIRST(Ungrab)..LAST(Ungrab)]*) OF X.KeyCode;
+      sel: SelArray           := NIL;
+      evq                     := XEventQueue.Empty;
+      evc: Thread.Condition;
+      (* signaled when evq.lo becomes different from evq.hi *)
+      (* list of awaited events: *)
+      qEmpty, qNonEmpty: Thread.Condition;
+      (* qEmpty is signalled when the filterXInput thread discovers that
+         the queue of events in Xlib is empty and wants the WaitForXInput
+         thread to do a select on its behalf; qNonEmpty is signaled to
+         alert the filterXInput thread that the queue in Xlib is non-empty,
+         or that the error queue is non-empty. *)
+      ooq := XEventQueue.Empty;  (* The queue of out-of-order events --
+                                    such as MotionNotify from
+                                    QueryPointer *)
+      (*params: Trestle.Parameters;*)
+      screens: REF ARRAY OF XScreenType.T;
+      (* Types of the screens on the X server. *)
+      defaultScreen: CARDINAL;
+      (* index in screens of default screen for this X server. *)
+      (* The next fields are protected by VBT.mu and self *)
+      current, mouseFocus: VBT.T := NIL;
+      (* The child that has received a FirstDown but no corresponding
+         LastUp, or NIL if there is no such child. *)
+      currentRoot, mouseFocusRoot := -1;
+      (* If mouseFocus # NIL, mouseFocusRoot is the screen number of the
+         root window containing it.  currentRoot is the screen number of
+         the screen the cursor is on. *)
+      currentRootWindow: X.Window := X.None;
+      (* The root window of the current screen *)
+      otherCages: BOOLEAN := FALSE;
+      (* The remaining fields are protected by VBT.mu *)
+      (* True if some VBT other than mouseFocus or current has a cage which
+         fails to contain some point on currentRoot. *)
+      takeFocus, deleteWindow, protocols, miscAtom, decTakeFocus, wmMoved,
+        paNewScreen, paNewDisplay, paAddDisplay: X.Atom := X.None;
+      errq                            := XEventQueue.Empty;
+      eventHook: TrestleOnX.EventProc := NIL;
+      (* protection = scheduler *)
+      inst, fullinst: TEXT;
+    END;
+
+TYPE
+  Child = ProperSplit.Child OBJECT
+            (* fields below protected by parent lock *)
+            nwValid            := FALSE;
+            nw     : Point.T;
+            (* The nw field is the location of the northwest corner of the
+               window on the root window, if nwValid is TRUE.*)
+            inside := FALSE;
+            (* whether the cursor is inside the window. *)
+            mapped := FALSE;
+            (* whether the X window is mapped. *)
+            isXFocus, underXFocus := FALSE;
+            (* The boolean isXFocus is true if this window has the X
+               keyboard focus, and underXFocus is true if the X keyboard
+               focus is an ancestor of this window. *)
+            owns           : OwnsArray := NIL;
+            recentlyOutside            := TRUE;
+            (* true if the cursor has been outside our window since the
+               last time a takefocus message was sent *)
+            width, height: CARDINAL;
+            (* width and height of X window. *)
+            serial             : Ctypes.unsigned_long;
+            oldWidth, oldHeight                         := LAST(INTEGER);
+            (* X exposure events that carry the given serial number and
+               affect only the portion of the window outside of the old
+               width and height can be discarded, since they are subsumed
+               by a previous reshape. *)
+            reshapeComing := FALSE;
+            (* =&gt; a map, unmap, or configure event is in the parent's queue
+               for this vbt. *)
+            userPosition := FALSE;
+            (* indicates whether the position to be set was generated by a
+               user-specification in global coordinates *)
+            w, xcage: X.Drawable;  (* xcage = X.None for offscreen VBTs *)
+            cageRect: Rect.T;
+            scrollQ                := XScrollQueue.Empty;
+            (* The scroll queue contains the scrolling commands that have
+               been issued but not yet acknowleged. *)
+            badR := Region.Empty;
+            (* The actual bad region of a Child ur is ur.badR union
+               bad(ur.ch). *)
+            sh, sv: VBT.SizeRange;
+            (* The last hor and ver sizeranges that were reported to X. *)
+            csid: X.Cursor;
+            (* The last cursor id that was reported to X. *)
+            cageCovered := FALSE;
+            (* TRUE during delivery of a button click, to avoid setting the
+               cage twice. *)
+            decorated := FALSE;
+            (* TRUE if the window is normal, FALSE if override-redirect;
+               only valid after w is created. *)
+            captureOnWrite: ScrnPixmap.T := NIL;
+          END;
+
+TYPE
+  SelectionRecord = RECORD
+                      v   : VBT.T         := NIL;
+                      ts  : VBT.TimeStamp := 0;
+                      name: X.Atom        := X.None
+                    END;
+
+  SelArray = REF ARRAY OF SelectionRecord;
+
+  OwnsArray = REF ARRAY OF BOOLEAN;
+
+TYPE
+  NewScreenProp = REF RECORD
+                        type, prop : X.Atom;
+                        len, format: INTEGER;
+                        data       : REF ARRAY OF Ctypes.char
+                      END;
+
+TYPE
+  WaitFor =
+    Thread.Condition OBJECT
+      (* signalled when turn changes. *)
+      ev     : X.XEvent;
+      timeout: BOOLEAN;
+      types               := ARRAY [0 .. 3] OF INTEGER{-1, ..};
+      (* The types of events that this WaitFor might match, padded with
+         -1s. *)
+      (* remaining fields protected by the xcon containing this object in
+         its await *)
+      timelimit: INTEGER;
+      (* -1 =&gt; no limit, else # of seconds until the waitfor times out. *)
+      next: WaitFor := NIL;
+      turn          := FALSE;
+      (* FALSE =&gt; not yet matched; TRUE =&gt; matched and not yet processed *)
+    METHODS
+      match  (READONLY ev: X.XEvent): BOOLEAN;
+      notify (READONLY evRec: X.XEvent; xcon: XClient.T);
+      &lt;* LL.sup = xcon *&gt;
+      (* the main input loop in XInput accepts an X event and performs some
+         initial event type-specific processing.  If there is a WaitFor
+         which matches the event, it calls /notify/.  The default
+         implementation signals the WaitFor and blocks until it has been
+         processed.  A SelectionRequest, however, starts selection
+         threads *)
+    END;
+
+  SimpleWaitForPublic =
+    WaitFor OBJECT
+      d: X.Drawable;
+      (* d # X.None =&gt; non-error events must contain d in order to
+         match. *)
+      reqno: Ctypes.unsigned_long;
+      (* error events must contain this request no.  in order to match. *)
+    END;
+
+  <A HREF="#x3">SimpleWaitFor</A> &lt;: SimpleWaitForPublic;
+
+PROCEDURE <A HREF="#x4">Kill</A> (trsl: XClient.T);
+&lt;* LL.sup = trsl *&gt;
+</PRE><BLOCKQUOTE><EM> clean way to close a Trestle </EM></BLOCKQUOTE><PRE>
+
+CONST Timeout = 1; (* not a valid value for an X event type *)
+
+PROCEDURE <A HREF="#x5">Await</A> (trsl: T_Abs; wf: WaitFor; timelimit: INTEGER := -1):
+  INTEGER RAISES {TrestleComm.Failure};
+&lt;* LL.sup = trsl *&gt;
+</PRE><BLOCKQUOTE><EM> convenience routine, calls RegisterWaiter, then WaitWaiter </EM></BLOCKQUOTE><PRE>
+
+PROCEDURE <A HREF="#x6">FindWaiter</A> (trsl: XClient.T; READONLY ev: X.XEvent): WaitFor;
+&lt;* LL.sup = trsl *&gt;
+</PRE><BLOCKQUOTE><EM> Find a waiter which matches <CODE>ev</CODE> </EM></BLOCKQUOTE><PRE>
+
+PROCEDURE <A HREF="XClientF.m3.html#RegisterWaiter">RegisterWaiter</A> (trsl: T_Abs; wf: WaitFor);
+&lt;* LL.sup = trsl *&gt;
+</PRE><BLOCKQUOTE><EM> register /wf/ with /trsl/ to be notified when the the match method
+   accepts an X event. </EM></BLOCKQUOTE><PRE>
+
+PROCEDURE <A HREF="XClientF.m3.html#WaitWaiter">WaitWaiter</A>(trsl: T_Abs; wf: WaitFor; timelimit: INTEGER := -1):
+  INTEGER RAISES {TrestleComm.Failure};
+&lt;* LL = trsl *&gt;
+</PRE><BLOCKQUOTE><EM> Suspend execution of this thread until the timelimit expires, or until
+   the WaitFor match method accepts an X event.  This routine releases trsl
+   and regains it when the condition is met.  Returns the type of X
+   event or Timeout.
+<P>
+   If /wf/ hasn't previously been registered with /trsl/, you might
+   wait a very long time </EM></BLOCKQUOTE><PRE>
+</PRE> ---------- various utilities ---------- 
+<PRE>&lt;* INLINE *&gt; PROCEDURE <A HREF="#x7">ToRect</A> (x, y, width, height: INTEGER): Rect.T;
+</PRE><BLOCKQUOTE><EM> utility to return a rectangle from X rectangle description </EM></BLOCKQUOTE><PRE>
+
+PROCEDURE <A HREF="#x8">NewAtom</A> (v: XClient.T): X.Atom RAISES {TrestleComm.Failure};
+PROCEDURE <A HREF="#x9">FreeAtom</A> (v: XClient.T; VAR sym: X.Atom);
+
+PROCEDURE <A HREF="#x10">BackDoor</A> (v: XClient.T; READONLY ev: X.XEvent);
+</PRE><BLOCKQUOTE><EM> send an XEvent to the T </EM></BLOCKQUOTE><PRE>
+
+PROCEDURE <A HREF="#x11">SetUngrabs</A> (trsl: XClient.T) RAISES {TrestleComm.Failure};
+
+PROCEDURE <A HREF="#x12">ValidateNW</A> (trsl: XClient.T; ch: Child; st: XScreenType.T)
+  RAISES {TrestleComm.Failure};
+
+PROCEDURE <A HREF="#x13">GetDomain</A> (ur: Child; VAR (* OUT*) width, height: CARDINAL);
+</PRE><BLOCKQUOTE><EM> Return the domain of ur's X window, or 0,0 when the window is unmapped,
+   and clear ur.reshapeComing.  LL = ur.ch.parent </EM></BLOCKQUOTE><PRE>
+
+PROCEDURE <A HREF="#x14">AdjustCoverage</A> (xcon: XClient.T; d: [-1 .. 1] := 0)
+  RAISES {TrestleComm.Failure};
+</PRE><BLOCKQUOTE><EM> see TrestleOnX.Enter() </EM></BLOCKQUOTE><PRE>
+
+PROCEDURE <A HREF="#x15">Delete</A> (trsl: XClient.T; ch: VBT.T; ur: Child);
+
+PROCEDURE <A HREF="#x16">Reshape</A> (ch: VBT.T; width, height: CARDINAL; sendMoved := FALSE);
+</PRE><BLOCKQUOTE><EM> Reshape ch to new width and height.  LL = VBT.mu </EM></BLOCKQUOTE><PRE>
+
+PROCEDURE <A HREF="#x17">Connect</A> (inst: TEXT; t: XClient.T := NIL): Trestle.T
+  RAISES {TrestleComm.Failure};
+</PRE><BLOCKQUOTE><EM> If t is NIL, allocate a new T and return it.  In any case, connect t to
+   the X server named inst. </EM></BLOCKQUOTE><PRE>
+</PRE> ---------- connection management ---------- 
+<PRE>PROCEDURE <A HREF="#x18">DoConnect</A> (             self     : TrestleClass.ConnectClosure;
+                                  inst     : TEXT;
+                                  localOnly: BOOLEAN;
+                     VAR (* OUT*) t        : Trestle.T                    ):
+  BOOLEAN;
+</PRE><BLOCKQUOTE><EM> Apply procedure for TrestleClass.ConnectClosure.  Establishes connection
+   with X server </EM></BLOCKQUOTE><PRE>
+
+END XClientF.
+</PRE>
+</inInterface>
+<HR>
+<A NAME="x1">XClientF's implementation  is in:
+</A><UL>
+<LI><A HREF="NTClientF.m3.html#0TOP0">ui/src/xvbt/NTClientF.m3</A>
+<LI><A HREF="XClientF.m3.html#0TOP0">ui/src/xvbt/XClientF.m3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x2">opaque type XClientF.T_Abs is in:
+</A><UL>
+<LI><A HREF="NTClientF.m3.html#T_Abs">ui/src/xvbt/NTClientF.m3</A>
+<LI><A HREF="XClientF.m3.html#T_Abs">ui/src/xvbt/XClientF.m3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x3">opaque type XClientF.SimpleWaitFor is in:
+</A><UL>
+<LI><A HREF="NTClientF.m3.html#SimpleWaitFor">ui/src/xvbt/NTClientF.m3</A>
+<LI><A HREF="XClientF.m3.html#SimpleWaitFor">ui/src/xvbt/XClientF.m3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x4">procedure XClientF.Kill is in:
+</A><UL>
+<LI><A HREF="NTClientF.m3.html#Kill">ui/src/xvbt/NTClientF.m3</A>
+<LI><A HREF="XClientF.m3.html#Kill">ui/src/xvbt/XClientF.m3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x5">procedure XClientF.Await is in:
+</A><UL>
+<LI><A HREF="NTClientF.m3.html#Await">ui/src/xvbt/NTClientF.m3</A>
+<LI><A HREF="XClientF.m3.html#Await">ui/src/xvbt/XClientF.m3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x6">procedure XClientF.FindWaiter is in:
+</A><UL>
+<LI><A HREF="NTClientF.m3.html#FindWaiter">ui/src/xvbt/NTClientF.m3</A>
+<LI><A HREF="XClientF.m3.html#FindWaiter">ui/src/xvbt/XClientF.m3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x7">procedure XClientF.ToRect is in:
+</A><UL>
+<LI><A HREF="NTClientF.m3.html#ToRect">ui/src/xvbt/NTClientF.m3</A>
+<LI><A HREF="XClientF.m3.html#ToRect">ui/src/xvbt/XClientF.m3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x8">procedure XClientF.NewAtom is in:
+</A><UL>
+<LI><A HREF="NTClientF.m3.html#NewAtom">ui/src/xvbt/NTClientF.m3</A>
+<LI><A HREF="XClientF.m3.html#NewAtom">ui/src/xvbt/XClientF.m3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x9">procedure XClientF.FreeAtom is in:
+</A><UL>
+<LI><A HREF="NTClientF.m3.html#FreeAtom">ui/src/xvbt/NTClientF.m3</A>
+<LI><A HREF="XClientF.m3.html#FreeAtom">ui/src/xvbt/XClientF.m3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x10">procedure XClientF.BackDoor is in:
+</A><UL>
+<LI><A HREF="NTClientF.m3.html#BackDoor">ui/src/xvbt/NTClientF.m3</A>
+<LI><A HREF="XClientF.m3.html#BackDoor">ui/src/xvbt/XClientF.m3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x11">procedure XClientF.SetUngrabs is in:
+</A><UL>
+<LI><A HREF="NTClientF.m3.html#SetUngrabs">ui/src/xvbt/NTClientF.m3</A>
+<LI><A HREF="XClientF.m3.html#SetUngrabs">ui/src/xvbt/XClientF.m3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x12">procedure XClientF.ValidateNW is in:
+</A><UL>
+<LI><A HREF="NTClientF.m3.html#ValidateNW">ui/src/xvbt/NTClientF.m3</A>
+<LI><A HREF="XClientF.m3.html#ValidateNW">ui/src/xvbt/XClientF.m3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x13">procedure XClientF.GetDomain is in:
+</A><UL>
+<LI><A HREF="NTClientF.m3.html#GetDomain">ui/src/xvbt/NTClientF.m3</A>
+<LI><A HREF="XClientF.m3.html#GetDomain">ui/src/xvbt/XClientF.m3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x14">procedure XClientF.AdjustCoverage is in:
+</A><UL>
+<LI><A HREF="NTClientF.m3.html#AdjustCoverage">ui/src/xvbt/NTClientF.m3</A>
+<LI><A HREF="XClientF.m3.html#AdjustCoverage">ui/src/xvbt/XClientF.m3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x15">procedure XClientF.Delete is in:
+</A><UL>
+<LI><A HREF="NTClientF.m3.html#Delete">ui/src/xvbt/NTClientF.m3</A>
+<LI><A HREF="XClientF.m3.html#Delete">ui/src/xvbt/XClientF.m3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x16">procedure XClientF.Reshape is in:
+</A><UL>
+<LI><A HREF="NTClientF.m3.html#Reshape">ui/src/xvbt/NTClientF.m3</A>
+<LI><A HREF="XClientF.m3.html#Reshape">ui/src/xvbt/XClientF.m3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x17">procedure XClientF.Connect is in:
+</A><UL>
+<LI><A HREF="NTClientF.m3.html#Connect">ui/src/xvbt/NTClientF.m3</A>
+<LI><A HREF="XClientF.m3.html#Connect">ui/src/xvbt/XClientF.m3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x18">procedure XClientF.DoConnect is in:
+</A><UL>
+<LI><A HREF="NTClientF.m3.html#DoConnect">ui/src/xvbt/NTClientF.m3</A>
+<LI><A HREF="XClientF.m3.html#DoConnect">ui/src/xvbt/XClientF.m3</A>
+</UL>
+<P>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

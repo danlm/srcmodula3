@@ -1,0 +1,63 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: rw/src/Common/TextRd.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>rw/src/Common/TextRd.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE> A <CODE>TextRd.T</CODE>, or text reader, is a reader that delivers the
+   characters of a <CODE>TEXT</CODE> supplied when the reader was created.  Text
+   readers are seekable, non-intermittent, and never raise <CODE>Failure</CODE>
+   or <CODE>Alerted</CODE>. 
+
+<P><PRE>INTERFACE <interface><A HREF="TextRd.m3.html">TextRd</A></interface>;
+
+IMPORT <A HREF="Rd.i3.html">Rd</A>;
+
+TYPE
+  <A HREF="TextRd.m3.html#T">T</A> &lt;: Public;
+  Public = Rd.T OBJECT METHODS init(t: TEXT): T END;
+</PRE> The call <CODE>rd.init(t)</CODE> initializes <CODE>rd</CODE> as a seekable,
+   non-intermittent reader with:
+<PRE>
+      len(rd) = Text.Length(t)
+      src(rd) = <KBD>characters of t</KBD>
+      cur(rd) = 0
+</PRE>
+   It is a checked runtime error if <CODE>t = NIL</CODE>. 
+
+<P><PRE>PROCEDURE <A HREF="TextRd.m3.html#New">New</A>(t: TEXT): T;
+</PRE><BLOCKQUOTE><EM> Equivalent to <CODE>NEW(T).init(t)</CODE>. </EM></BLOCKQUOTE><PRE>
+
+END TextRd.
+</PRE>
+</inInterface>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

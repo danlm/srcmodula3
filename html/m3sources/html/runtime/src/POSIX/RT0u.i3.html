@@ -1,0 +1,90 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: runtime/src/POSIX/RT0u.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>runtime/src/POSIX/RT0u.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE> RT0u is almost <CODE>the bottom of the world</CODE>.  It contains
+   variables that are shared by multiple modules of the runtime
+   and/or the compiler and linker.
+<P>
+   If you're using this interface, you're a wizard!
+<P>
+   This interface and its implemenation MUST NOT import any
+   interface other than RT0.
+
+
+<P><PRE>UNSAFE INTERFACE <interface><A HREF="#x1">RT0u</A></interface>;
+
+IMPORT <A HREF="../common/RT0.i3.html">RT0</A>;
+</PRE>--------------------------------------------------- global module table ---
+
+<P><PRE>VAR (*CONST*) nModules: CARDINAL := 0;  (* == # compilation units in pgm *)
+</PRE><BLOCKQUOTE><EM> initialized by RTHooks' main body </EM></BLOCKQUOTE><PRE>
+
+VAR (*CONST*) modules: UNTRACED REF (*ARRAY OF*) RT0.ModulePtr := NIL;
+</PRE><BLOCKQUOTE><EM> allocated by the linker, its actual bounds are [0..nModules-1] </EM></BLOCKQUOTE><PRE>
+</PRE>----------------------------------------------------- global type table ---
+
+<P><PRE>VAR (*CONST*) nTypes: CARDINAL := 0;   (* == max allocated typecode *)
+</PRE><BLOCKQUOTE><EM> initialized by RTType.Init. </EM></BLOCKQUOTE><PRE>
+
+VAR (*CONST*) types: UNTRACED REF (*ARRAY OF*) RT0.TypeDefn := NIL;
+</PRE><BLOCKQUOTE><EM> allocated by the startup code, its actual bounds are [0..nTypes-1] </EM></BLOCKQUOTE><PRE>
+</PRE>------------------------------------------------------ mutual exclusion ---
+
+<P><PRE>&lt;*EXTERNAL RT0u__inCritical*&gt;
+VAR inCritical: INTEGER;
+</PRE><BLOCKQUOTE><EM> inCritical provides low-level mutual exclusion between the thread
+   runtime, garbage collector and the Unix signal that triggers thread
+   preemption.  If inCritical is greater than zero, thread preemption
+   is disabled.  We *ASSUME* that <CODE>INC(inCritical)</CODE> and <CODE>DEC(inCritical)</CODE>
+   generate code that is atomic with respect to Unix signal delivery. </EM></BLOCKQUOTE><PRE>
+</PRE>------------------------------------------------------- allocator stats ---
+
+<P><PRE>VAR (*CONST*) alloc_cnts : UNTRACED REF ARRAY RT0.Typecode OF INTEGER;
+</PRE><BLOCKQUOTE><EM> allocated by the startup code, its actual bounds are [0..nTypes-1] </EM></BLOCKQUOTE><PRE>
+
+VAR (*CONST*) alloc_bytes: UNTRACED REF ARRAY RT0.Typecode OF INTEGER;
+</PRE><BLOCKQUOTE><EM> allocated by the startup code, its actual bounds are [0..nTypes-1] </EM></BLOCKQUOTE><PRE>
+
+END RT0u.
+</PRE>
+</inInterface>
+<HR>
+<A NAME="x1">RT0u's implementation  is in:
+</A><UL>
+<LI><A HREF="RT0u.m3.html#0TOP0">runtime/src/POSIX/RT0u.m3</A>
+<LI><A HREF="../WIN32/RT0u.m3.html#0TOP0">runtime/src/WIN32/RT0u.m3</A>
+</UL>
+<P>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

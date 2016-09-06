@@ -1,0 +1,57 @@
+(ZSplit
+  (LabelFont "Lucidasans-18")
+  (Font "Lucidasans-24")
+  (ZBackground
+    (Rim (Pen 10)
+      (Shape (Width 250 + 100) (Height + 100)
+        (VBox
+          (Frame Chiseled
+            (Rim (Pen 10)
+              (VBox
+                (HBox
+                  Fill
+                  (Frame Lowered
+                    (TypeIn (Color "Black") %account)))
+                Fill
+                (Text "")
+                (HBox
+                  Fill
+                  Glue
+                  (Text "Balance: ")
+                  (TypeIn ReadOnly (Color "Black") %balance ="----")
+                  Fill)
+                Fill
+                (Text "")
+                (HBox
+                  Fill
+                  (Button %new (Rim (Pen 3) " New "))
+                  Fill
+                  (Button %old (Rim (Pen 3) " Old "))
+                  Fill
+                  (Button %delete (Rim (Pen 3) "Delete"))
+                  Fill))))
+          Fill
+          (Text "")
+          (Frame Chiseled
+            (Rim (Pen 10)
+              (VBox
+                (VBox
+                  Fill
+                  (Shape (Width 150) (Color "Black")
+                    (Numeric HideButtons AllowEmpty (Value 0) %amount))
+                  Fill)
+                Fill
+                (Text "")
+                (HBox
+                  Fill
+                  (Button %withdraw (Rim (Pen 3) "Withdraw"))
+                  Fill
+                  (Text "")
+                  (Button %deposit (Rim (Pen 3) "Deposit"))
+                  Fill))))
+          Fill))))
+  (ZChassis
+    %ewindow
+    (Title "Failure")
+    (Shape (Width 280)
+      (Rim (Pen 10) (Text %errormsg "A failure occured")))))

@@ -1,0 +1,89 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: ui/src/split/RootVBT.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>ui/src/split/RootVBT.m3</H2></A><HR>
+<inModule>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM>                                                                           </EM></BLOCKQUOTE><PRE>
+</PRE> by Steve Glassman, Mark Manasse and Greg Nelson           
+<PRE>&lt;*PRAGMA LL*&gt;
+
+MODULE <module><implements><A HREF="RootVBT.i3.html">RootVBT</A></implements></module>;
+
+IMPORT <A HREF="../vbt/VBT.i3.html">VBT</A>, <A HREF="Split.i3.html">Split</A>, <A HREF="Filter.i3.html">Filter</A>, <A HREF="HighlightVBT.i3.html">HighlightVBT</A>, <A HREF="../vbt/VBTClass.i3.html">VBTClass</A>, <A HREF="../vbt/Palette.i3.html">Palette</A>, <A HREF="../vbt/VBTRep.i3.html">VBTRep</A>;
+
+TYPE
+  GrandChild = HighlightVBT.T OBJECT
+    proc: DeleteProc
+  METHODS
+    rescreen := Rescreen;
+    misc := Misc;
+  END;
+
+REVEAL <A NAME="Child">Child</A> = ETAgent.T BRANDED OBJECT END;
+
+PROCEDURE <A NAME="NewChild"><procedure>NewChild</procedure></A>(ch: VBT.T; p: DeleteProc): Child =
+  VAR grandChild := NEW(GrandChild, proc := p); res := NEW(Child); BEGIN
+    EVAL HighlightVBT.T.init(grandChild, ch);
+    EVAL ETAgent.T.init(res, grandChild);
+    LOCK res DO
+      res.props := res.props + VBTRep.Props{VBTRep.Prop.Combiner}
+    END;
+    RETURN res
+  END NewChild;
+
+PROCEDURE <A NAME="Rescreen"><procedure>Rescreen</procedure></A>(v: Child; READONLY cd: VBT.RescreenRec) =
+  BEGIN
+    Palette.Init(cd.st);
+    HighlightVBT.T.rescreen(v, cd)
+  END Rescreen;
+
+PROCEDURE <A NAME="Misc"><procedure>Misc</procedure></A>(v: GrandChild; READONLY cd: VBT.MiscRec) =
+  VAR ch := v.ch; button: VBT.Button := LAST(VBT.Button);
+  CONST gone = VBT.CursorPosition{Point.Origin, NoScreen, TRUE, TRUE};
+  BEGIN
+    IF ch = NIL THEN RETURN END;
+    IF cd.type = VBT.Deleted OR cd.type = VBT.Disconnected THEN
+      VBTClass.Position(v, VBT.PositionRec{gone, 0, VBT.Modifiers{}});
+      VBTClass.Mouse(v,
+        VBT.MouseRec{button, 0, gone, VBT.Modifiers{},
+          VBT.ClickType.LastUp, 0});
+      IF v.proc # NIL THEN v.proc(ch) END;
+      EVAL Filter.Replace(v, NIL)
+    END;
+    VBTClass.Misc(ch, cd);
+  END Misc;
+
+END RootVBT.
+</PRE>
+</inModule>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

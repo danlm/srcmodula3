@@ -1,0 +1,56 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: formsvbt/src/Macro.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>formsvbt/src/Macro.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM>                                                                           </EM></BLOCKQUOTE><PRE>
+
+INTERFACE <interface><A HREF="Macro.m3.html">Macro</A></interface>;
+
+IMPORT <A HREF="FormsVBT.i3.html">FormsVBT</A>, <A HREF="../../libm3/DS/RefList.i3.html">RefList</A>;
+
+TYPE
+  <A HREF="Macro.m3.html#T">T</A> &lt;: Public;
+  Public = OBJECT
+           METHODS
+             apply (actuals: RefList.T): REFANY RAISES {FormsVBT.Error}
+           END;
+
+PROCEDURE <A HREF="Macro.m3.html#Parse">Parse</A> (exp: RefList.T): T RAISES {FormsVBT.Error};
+
+PROCEDURE <A HREF="Macro.m3.html#Init">Init</A> ();
+
+END Macro.
+</PRE>
+</inInterface>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

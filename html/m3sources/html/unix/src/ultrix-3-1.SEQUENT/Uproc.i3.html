@@ -1,0 +1,343 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: unix/src/ultrix-3-1.SEQUENT/Uproc.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>unix/src/ultrix-3-1.SEQUENT/Uproc.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE>************** this interface is under construction.  when finished,
+                 go fix Ushm to use it, please. 
+
+<P><PRE>INTERFACE <interface>Uproc</interface>;
+
+FROM <A HREF="../../../C/src/Common/Ctypes.i3.html">Ctypes</A> IMPORT int, char, short, long, char_star, s_char;
+FROM <A HREF="#x1">Utypes</A> IMPORT uid_t, u_short, pid_t, size_t, caddr_t;
+FROM <A HREF="#x2">Udmap</A>  IMPORT struct_dmap_star;
+FROM <A HREF="#x3">Uresource</A> IMPORT struct_rusage_star;
+FROM <A HREF="#x4">Utime</A>   IMPORT strct_itimerval;
+FROM <A HREF="#x5">Ushm</A>    IMPORT struct_smem_star;
+</PRE>** &lt;sys/proc.h&gt; **
+
+<P><PRE>TYPE
+  struct_proc = RECORD
+    p_link: struct_proc_star;	(* linked list of running processes *)
+    p_rlink: struct_proc_star;
+    p_nxt: struct_proc_star;	(* linked list of allocated proc slots *)
+    p_prev: struct_proc_star_star;	(* also zombies, and free proc's *)
+    p_addr: struct_pte_star;	(* u-area kernel map address *)
+    proc_map: struct_proc_map ; (* machine-dependent VM info *)
+    	p_usrpri: s_char;	(* user-priority based on p_cpu and p_nice *)
+    	p_pri: s_char;		(* priority, negative is high *)
+    p_cpu: char;		(* cpu usage for scheduling *)
+    p_stat: char;
+    p_time: char;		(* resident time for scheduling *)
+    p_nice: s_char;		(* nice for cpu usage *)
+    p_slptime: char;	(* time since last block *)
+    p_cursig: char;
+    p_sig: int;		(* signals pending to this process *)
+    p_sigmask: int;	(* current signal mask *)
+    p_sigignore: int;	(* signals being ignored *)
+    p_sigcatch: int;	(* signals being caught by user *)
+    p_sched: int;	(* contains old SLOAD *)
+    p_select: int;	(* contains old SSEL *)
+    p_vm: int;		(* contains old: SVFORK, SVFDONE, SNOVM,
+			 * SKEEP, SPHYSIO, SPAGE, SULOCK, SSWAP,
+			 * SPAGI, SUANOM, SSEQL, SLOCK, SPTECHG,
+			 * SEXECDN *)
+    p_affinity: int;	(* MASK of CPUS on which can run *)
+    p_cpumask: int;	(* last cpu on which the process ran *)
+    p_trace: int;	(* contains old STRC, SWTED *)
+    p_type: int;		(* contains old SSYS, SWEXIT and SLOGIN *)
+    p_file: int;		(* contains old SLKDONE *)
+    p_sigflag: int;	(* contains new SNOCLDSTP *)
+    p_mips_flag: int;	(* contains SFIXADE *)
+    p_uid: uid_t;		(* eff. user id, used to direct tty signals *)
+    p_suid: uid_t;		(* saved set uid, used to direct tty signals *)
+    p_sgid: uid_t;		(* saved set group id, used by setgid *)
+    p_pgrp: short;		(* name of process group leader *)
+    p_pid: short;		(* unique process id *)
+    p_ppid: short;		(* process id of parent *)
+    p_xstat: u_short;	(* Exit status for wait *)
+    p_progenv: u_short;	(* process compatibility mode *)
+    p_poip: short;		(* page outs in progress *)
+    p_sid: pid_t;		(* session id (for POSIX job control) *)
+    p_ru: struct_rusage_star;	(* mbuf holding exit information *)
+    p_tsize: size_t;	(* size of text (clicks) *)
+    p_dsize: size_t;	(* size of data space (clicks) *)
+    p_ssize: size_t;	(* copy of stack size (clicks) *)
+    p_rssize: size_t; 	(* current resident set size in clicks *)
+    p_maxrss: size_t;	(* copy of u.u_limit[MAXRSS] *)
+    p_swrss: size_t;	(* resident set size before last swap *)
+    p_wchan: caddr_t;	(* event process is awaiting *)
+    p_exist: int;	(* if P_DYING, process will exit *)
+    p_ref: int;		(* count of processes relying on p *)
+    p_waitchk: int;	(* coordinates wait with setting ZOMB and STOP *)
+    p_textp: struct_text_star;	(* pointer to text structure *)
+    p_xlink: struct_proc_star;	(* linked list of procs sharing same text *)
+    p_cpticks: short;	(* ticks of cpu time *)
+    p_pctcpu: int;	(* %cpu for this process during p_time *)
+    p_fp: long;		(* generate SIGFPE on all fp interrupts *)
+    p_puac: u_short;	(* print/don't print unaligned access msgs *)
+    p_ndx: short;		(* proc index for memall (because of vfork) *)
+    p_idhash: short;	(* hashed based on p_pid for kill+exit+... *)
+    p_pptr: struct_proc_star;	(* pointer to process structure of parent *)
+    p_cptr: struct_proc_star;	(* pointer to youngest living child *)
+    p_osptr: struct_proc_star;	(* pointer to older sibling processes *)
+    p_ysptr: struct_proc_star;	(* pointer to younger siblings *)
+    p_debug: char_star;	(* for ptrace/procxmt communciation *)
+    p_realtimer: struct_itimerval;
+    p_quota: struct_quota_star;	(* quotas for this process *)
+    p_ttyp: struct_tty_star;    (* controlling tty pointer 	*)
+    p_smsize: size_t;	(* size of SM space (clicks)	*)
+    p_smbeg: int;	(* page table offset of first SMS *)
+    p_smend: int;	(* page table offset of end of	*)
+			(*	last attached SMS.	*)
+    p_smcount: int;      (* count of SMS attached to proc *)
+    p_sm: struct_p_sm_star;     (* shared memory related elements	*)
+    p_hlock: struct_lock_t_star;
+    p_dmap: struct_dmap_star;	(* disk map for data segment *)
+    p_smap: struct_dmap_star;	(* disk map for stack segment *)
+    p_cdmap: struct_dmap_star;	(* shadows data/stack swap *)
+    p_csmap: struct_dmap_star;	(* used during fork/exec*)
+
+    p_vpcontext: struct_vpcontext_star;
+					(* ptr to proc's vp context area *)
+    END;
+
+  struct_proc_star = UNTRACED REF struct_proc;
+  struct_proc_star_star = UNTRACED REF struct_proc_star;
+
+  struct_p_sm = RECORD
+    sm_p: struct_smem_star;	(* pointer to SM struct	*)
+				(* linked list of procs		*)
+				(* sharing the same shared	*)
+				(* memory segment.		*)
+    sm_link: struct_proc_star;
+    sm_saddr: int;		(* starting addr of SMS *)
+    sm_eaddr: int;		(* ending addr of SMS *)
+    sm_pflag: int;	(* R/W permissions	*)
+    sm_lock: short;	(* this proc has locked SMS *)
+    END;
+  struct_p_sm_star = UNTRACED REF struct_p_sm;
+
+CONST
+  PIDHSZ = 64;
+
+  UAC_MSGON = 1;      (* print unaligned access messages, dflt *)
+  UAC_MSGOFF = 0;     (* don't print unaligned access messages *)
+</PRE> stat codes 
+<PRE>CONST
+  SSLEEP = 1;		(* awaiting an event *)
+  SWAIT  = 2;		(* (abandoned state) *)
+  SRUN   = 3;		(* running *)
+  SIDL   = 4;		(* intermediate state in process creation *)
+  SZOMB  = 5;		(* intermediate state in process termination *)
+  SSTOP  = 6;		(* process being traced *)
+</PRE> flag codes 
+ These have been divied up into several fields:
+ *	p_vm, p_sched, p_type, p_trace, p_file
+ *	u_oweupc, u_sigflag.
+ *	Note that STIMO isn't used anywhere
+ * Both ps and pstat count on there being no overlap in bits,
+ * so that these fields can be or'red together for printing
+ 
+<PRE>CONST
+  SLOAD	    = 16_0000001; (* p_sched: in core *)
+  SSYS      = 16_0000002; (* p_type:  or pager process *)
+  SLOCK     = 16_0000004; (* p_vm: process being swapped out *)
+  SSWAP     = 16_0000008; (* p_vm: save area flag *)
+  STRC      = 16_0000010; (* p_trace: process is being traced *)
+  SWTED     = 16_0000020; (* p_trace: another tracing flag *)
+  SULOCK    = 16_0000040; (* p_vm: user settable lock in core *)
+  SPAGE     = 16_0000080; (* p_vm: process in page wait state *)
+  SKEEP     = 16_0000100; (* p_vm: another flag to prevent swap out *)
+  SOMASK    = 16_0000200; (* u_sigflag: restore old mask after taking signal *)
+  SWEXIT    = 16_0000400; (* p_type:  on exiting *)
+  SPHYSIO   = 16_0000800; (* p_vm: doing physical i/o (bio.c) *)
+  SVFORK    = 16_0001000; (* p_vm: process resulted from vfork() *)
+  SVFDONE   = 16_0002000; (* p_vm: another vfork flag *)
+  SNOVM     = 16_0004000; (* p_vm: no vm, parent in a vfork() *)
+  SPAGI     = 16_0008000; (* p_vm: init data space on demand, from inode *)
+  SSEQL     = 16_0010000; (* p_vm: user warned of sequential vm behavior *)
+  SUANOM    = 16_0020000; (* p_vm: user warned of random vm behavior *)
+  STIMO     = 16_0040000; (* NOT_USED: timing out during sleep *)
+  (* was SDETACH *)
+  SXCTDAT   = 16_0080000; (* p_vm: an icache flush on pagein *)
+  SNOCLDSTP = 16_0100000; (* p_sigflagPOSIX child stop flag *)
+  (* was SOUSIG *)
+  SOUSIG    = 16_0100000; (* u_sigflag: using old signal mechanism *)
+  SOWEUPC   = 16_0200000; (* u_oweupc: owe process an addupc() call at next ast *)
+  SSEL      = 16_0400000; (* p_sched: selecting; wakeup/waiting danger *)
+  SLOGIN    = 16_0800000; (* p_type:  login process (legit child of init) *)
+  SPTECHG   = 16_1000000; (* p_vm: pte's for process have changed *)
+  SNFSPGN   = 16_2000000; (* p_vm: uninterruptible pagin over nfs *)
+  SLKDONE   = 16_4000000; (* p_file: Sys-V file locking applied *)
+  SFIXADE   = 16_8000000; (* fixup unalligned address errors *)
+  SIDLEP    = 16_20000000; (* idle process *)
+</PRE> flags for p_fp 
+  <PRE>P_FP_SIGINTR1 = 1;
+  P_FP_SIGINTR2	= 2;
+
+  SEXECDN  = 16_10000000;  (* p_vm: exec() done - needed for POSIX pgrp test *)
+
+  P_VM_NO_OP   = SPTECHG;
+</PRE> for affinity 
+  <PRE>PRIMARY  = 1;
+  ALLCPU  = -1;
+</PRE> for p_exist 
+  <PRE>P_ALIVE = 0;	(* process will stick around if ref'ed *)
+  P_DYING = 1;	(* no longer legal to ref *)
+  P_DEAD  = 2;	(* done with exit: parent may now clear *)
+</PRE><P>
+ * There is one bit for every active process slot
+ 
+
+<P>
+ * This algorithm works out to 39 usec for any mask set.
+ *  For fully populated masks, this is 1.22 usec/proc,
+ *		for half full, this is 2.44 usec/proc
+ *		for 1/4  full, this is 4.88 usec/proc
+ *
+ * If we assume a half populated process table of 1024 entries,
+ * clustered entirely in the top 2/3s of the table, you get:
+ *
+ *	1024/32 = 32 masks
+ *	32 * (2/3) = 22 used masks
+ *	22 masks * 39 usec/mask = .858 microseconds/table
+ 
+
+<P>  
+ * We have handcrafted while loops from If's and Goto's, so
+ * that if a user of the macro issues a Break, it will break
+ * out of the For loop, and not one of the inner While loops
+ 
+
+<P><PRE>END Uproc.
+</PRE>
+</inInterface>
+<HR>
+<A NAME="x1">interface Utypes is in:
+</A><UL>
+<LI><A HREF="../aix-3-2/Utypes.i3.html#0TOP0">unix/src/aix-3-2/Utypes.i3</A>
+<LI><A HREF="../aix-ps2-1-2/Utypes.i3.html#0TOP0">unix/src/aix-ps2-1-2/Utypes.i3</A>
+<LI><A HREF="../freebsd-1/Utypes.i3.html#0TOP0">unix/src/freebsd-1/Utypes.i3</A>
+<LI><A HREF="../freebsd-2/Utypes.i3.html#0TOP0">unix/src/freebsd-2/Utypes.i3</A>
+<LI><A HREF="../hpux-7-0/Utypes.i3.html#0TOP0">unix/src/hpux-7-0/Utypes.i3</A>
+<LI><A HREF="../ibm-4-3/Utypes.i3.html#0TOP0">unix/src/ibm-4-3/Utypes.i3</A>
+<LI><A HREF="../irix-5.2/Utypes.i3.html#0TOP0">unix/src/irix-5.2/Utypes.i3</A>
+<LI><A HREF="../linux/Utypes.i3.html#0TOP0">unix/src/linux/Utypes.i3</A>
+<LI><A HREF="../osf-1.ALPHA_OSF/Utypes.i3.html#0TOP0">unix/src/osf-1.ALPHA_OSF/Utypes.i3</A>
+<LI><A HREF="../osf-1.DS3100/Utypes.i3.html#0TOP0">unix/src/osf-1.DS3100/Utypes.i3</A>
+<LI><A HREF="../solaris-2-x/Utypes.i3.html#0TOP0">unix/src/solaris-2-x/Utypes.i3</A>
+<LI><A HREF="../sunos-4-x/Utypes.i3.html#0TOP0">unix/src/sunos-4-x/Utypes.i3</A>
+<LI><A HREF="../sysv-4.0/Utypes.i3.html#0TOP0">unix/src/sysv-4.0/Utypes.i3</A>
+<LI><A HREF="../ultrix-3-1.AP3000/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.AP3000/Utypes.i3</A>
+<LI><A HREF="../ultrix-3-1.ARM/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.ARM/Utypes.i3</A>
+<LI><A HREF="../ultrix-3-1.DS3100/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.DS3100/Utypes.i3</A>
+<LI><A HREF="../ultrix-3-1.NEXT/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.NEXT/Utypes.i3</A>
+<LI><A HREF="Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.SEQUENT/Utypes.i3</A>
+<LI><A HREF="../ultrix-3-1.SUN3/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.SUN3/Utypes.i3</A>
+<LI><A HREF="../ultrix-3-1.SUN386/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.SUN386/Utypes.i3</A>
+<LI><A HREF="../ultrix-3-1.UMAX/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.UMAX/Utypes.i3</A>
+<LI><A HREF="../ultrix-3-1.VAX/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.VAX/Utypes.i3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x2">interface Udmap is in:
+</A><UL>
+<LI><A HREF="../ultrix-3-1.DS3100/Udmap.i3.html#0TOP0">unix/src/ultrix-3-1.DS3100/Udmap.i3</A>
+<LI><A HREF="Udmap.i3.html#0TOP0">unix/src/ultrix-3-1.SEQUENT/Udmap.i3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x3">interface Uresource is in:
+</A><UL>
+<LI><A HREF="../aix-3-2/Uresource.i3.html#0TOP0">unix/src/aix-3-2/Uresource.i3</A>
+<LI><A HREF="../aix-ps2-1-2/Uresource.i3.html#0TOP0">unix/src/aix-ps2-1-2/Uresource.i3</A>
+<LI><A HREF="../freebsd-1/Uresource.i3.html#0TOP0">unix/src/freebsd-1/Uresource.i3</A>
+<LI><A HREF="../freebsd-2/Uresource.i3.html#0TOP0">unix/src/freebsd-2/Uresource.i3</A>
+<LI><A HREF="../hpux-7-0/Uresource.i3.html#0TOP0">unix/src/hpux-7-0/Uresource.i3</A>
+<LI><A HREF="../ibm-4-3/Uresource.i3.html#0TOP0">unix/src/ibm-4-3/Uresource.i3</A>
+<LI><A HREF="../irix-5.2/Uresource.i3.html#0TOP0">unix/src/irix-5.2/Uresource.i3</A>
+<LI><A HREF="../linux/Uresource.i3.html#0TOP0">unix/src/linux/Uresource.i3</A>
+<LI><A HREF="../osf-1.generic/Uresource.i3.html#0TOP0">unix/src/osf-1.generic/Uresource.i3</A>
+<LI><A HREF="../solaris-2-x/Uresource.i3.html#0TOP0">unix/src/solaris-2-x/Uresource.i3</A>
+<LI><A HREF="../sunos-4-x/Uresource.i3.html#0TOP0">unix/src/sunos-4-x/Uresource.i3</A>
+<LI><A HREF="../sysv-4.0/Uresource.i3.html#0TOP0">unix/src/sysv-4.0/Uresource.i3</A>
+<LI><A HREF="../ultrix-3-1.generic/Uresource.i3.html#0TOP0">unix/src/ultrix-3-1.generic/Uresource.i3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x4">interface Utime is in:
+</A><UL>
+<LI><A HREF="../aix-3-2/Utime.i3.html#0TOP0">unix/src/aix-3-2/Utime.i3</A>
+<LI><A HREF="../aix-ps2-1-2/Utime.i3.html#0TOP0">unix/src/aix-ps2-1-2/Utime.i3</A>
+<LI><A HREF="../freebsd-1/Utime.i3.html#0TOP0">unix/src/freebsd-1/Utime.i3</A>
+<LI><A HREF="../freebsd-2/Utime.i3.html#0TOP0">unix/src/freebsd-2/Utime.i3</A>
+<LI><A HREF="../hpux-7-0/Utime.i3.html#0TOP0">unix/src/hpux-7-0/Utime.i3</A>
+<LI><A HREF="../ibm-4-3/Utime.i3.html#0TOP0">unix/src/ibm-4-3/Utime.i3</A>
+<LI><A HREF="../irix-5.2/Utime.i3.html#0TOP0">unix/src/irix-5.2/Utime.i3</A>
+<LI><A HREF="../linux/Utime.i3.html#0TOP0">unix/src/linux/Utime.i3</A>
+<LI><A HREF="../osf-1.ALPHA_OSF/Utime.i3.html#0TOP0">unix/src/osf-1.ALPHA_OSF/Utime.i3</A>
+<LI><A HREF="../osf-1.DS3100/Utime.i3.html#0TOP0">unix/src/osf-1.DS3100/Utime.i3</A>
+<LI><A HREF="../solaris-2-x/Utime.i3.html#0TOP0">unix/src/solaris-2-x/Utime.i3</A>
+<LI><A HREF="../sunos-4-x/Utime.i3.html#0TOP0">unix/src/sunos-4-x/Utime.i3</A>
+<LI><A HREF="../sysv-4.0/Utime.i3.html#0TOP0">unix/src/sysv-4.0/Utime.i3</A>
+<LI><A HREF="../ultrix-3-1.generic/Utime.i3.html#0TOP0">unix/src/ultrix-3-1.generic/Utime.i3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x5">interface Ushm is in:
+</A><UL>
+<LI><A HREF="../aix-3-2/Ushm.i3.html#0TOP0">unix/src/aix-3-2/Ushm.i3</A>
+<LI><A HREF="../aix-ps2-1-2/Ushm.i3.html#0TOP0">unix/src/aix-ps2-1-2/Ushm.i3</A>
+<LI><A HREF="../freebsd-1/Ushm.i3.html#0TOP0">unix/src/freebsd-1/Ushm.i3</A>
+<LI><A HREF="../freebsd-2/Ushm.i3.html#0TOP0">unix/src/freebsd-2/Ushm.i3</A>
+<LI><A HREF="../hpux-7-0/Ushm.i3.html#0TOP0">unix/src/hpux-7-0/Ushm.i3</A>
+<LI><A HREF="../ibm-4-3/Ushm.i3.html#0TOP0">unix/src/ibm-4-3/Ushm.i3</A>
+<LI><A HREF="../irix-5.2/Ushm.i3.html#0TOP0">unix/src/irix-5.2/Ushm.i3</A>
+<LI><A HREF="../linux/Ushm.i3.html#0TOP0">unix/src/linux/Ushm.i3</A>
+<LI><A HREF="../osf-1.generic/Ushm.i3.html#0TOP0">unix/src/osf-1.generic/Ushm.i3</A>
+<LI><A HREF="../solaris-2-x/Ushm.i3.html#0TOP0">unix/src/solaris-2-x/Ushm.i3</A>
+<LI><A HREF="../sunos-4-x/Ushm.i3.html#0TOP0">unix/src/sunos-4-x/Ushm.i3</A>
+<LI><A HREF="../sysv-4.0/Ushm.i3.html#0TOP0">unix/src/sysv-4.0/Ushm.i3</A>
+<LI><A HREF="../ultrix-3-1.AP3000/Ushm.i3.html#0TOP0">unix/src/ultrix-3-1.AP3000/Ushm.i3</A>
+<LI><A HREF="../ultrix-3-1.ARM/Ushm.i3.html#0TOP0">unix/src/ultrix-3-1.ARM/Ushm.i3</A>
+<LI><A HREF="../ultrix-3-1.DS3100/Ushm.i3.html#0TOP0">unix/src/ultrix-3-1.DS3100/Ushm.i3</A>
+<LI><A HREF="../ultrix-3-1.NEXT/Ushm.i3.html#0TOP0">unix/src/ultrix-3-1.NEXT/Ushm.i3</A>
+<LI><A HREF="Ushm.i3.html#0TOP0">unix/src/ultrix-3-1.SEQUENT/Ushm.i3</A>
+<LI><A HREF="../ultrix-3-1.SUN3/Ushm.i3.html#0TOP0">unix/src/ultrix-3-1.SUN3/Ushm.i3</A>
+<LI><A HREF="../ultrix-3-1.SUN386/Ushm.i3.html#0TOP0">unix/src/ultrix-3-1.SUN386/Ushm.i3</A>
+<LI><A HREF="../ultrix-3-1.UMAX/Ushm.i3.html#0TOP0">unix/src/ultrix-3-1.UMAX/Ushm.i3</A>
+<LI><A HREF="../ultrix-3-1.VAX/Ushm.i3.html#0TOP0">unix/src/ultrix-3-1.VAX/Ushm.i3</A>
+</UL>
+<P>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

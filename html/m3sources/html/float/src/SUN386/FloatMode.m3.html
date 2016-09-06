@@ -1,0 +1,328 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: float/src/SUN386/FloatMode.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>float/src/SUN386/FloatMode.m3</H2></A><HR>
+<inModule>
+<PRE></PRE> Copyright (C) 1992, Xerox                                                 
+
+<P>
+<P>
+<P><PRE>UNSAFE MODULE <module><implements><A HREF="#x1">FloatMode</A></implements></module>;
+</PRE> XXX: this implementation only gets/sets flags globally, not per
+   thread 
+
+<P>
+ * Unsafe because TtoS is potentially unsafe, however it is not in
+ * our use of it.
+ 
+<PRE>FROM <A HREF="#x2">FPU</A> IMPORT ieee_flags;
+IMPORT <A HREF="#x2">FPU</A>, <A HREF="../../../C/src/Common/Ctypes.i3.html">Ctypes</A>, <A HREF="../../../word/src/Word.i3.html">Word</A>, <A HREF="#x3">Usignal</A>, <A HREF="../../../C/src/Common/M3toC.i3.html">M3toC</A>;
+</PRE><P>
+&lt;sys/ieeefp.h&gt;
+    enum fp_direction_type 		/* rounding direction */
+        {
+        fp_nearest	= 0,
+        fp_negative	= 1,
+        fp_positive	= 2,
+        fp_tozero	= 3
+        } ;
+
+
+<P><PRE>PROCEDURE <A NAME="SetRounding"><procedure>SetRounding</procedure></A> (md: RoundingMode) RAISES {Failure} =
+  VAR
+    dummy: Ctypes.char_star;
+    x    : INTEGER;
+  BEGIN
+    x := ieee_flags(setStr, directionStr, rndModeToSunOs[md], dummy);
+    IF x # 0 THEN RAISE Failure; END;
+  END SetRounding;
+
+PROCEDURE <A NAME="GetRounding"><procedure>GetRounding</procedure></A> (): RoundingMode =
+  CONST
+    sunOsToRndMode = ARRAY [0 .. 3] OF RoundingMode{
+                       RoundingMode.NearestElseEven,
+                       RoundingMode.TowardMinusInfinity,
+                       RoundingMode.TowardPlusInfinity,
+                       RoundingMode.TowardZero };
+  VAR
+    x    : INTEGER;
+    dummy: Ctypes.char_star;
+  BEGIN
+    x := ieee_flags(getStr, directionStr, nullStr, dummy);
+    RETURN (sunOsToRndMode[x]);
+  END GetRounding;
+</PRE> XXX: this only gets/sets flags globally, not per thread 
+
+<P>
+&lt;sys/ieeefp.h&gt;
+enum fp_exception_type		/* exceptions according to bit number */
+        {
+        fp_invalid	= 0,
+        fp_denormalized	= 1,
+        fp_division	= 2,
+        fp_overflow	= 3,
+        fp_underflow	= 4,
+        fp_inexact      = 5
+        } ;
+
+
+<P><PRE>PROCEDURE <A NAME="GetFlags"><procedure>GetFlags</procedure></A> (): SET OF Flag =
+  CONST
+    sunOsToFlag = ARRAY [0 .. 5] OF Flag{
+                    Flag.Invalid,
+                    Flag.Underflow,  (* Denormalized *)
+                    Flag.DivByZero,
+                    Flag.Overflow,
+                    Flag.Underflow,
+                    Flag.Inexact };
+  VAR
+    x     : INTEGER;
+    dummy : Ctypes.char_star;
+    excpts := SET OF Flag{};
+  BEGIN
+    x := ieee_flags(getStr, exceptionStr, nullStr, dummy);
+    FOR i := 0 TO NUMBER(sunOsToFlag) - 1 DO
+      IF Word.Extract(x, i, 1) # 0 THEN
+        excpts := excpts + SET OF Flag{sunOsToFlag[i]};
+      END;
+    END;
+    RETURN (excpts);
+  END GetFlags;
+
+PROCEDURE <A NAME="SetFlags"><procedure>SetFlags</procedure></A> (s: SET OF Flag): SET OF Flag =
+  VAR
+    x    : INTEGER         := 0;
+    dummy: Ctypes.char_star;
+    out                    := SET OF Flag{};
+  BEGIN
+    EVAL( ieee_flags( clearAllStr, exceptionStr, dummy, dummy));
+    out := GetFlags();
+    FOR i := FIRST(Flag) TO LAST(Flag) DO
+      IF i IN s THEN
+        x := ieee_flags(setStr, exceptionStr, flagToSunOs[i], dummy);
+      ELSE
+        x :=
+          ieee_flags(clearStr, exceptionStr, flagToSunOs[i], dummy);
+      END;
+      &lt;* ASSERT x = 0 *&gt;
+    END;
+    RETURN out;
+  END SetFlags;
+
+PROCEDURE <A NAME="ClearFlag"><procedure>ClearFlag</procedure></A> (f: Flag) =
+  VAR
+    x    : INTEGER         := 0;
+    dummy: Ctypes.char_star;
+  BEGIN
+    x := ieee_flags(clearStr, exceptionStr, flagToSunOs[f], dummy);
+    &lt;* ASSERT x = 0 *&gt;
+  END ClearFlag;
+
+PROCEDURE <A NAME="GetBehavior"><procedure>GetBehavior</procedure></A> (f: Flag): Behavior =
+  VAR x: INTEGER;
+  BEGIN
+    CASE f OF
+    | Flag.IntOverflow =&gt; RETURN (Behavior.Ignore);
+    | Flag.IntDivByZero =&gt; RETURN (Behavior.Trap);
+    ELSE
+      x := FPU.ieee_handler(getStr, flagToSunOs[f], NIL);
+      IF x = 0 OR x = 1 THEN    (* SIGFPE_DEFAULT or SIGFPE_IGNORE *)
+        RETURN (Behavior.SetFlag);
+      ELSE
+        RETURN (Behavior.Trap);
+      END;
+    END;
+  END GetBehavior;
+
+PROCEDURE <A NAME="SetBehavior"><procedure>SetBehavior</procedure></A> (f: Flag; b: Behavior) RAISES {Failure} =
+  VAR x: INTEGER;
+  BEGIN
+    CASE f OF
+    | Flag.IntOverflow =&gt; RAISE Failure;
+    | Flag.IntDivByZero =&gt; RAISE Failure;
+    ELSE
+      CASE b OF
+      | Behavior.Trap =&gt;
+          x := FPU.ieee_handler(
+                 setStr, flagToSunOs[f], HandleFPE);
+          IF x = 1 THEN RAISE Failure; END;
+      | Behavior.SetFlag =&gt;
+          (*
+           * using &quot;clear&quot; instead of &quot;set&quot; would be logical, but
+           * ieee_handler doesn't clear the handler structure when
+           * given &quot;clear&quot;, it only turns off trapping.  A final arg
+           * to ieee_handler of NIL (=0) corresponds to SIGFPE_DEFAULT
+           *)
+          x := FPU.ieee_handler(setStr, flagToSunOs[f], NIL);
+          IF x = 1 THEN RAISE Failure; END;
+      | Behavior.Ignore =&gt; RAISE Failure;
+      END;
+    END;
+  END SetBehavior;
+</PRE><P>
+&lt;sys/signal.h&gt;
+#define     FPE_INTDIV_TRAP	0x14	/* integer divide by zero */
+#define     FPE_INTOVF_TRAP	0x15	/* integer overflow */
+#define     FPE_FLTOPERR_TRAP	0x01	/* [floating operand error] */
+#define     FPE_FLTDEN_TRAP	0x02	/* [floating denormalized operand] */
+#define     FPE_FLTDIV_TRAP	0x03	/* [floating divide by zero] */
+#define     FPE_FLTOVF_TRAP	0x04	/* [floating overflow] */
+#define     FPE_FLTUND_TRAP	0x05	/* [floating underflow] */
+#define     FPE_FLTINEX_TRAP	0x06	/* [floating inexact result] */
+#define     FPE_UUOP_TRAP	0x07	/* [floating undefined opcode] */
+#define     FPE_DATACH_TRAP	0x08	/* [floating data chain exception] */
+#define     FPE_FLTSTK_TRAP	0x10	/* [floating stack fault] */
+#define     FPE_FPA_ENABLE	0x11	/* [FPA not enabled] */
+#define     FPE_FPA_ERROR	0x12	/* [FPA arithmetic exception] */
+
+
+<P><PRE>PROCEDURE <A NAME="HandleFPE"><procedure>HandleFPE</procedure></A> (&lt;* UNUSED *&gt; sig      : INTEGER;
+                                  code     : INTEGER;
+                     &lt;* UNUSED *&gt; scp, addr: ADDRESS  ) RAISES {Trap} =
+  VAR old: INTEGER;
+  BEGIN
+    (*
+     * since the RAISE does a longjump, never leave unix signal
+     * handler, and sigmask is never restored.  So restore it here.
+     *)
+    old := Usignal.sigsetmask(0);
+    EVAL (Usignal.sigsetmask(Word.And(old, Word.Not(128))));
+    CASE code OF                &lt;* NOWARN *&gt;
+    | 16_06 =&gt; RAISE Trap(Flag.Inexact);
+    | 16_03 =&gt; RAISE Trap(Flag.DivByZero);
+    | 16_05 =&gt; RAISE Trap(Flag.Underflow);
+    | 16_01 =&gt; RAISE Trap(Flag.Invalid);
+    | 16_04 =&gt; RAISE Trap(Flag.Overflow);
+    | 16_02 =&gt; RAISE Trap(Flag.Underflow); (* Trap(Flag.Denormalized); *)
+    | 16_07 =&gt; RAISE Trap(Flag.Invalid);
+    | 16_14 =&gt; RAISE Trap(Flag.IntDivByZero);
+    | 16_15 =&gt; RAISE Trap(Flag.IntOverflow);
+    END;
+  END HandleFPE;
+
+PROCEDURE <A NAME="InitThread"><procedure>InitThread</procedure></A> (&lt;*UNUSED*&gt; VAR state: ThreadState) =
+    BEGIN
+        END InitThread;
+
+PROCEDURE <A NAME="BuildConversionArrays"><procedure>BuildConversionArrays</procedure></A> () =
+  CONST
+    rndModes = ARRAY RoundingMode OF
+                 TEXT{
+                 &quot;nearest&quot;, &quot;negative&quot;, &quot;positive&quot;, &quot;tozero&quot;,  &quot;xxx&quot;, ..};
+    flags = ARRAY Flag OF
+              TEXT{&quot;invalid&quot;, &quot;inexact&quot;, &quot;overflow&quot;,
+                   &quot;underflow&quot;, &quot;division&quot;, &quot;xxx&quot;, ..};
+
+  BEGIN
+    FOR i := FIRST(rndModes) TO LAST(rndModes) DO
+      rndModeToSunOs[i] := M3toC.TtoS(rndModes[i]);
+    END;
+    FOR i := FIRST(flags) TO LAST(flags) DO
+      flagToSunOs[i] := M3toC.TtoS(flags[i]);
+    END;
+  END BuildConversionArrays;
+
+VAR
+  setStr, directionStr, getStr: Ctypes.char_star;
+  exceptionStr, nullStr, clearStr: Ctypes.char_star;
+  rndModeToSunOs: ARRAY RoundingMode OF Ctypes.char_star;
+  flagToSunOs: ARRAY Flag OF Ctypes.char_star;
+  clearAllStr: Ctypes.char_star;
+BEGIN
+  setStr := M3toC.TtoS(&quot;set&quot;);
+  directionStr := M3toC.TtoS(&quot;direction&quot;);
+  getStr := M3toC.TtoS(&quot;get&quot;);
+  exceptionStr := M3toC.TtoS(&quot;exception&quot;);
+  nullStr := M3toC.TtoS(&quot;&quot;);
+  clearStr := M3toC.TtoS(&quot;clear&quot;);
+  clearAllStr := M3toC.TtoS (&quot;clearall&quot;);
+
+  BuildConversionArrays();
+
+  (* 16_14 = INTDIV_TRAP from above *)
+  EVAL (FPU.sigfpe(16_14, HandleFPE));
+
+END FloatMode.
+</PRE>
+</inModule>
+<HR>
+<A NAME="x1">interface FloatMode is in:
+</A><UL>
+<LI><A HREF="../DS3100/FloatMode.i3.html#0TOP0">float/src/DS3100/FloatMode.i3</A>
+<LI><A HREF="../IEEE-default/FloatMode.i3.html#0TOP0">float/src/IEEE-default/FloatMode.i3</A>
+<LI><A HREF="../IRIX5/FloatMode.i3.html#0TOP0">float/src/IRIX5/FloatMode.i3</A>
+<LI><A HREF="../SOLsun/FloatMode.i3.html#0TOP0">float/src/SOLsun/FloatMode.i3</A>
+<LI><A HREF="../SPARC/FloatMode.i3.html#0TOP0">float/src/SPARC/FloatMode.i3</A>
+<LI><A HREF="FloatMode.i3.html#0TOP0">float/src/SUN386/FloatMode.i3</A>
+<LI><A HREF="../VAX/FloatMode.i3.html#0TOP0">float/src/VAX/FloatMode.i3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x2">interface FPU is in:
+</A><UL>
+<LI><A HREF="../DS3100/FPU.i3.html#0TOP0">float/src/DS3100/FPU.i3</A>
+<LI><A HREF="../IEEE-default/FPU.i3.html#0TOP0">float/src/IEEE-default/FPU.i3</A>
+<LI><A HREF="../IRIX5/FPU.i3.html#0TOP0">float/src/IRIX5/FPU.i3</A>
+<LI><A HREF="../SOLsun/FPU.i3.html#0TOP0">float/src/SOLsun/FPU.i3</A>
+<LI><A HREF="../SPARC/FPU.i3.html#0TOP0">float/src/SPARC/FPU.i3</A>
+<LI><A HREF="FPU.i3.html#0TOP0">float/src/SUN386/FPU.i3</A>
+<LI><A HREF="../VAX/FPU.i3.html#0TOP0">float/src/VAX/FPU.i3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x3">interface Usignal is in:
+</A><UL>
+<LI><A HREF="../../../unix/src/aix-3-2/Usignal.i3.html#0TOP0">unix/src/aix-3-2/Usignal.i3</A>
+<LI><A HREF="../../../unix/src/aix-ps2-1-2/Usignal.i3.html#0TOP0">unix/src/aix-ps2-1-2/Usignal.i3</A>
+<LI><A HREF="../../../unix/src/freebsd-1/Usignal.i3.html#0TOP0">unix/src/freebsd-1/Usignal.i3</A>
+<LI><A HREF="../../../unix/src/freebsd-2/Usignal.i3.html#0TOP0">unix/src/freebsd-2/Usignal.i3</A>
+<LI><A HREF="../../../unix/src/hpux-7-0/Usignal.i3.html#0TOP0">unix/src/hpux-7-0/Usignal.i3</A>
+<LI><A HREF="../../../unix/src/ibm-4-3/Usignal.i3.html#0TOP0">unix/src/ibm-4-3/Usignal.i3</A>
+<LI><A HREF="../../../unix/src/irix-5.2/Usignal.i3.html#0TOP0">unix/src/irix-5.2/Usignal.i3</A>
+<LI><A HREF="../../../unix/src/linux/Usignal.i3.html#0TOP0">unix/src/linux/Usignal.i3</A>
+<LI><A HREF="../../../unix/src/osf-1.ALPHA_OSF/Usignal.i3.html#0TOP0">unix/src/osf-1.ALPHA_OSF/Usignal.i3</A>
+<LI><A HREF="../../../unix/src/osf-1.DS3100/Usignal.i3.html#0TOP0">unix/src/osf-1.DS3100/Usignal.i3</A>
+<LI><A HREF="../../../unix/src/solaris-2-x/Usignal.i3.html#0TOP0">unix/src/solaris-2-x/Usignal.i3</A>
+<LI><A HREF="../../../unix/src/sunos-4-x/Usignal.i3.html#0TOP0">unix/src/sunos-4-x/Usignal.i3</A>
+<LI><A HREF="../../../unix/src/sysv-4.0/Usignal.i3.html#0TOP0">unix/src/sysv-4.0/Usignal.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.AP3000/Usignal.i3.html#0TOP0">unix/src/ultrix-3-1.AP3000/Usignal.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.ARM/Usignal.i3.html#0TOP0">unix/src/ultrix-3-1.ARM/Usignal.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.DS3100/Usignal.i3.html#0TOP0">unix/src/ultrix-3-1.DS3100/Usignal.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.NEXT/Usignal.i3.html#0TOP0">unix/src/ultrix-3-1.NEXT/Usignal.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.SEQUENT/Usignal.i3.html#0TOP0">unix/src/ultrix-3-1.SEQUENT/Usignal.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.SUN3/Usignal.i3.html#0TOP0">unix/src/ultrix-3-1.SUN3/Usignal.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.SUN386/Usignal.i3.html#0TOP0">unix/src/ultrix-3-1.SUN386/Usignal.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.UMAX/Usignal.i3.html#0TOP0">unix/src/ultrix-3-1.UMAX/Usignal.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.VAX/Usignal.i3.html#0TOP0">unix/src/ultrix-3-1.VAX/Usignal.i3</A>
+</UL>
+<P>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

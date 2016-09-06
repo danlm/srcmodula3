@@ -1,0 +1,545 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: unix/src/hpux-7-0/Uin.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>unix/src/hpux-7-0/Uin.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM>                                                                           </EM></BLOCKQUOTE><PRE>
+
+INTERFACE <interface><A HREF="#x1">Uin</A></interface>;
+
+FROM <A HREF="../../../C/src/Common/Ctypes.i3.html">Ctypes</A> IMPORT short, char;
+FROM <A HREF="#x2">Utypes</A> IMPORT u_char, u_short, u_long;
+IMPORT <A HREF="../../../word/src/Word.i3.html">Word</A>;
+</PRE> Constants and structures defined by the internet system,
+   Per RFC 790, September 1981. 
+
+<P><PRE>CONST
+  IPPROTO_IP = 0;		(* dummy for IP *)
+  IPPROTO_ICMP = 1;		(* control message protocol *)
+  IPPROTO_IGMP = 2;		(* group control protocol *)
+  IPPROTO_GGP = 3;		(* gateway^2 (deprecated) *)
+  IPPROTO_TCP = 6;		(* tcp *)
+  IPPROTO_EGP = 8;		(* exterior gateway protocol *)
+  IPPROTO_PUP = 12;		(* pup *)
+  IPPROTO_UDP = 17;		(* user datagram protocol *)
+  IPPROTO_IDP = 22;		(* xns idp *)
+  IPPROTO_HELLO = 63;		(* &quot;hello&quot; routing protocol *)
+  IPPROTO_ND = 77;		(* UNOFFICIAL net disk proto *)
+
+  IPPROTO_RAW = 255;		(* raw IP packet *)
+  IPPROTO_MAX = 256;
+</PRE> Port/socket numbers: network standard functions 
+  <PRE>IPPORT_ECHO = 7;
+  IPPORT_DISCARD = 9;
+  IPPORT_SYSTAT = 11;
+  IPPORT_DAYTIME = 13;
+  IPPORT_NETSTAT = 15;
+  IPPORT_FTP = 21;
+  IPPORT_TELNET = 23;
+  IPPORT_SMTP = 25;
+  IPPORT_TIMESERVER = 37;
+  IPPORT_NAMESERVER = 42;
+  IPPORT_WHOIS = 43;
+  IPPORT_MTP = 57;
+</PRE> Port/socket numbers: host specific functions 
+  <PRE>IPPORT_TFTP = 69;
+  IPPORT_RJE = 77;
+  IPPORT_FINGER = 79;
+  IPPORT_TTYLINK = 87;
+  IPPORT_SUPDUP = 95;
+</PRE> UNIX TCP sockets 
+  <PRE>IPPORT_EXECSERVER = 512;
+  IPPORT_LOGINSERVER = 513;
+  IPPORT_CMDSERVER = 514;
+  IPPORT_EFSSERVER = 520;
+</PRE> UNIX UDP sockets 
+  <PRE>IPPORT_BIFFUDP = 512;
+  IPPORT_WHOSERVER = 513;
+  IPPORT_ROUTESERVER = 520;	(* 520+1 also used *)
+</PRE> Ports &lt; IPPORT_RESERVED are reserved for privileged processes (e.g. root).
+   Ports &gt; IPPORT_USERRESERVED are reserved for servers, not necessarily
+   privileged. 
+  <PRE>IPPORT_RESERVED = 1024;
+  IPPORT_USERRESERVED = 5000;
+</PRE> Link numbers 
+  <PRE>IMPLINK_IP = 155;
+  IMPLINK_LOWEXPER = 156;
+  IMPLINK_HIGHEXPER = 158;
+
+TYPE
+  struct_in_addr =   RECORD
+                       s_addr: u_long; END;
+  struct_in_addr_b = RECORD
+                       s_b1, s_b2, s_b3, s_b4: u_char; END;
+  struct_in_addr_w = RECORD
+                       s_w1, s_w2: u_short; END;
+</PRE> Definitions of bits in internet address integers.
+   On subnets, the decomposition of addresses to host and net parts
+   is done according to subnet mask, not the masks here. 
+<PRE>PROCEDURE <A HREF="#x3">IN_CLASSA</A>(i: INTEGER): BOOLEAN;
+CONST
+  (* Compiler bug/feature forces us to use Word.Shift *)
+  IN_CLASSA_NET: u_long = Word.Shift(16_ff0000, 8);
+  IN_CLASSA_NSHIFT = 24;
+  IN_CLASSA_HOST = 16_00ffffff;
+  IN_CLASSA_MAX = 128;
+
+PROCEDURE <A HREF="#x4">IN_CLASSB</A>(i: INTEGER): BOOLEAN;
+CONST
+  IN_CLASSB_NET = Word.Shift(16_ffff00, 8);
+  IN_CLASSB_NSHIFT = 16;
+  IN_CLASSB_HOST = 16_0000ffff;
+  IN_CLASSB_MAX = 65536;
+
+PROCEDURE <A HREF="#x5">IN_CLASSC</A>(i: INTEGER): BOOLEAN;
+CONST
+  IN_CLASSC_NET = Word.Shift(16_ffffff, 8);
+  IN_CLASSC_NSHIFT = 8;
+  IN_CLASSC_HOST = 16_000000ff;
+
+PROCEDURE <A HREF="#x6">IN_CLASSD</A>(i: INTEGER): BOOLEAN;
+PROCEDURE <A HREF="#x7">IN_MULTICAST</A>(i: INTEGER): BOOLEAN;
+
+PROCEDURE <A HREF="#x8">IN_EXPERIMENTAL</A>(i: INTEGER): BOOLEAN;
+PROCEDURE <A HREF="#x9">IN_BADCLASS</A>(i: INTEGER): BOOLEAN;
+
+CONST
+  INADDR_ANY = 16_00000000;
+  INADDR_LOOPBACK = 16_7F000001;
+  INADDR_BROADCAST = Word.Shift(16_ffffff, 8) + 16_ff;
+				(* must be masked *)
+
+  IN_LOOPBACKNET = 127;		(* official! *)
+</PRE> Stuff the loopback address into an Internet address. 
+<PRE>PROCEDURE <A HREF="#x10">IN_SET_LOOPBACK_ADDR</A>(a: struct_sockaddr_in_star);
+</PRE> Socket address, internet style. 
+<PRE>TYPE
+  struct_sockaddr_in = RECORD
+    sin_family: short;
+    sin_port: u_short;
+    sin_addr: struct_in_addr;
+    sin_zero: ARRAY [0..7] OF char;
+  END;
+  struct_sockaddr_in_star = UNTRACED REF struct_sockaddr_in;
+</PRE> Options for use with [gs]etsockopt at the IP level. 
+<PRE>CONST
+  IP_OPTIONS = 1;		(* set/get IP per-packet options *)
+</PRE> Procedures for number representation conversion. 
+<PRE>PROCEDURE <A HREF="#x11">ntohl</A>(x: u_long): u_long;
+PROCEDURE <A HREF="#x12">ntohs</A>(x: u_short): u_short;
+PROCEDURE <A HREF="#x13">htonl</A>(x: u_long): u_long;
+PROCEDURE <A HREF="#x14">htons</A>(x: u_short): u_short;
+
+END Uin.
+</PRE>
+</inInterface>
+<HR>
+<A NAME="x1">Uin's implementation  is in:
+</A><UL>
+<LI><A HREF="../../../tcp/src/POSIX/TCP.m3.html#0TOP0">tcp/src/POSIX/TCP.m3</A>
+<LI><A HREF="../aix-3-2/Uin.m3.html#0TOP0">unix/src/aix-3-2/Uin.m3</A>
+<LI><A HREF="../aix-ps2-1-2/Uin.m3.html#0TOP0">unix/src/aix-ps2-1-2/Uin.m3</A>
+<LI><A HREF="../freebsd-1/Uin.m3.html#0TOP0">unix/src/freebsd-1/Uin.m3</A>
+<LI><A HREF="../freebsd-2/Uin.m3.html#0TOP0">unix/src/freebsd-2/Uin.m3</A>
+<LI><A HREF="Uin.m3.html#0TOP0">unix/src/hpux-7-0/Uin.m3</A>
+<LI><A HREF="../ibm-4-3/Uin.m3.html#0TOP0">unix/src/ibm-4-3/Uin.m3</A>
+<LI><A HREF="../irix-5.2/Uin.m3.html#0TOP0">unix/src/irix-5.2/Uin.m3</A>
+<LI><A HREF="../linux/Uin.m3.html#0TOP0">unix/src/linux/Uin.m3</A>
+<LI><A HREF="../osf-1.ALPHA_OSF/Uin.m3.html#0TOP0">unix/src/osf-1.ALPHA_OSF/Uin.m3</A>
+<LI><A HREF="../osf-1.DS3100/Uin.m3.html#0TOP0">unix/src/osf-1.DS3100/Uin.m3</A>
+<LI><A HREF="../solaris-2-x/Uin.m3.html#0TOP0">unix/src/solaris-2-x/Uin.m3</A>
+<LI><A HREF="../sunos-4-x/Uin.m3.html#0TOP0">unix/src/sunos-4-x/Uin.m3</A>
+<LI><A HREF="../sysv-4.0/Uin.m3.html#0TOP0">unix/src/sysv-4.0/Uin.m3</A>
+<LI><A HREF="../ultrix-3-1.AP3000/Uin.m3.html#0TOP0">unix/src/ultrix-3-1.AP3000/Uin.m3</A>
+<LI><A HREF="../ultrix-3-1.ARM/Uin.m3.html#0TOP0">unix/src/ultrix-3-1.ARM/Uin.m3</A>
+<LI><A HREF="../ultrix-3-1.DS3100/Uin.m3.html#0TOP0">unix/src/ultrix-3-1.DS3100/Uin.m3</A>
+<LI><A HREF="../ultrix-3-1.NEXT/Uin.m3.html#0TOP0">unix/src/ultrix-3-1.NEXT/Uin.m3</A>
+<LI><A HREF="../ultrix-3-1.SEQUENT/Uin.m3.html#0TOP0">unix/src/ultrix-3-1.SEQUENT/Uin.m3</A>
+<LI><A HREF="../ultrix-3-1.SUN3/Uin.m3.html#0TOP0">unix/src/ultrix-3-1.SUN3/Uin.m3</A>
+<LI><A HREF="../ultrix-3-1.SUN386/Uin.m3.html#0TOP0">unix/src/ultrix-3-1.SUN386/Uin.m3</A>
+<LI><A HREF="../ultrix-3-1.UMAX/Uin.m3.html#0TOP0">unix/src/ultrix-3-1.UMAX/Uin.m3</A>
+<LI><A HREF="../ultrix-3-1.VAX/Uin.m3.html#0TOP0">unix/src/ultrix-3-1.VAX/Uin.m3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x2">interface Utypes is in:
+</A><UL>
+<LI><A HREF="../aix-3-2/Utypes.i3.html#0TOP0">unix/src/aix-3-2/Utypes.i3</A>
+<LI><A HREF="../aix-ps2-1-2/Utypes.i3.html#0TOP0">unix/src/aix-ps2-1-2/Utypes.i3</A>
+<LI><A HREF="../freebsd-1/Utypes.i3.html#0TOP0">unix/src/freebsd-1/Utypes.i3</A>
+<LI><A HREF="../freebsd-2/Utypes.i3.html#0TOP0">unix/src/freebsd-2/Utypes.i3</A>
+<LI><A HREF="Utypes.i3.html#0TOP0">unix/src/hpux-7-0/Utypes.i3</A>
+<LI><A HREF="../ibm-4-3/Utypes.i3.html#0TOP0">unix/src/ibm-4-3/Utypes.i3</A>
+<LI><A HREF="../irix-5.2/Utypes.i3.html#0TOP0">unix/src/irix-5.2/Utypes.i3</A>
+<LI><A HREF="../linux/Utypes.i3.html#0TOP0">unix/src/linux/Utypes.i3</A>
+<LI><A HREF="../osf-1.ALPHA_OSF/Utypes.i3.html#0TOP0">unix/src/osf-1.ALPHA_OSF/Utypes.i3</A>
+<LI><A HREF="../osf-1.DS3100/Utypes.i3.html#0TOP0">unix/src/osf-1.DS3100/Utypes.i3</A>
+<LI><A HREF="../solaris-2-x/Utypes.i3.html#0TOP0">unix/src/solaris-2-x/Utypes.i3</A>
+<LI><A HREF="../sunos-4-x/Utypes.i3.html#0TOP0">unix/src/sunos-4-x/Utypes.i3</A>
+<LI><A HREF="../sysv-4.0/Utypes.i3.html#0TOP0">unix/src/sysv-4.0/Utypes.i3</A>
+<LI><A HREF="../ultrix-3-1.AP3000/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.AP3000/Utypes.i3</A>
+<LI><A HREF="../ultrix-3-1.ARM/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.ARM/Utypes.i3</A>
+<LI><A HREF="../ultrix-3-1.DS3100/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.DS3100/Utypes.i3</A>
+<LI><A HREF="../ultrix-3-1.NEXT/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.NEXT/Utypes.i3</A>
+<LI><A HREF="../ultrix-3-1.SEQUENT/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.SEQUENT/Utypes.i3</A>
+<LI><A HREF="../ultrix-3-1.SUN3/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.SUN3/Utypes.i3</A>
+<LI><A HREF="../ultrix-3-1.SUN386/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.SUN386/Utypes.i3</A>
+<LI><A HREF="../ultrix-3-1.UMAX/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.UMAX/Utypes.i3</A>
+<LI><A HREF="../ultrix-3-1.VAX/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.VAX/Utypes.i3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x3">procedure Uin.IN_CLASSA is in:
+</A><UL>
+<LI><A HREF="../aix-3-2/Uin.m3.html#IN_CLASSA">unix/src/aix-3-2/Uin.m3</A>
+<LI><A HREF="../aix-ps2-1-2/Uin.m3.html#IN_CLASSA">unix/src/aix-ps2-1-2/Uin.m3</A>
+<LI><A HREF="../freebsd-1/Uin.m3.html#IN_CLASSA">unix/src/freebsd-1/Uin.m3</A>
+<LI><A HREF="../freebsd-2/Uin.m3.html#IN_CLASSA">unix/src/freebsd-2/Uin.m3</A>
+<LI><A HREF="Uin.m3.html#IN_CLASSA">unix/src/hpux-7-0/Uin.m3</A>
+<LI><A HREF="../ibm-4-3/Uin.m3.html#IN_CLASSA">unix/src/ibm-4-3/Uin.m3</A>
+<LI><A HREF="../irix-5.2/Uin.m3.html#IN_CLASSA">unix/src/irix-5.2/Uin.m3</A>
+<LI><A HREF="../linux/Uin.m3.html#IN_CLASSA">unix/src/linux/Uin.m3</A>
+<LI><A HREF="../osf-1.ALPHA_OSF/Uin.m3.html#IN_CLASSA">unix/src/osf-1.ALPHA_OSF/Uin.m3</A>
+<LI><A HREF="../osf-1.DS3100/Uin.m3.html#IN_CLASSA">unix/src/osf-1.DS3100/Uin.m3</A>
+<LI><A HREF="../solaris-2-x/Uin.m3.html#IN_CLASSA">unix/src/solaris-2-x/Uin.m3</A>
+<LI><A HREF="../sunos-4-x/Uin.m3.html#IN_CLASSA">unix/src/sunos-4-x/Uin.m3</A>
+<LI><A HREF="../sysv-4.0/Uin.m3.html#IN_CLASSA">unix/src/sysv-4.0/Uin.m3</A>
+<LI><A HREF="../ultrix-3-1.AP3000/Uin.m3.html#IN_CLASSA">unix/src/ultrix-3-1.AP3000/Uin.m3</A>
+<LI><A HREF="../ultrix-3-1.ARM/Uin.m3.html#IN_CLASSA">unix/src/ultrix-3-1.ARM/Uin.m3</A>
+<LI><A HREF="../ultrix-3-1.DS3100/Uin.m3.html#IN_CLASSA">unix/src/ultrix-3-1.DS3100/Uin.m3</A>
+<LI><A HREF="../ultrix-3-1.NEXT/Uin.m3.html#IN_CLASSA">unix/src/ultrix-3-1.NEXT/Uin.m3</A>
+<LI><A HREF="../ultrix-3-1.SEQUENT/Uin.m3.html#IN_CLASSA">unix/src/ultrix-3-1.SEQUENT/Uin.m3</A>
+<LI><A HREF="../ultrix-3-1.SUN3/Uin.m3.html#IN_CLASSA">unix/src/ultrix-3-1.SUN3/Uin.m3</A>
+<LI><A HREF="../ultrix-3-1.SUN386/Uin.m3.html#IN_CLASSA">unix/src/ultrix-3-1.SUN386/Uin.m3</A>
+<LI><A HREF="../ultrix-3-1.UMAX/Uin.m3.html#IN_CLASSA">unix/src/ultrix-3-1.UMAX/Uin.m3</A>
+<LI><A HREF="../ultrix-3-1.VAX/Uin.m3.html#IN_CLASSA">unix/src/ultrix-3-1.VAX/Uin.m3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x4">procedure Uin.IN_CLASSB is in:
+</A><UL>
+<LI><A HREF="../aix-3-2/Uin.m3.html#IN_CLASSB">unix/src/aix-3-2/Uin.m3</A>
+<LI><A HREF="../aix-ps2-1-2/Uin.m3.html#IN_CLASSB">unix/src/aix-ps2-1-2/Uin.m3</A>
+<LI><A HREF="../freebsd-1/Uin.m3.html#IN_CLASSB">unix/src/freebsd-1/Uin.m3</A>
+<LI><A HREF="../freebsd-2/Uin.m3.html#IN_CLASSB">unix/src/freebsd-2/Uin.m3</A>
+<LI><A HREF="Uin.m3.html#IN_CLASSB">unix/src/hpux-7-0/Uin.m3</A>
+<LI><A HREF="../ibm-4-3/Uin.m3.html#IN_CLASSB">unix/src/ibm-4-3/Uin.m3</A>
+<LI><A HREF="../irix-5.2/Uin.m3.html#IN_CLASSB">unix/src/irix-5.2/Uin.m3</A>
+<LI><A HREF="../linux/Uin.m3.html#IN_CLASSB">unix/src/linux/Uin.m3</A>
+<LI><A HREF="../osf-1.ALPHA_OSF/Uin.m3.html#IN_CLASSB">unix/src/osf-1.ALPHA_OSF/Uin.m3</A>
+<LI><A HREF="../osf-1.DS3100/Uin.m3.html#IN_CLASSB">unix/src/osf-1.DS3100/Uin.m3</A>
+<LI><A HREF="../solaris-2-x/Uin.m3.html#IN_CLASSB">unix/src/solaris-2-x/Uin.m3</A>
+<LI><A HREF="../sunos-4-x/Uin.m3.html#IN_CLASSB">unix/src/sunos-4-x/Uin.m3</A>
+<LI><A HREF="../sysv-4.0/Uin.m3.html#IN_CLASSB">unix/src/sysv-4.0/Uin.m3</A>
+<LI><A HREF="../ultrix-3-1.AP3000/Uin.m3.html#IN_CLASSB">unix/src/ultrix-3-1.AP3000/Uin.m3</A>
+<LI><A HREF="../ultrix-3-1.ARM/Uin.m3.html#IN_CLASSB">unix/src/ultrix-3-1.ARM/Uin.m3</A>
+<LI><A HREF="../ultrix-3-1.DS3100/Uin.m3.html#IN_CLASSB">unix/src/ultrix-3-1.DS3100/Uin.m3</A>
+<LI><A HREF="../ultrix-3-1.NEXT/Uin.m3.html#IN_CLASSB">unix/src/ultrix-3-1.NEXT/Uin.m3</A>
+<LI><A HREF="../ultrix-3-1.SEQUENT/Uin.m3.html#IN_CLASSB">unix/src/ultrix-3-1.SEQUENT/Uin.m3</A>
+<LI><A HREF="../ultrix-3-1.SUN3/Uin.m3.html#IN_CLASSB">unix/src/ultrix-3-1.SUN3/Uin.m3</A>
+<LI><A HREF="../ultrix-3-1.SUN386/Uin.m3.html#IN_CLASSB">unix/src/ultrix-3-1.SUN386/Uin.m3</A>
+<LI><A HREF="../ultrix-3-1.UMAX/Uin.m3.html#IN_CLASSB">unix/src/ultrix-3-1.UMAX/Uin.m3</A>
+<LI><A HREF="../ultrix-3-1.VAX/Uin.m3.html#IN_CLASSB">unix/src/ultrix-3-1.VAX/Uin.m3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x5">procedure Uin.IN_CLASSC is in:
+</A><UL>
+<LI><A HREF="../aix-3-2/Uin.m3.html#IN_CLASSC">unix/src/aix-3-2/Uin.m3</A>
+<LI><A HREF="../aix-ps2-1-2/Uin.m3.html#IN_CLASSC">unix/src/aix-ps2-1-2/Uin.m3</A>
+<LI><A HREF="../freebsd-1/Uin.m3.html#IN_CLASSC">unix/src/freebsd-1/Uin.m3</A>
+<LI><A HREF="../freebsd-2/Uin.m3.html#IN_CLASSC">unix/src/freebsd-2/Uin.m3</A>
+<LI><A HREF="Uin.m3.html#IN_CLASSC">unix/src/hpux-7-0/Uin.m3</A>
+<LI><A HREF="../ibm-4-3/Uin.m3.html#IN_CLASSC">unix/src/ibm-4-3/Uin.m3</A>
+<LI><A HREF="../irix-5.2/Uin.m3.html#IN_CLASSC">unix/src/irix-5.2/Uin.m3</A>
+<LI><A HREF="../linux/Uin.m3.html#IN_CLASSC">unix/src/linux/Uin.m3</A>
+<LI><A HREF="../osf-1.ALPHA_OSF/Uin.m3.html#IN_CLASSC">unix/src/osf-1.ALPHA_OSF/Uin.m3</A>
+<LI><A HREF="../osf-1.DS3100/Uin.m3.html#IN_CLASSC">unix/src/osf-1.DS3100/Uin.m3</A>
+<LI><A HREF="../solaris-2-x/Uin.m3.html#IN_CLASSC">unix/src/solaris-2-x/Uin.m3</A>
+<LI><A HREF="../sunos-4-x/Uin.m3.html#IN_CLASSC">unix/src/sunos-4-x/Uin.m3</A>
+<LI><A HREF="../sysv-4.0/Uin.m3.html#IN_CLASSC">unix/src/sysv-4.0/Uin.m3</A>
+<LI><A HREF="../ultrix-3-1.AP3000/Uin.m3.html#IN_CLASSC">unix/src/ultrix-3-1.AP3000/Uin.m3</A>
+<LI><A HREF="../ultrix-3-1.ARM/Uin.m3.html#IN_CLASSC">unix/src/ultrix-3-1.ARM/Uin.m3</A>
+<LI><A HREF="../ultrix-3-1.DS3100/Uin.m3.html#IN_CLASSC">unix/src/ultrix-3-1.DS3100/Uin.m3</A>
+<LI><A HREF="../ultrix-3-1.NEXT/Uin.m3.html#IN_CLASSC">unix/src/ultrix-3-1.NEXT/Uin.m3</A>
+<LI><A HREF="../ultrix-3-1.SEQUENT/Uin.m3.html#IN_CLASSC">unix/src/ultrix-3-1.SEQUENT/Uin.m3</A>
+<LI><A HREF="../ultrix-3-1.SUN3/Uin.m3.html#IN_CLASSC">unix/src/ultrix-3-1.SUN3/Uin.m3</A>
+<LI><A HREF="../ultrix-3-1.SUN386/Uin.m3.html#IN_CLASSC">unix/src/ultrix-3-1.SUN386/Uin.m3</A>
+<LI><A HREF="../ultrix-3-1.UMAX/Uin.m3.html#IN_CLASSC">unix/src/ultrix-3-1.UMAX/Uin.m3</A>
+<LI><A HREF="../ultrix-3-1.VAX/Uin.m3.html#IN_CLASSC">unix/src/ultrix-3-1.VAX/Uin.m3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x6">procedure Uin.IN_CLASSD is in:
+</A><UL>
+<LI><A HREF="../aix-3-2/Uin.m3.html#IN_CLASSD">unix/src/aix-3-2/Uin.m3</A>
+<LI><A HREF="../aix-ps2-1-2/Uin.m3.html#IN_CLASSD">unix/src/aix-ps2-1-2/Uin.m3</A>
+<LI><A HREF="../freebsd-1/Uin.m3.html#IN_CLASSD">unix/src/freebsd-1/Uin.m3</A>
+<LI><A HREF="../freebsd-2/Uin.m3.html#IN_CLASSD">unix/src/freebsd-2/Uin.m3</A>
+<LI><A HREF="Uin.m3.html#IN_CLASSD">unix/src/hpux-7-0/Uin.m3</A>
+<LI><A HREF="../ibm-4-3/Uin.m3.html#IN_CLASSD">unix/src/ibm-4-3/Uin.m3</A>
+<LI><A HREF="../irix-5.2/Uin.m3.html#IN_CLASSD">unix/src/irix-5.2/Uin.m3</A>
+<LI><A HREF="../linux/Uin.m3.html#IN_CLASSD">unix/src/linux/Uin.m3</A>
+<LI><A HREF="../osf-1.ALPHA_OSF/Uin.m3.html#IN_CLASSD">unix/src/osf-1.ALPHA_OSF/Uin.m3</A>
+<LI><A HREF="../osf-1.DS3100/Uin.m3.html#IN_CLASSD">unix/src/osf-1.DS3100/Uin.m3</A>
+<LI><A HREF="../solaris-2-x/Uin.m3.html#IN_CLASSD">unix/src/solaris-2-x/Uin.m3</A>
+<LI><A HREF="../sunos-4-x/Uin.m3.html#IN_CLASSD">unix/src/sunos-4-x/Uin.m3</A>
+<LI><A HREF="../sysv-4.0/Uin.m3.html#IN_CLASSD">unix/src/sysv-4.0/Uin.m3</A>
+<LI><A HREF="../ultrix-3-1.AP3000/Uin.m3.html#IN_CLASSD">unix/src/ultrix-3-1.AP3000/Uin.m3</A>
+<LI><A HREF="../ultrix-3-1.ARM/Uin.m3.html#IN_CLASSD">unix/src/ultrix-3-1.ARM/Uin.m3</A>
+<LI><A HREF="../ultrix-3-1.DS3100/Uin.m3.html#IN_CLASSD">unix/src/ultrix-3-1.DS3100/Uin.m3</A>
+<LI><A HREF="../ultrix-3-1.NEXT/Uin.m3.html#IN_CLASSD">unix/src/ultrix-3-1.NEXT/Uin.m3</A>
+<LI><A HREF="../ultrix-3-1.SEQUENT/Uin.m3.html#IN_CLASSD">unix/src/ultrix-3-1.SEQUENT/Uin.m3</A>
+<LI><A HREF="../ultrix-3-1.SUN3/Uin.m3.html#IN_CLASSD">unix/src/ultrix-3-1.SUN3/Uin.m3</A>
+<LI><A HREF="../ultrix-3-1.SUN386/Uin.m3.html#IN_CLASSD">unix/src/ultrix-3-1.SUN386/Uin.m3</A>
+<LI><A HREF="../ultrix-3-1.UMAX/Uin.m3.html#IN_CLASSD">unix/src/ultrix-3-1.UMAX/Uin.m3</A>
+<LI><A HREF="../ultrix-3-1.VAX/Uin.m3.html#IN_CLASSD">unix/src/ultrix-3-1.VAX/Uin.m3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x7">procedure Uin.IN_MULTICAST is in:
+</A><UL>
+<LI><A HREF="../aix-3-2/Uin.m3.html#IN_MULTICAST">unix/src/aix-3-2/Uin.m3</A>
+<LI><A HREF="../aix-ps2-1-2/Uin.m3.html#IN_MULTICAST">unix/src/aix-ps2-1-2/Uin.m3</A>
+<LI><A HREF="../freebsd-1/Uin.m3.html#IN_MULTICAST">unix/src/freebsd-1/Uin.m3</A>
+<LI><A HREF="../freebsd-2/Uin.m3.html#IN_MULTICAST">unix/src/freebsd-2/Uin.m3</A>
+<LI><A HREF="Uin.m3.html#IN_MULTICAST">unix/src/hpux-7-0/Uin.m3</A>
+<LI><A HREF="../ibm-4-3/Uin.m3.html#IN_MULTICAST">unix/src/ibm-4-3/Uin.m3</A>
+<LI><A HREF="../irix-5.2/Uin.m3.html#IN_MULTICAST">unix/src/irix-5.2/Uin.m3</A>
+<LI><A HREF="../linux/Uin.m3.html#IN_MULTICAST">unix/src/linux/Uin.m3</A>
+<LI><A HREF="../osf-1.ALPHA_OSF/Uin.m3.html#IN_MULTICAST">unix/src/osf-1.ALPHA_OSF/Uin.m3</A>
+<LI><A HREF="../osf-1.DS3100/Uin.m3.html#IN_MULTICAST">unix/src/osf-1.DS3100/Uin.m3</A>
+<LI><A HREF="../solaris-2-x/Uin.m3.html#IN_MULTICAST">unix/src/solaris-2-x/Uin.m3</A>
+<LI><A HREF="../sunos-4-x/Uin.m3.html#IN_MULTICAST">unix/src/sunos-4-x/Uin.m3</A>
+<LI><A HREF="../sysv-4.0/Uin.m3.html#IN_MULTICAST">unix/src/sysv-4.0/Uin.m3</A>
+<LI><A HREF="../ultrix-3-1.AP3000/Uin.m3.html#IN_MULTICAST">unix/src/ultrix-3-1.AP3000/Uin.m3</A>
+<LI><A HREF="../ultrix-3-1.ARM/Uin.m3.html#IN_MULTICAST">unix/src/ultrix-3-1.ARM/Uin.m3</A>
+<LI><A HREF="../ultrix-3-1.DS3100/Uin.m3.html#IN_MULTICAST">unix/src/ultrix-3-1.DS3100/Uin.m3</A>
+<LI><A HREF="../ultrix-3-1.NEXT/Uin.m3.html#IN_MULTICAST">unix/src/ultrix-3-1.NEXT/Uin.m3</A>
+<LI><A HREF="../ultrix-3-1.SEQUENT/Uin.m3.html#IN_MULTICAST">unix/src/ultrix-3-1.SEQUENT/Uin.m3</A>
+<LI><A HREF="../ultrix-3-1.SUN3/Uin.m3.html#IN_MULTICAST">unix/src/ultrix-3-1.SUN3/Uin.m3</A>
+<LI><A HREF="../ultrix-3-1.SUN386/Uin.m3.html#IN_MULTICAST">unix/src/ultrix-3-1.SUN386/Uin.m3</A>
+<LI><A HREF="../ultrix-3-1.UMAX/Uin.m3.html#IN_MULTICAST">unix/src/ultrix-3-1.UMAX/Uin.m3</A>
+<LI><A HREF="../ultrix-3-1.VAX/Uin.m3.html#IN_MULTICAST">unix/src/ultrix-3-1.VAX/Uin.m3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x8">procedure Uin.IN_EXPERIMENTAL is in:
+</A><UL>
+<LI><A HREF="../aix-3-2/Uin.m3.html#IN_EXPERIMENTAL">unix/src/aix-3-2/Uin.m3</A>
+<LI><A HREF="../aix-ps2-1-2/Uin.m3.html#IN_EXPERIMENTAL">unix/src/aix-ps2-1-2/Uin.m3</A>
+<LI><A HREF="../freebsd-1/Uin.m3.html#IN_EXPERIMENTAL">unix/src/freebsd-1/Uin.m3</A>
+<LI><A HREF="../freebsd-2/Uin.m3.html#IN_EXPERIMENTAL">unix/src/freebsd-2/Uin.m3</A>
+<LI><A HREF="Uin.m3.html#IN_EXPERIMENTAL">unix/src/hpux-7-0/Uin.m3</A>
+<LI><A HREF="../ibm-4-3/Uin.m3.html#IN_EXPERIMENTAL">unix/src/ibm-4-3/Uin.m3</A>
+<LI><A HREF="../irix-5.2/Uin.m3.html#IN_EXPERIMENTAL">unix/src/irix-5.2/Uin.m3</A>
+<LI><A HREF="../linux/Uin.m3.html#IN_EXPERIMENTAL">unix/src/linux/Uin.m3</A>
+<LI><A HREF="../osf-1.ALPHA_OSF/Uin.m3.html#IN_EXPERIMENTAL">unix/src/osf-1.ALPHA_OSF/Uin.m3</A>
+<LI><A HREF="../osf-1.DS3100/Uin.m3.html#IN_EXPERIMENTAL">unix/src/osf-1.DS3100/Uin.m3</A>
+<LI><A HREF="../solaris-2-x/Uin.m3.html#IN_EXPERIMENTAL">unix/src/solaris-2-x/Uin.m3</A>
+<LI><A HREF="../sunos-4-x/Uin.m3.html#IN_EXPERIMENTAL">unix/src/sunos-4-x/Uin.m3</A>
+<LI><A HREF="../sysv-4.0/Uin.m3.html#IN_EXPERIMENTAL">unix/src/sysv-4.0/Uin.m3</A>
+<LI><A HREF="../ultrix-3-1.AP3000/Uin.m3.html#IN_EXPERIMENTAL">unix/src/ultrix-3-1.AP3000/Uin.m3</A>
+<LI><A HREF="../ultrix-3-1.ARM/Uin.m3.html#IN_EXPERIMENTAL">unix/src/ultrix-3-1.ARM/Uin.m3</A>
+<LI><A HREF="../ultrix-3-1.DS3100/Uin.m3.html#IN_EXPERIMENTAL">unix/src/ultrix-3-1.DS3100/Uin.m3</A>
+<LI><A HREF="../ultrix-3-1.NEXT/Uin.m3.html#IN_EXPERIMENTAL">unix/src/ultrix-3-1.NEXT/Uin.m3</A>
+<LI><A HREF="../ultrix-3-1.SEQUENT/Uin.m3.html#IN_EXPERIMENTAL">unix/src/ultrix-3-1.SEQUENT/Uin.m3</A>
+<LI><A HREF="../ultrix-3-1.SUN3/Uin.m3.html#IN_EXPERIMENTAL">unix/src/ultrix-3-1.SUN3/Uin.m3</A>
+<LI><A HREF="../ultrix-3-1.SUN386/Uin.m3.html#IN_EXPERIMENTAL">unix/src/ultrix-3-1.SUN386/Uin.m3</A>
+<LI><A HREF="../ultrix-3-1.UMAX/Uin.m3.html#IN_EXPERIMENTAL">unix/src/ultrix-3-1.UMAX/Uin.m3</A>
+<LI><A HREF="../ultrix-3-1.VAX/Uin.m3.html#IN_EXPERIMENTAL">unix/src/ultrix-3-1.VAX/Uin.m3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x9">procedure Uin.IN_BADCLASS is in:
+</A><UL>
+<LI><A HREF="../aix-3-2/Uin.m3.html#IN_BADCLASS">unix/src/aix-3-2/Uin.m3</A>
+<LI><A HREF="../aix-ps2-1-2/Uin.m3.html#IN_BADCLASS">unix/src/aix-ps2-1-2/Uin.m3</A>
+<LI><A HREF="../freebsd-1/Uin.m3.html#IN_BADCLASS">unix/src/freebsd-1/Uin.m3</A>
+<LI><A HREF="../freebsd-2/Uin.m3.html#IN_BADCLASS">unix/src/freebsd-2/Uin.m3</A>
+<LI><A HREF="Uin.m3.html#IN_BADCLASS">unix/src/hpux-7-0/Uin.m3</A>
+<LI><A HREF="../ibm-4-3/Uin.m3.html#IN_BADCLASS">unix/src/ibm-4-3/Uin.m3</A>
+<LI><A HREF="../irix-5.2/Uin.m3.html#IN_BADCLASS">unix/src/irix-5.2/Uin.m3</A>
+<LI><A HREF="../linux/Uin.m3.html#IN_BADCLASS">unix/src/linux/Uin.m3</A>
+<LI><A HREF="../osf-1.ALPHA_OSF/Uin.m3.html#IN_BADCLASS">unix/src/osf-1.ALPHA_OSF/Uin.m3</A>
+<LI><A HREF="../osf-1.DS3100/Uin.m3.html#IN_BADCLASS">unix/src/osf-1.DS3100/Uin.m3</A>
+<LI><A HREF="../solaris-2-x/Uin.m3.html#IN_BADCLASS">unix/src/solaris-2-x/Uin.m3</A>
+<LI><A HREF="../sunos-4-x/Uin.m3.html#IN_BADCLASS">unix/src/sunos-4-x/Uin.m3</A>
+<LI><A HREF="../sysv-4.0/Uin.m3.html#IN_BADCLASS">unix/src/sysv-4.0/Uin.m3</A>
+<LI><A HREF="../ultrix-3-1.AP3000/Uin.m3.html#IN_BADCLASS">unix/src/ultrix-3-1.AP3000/Uin.m3</A>
+<LI><A HREF="../ultrix-3-1.ARM/Uin.m3.html#IN_BADCLASS">unix/src/ultrix-3-1.ARM/Uin.m3</A>
+<LI><A HREF="../ultrix-3-1.DS3100/Uin.m3.html#IN_BADCLASS">unix/src/ultrix-3-1.DS3100/Uin.m3</A>
+<LI><A HREF="../ultrix-3-1.NEXT/Uin.m3.html#IN_BADCLASS">unix/src/ultrix-3-1.NEXT/Uin.m3</A>
+<LI><A HREF="../ultrix-3-1.SEQUENT/Uin.m3.html#IN_BADCLASS">unix/src/ultrix-3-1.SEQUENT/Uin.m3</A>
+<LI><A HREF="../ultrix-3-1.SUN3/Uin.m3.html#IN_BADCLASS">unix/src/ultrix-3-1.SUN3/Uin.m3</A>
+<LI><A HREF="../ultrix-3-1.SUN386/Uin.m3.html#IN_BADCLASS">unix/src/ultrix-3-1.SUN386/Uin.m3</A>
+<LI><A HREF="../ultrix-3-1.UMAX/Uin.m3.html#IN_BADCLASS">unix/src/ultrix-3-1.UMAX/Uin.m3</A>
+<LI><A HREF="../ultrix-3-1.VAX/Uin.m3.html#IN_BADCLASS">unix/src/ultrix-3-1.VAX/Uin.m3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x10">procedure Uin.IN_SET_LOOPBACK_ADDR is in:
+</A><UL>
+<LI><A HREF="../aix-3-2/Uin.m3.html#IN_SET_LOOPBACK_ADDR">unix/src/aix-3-2/Uin.m3</A>
+<LI><A HREF="../aix-ps2-1-2/Uin.m3.html#IN_SET_LOOPBACK_ADDR">unix/src/aix-ps2-1-2/Uin.m3</A>
+<LI><A HREF="../freebsd-1/Uin.m3.html#IN_SET_LOOPBACK_ADDR">unix/src/freebsd-1/Uin.m3</A>
+<LI><A HREF="../freebsd-2/Uin.m3.html#IN_SET_LOOPBACK_ADDR">unix/src/freebsd-2/Uin.m3</A>
+<LI><A HREF="Uin.m3.html#IN_SET_LOOPBACK_ADDR">unix/src/hpux-7-0/Uin.m3</A>
+<LI><A HREF="../ibm-4-3/Uin.m3.html#IN_SET_LOOPBACK_ADDR">unix/src/ibm-4-3/Uin.m3</A>
+<LI><A HREF="../irix-5.2/Uin.m3.html#IN_SET_LOOPBACK_ADDR">unix/src/irix-5.2/Uin.m3</A>
+<LI><A HREF="../linux/Uin.m3.html#IN_SET_LOOPBACK_ADDR">unix/src/linux/Uin.m3</A>
+<LI><A HREF="../osf-1.ALPHA_OSF/Uin.m3.html#IN_SET_LOOPBACK_ADDR">unix/src/osf-1.ALPHA_OSF/Uin.m3</A>
+<LI><A HREF="../osf-1.DS3100/Uin.m3.html#IN_SET_LOOPBACK_ADDR">unix/src/osf-1.DS3100/Uin.m3</A>
+<LI><A HREF="../solaris-2-x/Uin.m3.html#IN_SET_LOOPBACK_ADDR">unix/src/solaris-2-x/Uin.m3</A>
+<LI><A HREF="../sunos-4-x/Uin.m3.html#IN_SET_LOOPBACK_ADDR">unix/src/sunos-4-x/Uin.m3</A>
+<LI><A HREF="../sysv-4.0/Uin.m3.html#IN_SET_LOOPBACK_ADDR">unix/src/sysv-4.0/Uin.m3</A>
+<LI><A HREF="../ultrix-3-1.AP3000/Uin.m3.html#IN_SET_LOOPBACK_ADDR">unix/src/ultrix-3-1.AP3000/Uin.m3</A>
+<LI><A HREF="../ultrix-3-1.ARM/Uin.m3.html#IN_SET_LOOPBACK_ADDR">unix/src/ultrix-3-1.ARM/Uin.m3</A>
+<LI><A HREF="../ultrix-3-1.DS3100/Uin.m3.html#IN_SET_LOOPBACK_ADDR">unix/src/ultrix-3-1.DS3100/Uin.m3</A>
+<LI><A HREF="../ultrix-3-1.NEXT/Uin.m3.html#IN_SET_LOOPBACK_ADDR">unix/src/ultrix-3-1.NEXT/Uin.m3</A>
+<LI><A HREF="../ultrix-3-1.SEQUENT/Uin.m3.html#IN_SET_LOOPBACK_ADDR">unix/src/ultrix-3-1.SEQUENT/Uin.m3</A>
+<LI><A HREF="../ultrix-3-1.SUN3/Uin.m3.html#IN_SET_LOOPBACK_ADDR">unix/src/ultrix-3-1.SUN3/Uin.m3</A>
+<LI><A HREF="../ultrix-3-1.SUN386/Uin.m3.html#IN_SET_LOOPBACK_ADDR">unix/src/ultrix-3-1.SUN386/Uin.m3</A>
+<LI><A HREF="../ultrix-3-1.UMAX/Uin.m3.html#IN_SET_LOOPBACK_ADDR">unix/src/ultrix-3-1.UMAX/Uin.m3</A>
+<LI><A HREF="../ultrix-3-1.VAX/Uin.m3.html#IN_SET_LOOPBACK_ADDR">unix/src/ultrix-3-1.VAX/Uin.m3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x11">procedure Uin.ntohl is in:
+</A><UL>
+<LI><A HREF="../aix-3-2/Uin.m3.html#ntohl">unix/src/aix-3-2/Uin.m3</A>
+<LI><A HREF="../aix-ps2-1-2/Uin.m3.html#ntohl">unix/src/aix-ps2-1-2/Uin.m3</A>
+<LI><A HREF="../freebsd-1/Uin.m3.html#ntohl">unix/src/freebsd-1/Uin.m3</A>
+<LI><A HREF="../freebsd-2/Uin.m3.html#ntohl">unix/src/freebsd-2/Uin.m3</A>
+<LI><A HREF="Uin.m3.html#ntohl">unix/src/hpux-7-0/Uin.m3</A>
+<LI><A HREF="../ibm-4-3/Uin.m3.html#ntohl">unix/src/ibm-4-3/Uin.m3</A>
+<LI><A HREF="../irix-5.2/Uin.m3.html#ntohl">unix/src/irix-5.2/Uin.m3</A>
+<LI><A HREF="../linux/Uin.m3.html#ntohl">unix/src/linux/Uin.m3</A>
+<LI><A HREF="../osf-1.ALPHA_OSF/Uin.m3.html#ntohl">unix/src/osf-1.ALPHA_OSF/Uin.m3</A>
+<LI><A HREF="../osf-1.DS3100/Uin.m3.html#ntohl">unix/src/osf-1.DS3100/Uin.m3</A>
+<LI><A HREF="../solaris-2-x/Uin.m3.html#ntohl">unix/src/solaris-2-x/Uin.m3</A>
+<LI><A HREF="../sunos-4-x/Uin.m3.html#ntohl">unix/src/sunos-4-x/Uin.m3</A>
+<LI><A HREF="../sysv-4.0/Uin.m3.html#ntohl">unix/src/sysv-4.0/Uin.m3</A>
+<LI><A HREF="../ultrix-3-1.AP3000/Uin.m3.html#ntohl">unix/src/ultrix-3-1.AP3000/Uin.m3</A>
+<LI><A HREF="../ultrix-3-1.ARM/Uin.m3.html#ntohl">unix/src/ultrix-3-1.ARM/Uin.m3</A>
+<LI><A HREF="../ultrix-3-1.DS3100/Uin.m3.html#ntohl">unix/src/ultrix-3-1.DS3100/Uin.m3</A>
+<LI><A HREF="../ultrix-3-1.NEXT/Uin.m3.html#ntohl">unix/src/ultrix-3-1.NEXT/Uin.m3</A>
+<LI><A HREF="../ultrix-3-1.SEQUENT/Uin.m3.html#ntohl">unix/src/ultrix-3-1.SEQUENT/Uin.m3</A>
+<LI><A HREF="../ultrix-3-1.SUN3/Uin.m3.html#ntohl">unix/src/ultrix-3-1.SUN3/Uin.m3</A>
+<LI><A HREF="../ultrix-3-1.SUN386/Uin.m3.html#ntohl">unix/src/ultrix-3-1.SUN386/Uin.m3</A>
+<LI><A HREF="../ultrix-3-1.UMAX/Uin.m3.html#ntohl">unix/src/ultrix-3-1.UMAX/Uin.m3</A>
+<LI><A HREF="../ultrix-3-1.VAX/Uin.m3.html#ntohl">unix/src/ultrix-3-1.VAX/Uin.m3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x12">procedure Uin.ntohs is in:
+</A><UL>
+<LI><A HREF="../aix-3-2/Uin.m3.html#ntohs">unix/src/aix-3-2/Uin.m3</A>
+<LI><A HREF="../aix-ps2-1-2/Uin.m3.html#ntohs">unix/src/aix-ps2-1-2/Uin.m3</A>
+<LI><A HREF="../freebsd-1/Uin.m3.html#ntohs">unix/src/freebsd-1/Uin.m3</A>
+<LI><A HREF="../freebsd-2/Uin.m3.html#ntohs">unix/src/freebsd-2/Uin.m3</A>
+<LI><A HREF="Uin.m3.html#ntohs">unix/src/hpux-7-0/Uin.m3</A>
+<LI><A HREF="../ibm-4-3/Uin.m3.html#ntohs">unix/src/ibm-4-3/Uin.m3</A>
+<LI><A HREF="../irix-5.2/Uin.m3.html#ntohs">unix/src/irix-5.2/Uin.m3</A>
+<LI><A HREF="../linux/Uin.m3.html#ntohs">unix/src/linux/Uin.m3</A>
+<LI><A HREF="../osf-1.ALPHA_OSF/Uin.m3.html#ntohs">unix/src/osf-1.ALPHA_OSF/Uin.m3</A>
+<LI><A HREF="../osf-1.DS3100/Uin.m3.html#ntohs">unix/src/osf-1.DS3100/Uin.m3</A>
+<LI><A HREF="../solaris-2-x/Uin.m3.html#ntohs">unix/src/solaris-2-x/Uin.m3</A>
+<LI><A HREF="../sunos-4-x/Uin.m3.html#ntohs">unix/src/sunos-4-x/Uin.m3</A>
+<LI><A HREF="../sysv-4.0/Uin.m3.html#ntohs">unix/src/sysv-4.0/Uin.m3</A>
+<LI><A HREF="../ultrix-3-1.AP3000/Uin.m3.html#ntohs">unix/src/ultrix-3-1.AP3000/Uin.m3</A>
+<LI><A HREF="../ultrix-3-1.ARM/Uin.m3.html#ntohs">unix/src/ultrix-3-1.ARM/Uin.m3</A>
+<LI><A HREF="../ultrix-3-1.DS3100/Uin.m3.html#ntohs">unix/src/ultrix-3-1.DS3100/Uin.m3</A>
+<LI><A HREF="../ultrix-3-1.NEXT/Uin.m3.html#ntohs">unix/src/ultrix-3-1.NEXT/Uin.m3</A>
+<LI><A HREF="../ultrix-3-1.SEQUENT/Uin.m3.html#ntohs">unix/src/ultrix-3-1.SEQUENT/Uin.m3</A>
+<LI><A HREF="../ultrix-3-1.SUN3/Uin.m3.html#ntohs">unix/src/ultrix-3-1.SUN3/Uin.m3</A>
+<LI><A HREF="../ultrix-3-1.SUN386/Uin.m3.html#ntohs">unix/src/ultrix-3-1.SUN386/Uin.m3</A>
+<LI><A HREF="../ultrix-3-1.UMAX/Uin.m3.html#ntohs">unix/src/ultrix-3-1.UMAX/Uin.m3</A>
+<LI><A HREF="../ultrix-3-1.VAX/Uin.m3.html#ntohs">unix/src/ultrix-3-1.VAX/Uin.m3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x13">procedure Uin.htonl is in:
+</A><UL>
+<LI><A HREF="../aix-3-2/Uin.m3.html#htonl">unix/src/aix-3-2/Uin.m3</A>
+<LI><A HREF="../aix-ps2-1-2/Uin.m3.html#htonl">unix/src/aix-ps2-1-2/Uin.m3</A>
+<LI><A HREF="../freebsd-1/Uin.m3.html#htonl">unix/src/freebsd-1/Uin.m3</A>
+<LI><A HREF="../freebsd-2/Uin.m3.html#htonl">unix/src/freebsd-2/Uin.m3</A>
+<LI><A HREF="Uin.m3.html#htonl">unix/src/hpux-7-0/Uin.m3</A>
+<LI><A HREF="../ibm-4-3/Uin.m3.html#htonl">unix/src/ibm-4-3/Uin.m3</A>
+<LI><A HREF="../irix-5.2/Uin.m3.html#htonl">unix/src/irix-5.2/Uin.m3</A>
+<LI><A HREF="../linux/Uin.m3.html#htonl">unix/src/linux/Uin.m3</A>
+<LI><A HREF="../osf-1.ALPHA_OSF/Uin.m3.html#htonl">unix/src/osf-1.ALPHA_OSF/Uin.m3</A>
+<LI><A HREF="../osf-1.DS3100/Uin.m3.html#htonl">unix/src/osf-1.DS3100/Uin.m3</A>
+<LI><A HREF="../solaris-2-x/Uin.m3.html#htonl">unix/src/solaris-2-x/Uin.m3</A>
+<LI><A HREF="../sunos-4-x/Uin.m3.html#htonl">unix/src/sunos-4-x/Uin.m3</A>
+<LI><A HREF="../sysv-4.0/Uin.m3.html#htonl">unix/src/sysv-4.0/Uin.m3</A>
+<LI><A HREF="../ultrix-3-1.AP3000/Uin.m3.html#htonl">unix/src/ultrix-3-1.AP3000/Uin.m3</A>
+<LI><A HREF="../ultrix-3-1.ARM/Uin.m3.html#htonl">unix/src/ultrix-3-1.ARM/Uin.m3</A>
+<LI><A HREF="../ultrix-3-1.DS3100/Uin.m3.html#htonl">unix/src/ultrix-3-1.DS3100/Uin.m3</A>
+<LI><A HREF="../ultrix-3-1.NEXT/Uin.m3.html#htonl">unix/src/ultrix-3-1.NEXT/Uin.m3</A>
+<LI><A HREF="../ultrix-3-1.SEQUENT/Uin.m3.html#htonl">unix/src/ultrix-3-1.SEQUENT/Uin.m3</A>
+<LI><A HREF="../ultrix-3-1.SUN3/Uin.m3.html#htonl">unix/src/ultrix-3-1.SUN3/Uin.m3</A>
+<LI><A HREF="../ultrix-3-1.SUN386/Uin.m3.html#htonl">unix/src/ultrix-3-1.SUN386/Uin.m3</A>
+<LI><A HREF="../ultrix-3-1.UMAX/Uin.m3.html#htonl">unix/src/ultrix-3-1.UMAX/Uin.m3</A>
+<LI><A HREF="../ultrix-3-1.VAX/Uin.m3.html#htonl">unix/src/ultrix-3-1.VAX/Uin.m3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x14">procedure Uin.htons is in:
+</A><UL>
+<LI><A HREF="../aix-3-2/Uin.m3.html#htons">unix/src/aix-3-2/Uin.m3</A>
+<LI><A HREF="../aix-ps2-1-2/Uin.m3.html#htons">unix/src/aix-ps2-1-2/Uin.m3</A>
+<LI><A HREF="../freebsd-1/Uin.m3.html#htons">unix/src/freebsd-1/Uin.m3</A>
+<LI><A HREF="../freebsd-2/Uin.m3.html#htons">unix/src/freebsd-2/Uin.m3</A>
+<LI><A HREF="Uin.m3.html#htons">unix/src/hpux-7-0/Uin.m3</A>
+<LI><A HREF="../ibm-4-3/Uin.m3.html#htons">unix/src/ibm-4-3/Uin.m3</A>
+<LI><A HREF="../irix-5.2/Uin.m3.html#htons">unix/src/irix-5.2/Uin.m3</A>
+<LI><A HREF="../linux/Uin.m3.html#htons">unix/src/linux/Uin.m3</A>
+<LI><A HREF="../osf-1.ALPHA_OSF/Uin.m3.html#htons">unix/src/osf-1.ALPHA_OSF/Uin.m3</A>
+<LI><A HREF="../osf-1.DS3100/Uin.m3.html#htons">unix/src/osf-1.DS3100/Uin.m3</A>
+<LI><A HREF="../solaris-2-x/Uin.m3.html#htons">unix/src/solaris-2-x/Uin.m3</A>
+<LI><A HREF="../sunos-4-x/Uin.m3.html#htons">unix/src/sunos-4-x/Uin.m3</A>
+<LI><A HREF="../sysv-4.0/Uin.m3.html#htons">unix/src/sysv-4.0/Uin.m3</A>
+<LI><A HREF="../ultrix-3-1.AP3000/Uin.m3.html#htons">unix/src/ultrix-3-1.AP3000/Uin.m3</A>
+<LI><A HREF="../ultrix-3-1.ARM/Uin.m3.html#htons">unix/src/ultrix-3-1.ARM/Uin.m3</A>
+<LI><A HREF="../ultrix-3-1.DS3100/Uin.m3.html#htons">unix/src/ultrix-3-1.DS3100/Uin.m3</A>
+<LI><A HREF="../ultrix-3-1.NEXT/Uin.m3.html#htons">unix/src/ultrix-3-1.NEXT/Uin.m3</A>
+<LI><A HREF="../ultrix-3-1.SEQUENT/Uin.m3.html#htons">unix/src/ultrix-3-1.SEQUENT/Uin.m3</A>
+<LI><A HREF="../ultrix-3-1.SUN3/Uin.m3.html#htons">unix/src/ultrix-3-1.SUN3/Uin.m3</A>
+<LI><A HREF="../ultrix-3-1.SUN386/Uin.m3.html#htons">unix/src/ultrix-3-1.SUN386/Uin.m3</A>
+<LI><A HREF="../ultrix-3-1.UMAX/Uin.m3.html#htons">unix/src/ultrix-3-1.UMAX/Uin.m3</A>
+<LI><A HREF="../ultrix-3-1.VAX/Uin.m3.html#htons">unix/src/ultrix-3-1.VAX/Uin.m3</A>
+</UL>
+<P>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

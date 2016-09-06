@@ -1,0 +1,137 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: unix/src/irix-5.2/Umman.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>unix/src/irix-5.2/Umman.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM>                                                                           </EM></BLOCKQUOTE><PRE>
+
+INTERFACE <interface>Umman</interface>;
+
+FROM <A HREF="../../../word/src/Word.i3.html">Word</A> IMPORT Or;
+FROM <A HREF="../../../C/src/Common/Ctypes.i3.html">Ctypes</A> IMPORT int, void_star;
+FROM <A HREF="#x1">Utypes</A> IMPORT size_t, off_t;
+</PRE>** sys/mman.h **
+
+<P> mmap flags and protections 
+
+<P><PRE>CONST
+  MAP_SHARED	 = 16_1;	(* share changes *)
+  MAP_PRIVATE	 = 16_2;	(* changes are private *)
+  MAP_TYPE	 = 16_f;	(* mask for mapping type *)
+
+  MAP_FIXED	 = 16_010;	(* interpret addr exactly *)
+  MAP_RENAME	 = 16_020;	(* assign page to file *)
+  MAP_AUTOGROW	 = 16_040;	(* file grows with store access *)
+  MAP_LOCAL	 = 16_080;	(* separate copies made on fork/sproc *)
+  MAP_AUTORESRV	 = 16_100;	(* logical swap reserved on demand *)
+
+  PROT_NONE	 = 16_0;	(* page can not be accessed *)
+  PROT_READ	 = 16_1;	(* page can be read *)
+  PROT_WRITE	 = 16_2;	(* page can be written *)
+  PROT_EXECUTE	 = 16_4;	(* page can be executed *)
+  PROT_EXEC	 = 16_4;	(* SVR4 SVID name for PROT_EXECUTE *)
+
+  PROC_TEXT	 = Or(PROT_EXEC, PROT_READ);
+  PROC_DATA	 = Or(PROT_READ, PROT_WRITE);
+  SHARED           = 16_10;
+  PRIVATE          = 16_20;
+</PRE>	msync flags
+
+  <PRE>MS_SYNC	 = 16_0;	(* wait for msync *)
+  MS_ASYNC	 = 16_1;	(* return immediately *)
+  MS_INVALIDATE	 = 16_2;	(* invalidate mappings *)
+</PRE>	advice to madvise
+
+  <PRE>MADV_NORMAL	 = 0;		(* no further special treatment *)
+  MADV_RANDOM	 = 1;		(* expect random page references *)
+  MADV_SEQUENTIAL = 2;		(* expect sequential page references *)
+  MADV_WILLNEED	 = 3;		(* will need these pages *)
+  MADV_DONTNEED	 = 4;		(* don't need these pages *)
+</PRE> flags to memcntl 
+  <PRE>MC_SYNC          = 1;               (* sync with backing store *)
+  MC_LOCK          = 2;               (* lock pages in memory *)
+  MC_UNLOCK        = 3;               (* unlock pages from memory *)
+  MC_ADVISE        = 4;               (* give advice to management *)
+  MC_LOCKAS        = 5;               (* lock address space in memory *)
+  MC_UNLOCKAS      = 6;               (* unlock address space from memory *)
+</PRE> flags to mlockall 
+  <PRE>MCL_CURRENT      = 16_1;             (* lock current mappings *)
+  MCL_FUTURE       = 16_2;             (* lock future mappings *)
+
+&lt;*EXTERNAL*&gt;
+PROCEDURE mmap (addr: void_star; len: size_t; prot,flags,fd: int; off: off_t)
+  : void_star;
+
+&lt;*EXTERNAL*&gt;
+PROCEDURE msync (addr: void_star; len: size_t; flags: int): int;
+
+&lt;*EXTERNAL*&gt;
+PROCEDURE munmap (addr: void_star; len: size_t): int;
+
+&lt;*EXTERNAL*&gt;
+PROCEDURE madvise (addr: void_star; len: size_t; behav: int): int;
+
+&lt;*EXTERNAL*&gt;
+PROCEDURE mprotect (addr: void_star; len: size_t; prot: int): int;
+
+END Umman.
+</PRE>
+</inInterface>
+<HR>
+<A NAME="x1">interface Utypes is in:
+</A><UL>
+<LI><A HREF="../aix-3-2/Utypes.i3.html#0TOP0">unix/src/aix-3-2/Utypes.i3</A>
+<LI><A HREF="../aix-ps2-1-2/Utypes.i3.html#0TOP0">unix/src/aix-ps2-1-2/Utypes.i3</A>
+<LI><A HREF="../freebsd-1/Utypes.i3.html#0TOP0">unix/src/freebsd-1/Utypes.i3</A>
+<LI><A HREF="../freebsd-2/Utypes.i3.html#0TOP0">unix/src/freebsd-2/Utypes.i3</A>
+<LI><A HREF="../hpux-7-0/Utypes.i3.html#0TOP0">unix/src/hpux-7-0/Utypes.i3</A>
+<LI><A HREF="../ibm-4-3/Utypes.i3.html#0TOP0">unix/src/ibm-4-3/Utypes.i3</A>
+<LI><A HREF="Utypes.i3.html#0TOP0">unix/src/irix-5.2/Utypes.i3</A>
+<LI><A HREF="../linux/Utypes.i3.html#0TOP0">unix/src/linux/Utypes.i3</A>
+<LI><A HREF="../osf-1.ALPHA_OSF/Utypes.i3.html#0TOP0">unix/src/osf-1.ALPHA_OSF/Utypes.i3</A>
+<LI><A HREF="../osf-1.DS3100/Utypes.i3.html#0TOP0">unix/src/osf-1.DS3100/Utypes.i3</A>
+<LI><A HREF="../solaris-2-x/Utypes.i3.html#0TOP0">unix/src/solaris-2-x/Utypes.i3</A>
+<LI><A HREF="../sunos-4-x/Utypes.i3.html#0TOP0">unix/src/sunos-4-x/Utypes.i3</A>
+<LI><A HREF="../sysv-4.0/Utypes.i3.html#0TOP0">unix/src/sysv-4.0/Utypes.i3</A>
+<LI><A HREF="../ultrix-3-1.AP3000/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.AP3000/Utypes.i3</A>
+<LI><A HREF="../ultrix-3-1.ARM/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.ARM/Utypes.i3</A>
+<LI><A HREF="../ultrix-3-1.DS3100/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.DS3100/Utypes.i3</A>
+<LI><A HREF="../ultrix-3-1.NEXT/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.NEXT/Utypes.i3</A>
+<LI><A HREF="../ultrix-3-1.SEQUENT/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.SEQUENT/Utypes.i3</A>
+<LI><A HREF="../ultrix-3-1.SUN3/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.SUN3/Utypes.i3</A>
+<LI><A HREF="../ultrix-3-1.SUN386/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.SUN386/Utypes.i3</A>
+<LI><A HREF="../ultrix-3-1.UMAX/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.UMAX/Utypes.i3</A>
+<LI><A HREF="../ultrix-3-1.VAX/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.VAX/Utypes.i3</A>
+</UL>
+<P>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

@@ -1,0 +1,15 @@
+
+MODULE Main;
+
+IMPORT Text, Convert;
+
+PROCEDURE Int (n: INTEGER;  base := 10): Text.T =
+  VAR chars : ARRAY [0 .. BITSIZE (INTEGER) + 4] OF CHAR;   used: INTEGER;
+  BEGIN
+    used := Convert.FromInt (chars, n, base, FALSE);
+    RETURN Text.FromStr (SUBARRAY (chars, 0, used));
+  END Int;
+
+BEGIN
+  EVAL Int (10);
+END Main.

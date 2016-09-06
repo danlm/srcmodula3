@@ -1,0 +1,255 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: unix/src/ibm-4-3/Umsg.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>unix/src/ibm-4-3/Umsg.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+
+INTERFACE <interface><A HREF="#x1">Umsg</A></interface>;
+
+FROM <A HREF="../../../C/src/Common/Ctypes.i3.html">Ctypes</A> IMPORT char, short, unsigned_short, long, int;
+FROM <A HREF="#x2">Utypes</A> IMPORT time_t, key_t;
+FROM <A HREF="#x3">Uipc</A>   IMPORT struct_ipc_perm;
+</PRE>** &lt;sys/msg.h&gt; **
+
+<P> IPC Message Facility. 
+
+<P><PRE>CONST
+
+  PZERO = 25;                     (* I got this value from param.h; em *)
+  PMSG = (PZERO + 2); 		  (* message facility sleep priority *)
+
+  (* Permission Definitions. *)
+
+  MSG_R = 8_0400;       (* read permission *)
+  MSG_W = 8_0200;       (* write permission *)
+
+  (* ipc_perm Mode Definitions. *)
+
+  MSG_RWAIT = 8_01000;          (* a reader is waiting for a message *)
+  MSG_WWAIT = 8_02000;          (* a writer is waiting to send *)
+  MSG_LCK   = 8_010000;         (* message queue locked *)
+  MSG_WANT  = 8_020000;         (* lock wanted *)
+</PRE><P>
+ * The following lock routines are required for  message queues because
+ * in the middle of list manipulation, copyin()/copyout() are called.  
+ * An implicit side effect of copyin/copyout are possible page faults on the
+ * user buffers being accessed.  Page faults can cause the process to sleep, 
+ * thereby causing a competing process to startup. -- depp
+ *
+ 
+
+<P>* actually, theses macros reference sleep, panic, wakeup, which I 
+    cannot find; therefore their implementations are buggy - em *
+<PRE>PROCEDURE <A HREF="#x4">MSG_LOCK</A> (x: UNTRACED REF struct_msqid_ds);
+PROCEDURE <A HREF="#x5">MSG_UNLOCK</A> (x: UNTRACED REF struct_msqid_ds);
+
+CONST
+  (* Message Operation Flags. *)
+
+  MSG_NOERROR = 8_010000;               (* no error if big message *)
+
+  (* Sizing constants *)
+
+   MSGMAP  = 100;
+   MSGMAX  = 8192;
+   MSGMNB  = 16384;
+   MSGMNI  = 50;
+   MSGSSZ  = 8;
+   MSGTQL  = 40;
+   MSGSEG  = 1024;
+</PRE><P>
+**      There is one msg queue id data structure for each q in the system.
+
+
+<P><PRE>TYPE
+  struct_msqid_ds = RECORD
+        msg_perm:   struct_ipc_perm;  (* operation permission struct *)
+        msg_first:  struct_msg_star;  (* ptr to first message on q *)
+        msg_last:   struct_msg_star;  (* ptr to last message on q *)
+        msg_cbytes: unsigned_short;   (* current # bytes on q *)
+        msg_qnum:   unsigned_short;   (* # of messages on q *)
+        msg_qbytes: unsigned_short;   (* max # of bytes on q *)
+        msg_lspid:  unsigned_short;   (* pid of last msgsnd *)
+        msg_lrpid:  unsigned_short;   (* pid of last msgrcv *)
+        msg_stime:  time_t;           (* last msgsnd time *)
+        msg_rtime:  time_t;           (* last msgrcv time *)
+        msg_ctime:  time_t;           (* last change time *)
+    END;
+</PRE><P>
+**      There is one msg structure for each message that may be in the system.
+
+
+<P><PRE>TYPE
+  struct_msg = RECORD
+      msg_next: UNTRACED REF struct_msg;    (* ptr to next message on q *)
+      msg_type: long;                       (* message type *)
+      msg_ts:   short;                      (* message text size *)
+      msg_spot: short;                      (* message text map address *)
+    END;
+  struct_msg_star = UNTRACED REF struct_msg;
+</PRE><P>
+**      User message buffer template for msgsnd and msgrecv system calls.
+
+
+<P>  <PRE>struct_msgbuf = RECORD
+      mtype: long;                          (* message type *)
+      mtext: ARRAY [0..0] OF char;          (* message text *)
+    END;
+</PRE><BLOCKQUOTE><EM><P>
+**      Message information structure.
+</EM></BLOCKQUOTE><PRE>
+
+  struct_msginfo = RECORD
+      msgmap: int;      (* # of entries in msg map *)
+      msgmax: int;      (* max message size *)
+      msgmnb: int;      (* max # bytes on queue *)
+      msgmni: int;      (* # of message queue identifiers *)
+      msgssz: int;      (* msg segment size (should be word size multiple) *)
+      msgtql: int;      (* # of system message headers *)
+      msgwnt: int;      (* # of processes waiting for free map entries *)
+      msgseg: unsigned_short;      (* # of msg segments (MUST BE &lt; 32768) *)
+   END;
+</PRE>** msgctl(2) - message control operations **
+
+<P><PRE>&lt;*EXTERNAL*&gt; PROCEDURE msgctl (msqid, cmd: int; buf: struct_msqid_ds): int;
+</PRE>** msgget(2) - get message queue **
+
+<P><PRE>&lt;*EXTERNAL*&gt; PROCEDURE msgget (key: key_t; msgflg: int): int;
+</PRE>** msgsnd(2), msgrcv(2) - message operations, msgsnd and msgrcv **
+
+<P><PRE>&lt;*EXTERNAL*&gt; PROCEDURE msgsnd (msqid: int; msgp: UNTRACED REF struct_msgbuf;
+                               msgsz, msgflg: int): int;
+
+&lt;*EXTERNAL*&gt; PROCEDURE msgrcv (msqid: int; msgp: UNTRACED REF struct_msgbuf;
+                               msgsz: int; msgtyp: long; msgflg: int): int;
+
+END Umsg.
+</PRE>
+</inInterface>
+<HR>
+<A NAME="x1">Umsg's implementation  is in:
+</A><UL>
+<LI><A HREF="../aix-3-2/Umsg.m3.html#0TOP0">unix/src/aix-3-2/Umsg.m3</A>
+<LI><A HREF="../aix-ps2-1-2/Umsg.m3.html#0TOP0">unix/src/aix-ps2-1-2/Umsg.m3</A>
+<LI><A HREF="../freebsd-1/Umsg.m3.html#0TOP0">unix/src/freebsd-1/Umsg.m3</A>
+<LI><A HREF="../freebsd-2/Umsg.m3.html#0TOP0">unix/src/freebsd-2/Umsg.m3</A>
+<LI><A HREF="Umsg.m3.html#0TOP0">unix/src/ibm-4-3/Umsg.m3</A>
+<LI><A HREF="../irix-5.2/Umsg.m3.html#0TOP0">unix/src/irix-5.2/Umsg.m3</A>
+<LI><A HREF="../linux/Umsg.m3.html#0TOP0">unix/src/linux/Umsg.m3</A>
+<LI><A HREF="../osf-1.generic/Umsg.m3.html#0TOP0">unix/src/osf-1.generic/Umsg.m3</A>
+<LI><A HREF="../solaris-2-x/Umsg.m3.html#0TOP0">unix/src/solaris-2-x/Umsg.m3</A>
+<LI><A HREF="../sunos-4-x/Umsg.m3.html#0TOP0">unix/src/sunos-4-x/Umsg.m3</A>
+<LI><A HREF="../sysv-4.0/Umsg.m3.html#0TOP0">unix/src/sysv-4.0/Umsg.m3</A>
+<LI><A HREF="../ultrix-3-1.generic/Umsg.m3.html#0TOP0">unix/src/ultrix-3-1.generic/Umsg.m3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x2">interface Utypes is in:
+</A><UL>
+<LI><A HREF="../aix-3-2/Utypes.i3.html#0TOP0">unix/src/aix-3-2/Utypes.i3</A>
+<LI><A HREF="../aix-ps2-1-2/Utypes.i3.html#0TOP0">unix/src/aix-ps2-1-2/Utypes.i3</A>
+<LI><A HREF="../freebsd-1/Utypes.i3.html#0TOP0">unix/src/freebsd-1/Utypes.i3</A>
+<LI><A HREF="../freebsd-2/Utypes.i3.html#0TOP0">unix/src/freebsd-2/Utypes.i3</A>
+<LI><A HREF="../hpux-7-0/Utypes.i3.html#0TOP0">unix/src/hpux-7-0/Utypes.i3</A>
+<LI><A HREF="Utypes.i3.html#0TOP0">unix/src/ibm-4-3/Utypes.i3</A>
+<LI><A HREF="../irix-5.2/Utypes.i3.html#0TOP0">unix/src/irix-5.2/Utypes.i3</A>
+<LI><A HREF="../linux/Utypes.i3.html#0TOP0">unix/src/linux/Utypes.i3</A>
+<LI><A HREF="../osf-1.ALPHA_OSF/Utypes.i3.html#0TOP0">unix/src/osf-1.ALPHA_OSF/Utypes.i3</A>
+<LI><A HREF="../osf-1.DS3100/Utypes.i3.html#0TOP0">unix/src/osf-1.DS3100/Utypes.i3</A>
+<LI><A HREF="../solaris-2-x/Utypes.i3.html#0TOP0">unix/src/solaris-2-x/Utypes.i3</A>
+<LI><A HREF="../sunos-4-x/Utypes.i3.html#0TOP0">unix/src/sunos-4-x/Utypes.i3</A>
+<LI><A HREF="../sysv-4.0/Utypes.i3.html#0TOP0">unix/src/sysv-4.0/Utypes.i3</A>
+<LI><A HREF="../ultrix-3-1.AP3000/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.AP3000/Utypes.i3</A>
+<LI><A HREF="../ultrix-3-1.ARM/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.ARM/Utypes.i3</A>
+<LI><A HREF="../ultrix-3-1.DS3100/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.DS3100/Utypes.i3</A>
+<LI><A HREF="../ultrix-3-1.NEXT/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.NEXT/Utypes.i3</A>
+<LI><A HREF="../ultrix-3-1.SEQUENT/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.SEQUENT/Utypes.i3</A>
+<LI><A HREF="../ultrix-3-1.SUN3/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.SUN3/Utypes.i3</A>
+<LI><A HREF="../ultrix-3-1.SUN386/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.SUN386/Utypes.i3</A>
+<LI><A HREF="../ultrix-3-1.UMAX/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.UMAX/Utypes.i3</A>
+<LI><A HREF="../ultrix-3-1.VAX/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.VAX/Utypes.i3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x3">interface Uipc is in:
+</A><UL>
+<LI><A HREF="../aix-3-2/Uipc.i3.html#0TOP0">unix/src/aix-3-2/Uipc.i3</A>
+<LI><A HREF="../aix-ps2-1-2/Uipc.i3.html#0TOP0">unix/src/aix-ps2-1-2/Uipc.i3</A>
+<LI><A HREF="../freebsd-1/Uipc.i3.html#0TOP0">unix/src/freebsd-1/Uipc.i3</A>
+<LI><A HREF="../freebsd-2/Uipc.i3.html#0TOP0">unix/src/freebsd-2/Uipc.i3</A>
+<LI><A HREF="../hpux-7-0/Uipc.i3.html#0TOP0">unix/src/hpux-7-0/Uipc.i3</A>
+<LI><A HREF="Uipc.i3.html#0TOP0">unix/src/ibm-4-3/Uipc.i3</A>
+<LI><A HREF="../irix-5.2/Uipc.i3.html#0TOP0">unix/src/irix-5.2/Uipc.i3</A>
+<LI><A HREF="../linux/Uipc.i3.html#0TOP0">unix/src/linux/Uipc.i3</A>
+<LI><A HREF="../osf-1.generic/Uipc.i3.html#0TOP0">unix/src/osf-1.generic/Uipc.i3</A>
+<LI><A HREF="../solaris-2-x/Uipc.i3.html#0TOP0">unix/src/solaris-2-x/Uipc.i3</A>
+<LI><A HREF="../sunos-4-x/Uipc.i3.html#0TOP0">unix/src/sunos-4-x/Uipc.i3</A>
+<LI><A HREF="../sysv-4.0/Uipc.i3.html#0TOP0">unix/src/sysv-4.0/Uipc.i3</A>
+<LI><A HREF="../ultrix-3-1.generic/Uipc.i3.html#0TOP0">unix/src/ultrix-3-1.generic/Uipc.i3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x4">procedure Umsg.MSG_LOCK is in:
+</A><UL>
+<LI><A HREF="../aix-3-2/Umsg.m3.html#MSG_LOCK">unix/src/aix-3-2/Umsg.m3</A>
+<LI><A HREF="../aix-ps2-1-2/Umsg.m3.html#MSG_LOCK">unix/src/aix-ps2-1-2/Umsg.m3</A>
+<LI><A HREF="../freebsd-1/Umsg.m3.html#MSG_LOCK">unix/src/freebsd-1/Umsg.m3</A>
+<LI><A HREF="../freebsd-2/Umsg.m3.html#MSG_LOCK">unix/src/freebsd-2/Umsg.m3</A>
+<LI><A HREF="Umsg.m3.html#MSG_LOCK">unix/src/ibm-4-3/Umsg.m3</A>
+<LI><A HREF="../irix-5.2/Umsg.m3.html#MSG_LOCK">unix/src/irix-5.2/Umsg.m3</A>
+<LI><A HREF="../linux/Umsg.m3.html#MSG_LOCK">unix/src/linux/Umsg.m3</A>
+<LI><A HREF="../osf-1.generic/Umsg.m3.html#MSG_LOCK">unix/src/osf-1.generic/Umsg.m3</A>
+<LI><A HREF="../solaris-2-x/Umsg.m3.html#MSG_LOCK">unix/src/solaris-2-x/Umsg.m3</A>
+<LI><A HREF="../sunos-4-x/Umsg.m3.html#MSG_LOCK">unix/src/sunos-4-x/Umsg.m3</A>
+<LI><A HREF="../sysv-4.0/Umsg.m3.html#MSG_LOCK">unix/src/sysv-4.0/Umsg.m3</A>
+<LI><A HREF="../ultrix-3-1.generic/Umsg.m3.html#MSG_LOCK">unix/src/ultrix-3-1.generic/Umsg.m3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x5">procedure Umsg.MSG_UNLOCK is in:
+</A><UL>
+<LI><A HREF="../aix-3-2/Umsg.m3.html#MSG_UNLOCK">unix/src/aix-3-2/Umsg.m3</A>
+<LI><A HREF="../aix-ps2-1-2/Umsg.m3.html#MSG_UNLOCK">unix/src/aix-ps2-1-2/Umsg.m3</A>
+<LI><A HREF="../freebsd-1/Umsg.m3.html#MSG_UNLOCK">unix/src/freebsd-1/Umsg.m3</A>
+<LI><A HREF="../freebsd-2/Umsg.m3.html#MSG_UNLOCK">unix/src/freebsd-2/Umsg.m3</A>
+<LI><A HREF="Umsg.m3.html#MSG_UNLOCK">unix/src/ibm-4-3/Umsg.m3</A>
+<LI><A HREF="../irix-5.2/Umsg.m3.html#MSG_UNLOCK">unix/src/irix-5.2/Umsg.m3</A>
+<LI><A HREF="../linux/Umsg.m3.html#MSG_UNLOCK">unix/src/linux/Umsg.m3</A>
+<LI><A HREF="../osf-1.generic/Umsg.m3.html#MSG_UNLOCK">unix/src/osf-1.generic/Umsg.m3</A>
+<LI><A HREF="../solaris-2-x/Umsg.m3.html#MSG_UNLOCK">unix/src/solaris-2-x/Umsg.m3</A>
+<LI><A HREF="../sunos-4-x/Umsg.m3.html#MSG_UNLOCK">unix/src/sunos-4-x/Umsg.m3</A>
+<LI><A HREF="../sysv-4.0/Umsg.m3.html#MSG_UNLOCK">unix/src/sysv-4.0/Umsg.m3</A>
+<LI><A HREF="../ultrix-3-1.generic/Umsg.m3.html#MSG_UNLOCK">unix/src/ultrix-3-1.generic/Umsg.m3</A>
+</UL>
+<P>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

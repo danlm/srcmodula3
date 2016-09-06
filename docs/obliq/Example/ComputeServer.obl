@@ -1,0 +1,18 @@
+(* A compute server that runs a client procedure of no arguments via the rexec 
+   method. For contrast, lexec is a field containing a similar procedure. 
+   Client that invoke rexec(p) execute p at the server site, while clients that 
+   invoke lexec(p) execute p at the client site. *)
+
+module ComputeServer;
+
+var q = proc() end; (* To spy on clients. *)
+
+let computeServer =
+  net_export("ObliqComputeServer", "",
+    {protected,
+     rexec => 
+	meth(s,p) q:=p; p() end,
+     lexec => 
+	proc(p) q:=p; p() end
+    }
+  );

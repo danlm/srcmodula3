@@ -1,0 +1,74 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: ui/src/split/Filter.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>ui/src/split/Filter.m3</H2></A><HR>
+<inModule>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM>                                                                           </EM></BLOCKQUOTE><PRE>
+</PRE> by Steve Glassman, Mark Manasse and Greg Nelson           
+<PRE>&lt;*PRAGMA LL*&gt;
+
+MODULE <module><implements><A HREF="Filter.i3.html">Filter</A></implements></module>;
+
+IMPORT <A HREF="../vbt/VBT.i3.html">VBT</A>, <A HREF="FilterClass.i3.html">FilterClass</A>, <A HREF="../vbt/VBTClass.i3.html">VBTClass</A>;
+
+PROCEDURE <A NAME="Child"><procedure>Child</procedure></A>(v: T): VBT.T RAISES {} =
+  BEGIN
+    RETURN v.ch
+  END Child;
+
+PROCEDURE <A NAME="Replace"><procedure>Replace</procedure></A>(v: T; new: VBT.T): VBT.T =
+  VAR res := v.ch;
+  BEGIN
+    IF new # NIL AND new.parent # NIL THEN Crash() END;
+    IF new = NIL AND res = NIL THEN RETURN NIL END;
+    IF new # NIL THEN
+      IF new.st # v.st THEN VBTClass.Rescreen(new, v.st) END
+    END;
+    v.replace(res, new);
+    VBT.Mark(v);
+    VBT.NewShape(v);
+    RETURN res
+  END Replace;
+
+EXCEPTION FatalError;
+
+PROCEDURE <A NAME="Crash"><procedure>Crash</procedure></A> () =
+  &lt;* FATAL FatalError *&gt;
+  BEGIN
+    RAISE FatalError;
+  END Crash;
+
+BEGIN END Filter.
+</PRE>
+</inModule>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

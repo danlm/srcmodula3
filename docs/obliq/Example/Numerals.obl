@@ -1,0 +1,44 @@
+(* The amazing purely-object-oriented natural numbers. *)
+
+module Numerals;
+
+type Nat = 
+  Self(X) {succ: ()=>X, case: All(Z) (Z,(X)->Z)->Z};
+
+let zero : Nat =
+  {case =>
+     proc(z,s) z() end,
+   succ =>
+     meth(x)
+       let o = clone(x); o.case := proc(z,s) s(x) end; o
+     end
+  };
+
+(* That's it, now some utilities. *)
+
+let succ : (Nat)->Nat = 
+  proc(n) n.succ end;
+
+let iszero : (Nat)->Bool = 
+  proc(n) 
+    (n.case) (proc() true end, proc(p) false end) 
+  end;
+
+let pred : (Nat)->Nat = 
+  proc(n) 
+    (n.case) (proc() zero end, proc(p) p end) 
+  end;
+
+let rec eq : (Nat,Nat)->Bool = 
+  proc(n,m) 
+    if iszero(n) andif iszero(m) then true
+    elsif iszero(n) orif iszero(m) then false
+    else pred(n) eq pred(m)
+    end
+  end;
+
+let one : Nat = succ(zero);
+let two : Nat = succ(one);
+
+end module;
+

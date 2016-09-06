@@ -1,0 +1,51 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: Resources</TITLE>
+</HEAD>
+<BODY BGCOLOR="#ffffff" VLINK="#006633">
+
+<H2>Resources</H2>
+<P>
+
+The following procedures support the inclusion of arbitrary data,
+known as a resource, in a program.
+<P>
+
+<B> resource(file) </B>  
+          is shorthand for <TT>resource_named(file,file)</TT>.
+<P>
+
+<B> resource_named(rd,file) </B>  
+          declares that <TT>file</TT> is a resource file.  It will be
+          accessible via the reader <TT>rd</TT> if a bundle is built.
+<P>
+
+<B> bundle(m) </B>  
+          declares that the module <TT>m</TT> is to be built as a bundle
+          of the files specified by the prior calls to <TT>resource</TT> and
+          <TT>resource_named</TT>.
+<P>
+
+For a description of how to access resources from your running
+program, see the
+<A HREF="../../../m3sources/html/bundleintf/src/Bundle.i3.html">Bundle</A>
+and 
+<A HREF="../../../m3sources/html/vbtkitutils/src/Rsrc.i3.html">Rsrc</A>
+interfaces.
+<P>
+
+<HR>
+<A HREF="../home.html">[Modula-3 home page]</A>
+<P>
+<A HREF="mailto:m3-request@src.dec.com">
+<ADDRESS>m3-request@src.dec.com</ADDRESS></A>
+<PRE>
+Last modified on Thu Jan  4 11:07:50 PST 1996 by heydon 
+     modified on Thu Jun  1 08:19:22 PDT 1995 by kalsow 
+     modified on Thu Jan  7 18:40:57 PST 1993 by muller 
+</PRE>
+
+Copyright (C) 1992, 1996, Digital Equipment Corporation. All rights reserved.<BR>
+See the <A HREF="http://www.research.digital.com/SRC/m3sources/html/COPYRIGHT.html">COPYRIGHT</A> for a full description.
+</BODY>
+</HTML>

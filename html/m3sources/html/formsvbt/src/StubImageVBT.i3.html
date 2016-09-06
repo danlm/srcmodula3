@@ -1,0 +1,54 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: formsvbt/src/StubImageVBT.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>formsvbt/src/StubImageVBT.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+
+INTERFACE <interface><A HREF="StubImageVBT.m3.html">StubImageVBT</A></interface>;
+
+IMPORT <A HREF="../../ui/src/vbt/PaintOp.i3.html">PaintOp</A>, <A HREF="../../ui/src/vbt/VBT.i3.html">VBT</A>;
+IMPORT <A HREF="StubImages.i3.html">StubImages</A> AS Images;
+
+TYPE <A HREF="StubImageVBT.m3.html#T">T</A> &lt;: Public;
+
+TYPE Public = VBT.Leaf OBJECT
+  METHODS
+    init(pm: Images.T; bg: PaintOp.T): T;
+    put(pm: Images.T; bg: PaintOp.T);
+    get(): Images.T;
+  END;
+
+END StubImageVBT.
+</PRE>
+</inInterface>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

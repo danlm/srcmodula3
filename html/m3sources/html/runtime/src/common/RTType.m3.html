@@ -1,0 +1,827 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: runtime/src/common/RTType.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>runtime/src/common/RTType.m3</H2></A><HR>
+<inModule>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+
+UNSAFE MODULE <module>RTType</module> EXPORTS <A HREF="RTType.i3.html"><implements>RTType</A></implements>, <A HREF="RTTypeSRC.i3.html"><implements>RTTypeSRC</A></implements>;
+
+IMPORT <A HREF="RT0.i3.html">RT0</A>, <A HREF="#x1">RT0u</A>, <A HREF="RTMisc.i3.html">RTMisc</A>, <A HREF="RTModule.i3.html">RTModule</A>, <A HREF="RTHeapRep.i3.html">RTHeapRep</A>, <A HREF="../../../C/src/Common/M3toC.i3.html">M3toC</A>;
+IMPORT <A HREF="../../../C/src/Common/Ctypes.i3.html">Ctypes</A>, <A HREF="../../../C/src/Common/Cstdlib.i3.html">Cstdlib</A>, <A HREF="#x2">Cstring</A>, <A HREF="../../../word/src/Word.i3.html">Word</A>;
+FROM <A HREF="RTIO.i3.html">RTIO</A> IMPORT PutInt, PutString, PutText, PutAddr, PutHex, Flush;
+
+TYPE
+ TypePtr = UNTRACED REF RT0.TypeDefn;
+</PRE>------------------------------------------------ user callable routines ---
+
+<P><PRE>PROCEDURE <A NAME="MaxTypecode"><procedure>MaxTypecode</procedure></A> (): Typecode =
+  BEGIN
+    RETURN RT0u.nTypes - 1;
+  END MaxTypecode;
+
+PROCEDURE <A NAME="IsSubtype"><procedure>IsSubtype</procedure></A> (a, b: Typecode): BOOLEAN =
+  VAR t := Get (b);
+  BEGIN
+    IF (a &gt;= RT0u.nTypes) THEN BadType (a) END;
+    IF (a = 0)            THEN RETURN TRUE END;
+    RETURN (t.typecode &lt;= a AND a &lt;= t.lastSubTypeTC);
+  END IsSubtype;
+
+PROCEDURE <A NAME="Supertype"><procedure>Supertype</procedure></A> (tc: Typecode): Typecode =
+  VAR t := Get (tc);
+  BEGIN
+    IF (t.parent = NIL)
+      THEN RETURN NoSuchType;
+      ELSE RETURN t.parent.typecode;
+    END;
+  END Supertype;
+
+PROCEDURE <A NAME="IsTraced"><procedure>IsTraced</procedure></A> (tc: Typecode): BOOLEAN =
+  VAR t := Get (tc);
+  BEGIN
+    RETURN t.traced # 0;
+  END IsTraced;
+
+PROCEDURE <A NAME="Get"><procedure>Get</procedure></A> (tc: Typecode): RT0.TypeDefn =
+  VAR p: TypePtr := RT0u.types + tc * ADRSIZE (RT0.TypeDefn);
+  BEGIN
+    IF (tc &gt;= RT0u.nTypes) THEN BadType (tc) END;
+    RETURN p^;
+  END Get;
+
+PROCEDURE <A NAME="GetNDimensions"><procedure>GetNDimensions</procedure></A> (tc: Typecode): CARDINAL =
+  VAR t := Get (tc);
+  BEGIN
+    RETURN t.nDimensions;
+  END GetNDimensions;
+
+PROCEDURE <A NAME="TypeName"><procedure>TypeName</procedure></A> (ref: REFANY): TEXT =
+  VAR t := Get (TYPECODE (ref));
+  BEGIN
+    RETURN TypeDefnToName (t);
+  END TypeName;
+
+PROCEDURE <A NAME="TypecodeName"><procedure>TypecodeName</procedure></A> (tc: Typecode): TEXT =
+  VAR t := Get (tc);
+  BEGIN
+    RETURN TypeDefnToName (t);
+  END TypecodeName;
+
+PROCEDURE <A NAME="TypeDefnToName"><procedure>TypeDefnToName</procedure></A> (t: RT0.TypeDefn): TEXT =
+  BEGIN
+    IF (t.name = NIL) THEN RETURN &quot;&lt;anon type&gt;&quot;; END;
+    RETURN M3toC.CopyStoT (LOOPHOLE (t.name, Ctypes.char_star));
+  END TypeDefnToName;
+</PRE>--------------------------------------------------- UID -&gt; typecell map ---
+
+<P><PRE>TYPE
+ IDMap = RECORD uid: INTEGER;  defn: RT0.TypeDefn END;
+
+VAR
+  (* map from type id to typecode, sorted by type id. *)
+  n_type_ids : INTEGER;
+  type_ids   : ADDRESS; (* REF ARRAY [0..n_type_ids-1] OF IDMap *)
+
+PROCEDURE <A NAME="FindType"><procedure>FindType</procedure></A> (id: INTEGER): RT0.TypeDefn =
+  VAR
+    base : ADDRESS  := type_ids;
+    lo   : CARDINAL := 0;
+    hi   : CARDINAL := n_type_ids;
+    mid  : CARDINAL;
+    p    : UNTRACED REF IDMap;
+  BEGIN
+    WHILE (lo &lt; hi) DO
+      mid := (lo + hi) DIV 2;
+      p := base + mid * ADRSIZE (p^);
+      IF (id &lt; p.uid)
+        THEN hi := mid;
+        ELSE lo := mid + 1;
+      END;
+    END;
+    IF (lo &gt; 0) THEN DEC (lo) END;
+    p := base + lo * ADRSIZE (p^);
+    IF (p.uid # id) THEN RETURN NIL END;
+    RETURN p.defn;
+  END FindType;
+</PRE>-------------------------------------------------------- initialization ---
+
+<P><PRE>VAR
+  init_done := FALSE;
+  null  : RT0.TypeDefn;
+  text  : RT0.TypeDefn;
+  root  : RT0.TypeDefn;
+  uroot : RT0.TypeDefn;
+
+PROCEDURE <A NAME="Init"><procedure>Init</procedure></A> () =
+  BEGIN
+    &lt;* ASSERT NOT init_done *&gt;
+    init_done := TRUE;
+
+    RegisterTypes ();
+    CheckOpaques ();
+    CheckBrands ();
+    FindChildren ();
+    CheckParents ();
+    AssignTypecodes ();
+    FixLinks ();
+    FixSizes ();
+    CallSetupProcs ();
+    CheckRevelations ();
+    RTHeapRep.CheckTypes ();
+  END Init;
+
+PROCEDURE <A NAME="RegisterTypes"><procedure>RegisterTypes</procedure></A> () =
+  (* &quot;register&quot; each typecell with a distinct temporary typecode *)
+  VAR
+    mi  : RT0.ModulePtr;
+    t   : RT0.TypeDefn;
+    cnt, key : INTEGER;
+    tp, x, y, z : TypePtr;
+  BEGIN
+    (* count the typecells *)
+    cnt := 0;
+    FOR i := 0 TO RT0u.nModules - 1 DO
+      mi := RTModule.Get (i);
+      t := mi.type_cells;
+      WHILE (t # NIL) DO INC (cnt); t := t.next; END;
+    END;
+
+    (* allocate the space *)
+    RT0u.nTypes      := cnt;
+    RT0u.types       := Cstdlib.malloc (cnt * BYTESIZE (t));
+    RT0u.alloc_cnts  := Cstdlib.malloc (cnt * BYTESIZE (INTEGER));
+    RT0u.alloc_bytes := Cstdlib.malloc (cnt * BYTESIZE (INTEGER));
+
+    (* initialize the allocation counts *)
+    RTMisc.Zero (RT0u.alloc_cnts,  cnt * BYTESIZE (INTEGER));
+    RTMisc.Zero (RT0u.alloc_bytes, cnt * BYTESIZE (INTEGER));
+
+    (* collect pointers to all the typecells *)
+    tp := RT0u.types;
+    FOR i := 0 TO RT0u.nModules - 1 DO
+      mi := RTModule.Get (i);
+      t := mi.type_cells;
+      WHILE (t # NIL) DO
+        tp^ := t;  INC (tp, ADRSIZE (t));
+        t := t.next;
+      END;
+    END;
+
+    (* sort the cells by uid *)
+    x := RT0u.types;
+    FOR i := 1 TO cnt-1 DO
+      tp := x + i * ADRSIZE (t);
+      t := tp^;
+      key := t.selfID;
+      y := x + (i - 1) * ADRSIZE (t);
+      WHILE (y &gt;= x) AND (y^.selfID &gt; key) DO
+        z := y + ADRSIZE (t);
+        z^ := y^;
+        DEC (y, ADRSIZE (t));
+      END;
+      z := y + ADRSIZE (t);
+      z^ := t;
+    END;
+
+    (* remove duplicates, but keep names *)
+    cnt := 1;
+    x := RT0u.types;
+    y := x;
+    FOR i := 1 TO RT0u.nTypes-1 DO
+      INC (y, ADRSIZE (t));
+      IF x^.selfID = y^.selfID THEN
+        (* a duplicate, if we don't have one yet, save the name *)
+        IF (x^.name = NIL) THEN x^.name := y^.name; END;
+      ELSE (* a new typecell *)
+        INC (cnt);
+        INC (x, ADRSIZE (t));
+        x^ := y^;
+      END;
+    END;
+    RT0u.nTypes := cnt;
+  END RegisterTypes;
+
+PROCEDURE <A NAME="CheckOpaques"><procedure>CheckOpaques</procedure></A> () =
+  (* build the UID-&gt;Defn maps including the opaque types *)
+  VAR
+    cnt : INTEGER;
+    mi  : RT0.ModulePtr;
+    t   : RT0.TypeDefn;
+    r   : RT0.RevPtr;
+    s, v: UNTRACED REF IDMap;
+    tp  : TypePtr;
+  BEGIN
+    (* count the opaques *)
+    cnt := RT0u.nTypes;
+    FOR i := 0 TO RT0u.nModules - 1 DO
+      mi := RTModule.Get (i);
+      r := mi.full_rev;
+      IF (r # NIL) THEN
+        WHILE (r.lhs_id # 0) DO INC (cnt);  INC (r, ADRSIZE (r^)); END;
+      END;
+    END;
+
+    (* allocate the space *)
+    n_type_ids := cnt;
+    type_ids   := Cstdlib.malloc (cnt * BYTESIZE (IDMap));
+
+    (* initialize the map with the concrete typecells *)
+    tp := RT0u.types;
+    s  := type_ids;
+    FOR i := 0 TO RT0u.nTypes-1 DO
+      t := tp^;
+      s.uid  := t.selfID;
+      s.defn := t;
+      INC (tp, ADRSIZE (tp^));
+      INC (s, ADRSIZE (s^));
+    END;
+    n_type_ids := RT0u.nTypes;
+
+    (* finally, add each of the opaque types *)
+    FOR i := 0 TO RT0u.nModules - 1 DO
+      mi := RTModule.Get (i);
+      r := mi.full_rev;
+      IF (r # NIL) THEN
+        WHILE (r.lhs_id # 0) DO
+          t := FindType (r.lhs_id);
+          IF (t # NIL) THEN DuplicateLHS (mi, r, t) END;
+          t := FindType (r.rhs_id);
+          IF (t = NIL) THEN UndefinedRHS (mi, r) END;
+
+          (* insert the new entry *)
+          v := type_ids + n_type_ids * ADRSIZE (v^);
+          s := v - ADRSIZE (v^);
+          WHILE (s &gt;= type_ids) AND (s.uid &gt; r.lhs_id) DO
+            v^ := s^;
+            DEC (v, ADRSIZE (v^));
+            DEC (s, ADRSIZE (s^));
+          END;
+          v.uid  := r.lhs_id;
+          v.defn := t;
+          INC (n_type_ids);
+
+          INC (r, ADRSIZE (r^));
+        END;
+      END;
+    END;
+  END CheckOpaques;
+
+PROCEDURE <A NAME="CheckBrands"><procedure>CheckBrands</procedure></A> () =
+  (* ensure that all brands are distinct *)
+  VAR
+    t, a, b : RT0.TypeDefn;
+    tp      : TypePtr;
+    hash    : INTEGER;
+    buckets := ARRAY [0..292] OF RT0.TypeDefn {NIL, ..};
+  BEGIN
+    (* Hash each type with a non-nil brand into the table
+       using the type's sibling pointer to resolve collisions. *)
+    tp := RT0u.types;
+    FOR i := 0 TO RT0u.nTypes-1 DO
+      t := tp^;
+      IF (t.brand # NIL) THEN
+        hash := HashString (t.brand) MOD NUMBER (buckets);
+        t.sibling := buckets[hash];
+        buckets[hash] := t;
+      END;
+      INC (tp, ADRSIZE (tp^));
+    END;
+
+    (* Run the naive O(n^2) check on each hash bucket. *)
+    FOR i := 0 TO LAST (buckets) DO
+      a := buckets[i];
+      WHILE (a # NIL) DO
+        b := a.sibling;
+        WHILE (b # NIL) DO
+          IF Cstring.strcmp (LOOPHOLE(a.brand, Ctypes.char_star),
+                             LOOPHOLE(b.brand, Ctypes.char_star)) = 0 THEN
+            StartError ();
+            PutText    (&quot;Two types have the same brand: \&quot;&quot;);
+            PutString  (a.brand);
+            PutText    (&quot;\&quot;\n***    &quot;);
+            PutType    (a);
+            PutText    (&quot;\n***    &quot;);
+            PutType    (b);
+            EndError   ();
+          END;
+          b := b.sibling;
+        END;
+        a := a.sibling;
+      END;
+    END;
+
+    (* Reset the sibling pointers. *)
+    tp := RT0u.types;
+    FOR i := 0 TO RT0u.nTypes-1 DO
+      tp^.sibling := NIL;
+      INC (tp, ADRSIZE (tp^));
+    END;
+  END CheckBrands;
+
+PROCEDURE <A NAME="HashString"><procedure>HashString</procedure></A> (cp: UNTRACED REF CHAR): INTEGER =
+  VAR hash := 0;
+  BEGIN
+    WHILE (cp^ # '\000') DO
+      hash := Word.Plus (Word.LeftShift (hash, 1), ORD (cp^));
+      INC (cp, BYTESIZE (cp^));
+    END;
+    RETURN hash;
+  END HashString;
+
+PROCEDURE <A NAME="FindChildren"><procedure>FindChildren</procedure></A> () =
+  VAR tp: TypePtr;  t, p: RT0.TypeDefn;
+  BEGIN
+    tp := RT0u.types;
+    FOR i := 0 TO RT0u.nTypes -1 DO
+      t := tp^;
+      IF (t.parentID # 0) THEN
+        p := FindType (t.parentID);
+        IF (p = NIL) THEN BadParent (t) END;
+        t.parent := p;
+        t.sibling := p.children;
+        p.children := t;
+      END;
+      INC (tp, ADRSIZE (tp^));
+    END;
+  END FindChildren;
+
+PROCEDURE <A NAME="CheckParents"><procedure>CheckParents</procedure></A> () =
+  VAR tp: TypePtr;  t, u: RT0.TypeDefn;
+  BEGIN
+    tp := RT0u.types;
+    FOR i := 0 TO RT0u.nTypes -1 DO
+      t := tp^;  u := t;
+      WHILE (u # NIL) AND (t # NIL) DO
+        t := t.parent;
+        u := u.parent;
+        IF (u = NIL) THEN EXIT; END;
+        u := u.parent;
+        IF (t = u) THEN ParentCycle (tp^);  EXIT; END;
+      END;
+      INC (tp, ADRSIZE (tp^));
+    END;
+  END CheckParents;
+
+PROCEDURE <A NAME="AssignTypecodes"><procedure>AssignTypecodes</procedure></A> () =
+  VAR
+    tp, up        : TypePtr;
+    t, u          : RT0.TypeDefn;
+    next_typecode : INTEGER;
+  BEGIN
+    (* find the types with reserved typecodes *)
+    null  := FindType (16_48ec756e);
+    text  := FindType (16_50f86574);
+    root  := FindType (16_ffffffff9d8fb489);
+    uroot := FindType (16_ffffffff898ea789);
+
+    (* reset the typecodes *)
+    tp := RT0u.types;
+    FOR i := 0 TO RT0u.nTypes-1 DO
+      tp^.typecode := LAST (RT0.Typecode);
+      INC (tp, ADRSIZE (tp^));
+    END;
+
+    (* assign the fixed typecodes *)
+    null.typecode := RT0.NilTypecode;   null.lastSubTypeTC := RT0.NilTypecode;
+    text.typecode := RT0.TextTypecode;  text.lastSubTypeTC := RT0.TextTypecode;
+    next_typecode := MAX (RT0.NilTypecode, RT0.TextTypecode) + 1;
+
+    (* assign the OBJECT typecodes *)
+    AssignObjectTypecode (root, next_typecode);
+    AssignObjectTypecode (uroot, next_typecode);
+
+    (* assign the remaining REF typecodes *)
+    tp := RT0u.types;
+    FOR i := 0 TO RT0u.nTypes-1 DO
+      t := tp^;
+      IF (t.typecode = LAST (RT0.Typecode)) THEN
+        t.typecode := next_typecode;
+        t.lastSubTypeTC := next_typecode;
+        INC (next_typecode);
+      END;
+      INC (tp, ADRSIZE (tp^));
+    END;
+
+    &lt;* ASSERT next_typecode = RT0u.nTypes *&gt;
+
+    (* shuffle the typecells into their correct slots *)
+    tp := RT0u.types;
+    FOR i := 0 TO RT0u.nTypes-1 DO
+      t := tp^;
+      WHILE (t.typecode # i) DO
+        up := RT0u.types + t.typecode * ADRSIZE (up^);
+        u := up^;
+        up^ := t;
+        t := u;
+      END;
+      tp^ := t;
+      INC (tp, ADRSIZE (tp^));
+    END;
+  END AssignTypecodes;
+
+PROCEDURE <A NAME="AssignObjectTypecode"><procedure>AssignObjectTypecode</procedure></A> (t: RT0.TypeDefn;  VAR next: INTEGER) =
+  VAR u: RT0.TypeDefn;
+  BEGIN
+    &lt;* ASSERT t.typecode = LAST (RT0.Typecode) *&gt;
+    t.typecode := next;  INC (next);
+    u := t.children;
+    WHILE (u # NIL) DO
+      AssignObjectTypecode (u, next);
+      u := u.sibling;
+    END;
+    t.lastSubTypeTC := next-1;
+  END AssignObjectTypecode;
+
+PROCEDURE <A NAME="FixLinks"><procedure>FixLinks</procedure></A> () =
+  VAR
+    mi   : RT0.ModulePtr;
+    t, u : UNTRACED REF RT0.TypeLink;
+    defn : RT0.TypeDefn;
+  BEGIN
+    FOR i := 0 TO RT0u.nModules - 1 DO
+      mi := RTModule.Get (i);
+      t := mi.type_cell_ptrs;
+      WHILE (t # NIL) DO
+        u := t.next;
+        defn := FindType (t.type);
+        IF (defn = NIL) THEN BadTypeId (mi, t.type) END;
+        t.next := defn;
+        t.type := defn.typecode;
+        t := u;
+      END;
+    END;
+  END FixLinks;
+
+PROCEDURE <A NAME="FixSizes"><procedure>FixSizes</procedure></A> () =
+  (* fix the data(method) sizes and offsets *)
+  VAR t: RT0.TypeDefn;  tp: TypePtr;
+  BEGIN
+    (* make sure that all the REF types are some multiple of header words *)
+    tp := RT0u.types;
+    FOR i := 0 TO RT0u.nTypes-1 DO
+      t := tp^;
+      IF (t.typecode # RT0.NilTypecode)
+        AND (t.parent = NIL)
+        AND (t.children = NIL) THEN
+        t.dataSize := RTMisc.Upper (t.dataSize, BYTESIZE (RTHeapRep.Header));
+      END;
+      INC (tp, ADRSIZE (tp^));
+    END;
+
+    (* fix the objects *)
+    FixObjectSizes (root);
+    FixObjectSizes (uroot);
+  END FixSizes;
+
+PROCEDURE <A NAME="FixObjectSizes"><procedure>FixObjectSizes</procedure></A> (t: RT0.TypeDefn) =
+  VAR u: RT0.TypeDefn;
+  BEGIN
+    (* fix my sizes *)
+    u := t.parent;
+    IF (u # NIL) THEN
+      t.dataOffset := RTMisc.Upper (u.dataSize, t.dataAlignment);
+      INC (t.dataSize, t.dataOffset);
+      t.dataAlignment := MAX (t.dataAlignment, u.dataAlignment);
+      t.methodOffset := u.methodSize;
+      INC (t.methodSize, t.methodOffset);
+    END;
+    t.dataSize := RTMisc.Upper (t.dataSize, BYTESIZE (RTHeapRep.Header));
+
+    (* allocate my default method list *)
+    t.defaultMethods := Cstdlib.malloc (t.methodSize);
+    IF (t.defaultMethods = NIL) THEN
+      StartError ();
+      PutText (&quot;unable to allocate method suite for &quot;);
+      PutType (t);
+      EndError ();
+    END;
+    RTMisc.Zero (t.defaultMethods,  t.methodSize);
+
+    (* fix my children *)
+    u := t.children;
+    WHILE (u # NIL) DO
+      FixObjectSizes (u);
+      u := u.sibling;
+    END;
+  END FixObjectSizes;
+
+PROCEDURE <A NAME="CallSetupProcs"><procedure>CallSetupProcs</procedure></A> () =
+  VAR t: RT0.TypeDefn;  tp: TypePtr;
+  BEGIN
+    (* set up the REF types *)
+    tp := RT0u.types;
+    FOR i := 0 TO RT0u.nTypes-1 DO
+      t := tp^;
+      IF (t.parent = NIL) AND (t.children = NIL) AND (t.linkProc # NIL) THEN
+        t.linkProc (t);
+      END;
+      INC (tp, ADRSIZE (tp^));
+    END;
+
+    (* set up the objects *)
+    SetupObject (root);
+    SetupObject (uroot);
+  END CallSetupProcs;
+
+PROCEDURE <A NAME="SetupObject"><procedure>SetupObject</procedure></A> (t: RT0.TypeDefn) =
+  VAR u: RT0.TypeDefn;  a: UNTRACED REF ADDRESS;
+  BEGIN
+    (* initialize my method suite from my parent *)
+    u := t.parent;
+    IF (u # NIL) THEN
+      RTMisc.Copy (u.defaultMethods, t.defaultMethods, u.methodSize);
+    END;
+    LOOPHOLE (t.defaultMethods, UNTRACED REF INTEGER)^ := t.typecode;
+
+    (* initialize any remaining methods to the undefined procedure *)
+    a := t.defaultMethods + ADRSIZE (ADDRESS);
+    FOR j := 1 TO t.methodSize DIV BYTESIZE (ADDRESS) - 1 DO
+      IF (a^ = NIL) THEN a^ := LOOPHOLE (UndefinedMethod, ADDRESS) END;
+      INC (a, ADRSIZE (ADDRESS));
+    END;
+
+    (* call my setup proc *)
+    IF (t.linkProc # NIL) THEN t.linkProc (t) END;
+
+    (* set up my children *)
+    u := t.children;
+    WHILE (u # NIL) DO
+      SetupObject (u);
+      u := u.sibling;
+    END;
+  END SetupObject;
+
+PROCEDURE <A NAME="CheckRevelations"><procedure>CheckRevelations</procedure></A> () =
+  VAR
+    mi  : RT0.ModulePtr;
+    r   : RT0.RevPtr;
+    lhs : RT0.TypeDefn;
+    rhs : RT0.TypeDefn;
+  BEGIN
+    FOR i := 0 TO RT0u.nModules - 1 DO
+      mi := RTModule.Get (i);
+      r := mi.partial_rev;
+      IF (r # NIL) THEN
+        WHILE (r.lhs_id # 0) DO
+          lhs := FindType (r.lhs_id);
+          rhs := FindType (r.rhs_id);
+          IF (lhs = NIL) OR (rhs = NIL)
+            OR (lhs.typecode &lt; rhs.typecode)
+            OR (rhs.lastSubTypeTC &lt; lhs.typecode) THEN
+            BadRevelation (mi, r, lhs, rhs);
+          END;
+          INC (r, ADRSIZE (r^));
+        END;
+      END;
+    END;
+  END CheckRevelations;
+</PRE>-------------------------------------------------------- runtime errors ---
+
+<P><PRE>PROCEDURE <A NAME="UndefinedMethod"><procedure>UndefinedMethod</procedure></A> () =
+  BEGIN
+    RTMisc.FatalError (NIL, 0, &quot;attempted invocation of undefined method&quot;);
+  END UndefinedMethod;
+
+PROCEDURE <A NAME="BadType"><procedure>BadType</procedure></A> (tc: Typecode) =
+  BEGIN
+    RTMisc.FatalErrorI (&quot;improper typecode: &quot;, tc);
+  END BadType;
+</PRE>----------------------------------------------------------- init errors ---
+
+<P><PRE>PROCEDURE <A NAME="StartError"><procedure>StartError</procedure></A> () =
+  BEGIN
+    PutText (&quot;\n\n***\n*** &quot;);
+  END StartError;
+
+PROCEDURE <A NAME="EndError"><procedure>EndError</procedure></A> () =
+  BEGIN
+    PutText (&quot;\n***&quot;);
+    Flush ();
+    RTMisc.FatalError (NIL, 0, &quot;unable to initialize runtime types&quot;);
+  END EndError;
+
+PROCEDURE <A NAME="BadTypeId"><procedure>BadTypeId</procedure></A> (mi: RT0.ModulePtr;  id: INTEGER) =
+  BEGIN
+    StartError ();
+    PutText    (&quot;unable to resolve type id: &quot;);
+    PutHex     (id);
+    PutText    (&quot;\n***    in &quot;);
+    PutModule  (mi);
+    EndError   ();
+  END BadTypeId;
+
+PROCEDURE <A NAME="DuplicateLHS"><procedure>DuplicateLHS</procedure></A> (mi: RT0.ModulePtr;  r: RT0.RevPtr;  t: RT0.TypeDefn) =
+  BEGIN
+    StartError ();
+    PutText    (&quot;opaque type redefined: &quot;);
+    PutText    (&quot;\n***    REVEAL _t&quot;);
+    PutHex     (r.lhs_id);
+    PutText    (&quot; = _t&quot;);
+    PutHex     (r.rhs_id);
+    PutText    (&quot;\n***    in &quot;);
+    PutModule  (mi);
+    PutText    (&quot;\n***    but, already = &quot;);
+    PutType    (t);
+    EndError   ();
+  END DuplicateLHS;
+
+PROCEDURE <A NAME="UndefinedRHS"><procedure>UndefinedRHS</procedure></A> (mi: RT0.ModulePtr;  r: RT0.RevPtr) =
+  BEGIN
+    StartError ();
+    PutText    (&quot;opaque type revealed as undefined type: &quot;);
+    PutText    (&quot;\n***    REVEAL _t&quot;);
+    PutHex     (r.lhs_id);
+    PutText    (&quot; = _t&quot;);
+    PutHex     (r.rhs_id);
+    PutText    (&quot;\n***    in &quot;);
+    PutModule  (mi);
+    EndError   ();
+  END UndefinedRHS;
+
+PROCEDURE <A NAME="BadParent"><procedure>BadParent</procedure></A> (t: RT0.TypeDefn) =
+  BEGIN
+    StartError ();
+    PutText    (&quot;super type undefined:\n***    child = &quot;);
+    PutType    (t);
+    PutText    (&quot;\n***    parent = _t&quot;);
+    PutHex     (t.parentID);
+    EndError   ();
+  END BadParent;
+
+PROCEDURE <A NAME="ParentCycle"><procedure>ParentCycle</procedure></A> (t: RT0.TypeDefn) =
+  VAR u: RT0.TypeDefn;
+  BEGIN
+    StartError ();
+    PutText    (&quot;illegal cycle in super types:\n***    child  = &quot;);
+    PutType    (t);
+    u := t.parent;
+    WHILE (u # NIL) DO
+      PutText    (&quot;\n***    parent = &quot;);
+      PutType    (u);
+      IF (u = t) THEN EXIT; END;
+      u := u.parent;
+    END;
+    EndError   ();
+  END ParentCycle;
+
+PROCEDURE <A NAME="BadRevelation"><procedure>BadRevelation</procedure></A> (mi: RT0.ModulePtr;  r: RT0.RevPtr;
+                         lhs, rhs: RT0.TypeDefn) =
+  BEGIN
+    StartError ();
+    PutText    (&quot;inconsistent partial revelation: &quot;);
+    PutText    (&quot;\n***    REVEAL _t&quot;);
+    PutHex     (r.lhs_id);
+    PutText    (&quot; &lt;: _t&quot;);
+    PutHex     (r.rhs_id);
+    PutText    (&quot;\n***           &quot;);
+    PutType    (lhs);
+    PutText    (&quot; &lt;: &quot;);
+    PutType    (rhs);
+    PutText    (&quot;\n***    in &quot;);
+    PutModule  (mi);
+    EndError   ();
+  END BadRevelation;
+</PRE>---------------------------------------------------- internal debugging ---
+
+<P>**********************************
+PROCEDURE ShowTypes (full := TRUE) =
+  VAR t: RT0.TypeDefn;
+  BEGIN
+    PutText (<CODE>Here are the types: nTypes = </CODE>);
+    PutInt  (RT0u.nTypes);
+    PutText (<CODE>\n</CODE>);
+    FOR i := 0 TO RT0u.nTypes-1 DO
+      t := Get (i);
+      WHILE (t # NIL) DO
+        PutType (t); PutText (<CODE>\n</CODE>);
+        IF full THEN
+          PutText (<CODE>  data   </CODE>);
+          PutText (<CODE>  S= </CODE>); PutInt (t.dataSize);
+          PutText (<CODE>  A= </CODE>); PutInt (t.dataAlignment);
+          PutText (<CODE>  O= </CODE>); PutInt (t.dataOffset);
+          PutText (<CODE>\n</CODE>);
+          IF (t.methodSize # 0) OR (t.methodOffset # 0) THEN
+            PutText (<CODE>  method </CODE>);
+            PutText (<CODE>  S= </CODE>);  PutInt (t.methodSize);
+            PutText (<CODE>  O= </CODE>);  PutInt (t.methodOffset);
+            PutText (<CODE>\n</CODE>);
+          END;
+          IF (t.nDimensions # 0) OR (t.elementSize # 0) THEN
+            PutText (<CODE> array   </CODE>);
+            PutText (<CODE>  D= </CODE>);  PutInt (t.nDimensions);
+            PutText (<CODE>  S= </CODE>);  PutInt (t.elementSize);
+            PutText (<CODE>\n</CODE>);
+          END;
+        END;
+      END;
+    END;
+    Flush ();
+    EVAL ShowTypes; (* to prevent an <CODE>unused symbol</CODE> warning 
+  <PRE>END ShowTypes;
+************************************)
+
+PROCEDURE <A NAME="PutType"><procedure>PutType</procedure></A> (t: RT0.TypeDefn) =
+  BEGIN
+    PutText (&quot;[&quot;);
+    PutAddr (t);
+
+    IF (t # NIL) THEN
+      PutText (&quot;  _t&quot;);
+      PutHex  (t.selfID);
+
+      PutText (&quot;  typecode= &quot;);
+      PutInt  (t.typecode, 3);
+      IF (t.lastSubTypeTC # 0) THEN
+        PutText (&quot; .. &quot;);
+        PutInt  (t.lastSubTypeTC, 3);
+      END;
+
+      IF (t.name # NIL) THEN
+        PutText   (&quot;  &quot;);
+        PutString (t.name);
+      END;
+    END;
+
+    PutText (&quot;]&quot;);
+  END PutType;
+
+PROCEDURE <A NAME="PutModule"><procedure>PutModule</procedure></A> (mi: RT0.ModulePtr) =
+  BEGIN
+    IF (mi.file = NIL)
+      THEN PutText (&quot;???&quot;);
+      ELSE PutString (mi.file);
+    END;
+  END PutModule;
+
+BEGIN
+END RTType.
+</PRE>
+</inModule>
+<HR>
+<A NAME="x1">interface RT0u is in:
+</A><UL>
+<LI><A HREF="../POSIX/RT0u.i3.html#0TOP0">runtime/src/POSIX/RT0u.i3</A>
+<LI><A HREF="../WIN32/RT0u.i3.html#0TOP0">runtime/src/WIN32/RT0u.i3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x2">interface Cstring is in:
+</A><UL>
+<LI><A HREF="../../../C/src/AIX386/Cstring.i3.html#0TOP0">C/src/AIX386/Cstring.i3</A>
+<LI><A HREF="../../../C/src/ALPHA_OSF/Cstring.i3.html#0TOP0">C/src/ALPHA_OSF/Cstring.i3</A>
+<LI><A HREF="../../../C/src/AP3000/Cstring.i3.html#0TOP0">C/src/AP3000/Cstring.i3</A>
+<LI><A HREF="../../../C/src/ARM/Cstring.i3.html#0TOP0">C/src/ARM/Cstring.i3</A>
+<LI><A HREF="../../../C/src/DS3100/Cstring.i3.html#0TOP0">C/src/DS3100/Cstring.i3</A>
+<LI><A HREF="../../../C/src/FreeBSD/Cstring.i3.html#0TOP0">C/src/FreeBSD/Cstring.i3</A>
+<LI><A HREF="../../../C/src/FreeBSD2/Cstring.i3.html#0TOP0">C/src/FreeBSD2/Cstring.i3</A>
+<LI><A HREF="../../../C/src/HP300/Cstring.i3.html#0TOP0">C/src/HP300/Cstring.i3</A>
+<LI><A HREF="../../../C/src/HPPA/Cstring.i3.html#0TOP0">C/src/HPPA/Cstring.i3</A>
+<LI><A HREF="../../../C/src/IBMR2/Cstring.i3.html#0TOP0">C/src/IBMR2/Cstring.i3</A>
+<LI><A HREF="../../../C/src/IBMRT/Cstring.i3.html#0TOP0">C/src/IBMRT/Cstring.i3</A>
+<LI><A HREF="../../../C/src/IRIX5/Cstring.i3.html#0TOP0">C/src/IRIX5/Cstring.i3</A>
+<LI><A HREF="../../../C/src/LINUX/Cstring.i3.html#0TOP0">C/src/LINUX/Cstring.i3</A>
+<LI><A HREF="../../../C/src/LINUXELF/Cstring.i3.html#0TOP0">C/src/LINUXELF/Cstring.i3</A>
+<LI><A HREF="../../../C/src/NEXT/Cstring.i3.html#0TOP0">C/src/NEXT/Cstring.i3</A>
+<LI><A HREF="../../../C/src/NT386/Cstring.i3.html#0TOP0">C/src/NT386/Cstring.i3</A>
+<LI><A HREF="../../../C/src/OKI/Cstring.i3.html#0TOP0">C/src/OKI/Cstring.i3</A>
+<LI><A HREF="../../../C/src/SEQUENT/Cstring.i3.html#0TOP0">C/src/SEQUENT/Cstring.i3</A>
+<LI><A HREF="../../../C/src/SOLgnu/Cstring.i3.html#0TOP0">C/src/SOLgnu/Cstring.i3</A>
+<LI><A HREF="../../../C/src/SOLsun/Cstring.i3.html#0TOP0">C/src/SOLsun/Cstring.i3</A>
+<LI><A HREF="../../../C/src/SPARC/Cstring.i3.html#0TOP0">C/src/SPARC/Cstring.i3</A>
+<LI><A HREF="../../../C/src/SUN3/Cstring.i3.html#0TOP0">C/src/SUN3/Cstring.i3</A>
+<LI><A HREF="../../../C/src/SUN386/Cstring.i3.html#0TOP0">C/src/SUN386/Cstring.i3</A>
+<LI><A HREF="../../../C/src/UMAX/Cstring.i3.html#0TOP0">C/src/UMAX/Cstring.i3</A>
+<LI><A HREF="../../../C/src/VAX/Cstring.i3.html#0TOP0">C/src/VAX/Cstring.i3</A>
+</UL>
+<P>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

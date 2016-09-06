@@ -1,0 +1,243 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: ui/src/winvbt/WinMsg.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>ui/src/winvbt/WinMsg.m3</H2></A><HR>
+<inModule>
+<PRE>
+MODULE <module><implements><A HREF="WinMsg.i3.html">WinMsg</A></implements></module>;
+
+IMPORT <A HREF="../../../win32/src/WinUser.i3.html">WinUser</A> AS WU;
+
+PROCEDURE <A NAME="ToText"><procedure>ToText</procedure></A> (msg: INTEGER): TEXT =
+  VAR
+    lo   : CARDINAL := 0;
+    hi   : CARDINAL := NUMBER (Desc);
+    mid  : CARDINAL;
+  BEGIN
+    WHILE (lo &lt; hi) DO
+      mid := (lo + hi) DIV 2;
+      IF (msg &lt; Desc[mid].msg)
+        THEN hi := mid;
+        ELSE lo := mid + 1;
+      END;
+    END;
+    IF (lo &gt; 0) THEN DEC (lo) END;
+    IF (Desc[lo].msg = msg) THEN RETURN Desc[lo].txt; END;
+    RETURN NIL;
+  END ToText;
+
+TYPE
+  X = RECORD msg: INTEGER;  txt: TEXT; END;
+
+CONST
+  Desc = ARRAY OF X {
+    X{ WU.WM_NULL,                        &quot;WM_NULL&quot; },
+    X{ WU.WM_CREATE,                      &quot;WM_CREATE&quot; },
+    X{ WU.WM_DESTROY,                     &quot;WM_DESTROY&quot; },
+    X{ WU.WM_MOVE,                        &quot;WM_MOVE&quot; },
+    X{ WU.WM_SIZE,                        &quot;WM_SIZE&quot; },
+    X{ WU.WM_ACTIVATE,                    &quot;WM_ACTIVATE&quot; },
+    X{ WU.WM_SETFOCUS,                    &quot;WM_SETFOCUS&quot; },
+    X{ WU.WM_KILLFOCUS,                   &quot;WM_KILLFOCUS&quot; },
+    X{ WU.WM_ENABLE,                      &quot;WM_ENABLE&quot; },
+    X{ WU.WM_SETREDRAW,                   &quot;WM_SETREDRAW&quot; },
+    X{ WU.WM_SETTEXT,                     &quot;WM_SETTEXT&quot; },
+    X{ WU.WM_GETTEXT,                     &quot;WM_GETTEXT&quot; },
+    X{ WU.WM_GETTEXTLENGTH,               &quot;WM_GETTEXTLENGTH&quot; },
+    X{ WU.WM_PAINT,                       &quot;WM_PAINT&quot; },
+    X{ WU.WM_CLOSE,                       &quot;WM_CLOSE&quot; },
+    X{ WU.WM_QUERYENDSESSION,             &quot;WM_QUERYENDSESSION&quot; },
+    X{ WU.WM_QUIT,                        &quot;WM_QUIT&quot; },
+    X{ WU.WM_QUERYOPEN,                   &quot;WM_QUERYOPEN&quot; },
+    X{ WU.WM_ERASEBKGND,                  &quot;WM_ERASEBKGND&quot; },
+    X{ WU.WM_SYSCOLORCHANGE,              &quot;WM_SYSCOLORCHANGE&quot; },
+    X{ WU.WM_ENDSESSION,                  &quot;WM_ENDSESSION&quot; },
+    X{ WU.WM_SHOWWINDOW,                  &quot;WM_SHOWWINDOW&quot; },
+    X{ WU.WM_WININICHANGE,                &quot;WM_WININICHANGE&quot; },
+    X{ WU.WM_DEVMODECHANGE,               &quot;WM_DEVMODECHANGE&quot; },
+    X{ WU.WM_ACTIVATEAPP,                 &quot;WM_ACTIVATEAPP&quot; },
+    X{ WU.WM_FONTCHANGE,                  &quot;WM_FONTCHANGE&quot; },
+    X{ WU.WM_TIMECHANGE,                  &quot;WM_TIMECHANGE&quot; },
+    X{ WU.WM_CANCELMODE,                  &quot;WM_CANCELMODE&quot; },
+    X{ WU.WM_SETCURSOR,                   &quot;WM_SETCURSOR&quot; },
+    X{ WU.WM_MOUSEACTIVATE,               &quot;WM_MOUSEACTIVATE&quot; },
+    X{ WU.WM_CHILDACTIVATE,               &quot;WM_CHILDACTIVATE&quot; },
+    X{ WU.WM_QUEUESYNC,                   &quot;WM_QUEUESYNC&quot; },
+    X{ WU.WM_GETMINMAXINFO,               &quot;WM_GETMINMAXINFO&quot; },
+    X{ WU.WM_PAINTICON,                   &quot;WM_PAINTICON&quot; },
+    X{ WU.WM_ICONERASEBKGND,              &quot;WM_ICONERASEBKGND&quot; },
+    X{ WU.WM_NEXTDLGCTL,                  &quot;WM_NEXTDLGCTL&quot; },
+    X{ WU.WM_SPOOLERSTATUS,               &quot;WM_SPOOLERSTATUS&quot; },
+    X{ WU.WM_DRAWITEM,                    &quot;WM_DRAWITEM&quot; },
+    X{ WU.WM_MEASUREITEM,                 &quot;WM_MEASUREITEM&quot; },
+    X{ WU.WM_DELETEITEM,                  &quot;WM_DELETEITEM&quot; },
+    X{ WU.WM_VKEYTOITEM,                  &quot;WM_VKEYTOITEM&quot; },
+    X{ WU.WM_CHARTOITEM,                  &quot;WM_CHARTOITEM&quot; },
+    X{ WU.WM_SETFONT,                     &quot;WM_SETFONT&quot; },
+    X{ WU.WM_GETFONT,                     &quot;WM_GETFONT&quot; },
+    X{ WU.WM_SETHOTKEY,                   &quot;WM_SETHOTKEY&quot; },
+    X{ WU.WM_GETHOTKEY,                   &quot;WM_GETHOTKEY&quot; },
+    X{ WU.WM_QUERYDRAGICON,               &quot;WM_QUERYDRAGICON&quot; },
+    X{ WU.WM_COMPAREITEM,                 &quot;WM_COMPAREITEM&quot; },
+    X{ WU.WM_FULLSCREEN,                  &quot;WM_FULLSCREEN&quot; },
+    X{ WU.WM_COMPACTING,                  &quot;WM_COMPACTING&quot; },
+    X{ WU.WM_OTHERWINDOWCREATED,          &quot;WM_OTHERWINDOWCREATED&quot; },
+    X{ WU.WM_OTHERWINDOWDESTROYED,        &quot;WM_OTHERWINDOWDESTROYED&quot; },
+    X{ WU.WM_COMMNOTIFY,                  &quot;WM_COMMNOTIFY&quot; },
+    X{ WU.WM_HOTKEYEVENT,                 &quot;WM_HOTKEYEVENT&quot; },
+    X{ WU.WM_WINDOWPOSCHANGING,           &quot;WM_WINDOWPOSCHANGING&quot; },
+    X{ WU.WM_WINDOWPOSCHANGED,            &quot;WM_WINDOWPOSCHANGED&quot; },
+    X{ WU.WM_POWER,                       &quot;WM_POWER&quot; },
+    X{ WU.WM_COPYDATA,                    &quot;WM_COPYDATA&quot; },
+    X{ WU.WM_NCCREATE,                    &quot;WM_NCCREATE&quot; },
+    X{ WU.WM_NCDESTROY,                   &quot;WM_NCDESTROY&quot; },
+    X{ WU.WM_NCCALCSIZE,                  &quot;WM_NCCALCSIZE&quot; },
+    X{ WU.WM_NCHITTEST,                   &quot;WM_NCHITTEST&quot; },
+    X{ WU.WM_NCPAINT,                     &quot;WM_NCPAINT&quot; },
+    X{ WU.WM_NCACTIVATE,                  &quot;WM_NCACTIVATE&quot; },
+    X{ WU.WM_GETDLGCODE,                  &quot;WM_GETDLGCODE&quot; },
+    X{ WU.WM_NCMOUSEMOVE,                 &quot;WM_NCMOUSEMOVE&quot; },
+    X{ WU.WM_NCLBUTTONDOWN,               &quot;WM_NCLBUTTONDOWN&quot; },
+    X{ WU.WM_NCLBUTTONUP,                 &quot;WM_NCLBUTTONUP&quot; },
+    X{ WU.WM_NCLBUTTONDBLCLK,             &quot;WM_NCLBUTTONDBLCLK&quot; },
+    X{ WU.WM_NCRBUTTONDOWN,               &quot;WM_NCRBUTTONDOWN&quot; },
+    X{ WU.WM_NCRBUTTONUP,                 &quot;WM_NCRBUTTONUP&quot; },
+    X{ WU.WM_NCRBUTTONDBLCLK,             &quot;WM_NCRBUTTONDBLCLK&quot; },
+    X{ WU.WM_NCMBUTTONDOWN,               &quot;WM_NCMBUTTONDOWN&quot; },
+    X{ WU.WM_NCMBUTTONUP,                 &quot;WM_NCMBUTTONUP&quot; },
+    X{ WU.WM_NCMBUTTONDBLCLK,             &quot;WM_NCMBUTTONDBLCLK&quot; },
+    X{ WU.WM_KEYDOWN,                     &quot;WM_KEYDOWN (aka WM_KEYFIRST)&quot; },
+    X{ WU.WM_KEYUP,                       &quot;WM_KEYUP&quot; },
+    X{ WU.WM_CHAR,                        &quot;WM_CHAR&quot; },
+    X{ WU.WM_DEADCHAR,                    &quot;WM_DEADCHAR&quot; },
+    X{ WU.WM_SYSKEYDOWN,                  &quot;WM_SYSKEYDOWN&quot; },
+    X{ WU.WM_SYSKEYUP,                    &quot;WM_SYSKEYUP&quot; },
+    X{ WU.WM_SYSCHAR,                     &quot;WM_SYSCHAR&quot; },
+    X{ WU.WM_SYSDEADCHAR,                 &quot;WM_SYSDEADCHAR&quot; },
+    X{ WU.WM_KEYLAST,                     &quot;WM_KEYLAST&quot; },
+    X{ WU.WM_INITDIALOG,                  &quot;WM_INITDIALOG&quot; },
+    X{ WU.WM_COMMAND,                     &quot;WM_COMMAND&quot; },
+    X{ WU.WM_SYSCOMMAND,                  &quot;WM_SYSCOMMAND&quot; },
+    X{ WU.WM_TIMER,                       &quot;WM_TIMER&quot; },
+    X{ WU.WM_HSCROLL,                     &quot;WM_HSCROLL&quot; },
+    X{ WU.WM_VSCROLL,                     &quot;WM_VSCROLL&quot; },
+    X{ WU.WM_INITMENU,                    &quot;WM_INITMENU&quot; },
+    X{ WU.WM_INITMENUPOPUP,               &quot;WM_INITMENUPOPUP&quot; },
+    X{ WU.WM_MENUSELECT,                  &quot;WM_MENUSELECT&quot; },
+    X{ WU.WM_MENUCHAR,                    &quot;WM_MENUCHAR&quot; },
+    X{ WU.WM_ENTERIDLE,                   &quot;WM_ENTERIDLE&quot; },
+    X{ WU.WM_CTLCOLORMSGBOX,              &quot;WM_CTLCOLORMSGBOX&quot; },
+    X{ WU.WM_CTLCOLOREDIT,                &quot;WM_CTLCOLOREDIT&quot; },
+    X{ WU.WM_CTLCOLORLISTBOX,             &quot;WM_CTLCOLORLISTBOX&quot; },
+    X{ WU.WM_CTLCOLORBTN,                 &quot;WM_CTLCOLORBTN&quot; },
+    X{ WU.WM_CTLCOLORDLG,                 &quot;WM_CTLCOLORDLG&quot; },
+    X{ WU.WM_CTLCOLORSCROLLBAR,           &quot;WM_CTLCOLORSCROLLBAR&quot; },
+    X{ WU.WM_CTLCOLORSTATIC,              &quot;WM_CTLCOLORSTATIC&quot; },
+    X{ WU.WM_MOUSEMOVE,                   &quot;WM_MOUSEMOVE (aka WM_MOUSEFIRST)&quot; },
+    X{ WU.WM_LBUTTONDOWN,                 &quot;WM_LBUTTONDOWN&quot; },
+    X{ WU.WM_LBUTTONUP,                   &quot;WM_LBUTTONUP&quot; },
+    X{ WU.WM_LBUTTONDBLCLK,               &quot;WM_LBUTTONDBLCLK&quot; },
+    X{ WU.WM_RBUTTONDOWN,                 &quot;WM_RBUTTONDOWN&quot; },
+    X{ WU.WM_RBUTTONUP,                   &quot;WM_RBUTTONUP&quot; },
+    X{ WU.WM_RBUTTONDBLCLK,               &quot;WM_RBUTTONDBLCLK&quot; },
+    X{ WU.WM_MBUTTONDOWN,                 &quot;WM_MBUTTONDOWN&quot; },
+    X{ WU.WM_MBUTTONUP,                   &quot;WM_MBUTTONUP&quot; },
+    X{ WU.WM_MBUTTONDBLCLK,               &quot;WM_MBUTTONDBLCLK (aka MOUSELAST)&quot; },
+    X{ WU.WM_PARENTNOTIFY,                &quot;WM_PARENTNOTIFY&quot; },
+    X{ WU.WM_ENTERMENULOOP,               &quot;WM_ENTERMENULOOP&quot; },
+    X{ WU.WM_EXITMENULOOP,                &quot;WM_EXITMENULOOP&quot; },
+</PRE><BLOCKQUOTE><EM>** Win95 only...
+    X{ WU.WM_NEXTMENU,                    <CODE>WM_NEXTMENU</CODE> },
+    X{ WU.WM_SIZING,                      <CODE>WM_SIZING</CODE> },
+    X{ WU.WM_CAPTURECHANGED,              <CODE>WM_CAPTURECHANGED</CODE> },
+    X{ WU.WM_MOVING,                      <CODE>WM_MOVING</CODE> },
+    X{ WU.WM_POWERBROADCAST,              <CODE>WM_POWERBROADCAST</CODE> },
+    X{ WU.WM_DEVICECHANGE,                <CODE>WM_DEVICECHANGE</CODE> },
+**</EM></BLOCKQUOTE><PRE>
+    X{ WU.WM_MDICREATE,                   &quot;WM_MDICREATE&quot; },
+    X{ WU.WM_MDIDESTROY,                  &quot;WM_MDIDESTROY&quot; },
+    X{ WU.WM_MDIACTIVATE,                 &quot;WM_MDIACTIVATE&quot; },
+    X{ WU.WM_MDIRESTORE,                  &quot;WM_MDIRESTORE&quot; },
+    X{ WU.WM_MDINEXT,                     &quot;WM_MDINEXT&quot; },
+    X{ WU.WM_MDIMAXIMIZE,                 &quot;WM_MDIMAXIMIZE&quot; },
+    X{ WU.WM_MDITILE,                     &quot;WM_MDITILE&quot; },
+    X{ WU.WM_MDICASCADE,                  &quot;WM_MDICASCADE&quot; },
+    X{ WU.WM_MDIICONARRANGE,              &quot;WM_MDIICONARRANGE&quot; },
+    X{ WU.WM_MDIGETACTIVE,                &quot;WM_MDIGETACTIVE&quot; },
+    X{ WU.WM_MDISETMENU,                  &quot;WM_MDISETMENU&quot; },
+    X{ WU.WM_ENTERSIZEMOVE_UNDOCUMENTED,  &quot;WM_ENTERSIZEMOVE_UNDOCUMENTED&quot; },
+    X{ WU.WM_EXITSIZEMOVE_UNDOCUMENTED,   &quot;WM_EXITSIZEMOVE_UNDOCUMENTED&quot; },
+    X{ WU.WM_DROPFILES,                   &quot;WM_DROPFILES&quot; },
+    X{ WU.WM_MDIREFRESHMENU,              &quot;WM_MDIREFRESHMENU&quot; },
+    X{ WU.WM_CUT,                         &quot;WM_CUT&quot; },
+    X{ WU.WM_COPY,                        &quot;WM_COPY&quot; },
+    X{ WU.WM_PASTE,                       &quot;WM_PASTE&quot; },
+    X{ WU.WM_CLEAR,                       &quot;WM_CLEAR&quot; },
+    X{ WU.WM_UNDO,                        &quot;WM_UNDO&quot; },
+    X{ WU.WM_RENDERFORMAT,                &quot;WM_RENDERFORMAT&quot; },
+    X{ WU.WM_RENDERALLFORMATS,            &quot;WM_RENDERALLFORMATS&quot; },
+    X{ WU.WM_DESTROYCLIPBOARD,            &quot;WM_DESTROYCLIPBOARD&quot; },
+    X{ WU.WM_DRAWCLIPBOARD,               &quot;WM_DRAWCLIPBOARD&quot; },
+    X{ WU.WM_PAINTCLIPBOARD,              &quot;WM_PAINTCLIPBOARD&quot; },
+    X{ WU.WM_VSCROLLCLIPBOARD,            &quot;WM_VSCROLLCLIPBOARD&quot; },
+    X{ WU.WM_SIZECLIPBOARD,               &quot;WM_SIZECLIPBOARD&quot; },
+    X{ WU.WM_ASKCBFORMATNAME,             &quot;WM_ASKCBFORMATNAME&quot; },
+    X{ WU.WM_CHANGECBCHAIN,               &quot;WM_CHANGECBCHAIN&quot; },
+    X{ WU.WM_HSCROLLCLIPBOARD,            &quot;WM_HSCROLLCLIPBOARD&quot; },
+    X{ WU.WM_QUERYNEWPALETTE,             &quot;WM_QUERYNEWPALETTE&quot; },
+    X{ WU.WM_PALETTEISCHANGING,           &quot;WM_PALETTEISCHANGING&quot; },
+    X{ WU.WM_PALETTECHANGED,              &quot;WM_PALETTECHANGED&quot; },
+    X{ WU.WM_HOTKEY,                      &quot;WM_HOTKEY&quot; },
+    X{ WU.WM_PENWINFIRST,                 &quot;WM_PENWINFIRST&quot; },
+    X{ WU.WM_PENWINLAST,                  &quot;WM_PENWINLAST&quot; },
+    X{ WU.WM_MM_RESERVED_FIRST,           &quot;WM_MM_RESERVED_FIRST&quot; },
+    X{ WU.WM_MM_RESERVED_LAST,            &quot;WM_MM_RESERVED_LAST&quot; },
+    X{ WU.WM_USER,                        &quot;WM_USER&quot; },
+    X{ CREATE_OFFSCREEN_VBT,              &quot;CREATE_OFFSCREEN_VBT&quot; },
+    X{ RESHAPE_VBT,                       &quot;RESHAPE_VBT&quot; },
+    X{ DELETE_VBT,                        &quot;DELETE_VBT&quot; },
+    X{ SYNC_VBT,                          &quot;SYNC_VBT&quot; },
+    X{ FORGE_VBT,                         &quot;FORGE_VBT&quot; },
+    X{ ICONIZE_VBT,                       &quot;ICONIZE_VBT&quot; },
+    X{ OVERLAP_VBT,                       &quot;OVERLAP_VBT&quot; },
+    X{ RETITLE_VBT,                       &quot;RETITLE_VBT&quot; }
+  };
+
+BEGIN
+  (* verify that we have a sorted list of tags. *)
+  FOR i := 1 TO LAST (Desc) DO
+    &lt;*ASSERT Desc[i-1].msg &lt; Desc[i].msg*&gt;
+  END;
+END WinMsg.
+</PRE>
+</inModule>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

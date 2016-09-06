@@ -1,0 +1,884 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: thread/src/WIN32/ThreadWin32.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>thread/src/WIN32/ThreadWin32.m3</H2></A><HR>
+<inModule>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM>                                                                 </EM></BLOCKQUOTE><PRE>
+</PRE> portions Copyright 1996, Critical Mass, Inc.                    
+                                                                 
+
+<P><PRE>UNSAFE MODULE <module>ThreadWin32</module>
+  EXPORTS <A HREF="../Common/Scheduler.i3.html"><implements>Scheduler</A></implements>, <A HREF="../Common/Thread.i3.html"><implements>Thread</A></implements>, <A HREF="#x1"><implements>ThreadF</A></implements>, <A HREF="../../../runtime/src/common/RTThreadInit.i3.html"><implements>RTThreadInit</A></implements>, <A HREF="../../../runtime/src/common/RTHooks.i3.html"><implements>RTHooks</A></implements>;
+
+IMPORT <A HREF="../../../runtime/src/common/RTHeapRep.i3.html">RTHeapRep</A>, <A HREF="../../../runtime/src/common/RTLinker.i3.html">RTLinker</A>, <A HREF="../../../runtime/src/common/RTMisc.i3.html">RTMisc</A>, <A HREF="../../../win32/src/WinBase.i3.html">WinBase</A>, <A HREF="../../../win32/src/WinDef.i3.html">WinDef</A>, <A HREF="../../../win32/src/WinNT.i3.html">WinNT</A>, <A HREF="ThreadContext.i3.html">ThreadContext</A>;
+IMPORT <A HREF="../../../word/src/Word.i3.html">Word</A>;
+</PRE><BLOCKQUOTE><EM>** IMPORT RTIO; **</EM></BLOCKQUOTE><PRE>
+</PRE>----------------------------------------- Exceptions, types and globals ---
+
+<P><PRE>VAR
+  cm: WinBase.LPCRITICAL_SECTION;
+    (* Global lock for internals of Mutex and Condition *)
+
+  default_stack: WinDef.DWORD := 16384;
+
+  nextId: Id := 1;
+
+REVEAL
+  <A NAME="Mutex">Mutex</A> = BRANDED &quot;MUTEX Win32-1.0&quot; OBJECT
+      cs: WinBase.LPCRITICAL_SECTION := NIL;
+      held: BOOLEAN := FALSE;
+        (* LL = self.cs *)
+        (* Because critical sections are thread re-entrant *)
+    END;
+
+  <A NAME="Condition">Condition</A> = BRANDED &quot;Thread.Condition Win32-1.0&quot; OBJECT
+      waiters: T := NIL;
+        (* LL = cm *)
+        (* List of threads waiting on this CV. *)
+    END;
+
+  <A NAME="T">T</A> = BRANDED &quot;Thread.T Win32-1.0&quot; OBJECT
+      next, prev: T := NIL;
+        (* LL = threadMu; global doubly-linked, circular list of all threads *)
+      nextIdle: T := NIL;
+        (* LL = threadMu; global list of idle threads *)
+      handle: WinNT.HANDLE := NIL;
+        (* LL = threadMu; thread handle in Windows *)
+      stackbase: ADDRESS := NIL;
+        (* LL = threadMu; base of thread stack for use by GC *)
+      closure: Closure := NIL;
+        (* LL = threadMu *)
+      result: REFANY := NIL;
+        (* LL = threadMu;  if not self.completed, used only by self;
+           if self.completed, read-only. *)
+      cond: Condition;
+        (* LL = threadMu; wait here to join, or for rebirth *)
+      waitingOn: Condition := NIL;
+        (* LL = cm; CV that we're blocked on *)
+      nextWaiter: T := NIL;
+        (* LL = cm; queue of threads waiting on the same CV *)
+      waitSema: WinNT.HANDLE := NIL;
+        (* binary semaphore for blocking during &quot;Wait&quot; *)
+      alertable: BOOLEAN := FALSE;
+        (* LL = cm; distinguishes between &quot;Wait&quot; and &quot;AlertWait&quot; *)
+      alerted: BOOLEAN := FALSE;
+        (* LL = cm; the alert flag, of course *)
+      completed: BOOLEAN := FALSE;
+        (* LL = threadMu; indicates that &quot;result&quot; is set *)
+      joined: BOOLEAN := FALSE;
+        (* LL = threadMu; &quot;Join&quot; or &quot;AlertJoin&quot; has already returned *)
+      id: Id;
+        (* LL = threadMu; unique ID of this thread *)
+      slot: INTEGER;
+        (* LL = threadMu; index into global array of active, slotted threads *)
+    END;
+</PRE>------------------------------------------- Caches of critical sections ---
+
+<P><PRE>CONST
+  CSectCacheSize = 20;
+    (* Everything should work OK if these are 0 *)
+
+VAR
+  cSectCache: ARRAY [0..CSectCacheSize-1] OF WinBase.LPCRITICAL_SECTION;
+  cSectCacheContents := 0;
+
+PROCEDURE <A NAME="AllocCSect"><procedure>AllocCSect</procedure></A>(m: Mutex) =
+    (* LL = 0 *)
+    (* If we can take a critical section from the cache,
+       do so; otherwise create it. In any case, register the containing
+       Mutex with the GC so that we can clean-up on de-allocation. *)
+  VAR mcs: WinBase.LPCRITICAL_SECTION := NIL;  lost_race := FALSE;
+  BEGIN
+    WinBase.EnterCriticalSection(cm);
+      IF cSectCacheContents &gt; 0 THEN
+        DEC(cSectCacheContents);
+        m.cs := cSectCache[cSectCacheContents];
+      ELSE
+        WinBase.LeaveCriticalSection(cm);
+          mcs := NEW(WinBase.LPCRITICAL_SECTION);
+        WinBase.EnterCriticalSection(cm);
+        IF (m.cs = NIL) THEN
+          m.cs := mcs;
+          WinBase.InitializeCriticalSection(m.cs);
+        ELSE
+          (* somebody else beat us thru the preceding NEW *)
+          lost_race := TRUE;
+        END;
+      END;
+    WinBase.LeaveCriticalSection(cm);
+
+    IF lost_race
+      THEN DISPOSE (mcs);
+      ELSE RTHeapRep.RegisterFinalCleanup(m, FreeCSect);
+    END;
+  END AllocCSect;
+
+PROCEDURE <A NAME="FreeCSect"><procedure>FreeCSect</procedure></A>(r: REFANY (*Mutex*) ) =
+    (* LL &lt; cm *)
+    (* Must not dereference any traced REF when called from GC *)
+    VAR m: Mutex := r;
+  BEGIN
+    WinBase.EnterCriticalSection(cm);
+    IF m.cs # NIL THEN
+      IF cSectCacheContents &lt; CSectCacheSize THEN
+        cSectCache[cSectCacheContents] := m.cs;
+        INC(cSectCacheContents);
+      ELSE
+        DISPOSE(m.cs);
+      END;
+      m.cs := NIL;
+    END;
+    WinBase.LeaveCriticalSection(cm)
+  END FreeCSect;
+</PRE>----------------------------------------------------------------- Mutex ---
+ Note: RTHooks.{Unlock,Lock}Mutex are the routines called directly by
+   the compiler.  Acquire and Release are the routines exported through
+   the Thread interface 
+         
+<P><PRE>PROCEDURE <A NAME="Acquire"><procedure>Acquire</procedure></A> (m: Mutex) =
+  BEGIN
+    LockMutex (m);
+  END Acquire;
+
+PROCEDURE <A NAME="Release"><procedure>Release</procedure></A> (m: Mutex) =
+  BEGIN
+    UnlockMutex (m);
+  END Release;
+
+PROCEDURE (*RTHooks.*)<A NAME="LockMutex"><procedure>LockMutex</procedure></A> (m: Mutex) =
+  BEGIN
+    IF (m.cs = NIL) THEN AllocCSect(m); END;
+    WinBase.EnterCriticalSection(m.cs);
+    IF m.held THEN Die(&quot;attempt to lock mutex already locked by self&quot;) END;
+    m.held := TRUE;
+  END LockMutex;
+
+PROCEDURE (*RTHooks.*)<A NAME="UnlockMutex"><procedure>UnlockMutex</procedure></A>(m: Mutex) =
+  BEGIN
+    IF NOT m.held THEN Die(&quot;attempt to release an unlocked mutex&quot;) END;
+    m.held := FALSE;
+    WinBase.LeaveCriticalSection(m.cs);
+  END UnlockMutex;
+</PRE>---------------------------------------- Condition variables and Alerts ---
+
+<P><PRE>PROCEDURE <A NAME="InnerWait"><procedure>InnerWait</procedure></A>(m: Mutex; c: Condition; self: T) =
+    (* LL = cm+m on entry; LL = m on exit *)
+  BEGIN
+    &lt;* ASSERT( (self.waitingOn=NIL) AND (self.nextWaiter=NIL) ) *&gt;
+    self.waitingOn := c;
+    self.nextWaiter := c.waiters;
+    c.waiters := self;
+    WinBase.LeaveCriticalSection(cm);
+    UnlockMutex(m);
+    IF WinBase.WaitForSingleObject(self.waitSema, WinBase.INFINITE) # 0 THEN
+      Choke();
+    END;
+    LockMutex(m);
+  END InnerWait;
+
+PROCEDURE <A NAME="InnerTestAlert"><procedure>InnerTestAlert</procedure></A>(self: T) RAISES {Alerted} =
+  (* LL = cm on entry; LL = cm on normal exit, 0 on exception exit *)
+  (* If self.alerted, clear &quot;alerted&quot;, leave cm and raise
+     &quot;Alerted&quot;. *)
+  BEGIN
+    IF self.alerted THEN
+      self.alerted := FALSE;
+      WinBase.LeaveCriticalSection(cm);
+      RAISE Alerted
+    END;
+  END InnerTestAlert;
+
+PROCEDURE <A NAME="AlertWait"><procedure>AlertWait</procedure></A> (m: Mutex; c: Condition) RAISES {Alerted} =
+  (* LL = m *)
+  VAR self := Self();
+  BEGIN
+    IF self = NIL THEN Die(&quot;AlertWait called from non-Modula-3 thread&quot;) END;
+    WinBase.EnterCriticalSection(cm);
+    InnerTestAlert(self);
+    self.alertable := TRUE;
+    InnerWait(m, c, self);
+    WinBase.EnterCriticalSection(cm);
+    InnerTestAlert(self);
+    WinBase.LeaveCriticalSection(cm);
+  END AlertWait;
+
+PROCEDURE <A NAME="Wait"><procedure>Wait</procedure></A> (m: Mutex; c: Condition) =
+  (* LL = m *)
+  VAR self := Self();
+  BEGIN
+    IF self = NIL THEN Die(&quot;Wait called from non-Modula-3 thread&quot;) END;
+    WinBase.EnterCriticalSection(cm);
+    InnerWait(m, c, self);
+  END Wait;
+
+PROCEDURE <A NAME="DequeueHead"><procedure>DequeueHead</procedure></A>(c: Condition) =
+  (* LL = cm *)
+  VAR t: T; prevCount: WinDef.LONG;
+  BEGIN
+    t := c.waiters; c.waiters := t.nextWaiter;
+    t.nextWaiter := NIL;
+    t.waitingOn := NIL;
+    t.alertable := FALSE;
+    IF WinBase.ReleaseSemaphore(t.waitSema, 1, ADR(prevCount)) = 0 THEN
+      Choke();
+    END;
+  END DequeueHead;
+
+PROCEDURE <A NAME="Signal"><procedure>Signal</procedure></A> (c: Condition) =
+  BEGIN
+    WinBase.EnterCriticalSection(cm);
+    IF c.waiters # NIL THEN DequeueHead(c) END;
+    WinBase.LeaveCriticalSection(cm);
+  END Signal;
+
+PROCEDURE <A NAME="Broadcast"><procedure>Broadcast</procedure></A> (c: Condition) =
+  BEGIN
+    WinBase.EnterCriticalSection(cm);
+    WHILE c.waiters # NIL DO DequeueHead(c) END;
+    WinBase.LeaveCriticalSection(cm);
+  END Broadcast;
+
+PROCEDURE <A NAME="Alert"><procedure>Alert</procedure></A>(t: T) =
+    VAR prevCount: WinDef.LONG; prev, next: T;
+  BEGIN
+    IF t = NIL THEN Die(&quot;Alert called from non-Modula-3 thread&quot;) END;
+    WinBase.EnterCriticalSection(cm);
+    t.alerted := TRUE;
+    IF t.alertable THEN
+      (* Dequeue from any CV and unblock from the semaphore *)
+      IF t.waitingOn # NIL THEN
+        next := t.waitingOn.waiters; prev := NIL;
+        WHILE next # t DO
+          &lt;* ASSERT(next#NIL) *&gt;
+          prev := next; next := next.nextWaiter;
+        END;
+        IF prev = NIL THEN
+          t.waitingOn.waiters := t.nextWaiter
+        ELSE
+          prev.nextWaiter := t.nextWaiter;
+        END;
+        t.nextWaiter := NIL;
+        t.waitingOn := NIL;
+      END;
+      t.alertable := FALSE;
+      IF WinBase.ReleaseSemaphore(t.waitSema, 1, ADR(prevCount)) = 0 THEN
+        Choke();
+      END;
+    END;
+    WinBase.LeaveCriticalSection(cm);
+  END Alert;
+
+PROCEDURE <A NAME="TestAlert"><procedure>TestAlert</procedure></A>(): BOOLEAN =
+    VAR self := Self(); result: BOOLEAN;
+  BEGIN
+    IF self = NIL THEN
+      (* Not created by Fork; not alertable *)
+      RETURN FALSE
+    ELSE
+      WinBase.EnterCriticalSection(cm);
+      result := self.alerted; IF result THEN self.alerted := FALSE END;
+      WinBase.LeaveCriticalSection(cm);
+      RETURN result
+    END;
+  END TestAlert;
+</PRE>------------------------------------------------------------------ Self ---
+
+<P><PRE>VAR
+  threadIndex: WinDef.DWORD;
+    (* read-only;  TLS (Thread Local Storage) index *)
+
+VAR (* LL = threadMu *)
+  n_slotted := 0;
+  next_slot := 1;
+  slots     : REF ARRAY OF T;  (* NOTE: we don't use slots[0]. *)
+
+PROCEDURE <A NAME="Self"><procedure>Self</procedure></A> (): T =
+  (* If not the initial thread and not created by Fork, returns NIL *)
+  VAR t: T;  x := LOOPHOLE(WinBase.TlsGetValue(threadIndex), INTEGER);
+  BEGIN
+    IF (x &lt; 1) THEN RETURN NIL; END;
+    t := slots[x];
+    IF (t.slot # x) THEN Die (&quot;thread with bad slot!&quot;); END;
+    RETURN t;
+  END Self;
+
+PROCEDURE <A NAME="SetSelf"><procedure>SetSelf</procedure></A> (t: T) =
+  (* LL = 0 *)
+  BEGIN
+    IF (slots [t.slot] # t) THEN Die (&quot;unslotted thread!&quot;); END;
+    IF WinBase.TlsSetValue(threadIndex, LOOPHOLE(t.slot, WinDef.LPVOID)) = 0
+      THEN Choke();
+    END;
+  END SetSelf;
+
+PROCEDURE <A NAME="AssignSlot"><procedure>AssignSlot</procedure></A> (t: T): INTEGER =
+  (* LL = threadMu *)
+  BEGIN
+    (* make sure we have room to register this guy *)
+    IF (slots = NIL) THEN slots := NEW (REF ARRAY OF T, 20); END;
+    IF (n_slotted &gt;= LAST (slots^)) THEN ExpandSlots (); END;
+
+    (* look for an empty slot *)
+    WHILE (slots [next_slot] # NIL) DO
+      INC (next_slot);
+      IF (next_slot &gt;= NUMBER (slots^)) THEN next_slot := 1; END;
+    END;
+
+    INC (n_slotted);
+    t.slot := next_slot;
+    slots [next_slot] := t;
+    RETURN t.slot;
+  END AssignSlot;
+
+PROCEDURE <A NAME="FreeSlot"><procedure>FreeSlot</procedure></A> (t: T) =
+  (* LL = threadMu *)
+  BEGIN
+    DEC (n_slotted);
+    WITH z = slots [t.slot] DO
+      IF (z # t) THEN Die (&quot;unslotted thread!&quot;); END;
+      z := NIL;
+    END;
+    t.slot := 0;
+  END FreeSlot;
+
+PROCEDURE <A NAME="ExpandSlots"><procedure>ExpandSlots</procedure></A> () =
+  VAR n := NUMBER (slots^);  new := NEW (REF ARRAY OF T, n+n);
+  BEGIN
+    SUBARRAY (new^, 0, n) := slots^;
+    slots := new;
+  END ExpandSlots;
+</PRE>------------------------------------------------------------ Fork, Join ---
+
+<P><PRE>CONST
+  MaxIdle = 20;
+
+VAR (* LL=threadMu *)
+  threadMu: Mutex;
+  allThreads: T := NIL;   (* global list of registered threads *)
+  idleThreads: T := NIL;  (* global list of idle threads *)
+  nIdle := 0;
+
+PROCEDURE <A NAME="CreateT"><procedure>CreateT</procedure></A>(): T =
+  (* LL &lt; threadMu, because allocated a traced reference may cause
+     the allocator to start a collection which will call SuspendOthers
+     which will try to acquire threadMu. *)
+  BEGIN
+    RETURN NEW(T, waitSema := WinBase.CreateSemaphore(NIL, 0, 1, NIL),
+               cond := NEW(Condition));
+  END CreateT;
+</PRE> ThreadBase calls ThreadMain after finding (approximately) where
+   its stack begins.  This dance ensures that all of ThreadMain's
+   traced references are within the stack scanned by the collector. 
+
+<P><PRE>PROCEDURE <A NAME="ThreadBase"><procedure>ThreadBase</procedure></A>(param: WinDef.DWORD): WinDef.DWORD =
+  VAR self: T;  x := LOOPHOLE(param, INTEGER);
+  BEGIN
+    LockMutex(threadMu);
+      self := slots[x];
+      self.stackbase := ADR(self);
+    UnlockMutex(threadMu);
+    ThreadMain(self);
+    RETURN 0;
+  END ThreadBase;
+
+PROCEDURE <A NAME="ThreadMain"><procedure>ThreadMain</procedure></A>(self: T) =
+  TYPE
+    ObjRef = UNTRACED REF MethodList;
+    MethodList = UNTRACED REF RECORD typecode: INTEGER;  method0: ADDRESS END;
+  VAR next_self: T; cl: Closure; res: REFANY;
+  BEGIN
+    LOOP (* The incarnation loop. *)
+      SetSelf (self);
+
+      LockMutex(threadMu);
+        cl := self.closure;
+        self.id := nextId;  INC (nextId);
+      UnlockMutex(threadMu);
+
+      IF (cl = NIL) THEN
+        Die (&quot;NIL closure passed to Thread.Fork!&quot;);
+      ELSIF (LOOPHOLE (cl, ObjRef)^^.method0 = NIL) THEN
+        Die (&quot;NIL apply method passed to Thread.Fork!&quot;);
+      END;
+
+      res := cl.apply();
+
+      next_self := NIL;
+      IF nIdle &lt; MaxIdle THEN
+        (* apparently the cache isn't full, although we don't hold threadMu
+           so we can't be certain... *)
+        next_self := NEW(T);
+      END;
+
+      LockMutex(threadMu);
+        self.result := res;
+        self.completed := TRUE;
+
+        IF next_self # NIL THEN
+          (* transplant the guts of &quot;self&quot; into next_self *)
+          next_self.handle    := self.handle;
+          next_self.stackbase := self.stackbase;
+          next_self.waitSema  := self.waitSema;
+          next_self.cond      := self.cond;
+
+          (* put &quot;next_self&quot; on the list of all threads *)
+          next_self.next := allThreads;
+          next_self.prev := allThreads.prev;
+          allThreads.prev.next := next_self;
+          allThreads.prev := next_self;
+
+          (* put &quot;next_self&quot; on the list of idle threads *)
+          next_self.nextIdle := idleThreads;
+          idleThreads := next_self;
+          INC(nIdle);
+
+          (* finish making &quot;self&quot; an orphan *)
+          IF allThreads = self THEN allThreads := self.next; END;
+          self.next.prev := self.prev;
+          self.prev.next := self.next;
+          self.next := NIL;
+          self.prev := NIL;
+          self.handle := NIL;
+          self.stackbase := NIL;
+        END;
+      UnlockMutex(threadMu);
+
+      Broadcast(self.cond); (* let everybody know that &quot;self&quot; is done *)
+
+      IF next_self = NIL THEN EXIT; END;
+      self := next_self;
+      IF WinBase.WaitForSingleObject(self.waitSema, WinBase.INFINITE) # 0 THEN
+        Choke();
+      END;
+    END;
+
+    (* remove ourself from the list of all threads *)
+    LockMutex(threadMu);
+      IF allThreads = self THEN allThreads := self.next; END;
+      self.next.prev := self.prev;
+      self.prev.next := self.next;
+      self.next := NIL;
+      self.prev := NIL;
+      IF WinBase.CloseHandle(self.waitSema) = 0 THEN Choke() END;
+      IF WinBase.CloseHandle(self.handle) = 0 THEN Choke() END;
+      self.handle := NIL;
+      self.waitSema := NIL;
+      FreeSlot (self);
+    UnlockMutex(threadMu);
+  END ThreadMain;
+
+PROCEDURE <A NAME="Fork"><procedure>Fork</procedure></A>(closure: Closure): T =
+  VAR
+    t: T := NIL;
+    id, stack_size: WinDef.DWORD;
+    prevCount: WinDef.LONG;
+    new_born: BOOLEAN;
+  BEGIN
+    (* determine the initial size of the stack for this thread *)
+    stack_size := default_stack;
+    TYPECASE closure OF SizedClosure (scl) =&gt;
+      IF scl.stackSize # 0 THEN
+        stack_size := scl.stackSize * BYTESIZE(INTEGER);
+      END;
+    ELSE (*skip*)
+    END;
+
+    (* try the cache for a thread *)
+    LockMutex(threadMu);
+      IF nIdle &gt; 0 THEN
+        new_born := FALSE;
+        &lt;* ASSERT(idleThreads # NIL) *&gt;
+        DEC(nIdle);
+        t := idleThreads;
+        idleThreads := t.nextIdle;
+        t.nextIdle := NIL;
+        t.slot := AssignSlot (t);
+      ELSE (* empty cache =&gt; we need a fresh thread *)
+        new_born := TRUE;
+        UnlockMutex(threadMu);
+          t := CreateT();
+        LockMutex(threadMu);
+        t.slot := AssignSlot (t);
+        t.handle := WinBase.CreateThread(NIL, stack_size,
+          LOOPHOLE(ThreadBase, WinBase.LPTHREAD_START_ROUTINE),
+          LOOPHOLE(t.slot,WinDef.LPVOID), WinBase.CREATE_SUSPENDED, ADR(id));
+        t.next := allThreads;
+        t.prev := allThreads.prev;
+        allThreads.prev.next := t;
+        allThreads.prev := t;
+      END;
+      IF (t.handle = NIL) THEN Choke() END;
+      t.closure := closure;
+    UnlockMutex(threadMu);
+
+    IF new_born THEN
+      IF WinBase.ResumeThread(t.handle) = -1 THEN Choke() END;
+    ELSE
+      IF WinBase.ReleaseSemaphore(t.waitSema, 1, ADR(prevCount)) = 0 THEN
+        Choke();
+      END;
+    END;
+
+    RETURN t
+  END Fork;
+
+PROCEDURE <A NAME="Join"><procedure>Join</procedure></A>(t: T): REFANY =
+  VAR res: REFANY;
+  BEGIN
+    LockMutex(threadMu);
+      IF t.joined THEN Die(&quot;attempt to join with thread twice&quot;); END;
+      WHILE NOT t.completed DO Wait(threadMu, t.cond) END;
+      res := t.result;
+      t.result := NIL;
+      t.joined := TRUE;
+    UnlockMutex(threadMu);
+    RETURN res;
+  END Join;
+
+PROCEDURE <A NAME="AlertJoin"><procedure>AlertJoin</procedure></A>(t: T): REFANY RAISES {Alerted} =
+  VAR res: REFANY;
+  BEGIN
+    LockMutex(threadMu);
+    TRY
+      IF t.joined THEN Die(&quot;attempt to join with thread twice&quot;); END;
+      WHILE NOT t.completed DO AlertWait(threadMu, t.cond) END;
+      res := t.result;
+      t.result := NIL;
+      t.joined := TRUE;
+    FINALLY
+      UnlockMutex(threadMu);
+    END;
+    RETURN res;
+  END AlertJoin;
+</PRE>------------------------------------------------ timer-based preemption ---
+
+<P><PRE>PROCEDURE <A NAME="SetSwitchingInterval"><procedure>SetSwitchingInterval</procedure></A> (&lt;*UNUSED*&gt; usec: CARDINAL) =
+  BEGIN
+  END SetSwitchingInterval;
+</PRE>---------------------------------------------------- Scheduling support ---
+
+<P><PRE>PROCEDURE <A NAME="Pause"><procedure>Pause</procedure></A>(n: LONGREAL) =
+  VAR amount, thisTime: LONGREAL;
+  CONST Limit = FLOAT(LAST(CARDINAL), LONGREAL) / 1000.0D0 - 1.0D0;
+  BEGIN
+    amount := n;
+    WHILE amount &gt; 0.0D0 DO
+      thisTime := MIN (Limit, amount);
+      amount := amount - thisTime;
+      WinBase.Sleep(ROUND(thisTime*1000.0D0));
+    END;
+  END Pause;
+
+PROCEDURE <A NAME="AlertPause"><procedure>AlertPause</procedure></A>(n: LONGREAL) RAISES {Alerted} =
+  VAR amount, thisTime: LONGREAL;
+  CONST Limit = FLOAT(LAST(CARDINAL), LONGREAL) / 1000.0D0 - 1.0D0;
+  VAR self: T;
+  BEGIN
+    self := Self();
+    amount := n;
+    WHILE amount &gt; 0.0D0 DO
+      thisTime := MIN (Limit, amount);
+      amount := amount - thisTime;
+      WinBase.EnterCriticalSection(cm);
+      InnerTestAlert(self);
+      self.alertable := TRUE;
+      &lt;* ASSERT(self.waitingOn = NIL) *&gt;
+      WinBase.LeaveCriticalSection(cm);
+      EVAL WinBase.WaitForSingleObject(self.waitSema, ROUND(thisTime*1.0D3));
+      WinBase.EnterCriticalSection(cm);
+      self.alertable := FALSE;
+      IF self.alerted THEN
+        (* Sadly, the alert might have happened after we timed out on the
+           semaphore and before we entered &quot;cm&quot;. In that case, we need to
+           decrement the semaphore's count *)
+        EVAL WinBase.WaitForSingleObject(self.waitSema, 0);
+        InnerTestAlert(self);
+      END;
+      WinBase.LeaveCriticalSection(cm);
+    END;
+  END AlertPause;
+
+PROCEDURE <A NAME="Yield"><procedure>Yield</procedure></A>() =
+  BEGIN
+    WinBase.Sleep(0);
+  END Yield;
+</PRE>--------------------------------------------------- Stack size controls ---
+
+<P><PRE>PROCEDURE <A NAME="GetDefaultStackSize"><procedure>GetDefaultStackSize</procedure></A>(): CARDINAL=
+  BEGIN
+    RETURN default_stack DIV BYTESIZE (INTEGER);
+  END GetDefaultStackSize;
+
+PROCEDURE <A NAME="MinDefaultStackSize"><procedure>MinDefaultStackSize</procedure></A>(new_min: CARDINAL)=
+  BEGIN
+    default_stack := MAX (default_stack, new_min * BYTESIZE (INTEGER));
+  END MinDefaultStackSize;
+
+PROCEDURE <A NAME="IncDefaultStackSize"><procedure>IncDefaultStackSize</procedure></A>(inc: CARDINAL)=
+  BEGIN
+    INC (default_stack, inc * BYTESIZE (INTEGER));
+  END IncDefaultStackSize;
+</PRE>-------------------------------------------- Exception handling support ---
+
+<P><PRE>VAR handlersIndex: INTEGER;
+
+PROCEDURE <A NAME="GetCurrentHandlers"><procedure>GetCurrentHandlers</procedure></A>(): ADDRESS=
+  BEGIN
+    RETURN WinBase.TlsGetValue(handlersIndex);
+  END GetCurrentHandlers;
+
+PROCEDURE <A NAME="SetCurrentHandlers"><procedure>SetCurrentHandlers</procedure></A>(h: ADDRESS)=
+  BEGIN
+    EVAL WinBase.TlsSetValue(handlersIndex, h);
+  END SetCurrentHandlers;
+
+PROCEDURE <A NAME="PushEFrame"><procedure>PushEFrame</procedure></A> (frame: ADDRESS) =
+  TYPE Frame = UNTRACED REF RECORD next: ADDRESS END;
+  VAR f := LOOPHOLE (frame, Frame);
+  BEGIN
+    f.next := WinBase.TlsGetValue(handlersIndex);
+    EVAL WinBase.TlsSetValue(handlersIndex, f);
+  END PushEFrame;
+
+PROCEDURE <A NAME="PopEFrame"><procedure>PopEFrame</procedure></A> (frame: ADDRESS) =
+  BEGIN
+    EVAL WinBase.TlsSetValue(handlersIndex, frame);
+  END PopEFrame;
+</PRE>--------------------------------------------- Garbage collector support ---
+
+<P><PRE>VAR
+  suspend_mu  : Mutex;
+  suspend_cnt : CARDINAL := 0;  (* LL = suspend_mu *)
+
+PROCEDURE <A NAME="SuspendOthers"><procedure>SuspendOthers</procedure></A> () =
+  (* LL=0. Always bracketed with ResumeOthers, which will unlock threadMu *)
+  VAR t: T;  self := Self ();  cnt: CARDINAL;
+  BEGIN
+    LOCK suspend_mu DO
+      cnt := suspend_cnt;
+      INC (suspend_cnt);
+    END;
+
+    IF (cnt = 0) THEN
+      LockMutex(threadMu);
+
+      WinBase.EnterCriticalSection(cm);
+      (* We must hold 'cm' to guarantee that no suspended thread holds it.
+         Otherwise, when the collector tries to acquire a mutex or signal
+         a condition, it will deadlock with the suspended thread that
+         holds 'cm'. *)
+
+      t := self.next;
+      WHILE (t # self) DO
+        IF WinBase.SuspendThread(t.handle) = -1 THEN Choke() END;
+        t := t.next;
+      END;
+      WinBase.LeaveCriticalSection(cm);
+    END;
+  END SuspendOthers;
+
+PROCEDURE <A NAME="ResumeOthers"><procedure>ResumeOthers</procedure></A> () =
+  (* LL=threadMu.  Always preceded by SuspendOthers, which locks threadMu *)
+  VAR t: T;  self := Self ();  cnt: CARDINAL;
+  BEGIN
+    LOCK suspend_mu DO
+      DEC (suspend_cnt);
+      cnt := suspend_cnt;
+    END;
+
+    IF (cnt = 0) THEN
+      t := self.next;
+      WHILE (t # self) DO
+        IF WinBase.ResumeThread(t.handle) = -1 THEN Choke() END;
+        t := t.next;
+      END;
+      UnlockMutex(threadMu);
+    END;
+  END ResumeOthers;
+
+PROCEDURE <A NAME="ProcessStacks"><procedure>ProcessStacks</procedure></A> (p: PROCEDURE (start, stop: ADDRESS)) =
+  (* LL=threadMu.  Only called within {SuspendOthers, ResumeOthers} *)
+  CONST UserRegs = Word.Or(ThreadContext.CONTEXT_CONTROL,
+                           ThreadContext.CONTEXT_INTEGER);
+  VAR t := allThreads;  context: ThreadContext.CONTEXT;  fixed_SP: ADDRESS;
+  BEGIN
+    REPEAT
+      IF (t.stackbase # NIL) THEN
+        context.ContextFlags := UserRegs;
+        IF WinBase.GetThreadContext(t.handle, ADR(context))=0 THEN Choke() END;
+        fixed_SP := LOOPHOLE (context.Esp, ADDRESS);
+        IF (t.stackbase - fixed_SP) &gt; 10000 THEN
+          fixed_SP := VerifySP (fixed_SP, t.stackbase);
+        END;
+        p(fixed_SP, t.stackbase); (* Process the stack *)
+        p(ADR(context.Edi), ADR(context.Eip));  (* Process the registers *)
+      END;
+      t := t.next;
+    UNTIL (t = allThreads);
+  END ProcessStacks;
+
+PROCEDURE <A NAME="VerifySP"><procedure>VerifySP</procedure></A> (start, stop: ADDRESS): ADDRESS =
+  (* Apparently, Win95 will lie about a thread's stack pointer! *)
+  (* Verify that the claimed stack pages are really readable... *)
+  CONST PageSize = 4096;
+  CONST N = BYTESIZE (info);
+  VAR info: WinNT.MEMORY_BASIC_INFORMATION;
+  BEGIN
+</PRE>*****
+RTIO.PutText (<CODE>GC: suspicious stack: [</CODE>);
+RTIO.PutAddr (start);
+RTIO.PutText (<CODE>..</CODE>);
+RTIO.PutAddr (stop);
+RTIO.PutText (<CODE>]\n</CODE>);
+RTIO.Flush ();
+*****
+
+<P>    <PRE>info.BaseAddress := LOOPHOLE (stop-1, ADDRESS);
+    LOOP
+      IF (info.BaseAddress &lt;= start) THEN
+        info.BaseAddress := start;
+        EXIT;
+      END;
+
+      IF WinBase.VirtualQuery (info.BaseAddress, ADR (info), N) # N THEN
+        Choke();
+      END;
+</PRE>******
+RTIO.PutText (<CODE> --&gt; </CODE>);  RTIO.PutAddr (info.BaseAddress);
+RTIO.PutText (<CODE> </CODE>);  RTIO.PutAddr (info.AllocationBase);
+RTIO.PutText (<CODE> </CODE>);  RTIO.PutHex (info.AllocationProtect);
+RTIO.PutText (<CODE> </CODE>);  RTIO.PutHex (info.RegionSize);
+RTIO.PutText (<CODE> </CODE>);  RTIO.PutHex (info.State);
+RTIO.PutText (<CODE> </CODE>);  RTIO.PutHex (info.Protect);
+RTIO.PutText (<CODE> </CODE>);  RTIO.PutHex (info.Type);
+RTIO.PutText (<CODE>\n</CODE>);
+******
+
+<P>       is this chunk readable? 
+      <PRE>IF (info.Protect # WinNT.PAGE_READWRITE)
+        AND (info.Protect # WinNT.PAGE_READONLY) THEN
+        (* nope, return the base of the last good chunk *)
+        INC (info.BaseAddress, info.RegionSize);
+        EXIT;
+      END;
+
+      (* yep, try the next chunk *)
+      DEC (info.BaseAddress, PageSize);
+    END;
+</PRE>*******
+RTIO.PutText (<CODE> ==&gt; [</CODE>);
+RTIO.PutAddr (info.BaseAddress);
+RTIO.PutText (<CODE>..</CODE>);
+RTIO.PutAddr (stop);
+RTIO.PutText (<CODE>]</CODE>);
+RTIO.PutText (<CODE>\n</CODE>);
+RTIO.Flush ();
+******
+
+<P>    <PRE>RETURN info.BaseAddress;
+  END VerifySP;
+</PRE>------------------------------------------------------------ misc. junk ---
+
+<P><PRE>PROCEDURE <A NAME="MyId"><procedure>MyId</procedure></A>(): Id RAISES {}=
+  VAR self := Self ();
+  BEGIN
+    RETURN self.id;
+  END MyId;
+</PRE>---------------------------------------------------------------- errors ---
+
+<P><PRE>PROCEDURE <A NAME="Die"><procedure>Die</procedure></A>(msg: TEXT) =
+  BEGIN
+    RTMisc.FatalError (&quot;ThreadWin32.m3&quot;, 721, &quot;Thread client error: &quot;, msg);
+  END Die;
+
+PROCEDURE <A NAME="Choke"><procedure>Choke</procedure></A>() =
+  BEGIN
+    RTMisc.FatalErrorI (
+        &quot;ThreadWin32.m3, line 726: Windows OS failure, GetLastError = &quot;,
+        WinBase.GetLastError ());
+  END Choke;
+</PRE>-------------------------------------------------------- Initialization ---
+
+<P>
+<P><PRE>PROCEDURE <A NAME="Init"><procedure>Init</procedure></A>() =
+  VAR
+    self: T;
+    threadhandle, processhandle: WinNT.HANDLE;
+  BEGIN
+    handlersIndex := WinBase.TlsAlloc();
+    IF handlersIndex &lt; 0 THEN Choke() END;
+
+    threadIndex := WinBase.TlsAlloc();
+    IF threadIndex &lt; 0 THEN Choke() END;
+
+    cm := NEW(WinBase.LPCRITICAL_SECTION);
+    WinBase.InitializeCriticalSection(cm);
+
+    suspend_mu := NEW(Mutex);
+    suspend_cnt := 0;
+
+    threadMu := NEW(Mutex);
+    self := CreateT();
+
+    LockMutex(threadMu);
+      threadhandle := WinBase.GetCurrentThread();
+      processhandle := WinBase.GetCurrentProcess();
+      IF WinBase.DuplicateHandle(processhandle, threadhandle, processhandle,
+                                 LOOPHOLE(ADR(self.handle), WinNT.PHANDLE), 0,
+                                 0, WinNT.DUPLICATE_SAME_ACCESS) = 0 THEN
+        Choke();
+      END;
+      self.slot  := AssignSlot (self);
+      self.id    := nextId;  INC (nextId);
+      self.next  := self;
+      self.prev  := self;
+      allThreads := self;
+      self.stackbase := RTLinker.info.bottom_of_stack;
+      IF self.stackbase = NIL THEN Choke(); END;
+    UnlockMutex(threadMu);
+    SetSelf (self);
+  END Init;
+
+BEGIN
+END ThreadWin32.
+</PRE>
+</inModule>
+<HR>
+<A NAME="x1">interface ThreadF is in:
+</A><UL>
+<LI><A HREF="../NOOP/ThreadF.i3.html#0TOP0">thread/src/NOOP/ThreadF.i3</A>
+<LI><A HREF="../POSIX/ThreadF.i3.html#0TOP0">thread/src/POSIX/ThreadF.i3</A>
+<LI><A HREF="ThreadF.i3.html#0TOP0">thread/src/WIN32/ThreadF.i3</A>
+</UL>
+<P>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

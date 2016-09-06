@@ -1,0 +1,89 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: unix/src/hpux-7-0/Udir.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>unix/src/hpux-7-0/Udir.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+
+UNSAFE INTERFACE <interface><A HREF="#x1">Udir</A></interface>;
+</PRE>** &lt;dir.h&gt; **
+
+<P><PRE>IMPORT <A HREF="../../../C/src/Common/Ctypes.i3.html">Ctypes</A>;
+
+CONST
+  MAXNAMLEN = 255;   (* maximum length of component of file path name *)
+  MAXPATHLEN = 1024; (* maximum length of file path name *)
+
+TYPE
+  gen_dir = RECORD                    (* describes directory entry *)
+    (* SunOS has another field here. *)
+    d_ino: Ctypes.unsigned_long;          (* inode number of entry *)
+    d_reclen: Ctypes.unsigned_short;      (* record length in bytes *)
+    d_namelen: Ctypes.unsigned_short;     (* name length in bytes *)
+    d_name: Ctypes.char; (* C array *)    (* name *)
+  END;
+
+  direct = gen_dir;                    (* backwards compatibility *)
+
+  DIR = RECORD
+    dd_fd:    Ctypes.int;
+    dd_loc:   Ctypes.long;
+    dd_size:  Ctypes.long;
+    dd_bbase: Ctypes.long;
+    dd_entno: Ctypes.long;
+    dd_bsize: Ctypes.long;
+    dd_buf:   UNTRACED REF Ctypes.char;
+  END;
+
+  DIR_star = UNTRACED REF DIR;
+
+  direct_star = UNTRACED REF direct;
+
+&lt;*EXTERNAL*&gt; PROCEDURE opendir(filename: Ctypes.char_star): DIR_star;
+&lt;*EXTERNAL*&gt; PROCEDURE <A HREF="../solaris-2-x/Udir.m3.html#readdir">readdir</A>(dirp: DIR_star): direct_star;
+&lt;*EXTERNAL*&gt; PROCEDURE telldir(dirp: DIR_star): Ctypes.long;
+&lt;*EXTERNAL*&gt; PROCEDURE seekdir(dirp: DIR_star; loc: Ctypes.long);
+</PRE><BLOCKQUOTE><EM> 'rewinddir' is usually a macro for 'seekdir(dirp, 0)' </EM></BLOCKQUOTE><PRE>
+&lt;*EXTERNAL*&gt; PROCEDURE closedir(dirp: DIR_star): Ctypes.int;
+
+END Udir.
+</PRE>
+</inInterface>
+<HR>
+<A NAME="x1">Udir's implementation  is in:
+</A><UL>
+<LI><A HREF="../aix-3-2/Udir.m3.html#0TOP0">unix/src/aix-3-2/Udir.m3</A>
+<LI><A HREF="../aix-ps2-1-2/Udir.m3.html#0TOP0">unix/src/aix-ps2-1-2/Udir.m3</A>
+<LI><A HREF="../solaris-2-x/Udir.m3.html#0TOP0">unix/src/solaris-2-x/Udir.m3</A>
+</UL>
+<P>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

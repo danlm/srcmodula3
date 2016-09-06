@@ -1,0 +1,55 @@
+(* Experiments with race conditions.  
+   Start a few clients accessing these servers by "a.ms;"; the racecount
+   stays 0. Then try b, which only differs by the lack of the "serialized" 
+   attribute. Do experiments by iterating calls to "m" and "ms". 
+   Try stopping the clients by setting "b.count:=0;" at the server, and see 
+   what really happens (this may or may not stop some clients, and may cause 
+   some clients to never reach 0. *)
+
+module Race;
+
+var racecount = 0;
+
+let a = 
+  {serialized,
+    m => 
+      meth(x) 
+        let loc = x.count; 
+        x.count:= x.count-1 ;
+        if not(x.count is loc-1) then racecount:=racecount+1 end
+       end,
+       
+     ms => 
+       meth(x) 
+         loop 
+           if x.count is 0 then exit end; 
+           x.m() 
+         end 
+       end,
+       
+     count => 100000
+   };
+
+let b = 
+  {
+    m => 
+      meth(x) 
+        let loc = x.count; 
+        x.count:= x.count-1 ;
+        if not(x.count is loc-1) then racecount:=racecount+1 end
+       end,
+       
+     ms => 
+       meth(x) 
+         loop 
+           if x.count is 0 then exit end; 
+           x.m() 
+         end 
+       end,
+       
+     count => 100000
+   };
+
+net_export("a","",a);
+net_export("b","",b);
+

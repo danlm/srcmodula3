@@ -1,0 +1,62 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: mgkit/src/GraphVBTExtras.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>mgkit/src/GraphVBTExtras.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+
+INTERFACE <interface><A HREF="GraphVBT.m3.html">GraphVBTExtras</A></interface>;
+
+IMPORT <A HREF="../../ui/src/vbt/Font.i3.html">Font</A>, <A HREF="GraphVBT.i3.html">GraphVBT</A>, <A HREF="../../mg/src/MG.i3.html">MG</A>, <A HREF="../../geometry/src/Point.i3.html">Point</A>, <A HREF="../../mg/src/R2.i3.html">R2</A>;
+
+&lt;* PRAGMA LL *&gt;
+
+&lt;* LL.sup &gt;= graph.mu for all procedures *&gt;
+
+PROCEDURE <A HREF="GraphVBT.m3.html#GetMG">GetMG</A>(graph: GraphVBT.T): MG.V;
+
+PROCEDURE <A HREF="GraphVBT.m3.html#WorldPosToPts">WorldPosToPts</A> (graph: GraphVBT.T; READONLY pos: R2.T): R2.T;
+
+PROCEDURE <A HREF="GraphVBT.m3.html#WorldSizeToPts">WorldSizeToPts</A> (graph: GraphVBT.T; READONLY size: R2.T): R2.T;
+
+PROCEDURE <A HREF="GraphVBT.m3.html#ScreenPtToWorldPos">ScreenPtToWorldPos</A> (graph: GraphVBT.T; READONLY pt: Point.T): R2.T;
+
+PROCEDURE <A HREF="GraphVBT.m3.html#WorldFontFromText">WorldFontFromText</A> (font: TEXT): GraphVBT.WorldFont;
+
+PROCEDURE <A HREF="GraphVBT.m3.html#WorldFontFromFont">WorldFontFromFont</A> (font: Font.T): GraphVBT.WorldFont;
+
+PROCEDURE <A HREF="GraphVBT.m3.html#FontFromWorldFont">FontFromWorldFont</A> (wf: GraphVBT.WorldFont): Font.T;
+
+END GraphVBTExtras.
+</PRE>
+</inInterface>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

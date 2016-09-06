@@ -1,0 +1,121 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: time/src/POSIX/TickPosix.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>time/src/POSIX/TickPosix.m3</H2></A><HR>
+<inModule>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+
+MODULE <module>TickPosix</module> EXPORTS <A HREF="../Common/Tick.i3.html"><implements>Tick</A></implements>;
+
+IMPORT <A HREF="#x1">Utime</A>, <A HREF="../../../word/src/Word.i3.html">Word</A>;
+
+CONST
+  IntModulus = FLOAT(LAST(INTEGER), LONGREAL) + 1.0D0;
+  WordModulus = 2.0D0 * IntModulus;
+  IntModulusAsWord = Word.Plus(LAST(INTEGER), 1);
+
+VAR (*CONST*) MicrosecondsPerTick, SecondsPerTick: LONGREAL;
+
+PROCEDURE <A NAME="Now"><procedure>Now</procedure></A>(): T =
+  VAR
+    tv: Utime.struct_timeval;
+    tz: Utime.struct_timezone;
+    i := Utime.gettimeofday(tv, tz);
+    d: LONGREAL;
+  BEGIN
+    &lt;* ASSERT i=0 *&gt;
+    d := (FLOAT(tv.tv_sec, LONGREAL)*1.0D6 + FLOAT(tv.tv_usec, LONGREAL))
+         / MicrosecondsPerTick
+         MOD WordModulus;
+    IF d &lt; IntModulus THEN
+      RETURN TRUNC(d)
+    ELSE
+      RETURN Word.Plus(IntModulusAsWord, TRUNC(d-IntModulus))
+    END
+  END Now;
+
+PROCEDURE <A NAME="ToSeconds"><procedure>ToSeconds</procedure></A>(t: Word.T): LONGREAL =
+  BEGIN
+    IF Word.LT(t, IntModulusAsWord) THEN
+      RETURN FLOAT(t, LONGREAL) * SecondsPerTick
+    ELSE
+      RETURN (FLOAT(Word.Minus(t, IntModulusAsWord), LONGREAL) + IntModulus)
+             * SecondsPerTick
+    END
+  END ToSeconds;
+
+PROCEDURE <A NAME="FromSeconds"><procedure>FromSeconds</procedure></A>(s: LONGREAL): Word.T RAISES {Overflow} =
+  BEGIN
+    WITH d = s / SecondsPerTick DO
+      IF d &lt; IntModulus THEN
+        RETURN TRUNC(d)
+      ELSIF d &lt; WordModulus THEN
+        RETURN Word.Plus(IntModulusAsWord, TRUNC(d-IntModulus))
+      ELSE
+        RAISE Overflow
+      END
+    END
+  END FromSeconds;
+
+VAR t0, t1: T;
+BEGIN
+  (* Determine value of &quot;MicrosecondsPerTick&quot; experimentally.  Note that
+     this will fail if this thread is descheduled for a tick during the
+     loop below. *)
+  MicrosecondsPerTick := 1.0D0; (* just for now! *)
+  t0 := Now();
+  REPEAT t1 := Now() UNTIL t1 # t0;
+  MicrosecondsPerTick := FLOAT(t1-t0, LONGREAL);
+  SecondsPerTick := MicrosecondsPerTick / 1.0D6
+END TickPosix.
+</PRE>
+</inModule>
+<HR>
+<A NAME="x1">interface Utime is in:
+</A><UL>
+<LI><A HREF="../../../unix/src/aix-3-2/Utime.i3.html#0TOP0">unix/src/aix-3-2/Utime.i3</A>
+<LI><A HREF="../../../unix/src/aix-ps2-1-2/Utime.i3.html#0TOP0">unix/src/aix-ps2-1-2/Utime.i3</A>
+<LI><A HREF="../../../unix/src/freebsd-1/Utime.i3.html#0TOP0">unix/src/freebsd-1/Utime.i3</A>
+<LI><A HREF="../../../unix/src/freebsd-2/Utime.i3.html#0TOP0">unix/src/freebsd-2/Utime.i3</A>
+<LI><A HREF="../../../unix/src/hpux-7-0/Utime.i3.html#0TOP0">unix/src/hpux-7-0/Utime.i3</A>
+<LI><A HREF="../../../unix/src/ibm-4-3/Utime.i3.html#0TOP0">unix/src/ibm-4-3/Utime.i3</A>
+<LI><A HREF="../../../unix/src/irix-5.2/Utime.i3.html#0TOP0">unix/src/irix-5.2/Utime.i3</A>
+<LI><A HREF="../../../unix/src/linux/Utime.i3.html#0TOP0">unix/src/linux/Utime.i3</A>
+<LI><A HREF="../../../unix/src/osf-1.ALPHA_OSF/Utime.i3.html#0TOP0">unix/src/osf-1.ALPHA_OSF/Utime.i3</A>
+<LI><A HREF="../../../unix/src/osf-1.DS3100/Utime.i3.html#0TOP0">unix/src/osf-1.DS3100/Utime.i3</A>
+<LI><A HREF="../../../unix/src/solaris-2-x/Utime.i3.html#0TOP0">unix/src/solaris-2-x/Utime.i3</A>
+<LI><A HREF="../../../unix/src/sunos-4-x/Utime.i3.html#0TOP0">unix/src/sunos-4-x/Utime.i3</A>
+<LI><A HREF="../../../unix/src/sysv-4.0/Utime.i3.html#0TOP0">unix/src/sysv-4.0/Utime.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.generic/Utime.i3.html#0TOP0">unix/src/ultrix-3-1.generic/Utime.i3</A>
+</UL>
+<P>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

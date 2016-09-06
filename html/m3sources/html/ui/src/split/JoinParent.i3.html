@@ -1,0 +1,104 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: ui/src/split/JoinParent.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>ui/src/split/JoinParent.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM>                                                                           </EM></BLOCKQUOTE><PRE>
+&lt;*PRAGMA LL*&gt;
+
+INTERFACE <interface><A HREF="JoinParent.m3.html">JoinParent</A></interface>;
+
+IMPORT <A HREF="ETAgent.i3.html">ETAgent</A>, <A HREF="JoinedVBT.i3.html">JoinedVBT</A>, <A HREF="../vbt/VBT.i3.html">VBT</A>, <A HREF="../../../geometry/src/Rect.i3.html">Rect</A>, <A HREF="../vbt/ScrnCursor.i3.html">ScrnCursor</A>;
+
+TYPE Join = JoinedVBT.Public OBJECT parents: T := NIL END;
+
+TYPE
+  <A HREF="JoinParent.m3.html#T">T</A> &lt;: Public;
+  Public =
+    ETAgent.T OBJECT             &lt;* LL &gt;= {JoinedVBT.T child of T, VBT.mu} *&gt;
+      link: T
+    METHODS
+      &lt;* LL.sup &lt;= VBT.mu *&gt;
+      init (join: JoinedVBT.T): T;
+    END;
+</PRE> The call <CODE>v.init(join, north, west)</CODE> initializes <CODE>v</CODE> as a
+   <CODE>JoinParent.T</CODE> with child <CODE>join</CODE>, and returns <CODE>v</CODE>.
+<P>
+   The northwest corner of the parent's domain is positioned at
+   point <CODE>(north, west)</CODE> in <CODE>Joined</CODE>'s domain; this will be
+   maintained as the parent is reshaped or rescreened. 
+   <P>
+
+
+<P><PRE>PROCEDURE <A HREF="JoinParent.m3.html#New">New</A> (v: JoinedVBT.T): T;
+&lt;* LL.sup &lt;= VBT.mu *&gt;
+</PRE><BLOCKQUOTE><EM> <CODE>New(...)</CODE> is equivalent to <CODE>NEW(ParentT).init(...)</CODE>. </EM></BLOCKQUOTE><PRE>
+
+PROCEDURE <A HREF="JoinParent.m3.html#Rem">Rem</A> (prnt: T);
+&lt;* LL = VBT.mu *&gt;
+</PRE><BLOCKQUOTE><EM> Cause the child of prnt to lose parent <CODE>prnt</CODE>, and mark it for
+   redisplay. </EM></BLOCKQUOTE><PRE>
+
+PROCEDURE <A HREF="JoinParent.m3.html#Child">Child</A> (prnt: T): JoinedVBT.T;
+&lt;* LL = VBT.mu *&gt;
+</PRE><BLOCKQUOTE><EM> Return the <CODE>JoinedVBT</CODE> for which <CODE>prnt</CODE> is a parent. </EM></BLOCKQUOTE><PRE>
+
+PROCEDURE <A HREF="JoinParent.m3.html#Succ">Succ</A> (v: JoinedVBT.T; prnt: T): T;
+&lt;* LL.sup = VBT.mu OR LL.sup = v *&gt;
+</PRE><BLOCKQUOTE><EM> Return the successor to parent <CODE>prnt</CODE> of <CODE>v</CODE>.  It is a checked runtime
+   error if <CODE>prnt</CODE> is not a parent of <CODE>v</CODE>.  As with <CODE>Split.Succ</CODE>, the
+   successor of <CODE>NIL</CODE> is the first parent; the successor the last parent is
+   <CODE>NIL</CODE>; and the successor of <CODE>NIL</CODE> is <CODE>NIL</CODE> if <CODE>v</CODE> has no parents. </EM></BLOCKQUOTE><PRE>
+
+PROCEDURE <A HREF="JoinParent.m3.html#Current">Current</A>(v: JoinedVBT.T): T;
+&lt;* LL.sup = v OR LL.sup = VBT.mu *&gt;
+
+PROCEDURE <A HREF="JoinParent.m3.html#SetInput">SetInput</A>(v: JoinedVBT.T; prnt: T);
+&lt;* LL.sup = VBT.mu *&gt;
+
+PROCEDURE <A HREF="JoinParent.m3.html#NeedsRescreen">NeedsRescreen</A>(v: JoinedVBT.T): BOOLEAN;
+&lt;* LL.sup = VBT.mu *&gt;
+
+PROCEDURE <A HREF="JoinParent.m3.html#ST">ST</A>(v: JoinedVBT.T): VBT.ScreenType;
+&lt;* LL.sup = VBT.mu *&gt;
+
+PROCEDURE <A HREF="JoinParent.m3.html#Domain">Domain</A>(v: JoinedVBT.T): Rect.T;
+&lt;* LL.sup = VBT.mu *&gt;
+
+PROCEDURE <A HREF="JoinParent.m3.html#SetCursor">SetCursor</A>(v: T; cs: ScrnCursor.T);
+&lt;* LL.sup = JoinedVBT child of v *&gt;
+
+END JoinParent.
+</PRE>
+</inInterface>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

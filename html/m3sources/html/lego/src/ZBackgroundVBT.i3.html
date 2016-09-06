@@ -1,0 +1,62 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: lego/src/ZBackgroundVBT.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>lego/src/ZBackgroundVBT.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM>                                                                           </EM></BLOCKQUOTE><PRE>
+&lt;* PRAGMA LL *&gt;
+</PRE> A <CODE>ZBackgroundVBT</CODE> is a filter that should be put around the
+   background child of a <CODE>ZSplit</CODE>.  This filter will insulate
+   highlighting that takes place within the background child from
+   highlighting in the other children of the <CODE>ZSplit</CODE>.  The
+   implementation is merely a <CODE>HighlightVBT</CODE>, but it's easier to
+   remember the purpose of that highlighter by calling it a
+   <CODE>ZBackgroundVBT</CODE> instead.
+<P>
+   In order for <CODE>ZChassisVBT</CODE> to display an outline of a subwindow
+   that is visible against the background when it is moved or resized,
+   you should use the <CODE>VBTColors</CODE> interface to associate the primary
+   background and foreground colors of the contents of the
+   <CODE>ZBackgroundVBT</CODE>. 
+
+<P><PRE>INTERFACE <interface><A HREF="ZBackgroundVBT.m3.html">ZBackgroundVBT</A></interface>;
+
+IMPORT <A HREF="../../ui/src/split/HighlightVBT.i3.html">HighlightVBT</A>;
+
+TYPE
+  T = HighlightVBT.T BRANDED OBJECT END;
+
+END ZBackgroundVBT.
+</PRE>
+</inInterface>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

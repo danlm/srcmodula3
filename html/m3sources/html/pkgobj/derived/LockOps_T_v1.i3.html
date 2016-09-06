@@ -1,0 +1,276 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: pkgobj/derived/LockOps_T_v1.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>pkgobj/derived/LockOps_T_v1.i3</H2></A><HR>
+<inInterface>
+<PRE>INTERFACE <interface><A HREF="LockOps_T_v1.m3.html">LockOps_T_v1</A></interface>;
+
+IMPORT <A HREF="../src/Common/NetPath.i3.html">NetPath</A>, <A HREF="../../thread/src/Common/Thread.i3.html">Thread</A>, <A HREF="../src/Common/LockMethods.i3.html">LockMethods</A>, <A HREF="../../netobjrt/src/NetObj.i3.html">NetObj</A>, <A HREF="../../fingerprint/src/Fingerprint.i3.html">Fingerprint</A>, <A HREF="../../netobjrt/src/StubLib.i3.html">StubLib</A>, <A HREF="../../rw/src/Common/Rd.i3.html">Rd</A>,
+       <A HREF="../../libm3/derived/TextList.i3.html">TextList</A>, <A HREF="../../rw/src/Common/Wr.i3.html">Wr</A>, <A HREF="../src/Common/PackageObj.i3.html">PackageObj</A>, <A HREF="../src/Common/LockOps.i3.html">LockOps</A>, <A HREF="../src/Common/PkgErr.i3.html">PkgErr</A>;
+TYPE Surrogate_LockOps_T = LockOps.T OBJECT
+      OVERRIDES
+        create := Surrogate_create;
+        remove := Surrogate_remove;
+        lock := Surrogate_lock;
+        unlock := Surrogate_unlock;
+        assign := Surrogate_assign;
+        commit := Surrogate_commit;
+        enumerate := Surrogate_enumerate;
+        getEntry := Surrogate_getEntry;
+        setEntry := Surrogate_setEntry;
+        setFingerprint := Surrogate_setFingerprint;
+        createCheck := Surrogate_createCheck;
+        createForeign := Surrogate_createForeign;
+        createDir := Surrogate_createDir;
+        removeDir := Surrogate_removeDir;
+        checkDir := Surrogate_checkDir;
+        enumerateDirs := Surrogate_enumerateDirs;
+        removeForeign := Surrogate_removeForeign;
+      END;
+
+PROCEDURE <A HREF="LockOps_T_v1.m3.html#Surrogate_create">Surrogate_create</A>(
+    self: LockOps.T;
+    auth: TEXT;
+    pn: NetPath.PN;
+    initialKey: TEXT;
+    version: PackageObj.Version;
+    remoteCheck: BOOLEAN) RAISES {NetObj.Error, PkgErr.E, Thread.Alerted};
+
+PROCEDURE <A HREF="LockOps_T_v1.m3.html#Surrogate_remove">Surrogate_remove</A>(
+    self: LockOps.T;
+    auth: TEXT;
+    package: NetPath.PN;
+    key: TEXT;
+    reship: BOOLEAN) RAISES {NetObj.Error, PkgErr.E, Thread.Alerted,
+    LockOps.CommitFailed, LockOps.LockConflict};
+
+PROCEDURE <A HREF="LockOps_T_v1.m3.html#Surrogate_lock">Surrogate_lock</A>(
+    self: LockOps.T;
+    auth: TEXT;
+    pn: NetPath.PN;
+    version: PackageObj.Version;
+    key: TEXT;
+    keySite: TEXT): PackageObj.Version RAISES {NetObj.Error, PkgErr.E,
+    LockOps.LockConflict, Thread.Alerted};
+
+PROCEDURE <A HREF="LockOps_T_v1.m3.html#Surrogate_unlock">Surrogate_unlock</A>(
+    self: LockOps.T;
+    auth: TEXT;
+    pn: NetPath.PN;
+    version: PackageObj.Version;
+    key: TEXT;
+    keySite: TEXT;
+    breakRights: LockOps.BreakRights;
+    forceVersion: BOOLEAN) RAISES {NetObj.Error, PkgErr.E,
+    LockOps.CommitFailed, LockOps.LockConflict, LockOps.SynchVersions,
+    Thread.Alerted};
+
+PROCEDURE <A HREF="LockOps_T_v1.m3.html#Surrogate_assign">Surrogate_assign</A>(
+    self: LockOps.T;
+    auth: TEXT;
+    pn: NetPath.PN;
+    key: TEXT;
+    keySite: TEXT): PackageObj.Version RAISES {NetObj.Error, PkgErr.E,
+    LockOps.LockConflict, Thread.Alerted};
+
+PROCEDURE <A HREF="LockOps_T_v1.m3.html#Surrogate_commit">Surrogate_commit</A>(
+    self: LockOps.T;
+    auth: TEXT;
+    pn: NetPath.PN;
+    version: PackageObj.Version;
+    VAR ships: LockOps.ShipArray;
+    reship: BOOLEAN): LockOps.CommitFailures RAISES {NetObj.Error,
+    LockOps.CommitFailed, PkgErr.E, Thread.Alerted};
+
+PROCEDURE <A HREF="LockOps_T_v1.m3.html#Surrogate_enumerate">Surrogate_enumerate</A>(
+    self: LockOps.T;
+    dir: TextList.T;
+    site: TEXT;
+    locksOnly: BOOLEAN;
+    localOnly: BOOLEAN;
+    pendingOnly: BOOLEAN): LockOps.EnumList RAISES {NetObj.Error, PkgErr.E,
+    Thread.Alerted};
+
+PROCEDURE <A HREF="LockOps_T_v1.m3.html#Surrogate_getEntry">Surrogate_getEntry</A>(
+    self: LockOps.T;
+    pn: NetPath.PN;
+    goRemote: BOOLEAN): LockOps.RefEntry RAISES {NetObj.Error, PkgErr.E,
+    Thread.Alerted};
+
+PROCEDURE <A HREF="LockOps_T_v1.m3.html#Surrogate_setEntry">Surrogate_setEntry</A>(
+    self: LockOps.T;
+    auth: TEXT;
+    pn: NetPath.PN;
+    entry: LockOps.RefEntry) RAISES {NetObj.Error, PkgErr.E,
+    Thread.Alerted};
+
+PROCEDURE <A HREF="LockOps_T_v1.m3.html#Surrogate_setFingerprint">Surrogate_setFingerprint</A>(
+    self: LockOps.T;
+    auth: TEXT;
+    pn: NetPath.PN;
+    version: PackageObj.Version;
+    fp: Fingerprint.T) RAISES {NetObj.Error, PkgErr.E, Thread.Alerted};
+
+PROCEDURE <A HREF="LockOps_T_v1.m3.html#Surrogate_createCheck">Surrogate_createCheck</A>(self: LockOps.T; pn: NetPath.PN)
+     RAISES {NetObj.Error, PkgErr.E, Thread.Alerted};
+
+PROCEDURE <A HREF="LockOps_T_v1.m3.html#Surrogate_createForeign">Surrogate_createForeign</A>(
+    self: LockOps.T;
+    auth: TEXT;
+    pn: NetPath.PN;
+    owningSite: TEXT;
+    instance: PackageObj.Int32) RAISES {NetObj.Error, PkgErr.E,
+    Thread.Alerted};
+
+PROCEDURE <A HREF="LockOps_T_v1.m3.html#Surrogate_createDir">Surrogate_createDir</A>(self: LockOps.T; auth: TEXT; dir: TextList.T)
+     RAISES {NetObj.Error, PkgErr.E, Thread.Alerted};
+
+PROCEDURE <A HREF="LockOps_T_v1.m3.html#Surrogate_removeDir">Surrogate_removeDir</A>(self: LockOps.T; auth: TEXT; dir: TextList.T)
+     RAISES {NetObj.Error, PkgErr.E, Thread.Alerted};
+
+PROCEDURE <A HREF="LockOps_T_v1.m3.html#Surrogate_checkDir">Surrogate_checkDir</A>(self: LockOps.T; dir: TextList.T)
+     RAISES {NetObj.Error, PkgErr.E, Thread.Alerted};
+
+PROCEDURE <A HREF="LockOps_T_v1.m3.html#Surrogate_enumerateDirs">Surrogate_enumerateDirs</A>(self: LockOps.T; site: TEXT)
+    : LockOps.DirList RAISES {NetObj.Error, PkgErr.E, Thread.Alerted};
+
+PROCEDURE <A HREF="LockOps_T_v1.m3.html#Surrogate_removeForeign">Surrogate_removeForeign</A>(
+    self: LockOps.T;
+    auth: TEXT;
+    pn: NetPath.PN) RAISES {NetObj.Error, PkgErr.E, LockOps.CommitFailed,
+    Thread.Alerted};
+
+PROCEDURE <A HREF="LockOps_T_v1.m3.html#Stub_create">Stub_create</A>(
+    self: LockOps.T;
+    c: StubLib.Conn;
+    rep: StubLib.DataRep) RAISES {NetObj.Error, Rd.Failure, Wr.Failure,
+    Thread.Alerted, PkgErr.E};
+
+PROCEDURE <A HREF="LockOps_T_v1.m3.html#Stub_remove">Stub_remove</A>(
+    self: LockOps.T;
+    c: StubLib.Conn;
+    rep: StubLib.DataRep) RAISES {NetObj.Error, Rd.Failure, Wr.Failure,
+    Thread.Alerted, PkgErr.E, LockOps.CommitFailed, LockOps.LockConflict};
+
+PROCEDURE <A HREF="LockOps_T_v1.m3.html#Stub_lock">Stub_lock</A>(self: LockOps.T; c: StubLib.Conn; rep: StubLib.DataRep)
+     RAISES {NetObj.Error, Rd.Failure, Wr.Failure, Thread.Alerted,
+    PkgErr.E, LockOps.LockConflict};
+
+PROCEDURE <A HREF="LockOps_T_v1.m3.html#Stub_unlock">Stub_unlock</A>(
+    self: LockOps.T;
+    c: StubLib.Conn;
+    rep: StubLib.DataRep) RAISES {NetObj.Error, Rd.Failure, Wr.Failure,
+    Thread.Alerted, PkgErr.E, LockOps.CommitFailed, LockOps.LockConflict,
+    LockOps.SynchVersions};
+
+PROCEDURE <A HREF="LockOps_T_v1.m3.html#Stub_assign">Stub_assign</A>(
+    self: LockOps.T;
+    c: StubLib.Conn;
+    rep: StubLib.DataRep) RAISES {NetObj.Error, Rd.Failure, Wr.Failure,
+    Thread.Alerted, PkgErr.E, LockOps.LockConflict};
+
+PROCEDURE <A HREF="LockOps_T_v1.m3.html#Stub_commit">Stub_commit</A>(
+    self: LockOps.T;
+    c: StubLib.Conn;
+    rep: StubLib.DataRep) RAISES {NetObj.Error, Rd.Failure, Wr.Failure,
+    Thread.Alerted, LockOps.CommitFailed, PkgErr.E};
+
+PROCEDURE <A HREF="LockOps_T_v1.m3.html#Stub_enumerate">Stub_enumerate</A>(
+    self: LockOps.T;
+    c: StubLib.Conn;
+    rep: StubLib.DataRep) RAISES {NetObj.Error, Rd.Failure, Wr.Failure,
+    Thread.Alerted, PkgErr.E};
+
+PROCEDURE <A HREF="LockOps_T_v1.m3.html#Stub_getEntry">Stub_getEntry</A>(
+    self: LockOps.T;
+    c: StubLib.Conn;
+    rep: StubLib.DataRep) RAISES {NetObj.Error, Rd.Failure, Wr.Failure,
+    Thread.Alerted, PkgErr.E};
+
+PROCEDURE <A HREF="LockOps_T_v1.m3.html#Stub_setEntry">Stub_setEntry</A>(
+    self: LockOps.T;
+    c: StubLib.Conn;
+    rep: StubLib.DataRep) RAISES {NetObj.Error, Rd.Failure, Wr.Failure,
+    Thread.Alerted, PkgErr.E};
+
+PROCEDURE <A HREF="LockOps_T_v1.m3.html#Stub_setFingerprint">Stub_setFingerprint</A>(
+    self: LockOps.T;
+    c: StubLib.Conn;
+    rep: StubLib.DataRep) RAISES {NetObj.Error, Rd.Failure, Wr.Failure,
+    Thread.Alerted, PkgErr.E};
+
+PROCEDURE <A HREF="LockOps_T_v1.m3.html#Stub_createCheck">Stub_createCheck</A>(
+    self: LockOps.T;
+    c: StubLib.Conn;
+    rep: StubLib.DataRep) RAISES {NetObj.Error, Rd.Failure, Wr.Failure,
+    Thread.Alerted, PkgErr.E};
+
+PROCEDURE <A HREF="LockOps_T_v1.m3.html#Stub_createForeign">Stub_createForeign</A>(
+    self: LockOps.T;
+    c: StubLib.Conn;
+    rep: StubLib.DataRep) RAISES {NetObj.Error, Rd.Failure, Wr.Failure,
+    Thread.Alerted, PkgErr.E};
+
+PROCEDURE <A HREF="LockOps_T_v1.m3.html#Stub_createDir">Stub_createDir</A>(
+    self: LockOps.T;
+    c: StubLib.Conn;
+    rep: StubLib.DataRep) RAISES {NetObj.Error, Rd.Failure, Wr.Failure,
+    Thread.Alerted, PkgErr.E};
+
+PROCEDURE <A HREF="LockOps_T_v1.m3.html#Stub_removeDir">Stub_removeDir</A>(
+    self: LockOps.T;
+    c: StubLib.Conn;
+    rep: StubLib.DataRep) RAISES {NetObj.Error, Rd.Failure, Wr.Failure,
+    Thread.Alerted, PkgErr.E};
+
+PROCEDURE <A HREF="LockOps_T_v1.m3.html#Stub_checkDir">Stub_checkDir</A>(
+    self: LockOps.T;
+    c: StubLib.Conn;
+    rep: StubLib.DataRep) RAISES {NetObj.Error, Rd.Failure, Wr.Failure,
+    Thread.Alerted, PkgErr.E};
+
+PROCEDURE <A HREF="LockOps_T_v1.m3.html#Stub_enumerateDirs">Stub_enumerateDirs</A>(
+    self: LockOps.T;
+    c: StubLib.Conn;
+    rep: StubLib.DataRep) RAISES {NetObj.Error, Rd.Failure, Wr.Failure,
+    Thread.Alerted, PkgErr.E};
+
+PROCEDURE <A HREF="LockOps_T_v1.m3.html#Stub_removeForeign">Stub_removeForeign</A>(
+    self: LockOps.T;
+    c: StubLib.Conn;
+    rep: StubLib.DataRep) RAISES {NetObj.Error, Rd.Failure, Wr.Failure,
+    Thread.Alerted, PkgErr.E, LockOps.CommitFailed};
+
+END LockOps_T_v1.
+</PRE>
+</inInterface>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

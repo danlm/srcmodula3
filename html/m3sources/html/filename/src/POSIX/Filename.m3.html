@@ -1,0 +1,271 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: filename/src/POSIX/Filename.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>filename/src/POSIX/Filename.m3</H2></A><HR>
+<inModule>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM>                                                                </EM></BLOCKQUOTE><PRE>
+
+UNSAFE MODULE <module><implements><A HREF="#x1">Filename</A></implements></module>;
+
+IMPORT <A HREF="../../../text/src/Text.i3.html">Text</A>, <A HREF="../../../rw/src/Common/Rd.i3.html">Rd</A>, <A HREF="../../../rw/src/Common/FileRd.i3.html">FileRd</A>, <A HREF="../../../C/src/Common/M3toC.i3.html">M3toC</A>, <A HREF="../../../os/src/Common/OSError.i3.html">OSError</A>, <A HREF="#x2">Uugid</A>, <A HREF="#x3">Upwd</A>, <A HREF="#x4">Unix</A>;
+
+PROCEDURE <A NAME="FileIsReadable"><procedure>FileIsReadable</procedure></A> (filename: TEXT): BOOLEAN =
+  BEGIN
+    RETURN Unix.access (M3toC.TtoS (filename), Unix.R_OK) = 0;
+  END FileIsReadable;
+
+PROCEDURE <A NAME="Root"><procedure>Root</procedure></A> (filename: TEXT): TEXT =
+  VAR dotpos := Text.FindCharR (filename, '.');
+  BEGIN
+    IF (dotpos = -1) OR (Text.FindChar (filename, '/', dotpos + 1) # -1)
+      THEN RETURN filename;
+      ELSE RETURN Text.Sub (filename, 0, dotpos);
+    END;
+  END Root;
+
+PROCEDURE <A NAME="Extension"><procedure>Extension</procedure></A> (filename: TEXT): TEXT =
+  VAR dotpos := Text.FindCharR (filename, '.');
+  BEGIN
+    IF (dotpos = -1) OR (Text.FindChar (filename, '/', dotpos + 1) # -1)
+      THEN RETURN &quot;&quot;;
+      ELSE RETURN Text.Sub (filename, dotpos + 1,
+                          Text.Length (filename) - (dotpos + 1));
+    END;
+  END Extension;
+
+PROCEDURE <A NAME="Head"><procedure>Head</procedure></A> (filename: TEXT): TEXT =
+  VAR slashpos := Text.FindCharR (filename, '/');
+  BEGIN
+    IF slashpos = -1
+      THEN RETURN filename;
+      ELSE RETURN Text.Sub (filename, 0, slashpos);
+    END;
+  END Head;
+
+PROCEDURE <A NAME="Tail"><procedure>Tail</procedure></A> (filename: TEXT): TEXT =
+  VAR slashpos := Text.FindCharR (filename, '/');
+  BEGIN
+    IF slashpos = -1
+      THEN  RETURN filename;
+      ELSE  RETURN Text.Sub (filename, slashpos + 1,
+                          Text.Length (filename) - (slashpos + 1));
+    END;
+  END Tail;
+</PRE>*************************************************************
+ DefaultExtension(filename, <CODE>.xxx</CODE>)                          
+                                                             
+     DefaultExtension adds an extension to filename          
+ if none already exists.  Alternatively, if the extension    
+ field begins with a *, any old extension in the first       
+ filename is replaced with the given extension.  Thus,       
+                                                             
+ DefaultExtension(filename, <CODE>.xxx</CODE>)   add .xxx if no ext     
+ DefaultExtension(filename, <CODE>*.xxx</CODE>)  force .xxx as ext      
+*************************************************************
+
+<P>
+<P><PRE>PROCEDURE <A NAME="DefaultExtension"><procedure>DefaultExtension</procedure></A> (filename, ext: TEXT): TEXT =
+  VAR
+    force  := Text.GetChar (ext, 0) = '*';
+    dotpos := Text.FindCharR (filename, '.');
+  BEGIN
+    IF force THEN ext := Text.Sub (ext, 1, Text.Length (ext)); END;
+    IF (dotpos = -1) OR (Text.FindChar (filename, '/', dotpos + 1) # -1) THEN
+      force := TRUE;
+      dotpos := Text.Length (filename);
+    END;
+    IF force
+      THEN RETURN Text.Cat (Text.Sub (filename, 0, dotpos), ext);
+      ELSE RETURN filename;
+    END;
+  END DefaultExtension;
+
+PROCEDURE <A NAME="ExpandTilde"><procedure>ExpandTilde</procedure></A> (filename: TEXT): TEXT RAISES {Error} =
+  (* Expands the ~ character at the beginning of a file name into the
+     correct directory path.  The initial character ~ is replaced by the
+     effective process owner's home directory from /etc/passwd.  The
+     initial string ~user is replaced by the home directory of user from
+     /etc/passwd.
+
+     Exception Error is raised if there is no entry for the appropriate
+     user in /etc/passwd.  *)
+  VAR
+    slashIndex: INTEGER;
+    len := Text.Length (filename);
+
+  BEGIN
+    IF len = 0 OR Text.GetChar (filename, 0) # '~' THEN
+      RETURN filename; END;
+
+    IF len = 1 OR Text.GetChar (filename, 1) = '/' THEN
+      WITH pwEntry = Upwd.getpwuid (Uugid.getuid ()) DO
+        IF pwEntry = NIL THEN RAISE Error; END;
+        RETURN M3toC.StoT (pwEntry.pw_dir)
+                 &amp; Text.Sub (filename, 1, LAST (INTEGER)); END; END;
+
+    slashIndex := Text.FindChar (filename, '/', 1);
+    IF slashIndex = -1 THEN
+      slashIndex := Text.Length (filename) + 1; END;
+
+    WITH pwEntry = Upwd.getpwnam (M3toC.TtoS (Text.Sub (filename, 1,
+                                                        slashIndex-1))) DO
+      IF pwEntry = NIL THEN RAISE Error; END;
+      RETURN M3toC.StoT (pwEntry.pw_dir)
+               &amp; Text.Sub (filename, slashIndex, LAST (INTEGER)); END;
+  END ExpandTilde;
+
+PROCEDURE <A NAME="SearchPath"><procedure>SearchPath</procedure></A> (path, filename: TEXT;
+                      pred: FilePredicate := FileIsReadable): TEXT =
+  VAR
+    start, finish: INTEGER;
+    dirname, tempname: TEXT;
+  BEGIN
+    IF Text.Empty (filename) THEN RETURN NIL; END;
+    IF Text.Empty (path) THEN path := &quot;.&quot;; END;
+    TRY
+      filename := ExpandTilde (filename);
+    EXCEPT Error =&gt;
+      RETURN NIL;
+    END;
+    IF Text.GetChar (filename, 0) = '/' THEN
+      IF pred (filename) THEN
+        RETURN filename;
+      ELSE
+        RETURN NIL; END;
+    ELSE
+      start := 0;
+      WITH path=path &amp; &quot;:&quot; DO
+        LOOP
+          finish := Text.FindChar (path, ':', start);
+          IF finish = -1 THEN
+            RETURN NIL; END;
+          TRY
+            dirname := ExpandTilde (Text.Sub (path, start, finish - start));
+            IF Text.Empty (dirname) THEN
+              dirname := &quot;.&quot;; END;
+            IF Text.GetChar (dirname, Text.Length (dirname) - 1) = '/' THEN
+              tempname := Text.Cat (dirname, filename);
+            ELSE
+              tempname := dirname &amp; &quot;/&quot; &amp; filename; END;
+            IF pred (tempname) THEN
+              RETURN tempname; END;
+          EXCEPT Error =&gt;
+            (* skip this directory *)
+          END;
+          start := finish + 1; END; END;
+      (*RETURN NIL;*) END;
+  END SearchPath;
+
+PROCEDURE <A NAME="RdFromPath"><procedure>RdFromPath</procedure></A> (path, filename: TEXT): Rd.T  RAISES {Rd.Failure} =
+  &lt;*FATAL OSError.E*&gt;
+  VAR pathname := SearchPath (path, filename);
+  BEGIN
+    IF pathname = NIL THEN RETURN NIL END;
+    RETURN FileRd.Open (pathname);
+  END RdFromPath;
+
+BEGIN
+END Filename.
+</PRE>
+</inModule>
+<HR>
+<A NAME="x1">interface Filename is in:
+</A><UL>
+<LI><A HREF="Filename.i3.html#0TOP0">filename/src/POSIX/Filename.i3</A>
+<LI><A HREF="../WINNT/Filename.i3.html#0TOP0">filename/src/WINNT/Filename.i3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x2">interface Uugid is in:
+</A><UL>
+<LI><A HREF="../../../unix/src/aix-3-2/Uugid.i3.html#0TOP0">unix/src/aix-3-2/Uugid.i3</A>
+<LI><A HREF="../../../unix/src/aix-ps2-1-2/Uugid.i3.html#0TOP0">unix/src/aix-ps2-1-2/Uugid.i3</A>
+<LI><A HREF="../../../unix/src/freebsd-1/Uugid.i3.html#0TOP0">unix/src/freebsd-1/Uugid.i3</A>
+<LI><A HREF="../../../unix/src/freebsd-2/Uugid.i3.html#0TOP0">unix/src/freebsd-2/Uugid.i3</A>
+<LI><A HREF="../../../unix/src/hpux-7-0/Uugid.i3.html#0TOP0">unix/src/hpux-7-0/Uugid.i3</A>
+<LI><A HREF="../../../unix/src/ibm-4-3/Uugid.i3.html#0TOP0">unix/src/ibm-4-3/Uugid.i3</A>
+<LI><A HREF="../../../unix/src/irix-5.2/Uugid.i3.html#0TOP0">unix/src/irix-5.2/Uugid.i3</A>
+<LI><A HREF="../../../unix/src/linux/Uugid.i3.html#0TOP0">unix/src/linux/Uugid.i3</A>
+<LI><A HREF="../../../unix/src/osf-1.generic/Uugid.i3.html#0TOP0">unix/src/osf-1.generic/Uugid.i3</A>
+<LI><A HREF="../../../unix/src/solaris-2-x/Uugid.i3.html#0TOP0">unix/src/solaris-2-x/Uugid.i3</A>
+<LI><A HREF="../../../unix/src/sunos-4-x/Uugid.i3.html#0TOP0">unix/src/sunos-4-x/Uugid.i3</A>
+<LI><A HREF="../../../unix/src/sysv-4.0/Uugid.i3.html#0TOP0">unix/src/sysv-4.0/Uugid.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.generic/Uugid.i3.html#0TOP0">unix/src/ultrix-3-1.generic/Uugid.i3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x3">interface Upwd is in:
+</A><UL>
+<LI><A HREF="../../../unix/src/aix-3-2/Upwd.i3.html#0TOP0">unix/src/aix-3-2/Upwd.i3</A>
+<LI><A HREF="../../../unix/src/aix-ps2-1-2/Upwd.i3.html#0TOP0">unix/src/aix-ps2-1-2/Upwd.i3</A>
+<LI><A HREF="../../../unix/src/freebsd-1/Upwd.i3.html#0TOP0">unix/src/freebsd-1/Upwd.i3</A>
+<LI><A HREF="../../../unix/src/freebsd-2/Upwd.i3.html#0TOP0">unix/src/freebsd-2/Upwd.i3</A>
+<LI><A HREF="../../../unix/src/hpux-7-0/Upwd.i3.html#0TOP0">unix/src/hpux-7-0/Upwd.i3</A>
+<LI><A HREF="../../../unix/src/ibm-4-3/Upwd.i3.html#0TOP0">unix/src/ibm-4-3/Upwd.i3</A>
+<LI><A HREF="../../../unix/src/irix-5.2/Upwd.i3.html#0TOP0">unix/src/irix-5.2/Upwd.i3</A>
+<LI><A HREF="../../../unix/src/linux/Upwd.i3.html#0TOP0">unix/src/linux/Upwd.i3</A>
+<LI><A HREF="../../../unix/src/osf-1.generic/Upwd.i3.html#0TOP0">unix/src/osf-1.generic/Upwd.i3</A>
+<LI><A HREF="../../../unix/src/solaris-2-x/Upwd.i3.html#0TOP0">unix/src/solaris-2-x/Upwd.i3</A>
+<LI><A HREF="../../../unix/src/sunos-4-x/Upwd.i3.html#0TOP0">unix/src/sunos-4-x/Upwd.i3</A>
+<LI><A HREF="../../../unix/src/sysv-4.0/Upwd.i3.html#0TOP0">unix/src/sysv-4.0/Upwd.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.generic/Upwd.i3.html#0TOP0">unix/src/ultrix-3-1.generic/Upwd.i3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x4">interface Unix is in:
+</A><UL>
+<LI><A HREF="../../../unix/src/aix-3-2/Unix.i3.html#0TOP0">unix/src/aix-3-2/Unix.i3</A>
+<LI><A HREF="../../../unix/src/aix-ps2-1-2/Unix.i3.html#0TOP0">unix/src/aix-ps2-1-2/Unix.i3</A>
+<LI><A HREF="../../../unix/src/freebsd-1/Unix.i3.html#0TOP0">unix/src/freebsd-1/Unix.i3</A>
+<LI><A HREF="../../../unix/src/freebsd-2/Unix.i3.html#0TOP0">unix/src/freebsd-2/Unix.i3</A>
+<LI><A HREF="../../../unix/src/hpux-7-0/Unix.i3.html#0TOP0">unix/src/hpux-7-0/Unix.i3</A>
+<LI><A HREF="../../../unix/src/ibm-4-3/Unix.i3.html#0TOP0">unix/src/ibm-4-3/Unix.i3</A>
+<LI><A HREF="../../../unix/src/irix-5.2/Unix.i3.html#0TOP0">unix/src/irix-5.2/Unix.i3</A>
+<LI><A HREF="../../../unix/src/linux/Unix.i3.html#0TOP0">unix/src/linux/Unix.i3</A>
+<LI><A HREF="../../../unix/src/osf-1.ALPHA_OSF/Unix.i3.html#0TOP0">unix/src/osf-1.ALPHA_OSF/Unix.i3</A>
+<LI><A HREF="../../../unix/src/osf-1.DS3100/Unix.i3.html#0TOP0">unix/src/osf-1.DS3100/Unix.i3</A>
+<LI><A HREF="../../../unix/src/solaris-2-x/Unix.i3.html#0TOP0">unix/src/solaris-2-x/Unix.i3</A>
+<LI><A HREF="../../../unix/src/sunos-4-x/Unix.i3.html#0TOP0">unix/src/sunos-4-x/Unix.i3</A>
+<LI><A HREF="../../../unix/src/sysv-4.0/Unix.i3.html#0TOP0">unix/src/sysv-4.0/Unix.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.AP3000/Unix.i3.html#0TOP0">unix/src/ultrix-3-1.AP3000/Unix.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.ARM/Unix.i3.html#0TOP0">unix/src/ultrix-3-1.ARM/Unix.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.DS3100/Unix.i3.html#0TOP0">unix/src/ultrix-3-1.DS3100/Unix.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.NEXT/Unix.i3.html#0TOP0">unix/src/ultrix-3-1.NEXT/Unix.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.SEQUENT/Unix.i3.html#0TOP0">unix/src/ultrix-3-1.SEQUENT/Unix.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.SUN3/Unix.i3.html#0TOP0">unix/src/ultrix-3-1.SUN3/Unix.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.SUN386/Unix.i3.html#0TOP0">unix/src/ultrix-3-1.SUN386/Unix.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.UMAX/Unix.i3.html#0TOP0">unix/src/ultrix-3-1.UMAX/Unix.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.VAX/Unix.i3.html#0TOP0">unix/src/ultrix-3-1.VAX/Unix.i3</A>
+</UL>
+<P>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

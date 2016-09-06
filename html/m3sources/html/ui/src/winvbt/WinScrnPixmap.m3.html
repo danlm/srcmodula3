@@ -1,0 +1,576 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: ui/src/winvbt/WinScrnPixmap.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>ui/src/winvbt/WinScrnPixmap.m3</H2></A><HR>
+<inModule>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM> Digital Internal Use Only                                                 </EM></BLOCKQUOTE><PRE>
+</PRE>                                                                           
+       Created on Tue Jan 17 16:51:19 PST 1995 by najork                   
+
+<P>
+<P><PRE>UNSAFE MODULE <module><implements><A HREF="WinScrnPixmap.i3.html">WinScrnPixmap</A></implements></module>;
+
+IMPORT <A HREF="../../../geometry/src/Axis.i3.html">Axis</A>, <A HREF="../vbt/Palette.i3.html">Palette</A>, <A HREF="../vbt/Pixmap.i3.html">Pixmap</A>, <A HREF="../../../geometry/src/Point.i3.html">Point</A>, <A HREF="../../../geometry/src/Rect.i3.html">Rect</A>, <A HREF="../vbt/ScrnPixmap.i3.html">ScrnPixmap</A>, <A HREF="../trestle/TrestleImpl.i3.html">TrestleImpl</A>, <A HREF="../vbt/VBTRep.i3.html">VBTRep</A>,
+       <A HREF="../../../win32/src/WinDef.i3.html">WinDef</A>, <A HREF="../../../win32/src/WinGDI.i3.html">WinGDI</A>, <A HREF="WinScreenType.i3.html">WinScreenType</A>, <A HREF="WinScreenTypePrivate.i3.html">WinScreenTypePrivate</A>, <A HREF="../../../win32/src/WinUser.i3.html">WinUser</A>;
+
+IMPORT <A HREF="../../../C/src/Common/Ctypes.i3.html">Ctypes</A>, <A HREF="../../../fmtlex/src/Fmt.i3.html">Fmt</A>, <A HREF="../../../rw/src/Common/IO.i3.html">IO</A>;
+
+CONST
+  True = 1;
+
+&lt;* PRAGMA LL *&gt;
+
+EXCEPTION FatalError;
+&lt;* FATAL FatalError *&gt;
+
+TYPE
+  T = ScrnPixmap.T BRANDED OBJECT
+    st: WinScreenType.T;
+  OVERRIDES
+    localize := Localize;
+    unload   := Unload;
+    free     := Free;
+  END;
+
+PROCEDURE <A NAME="Localize"><procedure>Localize</procedure></A> (self: T; READONLY rect: Rect.T): ScrnPixmap.Raw =
+  VAR
+    id    := self.id;
+    st    := self.st;
+    hwnd  : WinDef.HWND;
+    hdc   : WinDef.HDC;
+    hbmp  : WinDef.HBITMAP;
+    status: INTEGER;
+    res   : ScrnPixmap.Raw;
+    bmi   : WinGDI.BITMAPINFO;
+    pixels: REF ARRAY OF WinGDI.RGBQUAD;
+    k     : INTEGER;
+    r     : Rect.T;
+  BEGIN
+    IF id = SolidPixmap THEN RETURN rawSolid END;
+
+    r := Rect.Meet(rect, self.bounds);
+    IF Rect.IsEmpty (r) THEN RETURN NIL END;
+
+    IF id &lt; 0 THEN
+      id := SolidPixmap - id;
+      st := st.bits;
+    END;
+
+    LOCK st.trsl DO
+      WITH pmr = st.pmtable[id] DO
+        &lt;* ASSERT pmr.domain = self.bounds *&gt;
+        (* ... if that's true, can we do away with pmr.domain? *)
+        hbmp := pmr.hbmp;
+      END;
+    END;
+
+    (* Examine the depth *)
+    hwnd := WinUser.GetDesktopWindow ();
+    &lt;* ASSERT hwnd # NIL *&gt;
+    hdc := WinUser.GetDC (hwnd);
+    &lt;* ASSERT hdc # NIL *&gt;
+
+    WITH height = Rect.VerSize (self.bounds),
+         width  = Rect.HorSize (self.bounds),
+         bmih   = bmi.bmiHeader DO
+      bmi.bmiHeader.biSize := BYTESIZE(WinGDI.BITMAPINFOHEADER);
+      bmi.bmiHeader.biBitCount := 0;
+      status := WinGDI.GetDIBits (hdc,
+                                  hbmp,
+                                  0,          (* start at scan line 0 *)
+                                  height,     (* copy &quot;height&quot; lines *)
+                                  NIL,        (* ... that is, don't copy *)
+                                  ADR (bmi),  (* ... just fill in bmi *)
+                                  WinGDI.DIB_RGB_COLORS);
+      &lt;* ASSERT status = True *&gt;
+
+      &lt;* ASSERT bmih.biWidth = width *&gt;
+      &lt;* ASSERT bmih.biHeight = height *&gt;
+
+      IF bmih.biBitCount = 1 THEN
+        res := ScrnPixmap.NewRaw (1, r);
+      ELSE
+        res := ScrnPixmap.NewRaw (BITSIZE (WinDef.COLORREF), r);
+      END;
+
+      bmih.biBitCount := 32;
+      bmih.biCompression := WinGDI.BI_RGB;
+
+      pixels := NEW (REF ARRAY OF WinGDI.RGBQUAD, height * width);
+      status := WinGDI.GetDIBits (hdc,
+                                  hbmp,
+                                  0,             (* start at scan line 0 *)
+                                  height,        (* copy &quot;height&quot; lines *)
+                                  ADR(pixels[0]),(* into &quot;pixels&quot; *)
+                                  ADR (bmi),
+                                  WinGDI.DIB_RGB_COLORS);
+      &lt;* ASSERT status = height *&gt;
+
+      &lt;* ASSERT bmih.biBitCount = BITSIZE (WinDef.COLORREF) *&gt;
+      &lt;* ASSERT bmih.biWidth = Rect.HorSize (self.bounds) *&gt;
+      &lt;* ASSERT bmih.biHeight = Rect.VerSize (self.bounds) *&gt;
+    END;
+
+    (* Copy &quot;pixels&quot; into &quot;res&quot; *)
+    k := 0;
+    FOR v := self.bounds.south - 1 TO self.bounds.north BY -1 DO
+      FOR h := self.bounds.west TO self.bounds.east - 1 DO
+        WITH pt = Point.T {h, v} DO
+          IF Rect.Member (pt, r) THEN
+            IF res.depth = 1 THEN
+              IF pixels[k] = WinGDI.RGBQUAD {0, 0, 0, 0} THEN
+                res.set (pt, 0);
+              ELSE
+                res.set (pt, 1);
+              END;
+            ELSE
+              WITH p   = pixels[k],
+                   col = WinGDI.RGB (p.rgbRed, p.rgbGreen, p.rgbBlue) DO
+                res.set (pt, col);
+              END;
+            END;
+          END;
+          INC (k);
+        END;
+      END;
+    END;
+
+    status := WinUser.ReleaseDC (hwnd, hdc);
+    &lt;* ASSERT status = True *&gt;
+
+    RETURN res;
+  END Localize;
+</PRE>-----------------------------------------------------------------------------
+   The spec in ScrnPixmap.i3 states:
+<P>
+       The method call <CODE>pm.unload()</CODE> causes <CODE>pm</CODE> to become anonymous.
+<P>
+   The X version (XScrnPxmp.Unregister) doesn't do anything. 
+   So, we do the same.
+-----------------------------------------------------------------------------
+
+<P>
+<P><PRE>PROCEDURE <A NAME="Unload"><procedure>Unload</procedure></A> (&lt;*UNUSED*&gt; self: T) =
+  BEGIN
+    (* do nothing *)
+  END Unload;
+
+PROCEDURE <A NAME="Free"><procedure>Free</procedure></A> (self: T) =
+  VAR
+    id     := self.id;
+    st     := self.st;
+    status : WinDef.BOOL;
+  BEGIN
+    IF id = SolidPixmap THEN RETURN; END;
+    IF id &lt; 0 THEN
+      id := SolidPixmap - id;
+      st := st.bits;
+    END;
+    LOCK st.trsl DO
+      WITH z = st.pmtable[id] DO
+        z.domain.north := st.pmfree;
+        st.pmfree := id;
+        IF z.hbmp # NIL THEN
+          status := WinGDI.DeleteObject (z.hbmp);
+          &lt;* ASSERT status = True *&gt;
+          z.hbmp := NIL;
+        END;
+      END;
+    END;
+  END Free;
+</PRE>***************************************************************************
+
+<P><PRE>TYPE
+  Oracle = ScrnPixmap.Oracle BRANDED OBJECT
+    st: WinScreenType.T;
+  OVERRIDES
+    load    := Load;
+    list    := List;
+    lookup  := Lookup;
+    builtIn := BuiltIn;
+  END;
+
+PROCEDURE <A NAME="Load"><procedure>Load</procedure></A> (                    self: Oracle;
+                           READONLY pm  : ScrnPixmap.Raw;
+                &lt;*UNUSED*&gt;          nm  : TEXT := NIL): ScrnPixmap.T =
+  BEGIN
+    WITH st = self.st DO
+      LOCK st.trsl DO
+        IF pm.depth # 1 AND pm.depth # st.depth THEN
+          RAISE FatalError;
+        END;
+        RETURN NewPixmap (st, PixmapFromRaw (st, pm), pm.bounds, pm.depth);
+      END;
+    END;
+  END Load;
+
+PROCEDURE <A NAME="DumpPixmap"><procedure>DumpPixmap</procedure></A> (pm: ScrnPixmap.T) =
+  BEGIN
+    WITH st = NARROW (pm, T).st DO
+      IO.Put (&quot;WinPixmap.T {\n&quot;);
+      IO.Put (&quot;  id := &quot; &amp; Fmt.Int (pm.id) &amp; &quot;\n&quot;);
+      IO.Put (&quot;  depth := &quot; &amp; Fmt.Int (pm.depth) &amp; &quot;\n&quot;);
+      IO.Put (&quot;  bounds := &quot; &amp; Fmt_Rect(pm.bounds) &amp; &quot;\n&quot;);
+      IF st = st.bits
+        THEN IO.Put (&quot;  st := a monochrome screen type\n&quot;);
+        ELSE IO.Put (&quot;  st := a color screen type\n&quot;);
+      END;
+    END;
+  END DumpPixmap;
+
+PROCEDURE <A NAME="DumpPixmapRecord"><procedure>DumpPixmapRecord</procedure></A> (pmr: PixmapRecord) =
+  VAR
+    bitmap: WinGDI.BITMAP;
+    sz    : Ctypes.int;
+  BEGIN
+    IO.Put (&quot;WinScrnPixmap.PixmapRecord{\n&quot;);
+    IO.Put (&quot;  hbmp   := &quot; &amp; Fmt_Addr (pmr.hbmp)   &amp; &quot;\n&quot;);
+    IO.Put (&quot;  domain := &quot; &amp; Fmt_Rect (pmr.domain) &amp; &quot;\n&quot;);
+    IO.Put (&quot;}\n&quot;);
+    sz := WinGDI.GetObject(pmr.hbmp, BYTESIZE (bitmap), ADR(bitmap));
+    IF sz = 0 THEN
+      IO.Put (&quot;could not get dimensions of bitmap!\n&quot;);
+    ELSE
+      IO.Put (&quot;bmWidth  = &quot; &amp; Fmt.Int(bitmap.bmWidth));
+      IO.Put (&quot;bmHeight = &quot; &amp; Fmt.Int(bitmap.bmHeight));
+    END;
+  END DumpPixmapRecord;
+
+PROCEDURE <A NAME="DumpRaw"><procedure>DumpRaw</procedure></A> (pm: ScrnPixmap.Raw) =
+  VAR dom := pm.bounds;
+  BEGIN
+    IO.Put (&quot;ScrnPixmap.Raw: \n&quot;);
+    IO.Put (&quot;   depth = &quot; &amp; Fmt.Int (pm.depth) &amp; &quot;\n&quot;);
+    IO.Put (&quot;   bounds = {&quot; &amp; Fmt_Rect (dom) &amp; &quot;\n&quot;);
+    IO.Put (&quot;   bitsPerPixel = &quot; &amp; Fmt.Int (pm.bitsPerPixel) &amp; &quot;\n&quot;);
+    IO.Put (&quot;   wordsPerRow = &quot; &amp; Fmt.Int (pm.wordsPerRow) &amp; &quot;\n&quot;);
+    IO.Put (&quot;   One row of pixels from the middle:\n&quot;);
+    IF pm.pixelOrder = ScrnPixmap.ByteOrder.MSBFirst THEN
+      IO.Put (&quot;   byteOrder = MSBFirst\n&quot;);
+    ELSE
+      IO.Put (&quot;   byteOrder = LSBFirst\n&quot;);
+    END;
+    IO.Put (&quot;   westRounded = &quot; &amp; Fmt.Int (pm.westRounded) &amp; &quot;\n&quot;);
+    FOR v := dom.north TO MIN (dom.north + 19, dom.south - 1) DO
+      IO.Put(&quot;   row &quot; &amp; Fmt.Pad (Fmt.Int(v),2) &amp; &quot;: &quot;);
+      FOR h := dom.west TO MIN (dom.west + 19, dom.east - 1) DO
+        IO.Put(Fmt.Pad(Fmt.Int(pm.get(Point.T{h,v}), base := 16),2,'0') &amp; &quot; &quot;);
+      END;
+      IO.Put (&quot;\n&quot;);
+    END;
+  END DumpRaw;
+
+PROCEDURE <A NAME="Fmt_Rect"><procedure>Fmt_Rect</procedure></A> (r: Rect.T): TEXT =
+  BEGIN
+    RETURN &quot;Rect.T{&quot; &amp;
+           Fmt.Int(r.west) &amp; &quot;,&quot; &amp;
+           Fmt.Int(r.east) &amp; &quot;,&quot; &amp;
+           Fmt.Int(r.north) &amp; &quot;,&quot; &amp;
+           Fmt.Int(r.south) &amp; &quot;}&quot;;
+  END Fmt_Rect;
+
+PROCEDURE <A NAME="Fmt_Addr"><procedure>Fmt_Addr</procedure></A> (a: ADDRESS): TEXT =
+  BEGIN
+    WITH i = LOOPHOLE (a, INTEGER) DO
+      RETURN Fmt.Int (i, base := 16);
+    END;
+  END Fmt_Addr;
+</PRE>-----------------------------------------------------------------------------
+   The spec in ScrnPixmap.i3 states:
+<P>
+       The method call <CODE>st.pixmap.list(pat, maxResults)</CODE> returns the names
+       of all pixmaps owned by <CODE>st</CODE> that match the pattern <CODE>pat</CODE>.  The list
+       of results may be truncated to length <CODE>maxResults</CODE>.  A <CODE>*</CODE> matches
+       any number of characters and a <CODE>?</CODE> matches any single character.
+<P>
+   The X version (XScrnPxmp.PixmapList), however, simply always returns NIL.
+   For now, I do the same ... 
+-----------------------------------------------------------------------------
+
+<P><PRE>PROCEDURE <A NAME="List"><procedure>List</procedure></A> (&lt;*UNUSED*&gt; self      : Oracle;
+                &lt;*UNUSED*&gt; pat       : TEXT;
+                &lt;*UNUSED*&gt; maxResults: CARDINAL): REF ARRAY OF TEXT =
+  BEGIN
+    RETURN NIL
+  END List;
+</PRE>-----------------------------------------------------------------------------
+   The spec in ScrnPixmap.i3 states:
+<P>
+       The method call <CODE>st.pixmap.lookup(name)</CODE> return the pixmap with the
+       given name, or <CODE>NIL</CODE> if no pixmap has this name.
+<P>
+   The X version (XScrnPxmp.PixmapLookup), however, simply always returns NIL.
+   For now, I do the same ... 
+-----------------------------------------------------------------------------
+
+<P><PRE>PROCEDURE <A NAME="Lookup"><procedure>Lookup</procedure></A> (&lt;*UNUSED*&gt; self: Oracle;
+                  &lt;*UNUSED*&gt; name: TEXT): ScrnPixmap.T =
+  BEGIN
+    RETURN NIL;
+  END Lookup;
+
+PROCEDURE <A NAME="BuiltIn"><procedure>BuiltIn</procedure></A> (self: Oracle; pm: Pixmap.Predefined): ScrnPixmap.T =
+  BEGIN
+    IF self.st.bits # self.st THEN
+      RETURN Palette.ResolvePixmap (self.st.bits, Pixmap.T {pm});
+    END;
+    CASE pm OF
+    | Pixmap.Solid.pm =&gt;
+      WITH res = Load (self, rawSolid) DO
+        res.id := SolidPixmap;
+        RETURN res;
+      END;
+    | Pixmap.Gray.pm =&gt;
+      RETURN Load (self, rawGray);
+    | Pixmap.Empty.pm =&gt;
+      RETURN Load (self, rawEmpty);
+    ELSE
+      RAISE FatalError;
+    END;
+  END BuiltIn;
+</PRE>***************************************************************************
+ Exported procedures                                                       
+***************************************************************************
+
+<P>
+<P><PRE>PROCEDURE <A NAME="NewOracle"><procedure>NewOracle</procedure></A>(st : WinScreenType.T): ScrnPixmap.Oracle =
+  BEGIN
+    RETURN NEW (Oracle, st := st);
+  END NewOracle;
+
+PROCEDURE <A NAME="PixmapDomain"><procedure>PixmapDomain</procedure></A> (st: WinScreenType.T; pmId: INTEGER): Rect.T =
+  BEGIN
+    IF pmId = SolidPixmap THEN RETURN rawSolid.bounds END;
+    IF pmId &lt; 0 THEN
+      pmId := SolidPixmap - pmId;
+      st := st.bits;
+    END;
+    IF pmId &lt; NUMBER (st.pmtable^)
+      THEN RETURN st.pmtable[pmId].domain;
+      ELSE RETURN Rect.Empty;
+    END;
+  END PixmapDomain;
+</PRE><P>
+ * The xvbt version of this function is quite a hack: The actual image data
+ * of a <CODE>ScrnPixmap.Raw</CODE> is stored in a field <CODE>pixels</CODE>. It just so happens
+ * that the memory layout of <CODE>pixels</CODE> is identical to the layout expected by 
+ * the <CODE>data</CODE> field of an <CODE>X.XImage</CODE> record.  So, the xvbt version simply
+ * creates an XImage, loopholes the <CODE>pixels</CODE> field into the <CODE>data</CODE> field,
+ * then creates an <CODE>X.Pixmap</CODE>, paints the <CODE>X.XImage</CODE> onto the <CODE>X.Pixmap</CODE>,
+ * and returns the X pixmap.
+ *
+ * The Windows version currently deals only with monochrome bitmaps 
+ * (which makes sense, since I didn't implement colors yet either)
+ 
+
+<P><PRE>PROCEDURE <A NAME="PixmapFromRaw"><procedure>PixmapFromRaw</procedure></A> (st: WinScreenType.T;
+                         pm: ScrnPixmap.Raw): WinDef.HBITMAP =
+  &lt;* LL.sup = st.trsl *&gt;
+
+  PROCEDURE ConvertMonochrome (pm: ScrnPixmap.Raw): WinDef.HBITMAP =
+    TYPE
+      WinWord = Ctypes.unsigned_short;
+      Bit     = BITS 1 FOR [0..1];
+      Byte    = BITS 8 FOR ARRAY [0..7] OF Bit;
+      TwoByte = BITS 16 FOR ARRAY [0..1] OF Byte;
+    CONST
+      WinWordSize = BITSIZE (WinWord);
+    BEGIN
+      WITH pix_width  = pm.bounds.east  - pm.bounds.west,
+           pix_height = pm.bounds.south - pm.bounds.north,
+           word_width = (pix_width - 1) DIV WinWordSize + 1,
+           words      = NEW (REF ARRAY OF WinWord, word_width * pix_height) DO
+        (* first, let's blank the array *)
+        FOR i := 0 TO word_width * pix_height - 1 DO
+          words[i] := 0;
+        END;
+        (* Next, let's transfer the bits from pm.pixels to bits *)
+        FOR v := 0 TO pix_height - 1 DO
+          FOR h := 0 TO pix_width - 1 DO
+            WITH pt  = Point.T{pm.bounds.west + h, pm.bounds.north + v},
+                 word = v * word_width + h DIV WinWordSize,
+                 byte = (h MOD WinWordSize) DIV 8,
+                 bit  = 7 - h MOD 8 DO
+              LOOPHOLE (words[word], TwoByte)[byte][bit] := pm.get(pt);
+            END;
+          END;
+        END;
+        WITH res = WinGDI.CreateBitmap (pm.bounds.east - pm.bounds.west,
+                                        pm.bounds.south - pm.bounds.north,
+                                        1, 1, ADR(words[0])) DO
+          &lt;* ASSERT res # NIL *&gt;
+          RETURN res;
+        END;
+      END;
+    END ConvertMonochrome;
+
+  PROCEDURE ConvertColor (st: WinScreenType.T;
+                          pm: ScrnPixmap.Raw): WinDef.HBITMAP =
+    VAR
+      hwnd   : WinDef.HWND;
+      hdc    : WinDef.HDC;
+      hbmp   : WinDef.HBITMAP;
+      pixels : REF ARRAY OF WinGDI.RGBQUAD;
+      k      : INTEGER;
+      status : WinDef.BOOL;
+      bmi    : WinGDI.BITMAPINFO;
+    BEGIN
+      hwnd := WinUser.GetDesktopWindow ();
+      &lt;* ASSERT hwnd # NIL *&gt;
+      hdc := WinUser.GetDC (hwnd);
+      &lt;* ASSERT hdc # NIL *&gt;
+
+      pixels := NEW (REF ARRAY OF WinGDI.RGBQUAD,
+                     (pm.bounds.south - pm.bounds.north) *
+                     (pm.bounds.east - pm.bounds.west));
+      k := 0;
+      FOR i := pm.bounds.south - 1 TO pm.bounds.north BY -1 DO
+        FOR j := pm.bounds.west TO pm.bounds.east - 1 DO
+          WITH pixel = pm.get(Point.T{j,i}),
+               red   = WinGDI.GetRValue (pixel),
+               green = WinGDI.GetGValue (pixel),
+               blue  = WinGDI.GetBValue (pixel) DO
+            pixels[k] := WinGDI.RGBQUAD {blue, green, red, 0};
+          END;
+          INC (k);
+        END;
+      END;
+
+      WITH bmih = bmi.bmiHeader DO
+        bmih.biSize          := BYTESIZE(WinGDI.BITMAPINFOHEADER);
+        bmih.biWidth         := pm.bounds.east - pm.bounds.west;
+        (* Windows NT bug: According to the doc, a negative value for
+           biHeight indicates a top-down bitmap, that is, a bitmap that
+           starts in the upper-left corner. However, if I actually pass
+           a negative value, the bitmap comes out solid black most of the
+           time (although at some point, it came out ok ...) *)
+        bmih.biHeight        := pm.bounds.south - pm.bounds.north;
+        bmih.biPlanes        := 1;   (* always 1 *)
+        bmih.biBitCount      := 32;
+        bmih.biCompression   := WinGDI.BI_RGB;
+        bmih.biSizeImage     := 0;   (* 0 is valid only for BI_RGB *)
+        bmih.biXPelsPerMeter := ROUND (st.res[Axis.T.Hor] * 1000.0);
+        bmih.biYPelsPerMeter := ROUND (st.res[Axis.T.Ver] * 1000.0);
+        bmih.biClrUsed       := 0;   (* bitmap uses all the colors *)
+        bmih.biClrImportant  := 0;   (* all colors are important *)
+
+        hbmp := WinGDI.CreateDIBitmap (hdc,
+                                       ADR(bmih),
+                                       WinGDI.CBM_INIT,
+                                       LOOPHOLE (ADR (pixels[0]),
+                                                 WinDef.LPVOID),
+                                       ADR (bmi),
+                                       WinGDI.DIB_RGB_COLORS);
+      END;
+
+      status := WinUser.ReleaseDC (hwnd, hdc);
+      &lt;* ASSERT status = True *&gt;
+      RETURN hbmp;
+    END ConvertColor;
+
+  BEGIN
+    IF Rect.IsEmpty (pm.bounds) THEN
+      RETURN NIL ;
+    ELSIF pm.depth = 1 AND pm.bitsPerPixel = 1 THEN
+      RETURN ConvertMonochrome (pm);
+    ELSE
+      RETURN ConvertColor (st, pm);
+    END;
+  END PixmapFromRaw;
+</PRE>***************************************************************************
+ Private procedures                                                        
+***************************************************************************
+
+<P>
+<P><PRE>PROCEDURE <A NAME="NewPixmap"><procedure>NewPixmap</procedure></A> (         st    : WinScreenType.T;
+                              hbmp  : WinDef.HBITMAP;
+                     READONLY domain: Rect.T;
+                              depth : INTEGER): ScrnPixmap.T =
+  &lt;* LL.sup = st.trsl *&gt;
+  VAR id, slot: INTEGER;
+  BEGIN
+    IF depth = 1 THEN st := st.bits END;
+    IF (st.pmfree &gt;= 0) THEN
+      slot := st.pmfree;
+      st.pmfree := st.pmtable[slot].domain.north;
+    ELSE
+      slot := st.pmcount;
+      IF (slot = NUMBER (st.pmtable^)) THEN ExpandPixmapTable (st); END;
+    END;
+    IF st.bits = st THEN
+      id := SolidPixmap - slot;
+    ELSE
+      id := slot;
+    END;
+    st.pmtable[slot] := PixmapRecord {hbmp, domain};
+    INC(st.pmcount);
+    RETURN NEW (T, st := st, id := id, depth := depth,
+                bounds := Rect.Sub (domain, Rect.NorthWest (domain)));
+        (* Simply passing &quot;domain&quot; screws things up.
+           This sounds like a bug somewhere in my code. *)
+  END NewPixmap;
+
+PROCEDURE <A NAME="ExpandPixmapTable"><procedure>ExpandPixmapTable</procedure></A> (st: WinScreenType.T) =
+  VAR n := NUMBER (st.pmtable^);  new := NEW (REF ARRAY OF PixmapRecord, n+n);
+  BEGIN
+    SUBARRAY (new^, 0, n) := st.pmtable^;
+    st.pmtable := new;
+  END ExpandPixmapTable;
+
+VAR
+  rawSolid, rawGray, rawEmpty: ScrnPixmap.Raw;
+
+PROCEDURE <A NAME="InitPredefRaws"><procedure>InitPredefRaws</procedure></A> () =
+  BEGIN
+    WITH r = Rect.FromSize (8, 8) DO
+      rawSolid := ScrnPixmap.NewRaw (1, r);
+      rawEmpty := ScrnPixmap.NewRaw (1, r);
+      rawGray  := ScrnPixmap.NewRaw (1, r);
+      FOR x := r.west TO r.east - 1 DO
+        FOR y := r.north TO r.south - 1 DO
+          WITH p = Point.T {x, y} DO
+            rawSolid.set (p, 1);
+            rawEmpty.set (p, 0);
+            rawGray.set (p, (x + y) MOD 2);
+          END;
+        END;
+      END;
+    END;
+  END InitPredefRaws;
+
+BEGIN
+  InitPredefRaws();
+END WinScrnPixmap.
+</PRE>
+</inModule>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

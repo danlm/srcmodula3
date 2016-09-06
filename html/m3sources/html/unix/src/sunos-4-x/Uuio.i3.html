@@ -1,0 +1,114 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: unix/src/sunos-4-x/Uuio.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>unix/src/sunos-4-x/Uuio.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+
+INTERFACE <interface>Uuio</interface>;
+
+FROM <A HREF="../../../C/src/Common/Ctypes.i3.html">Ctypes</A> IMPORT int, char_star;
+FROM <A HREF="#x1">Utypes</A> IMPORT caddr_t;
+</PRE>** sys/uio.h **
+
+<P><PRE>TYPE
+
+TYPE
+  struct_iovec = RECORD
+    iov_base: caddr_t;
+    iov_len: int;
+  END;
+  struct_iovec_star = UNTRACED REF struct_iovec;
+
+  struct_uio = RECORD
+    uio_iov: struct_iovec_star;
+    uio_iovcnt: int;
+    uio_offset: int;
+    uio_segflg: int;
+    uio_resid: int;
+    uio_flag: int;
+  END;
+
+  uio_rw = {UIO_READ, UIO_WRITE};
+</PRE><P>
+ * Segment flag values (should be enum).
+ 
+
+<P><PRE>CONST
+  UIO_USERSPACE =	0;		(* from user data space *)
+  UIO_SYSSPACE =	1;		(* from system space *)
+  UIO_USERISPACE =	2;		(* from user I space *)
+
+CONST
+  MAX_IOVEC = 		16;		(* maximum length of io vectors *)
+</PRE>** read, readv(2) - read from a file **
+
+<P><PRE>&lt;*EXTERNAL*&gt; PROCEDURE read (d: int; buf: char_star; nbytes: int): int;
+&lt;*EXTERNAL*&gt; PROCEDURE readv (d: int; iov: struct_iovec_star;
+                              iovcnt: int): int;
+</PRE>** write, writev(2) - write on a file **
+
+<P><PRE>&lt;*EXTERNAL*&gt; PROCEDURE write (d: int; buf: char_star; nbytes: int): int;
+&lt;*EXTERNAL*&gt; PROCEDURE writev (d: int; iov: struct_iovec_star;
+                               ioveclen: int): int;
+
+END Uuio.
+</PRE>
+</inInterface>
+<HR>
+<A NAME="x1">interface Utypes is in:
+</A><UL>
+<LI><A HREF="../aix-3-2/Utypes.i3.html#0TOP0">unix/src/aix-3-2/Utypes.i3</A>
+<LI><A HREF="../aix-ps2-1-2/Utypes.i3.html#0TOP0">unix/src/aix-ps2-1-2/Utypes.i3</A>
+<LI><A HREF="../freebsd-1/Utypes.i3.html#0TOP0">unix/src/freebsd-1/Utypes.i3</A>
+<LI><A HREF="../freebsd-2/Utypes.i3.html#0TOP0">unix/src/freebsd-2/Utypes.i3</A>
+<LI><A HREF="../hpux-7-0/Utypes.i3.html#0TOP0">unix/src/hpux-7-0/Utypes.i3</A>
+<LI><A HREF="../ibm-4-3/Utypes.i3.html#0TOP0">unix/src/ibm-4-3/Utypes.i3</A>
+<LI><A HREF="../irix-5.2/Utypes.i3.html#0TOP0">unix/src/irix-5.2/Utypes.i3</A>
+<LI><A HREF="../linux/Utypes.i3.html#0TOP0">unix/src/linux/Utypes.i3</A>
+<LI><A HREF="../osf-1.ALPHA_OSF/Utypes.i3.html#0TOP0">unix/src/osf-1.ALPHA_OSF/Utypes.i3</A>
+<LI><A HREF="../osf-1.DS3100/Utypes.i3.html#0TOP0">unix/src/osf-1.DS3100/Utypes.i3</A>
+<LI><A HREF="../solaris-2-x/Utypes.i3.html#0TOP0">unix/src/solaris-2-x/Utypes.i3</A>
+<LI><A HREF="Utypes.i3.html#0TOP0">unix/src/sunos-4-x/Utypes.i3</A>
+<LI><A HREF="../sysv-4.0/Utypes.i3.html#0TOP0">unix/src/sysv-4.0/Utypes.i3</A>
+<LI><A HREF="../ultrix-3-1.AP3000/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.AP3000/Utypes.i3</A>
+<LI><A HREF="../ultrix-3-1.ARM/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.ARM/Utypes.i3</A>
+<LI><A HREF="../ultrix-3-1.DS3100/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.DS3100/Utypes.i3</A>
+<LI><A HREF="../ultrix-3-1.NEXT/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.NEXT/Utypes.i3</A>
+<LI><A HREF="../ultrix-3-1.SEQUENT/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.SEQUENT/Utypes.i3</A>
+<LI><A HREF="../ultrix-3-1.SUN3/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.SUN3/Utypes.i3</A>
+<LI><A HREF="../ultrix-3-1.SUN386/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.SUN386/Utypes.i3</A>
+<LI><A HREF="../ultrix-3-1.UMAX/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.UMAX/Utypes.i3</A>
+<LI><A HREF="../ultrix-3-1.VAX/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.VAX/Utypes.i3</A>
+</UL>
+<P>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

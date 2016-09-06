@@ -1,0 +1,86 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: float/src/SUN386/FPU.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>float/src/SUN386/FPU.i3</H2></A><HR>
+<inInterface>
+<PRE></PRE> Copyright (C) 1992, Xerox                                                 
+
+<P>
+<P><PRE>INTERFACE <interface><A HREF="#x1">FPU</A></interface>;
+
+IMPORT <A HREF="../../../C/src/Common/Ctypes.i3.html">Ctypes</A>, <A HREF="#x2">FloatMode</A>;
+
+&lt;* EXTERNAL scalbn *&gt; PROCEDURE scalb (x: LONGREAL; n: INTEGER): LONGREAL;
+&lt;* EXTERNAL *&gt; PROCEDURE ilogb(x: LONGREAL): INTEGER;
+&lt;* EXTERNAL *&gt; PROCEDURE logb(x: LONGREAL): LONGREAL;
+&lt;* EXTERNAL *&gt; PROCEDURE nextafter(x, y: LONGREAL): LONGREAL;
+&lt;* EXTERNAL *&gt; PROCEDURE copysign(x, y: LONGREAL): LONGREAL;
+&lt;* EXTERNAL *&gt; PROCEDURE finite(x: LONGREAL): BOOLEAN;
+&lt;* EXTERNAL *&gt; PROCEDURE isnan(x: LONGREAL): BOOLEAN;
+&lt;* EXTERNAL *&gt; PROCEDURE fp_class(x: LONGREAL): INTEGER;
+&lt;* EXTERNAL *&gt; PROCEDURE signbit(x: LONGREAL): INTEGER;
+&lt;* EXTERNAL *&gt; PROCEDURE sqrt(x: LONGREAL): LONGREAL;
+&lt;* EXTERNAL *&gt; PROCEDURE ieee_flags(action, mode, in: Ctypes.char_star;
+				    VAR out: Ctypes.char_star): INTEGER;
+
+TYPE
+  SigFPEHandler = PROCEDURE(sig, code: INTEGER; scp, addr: ADDRESS)
+		      RAISES {FloatMode.Trap};
+
+&lt;* EXTERNAL *&gt; PROCEDURE ieee_handler(action, exception: Ctypes.char_star;
+				      hdl: SigFPEHandler): INTEGER;
+
+&lt;* EXTERNAL *&gt; PROCEDURE sigfpe(code: INTEGER; hdl: SigFPEHandler): INTEGER;
+
+END FPU.
+</PRE>
+</inInterface>
+<HR>
+<A NAME="x1">FPU's implementation  is in:
+</A><UL>
+<LI><A HREF="../IEEE-default/FPU.m3.html#0TOP0">float/src/IEEE-default/FPU.m3</A>
+<LI><A HREF="../VAX/FPU.m3.html#0TOP0">float/src/VAX/FPU.m3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x2">interface FloatMode is in:
+</A><UL>
+<LI><A HREF="../DS3100/FloatMode.i3.html#0TOP0">float/src/DS3100/FloatMode.i3</A>
+<LI><A HREF="../IEEE-default/FloatMode.i3.html#0TOP0">float/src/IEEE-default/FloatMode.i3</A>
+<LI><A HREF="../IRIX5/FloatMode.i3.html#0TOP0">float/src/IRIX5/FloatMode.i3</A>
+<LI><A HREF="../SOLsun/FloatMode.i3.html#0TOP0">float/src/SOLsun/FloatMode.i3</A>
+<LI><A HREF="../SPARC/FloatMode.i3.html#0TOP0">float/src/SPARC/FloatMode.i3</A>
+<LI><A HREF="FloatMode.i3.html#0TOP0">float/src/SUN386/FloatMode.i3</A>
+<LI><A HREF="../VAX/FloatMode.i3.html#0TOP0">float/src/VAX/FloatMode.i3</A>
+</UL>
+<P>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

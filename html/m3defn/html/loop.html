@@ -1,0 +1,39 @@
+<HTML>
+<HEAD>
+<TITLE>Modula-3: Loop statements</TITLE>
+</HEAD>
+<BODY BGCOLOR="#ffffff" VLINK="#006633">
+
+<P>
+<A HREF="m3.html">[top]</A>
+<A HREF="tryfinally.html">[prev]</A>
+<A HREF="exit.html">[next]</A>
+<P>
+
+<H2>Loop</H2>
+<P>
+
+A statement of the form:
+<PRE>
+    LOOP S END
+</PRE>
+repeatedly executes <TT>S</TT> until it raises the exit-exception.
+Informally it is like:
+<PRE>
+    TRY S; S; S; ... EXCEPT  exit-exception  =&gt; (*skip*)  END
+</PRE>
+<P>
+
+<A HREF="m3.html">[top]</A>
+<A HREF="tryfinally.html">[prev]</A>
+<A HREF="exit.html">[next]</A>
+<HR>
+<A HREF="../../modula-3/html/home.html">[Modula-3 home page]</A>
+<P>
+<ADDRESS>m3-request@src.dec.com</ADDRESS>
+<PRE>
+Last modified on Wed Apr  3 09:39:51 PST 1996 by heydon
+     modified on Mon Apr 18 14:04:28 PDT 1994 by kalsow
+</PRE>
+</BODY>
+</HTML>

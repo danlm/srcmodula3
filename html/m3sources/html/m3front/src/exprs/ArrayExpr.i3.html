@@ -1,0 +1,55 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: m3front/src/exprs/ArrayExpr.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>m3front/src/exprs/ArrayExpr.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE> File: ArrayExpr.i3                                          
+ Last Modified On Thu Aug 27 09:10:06 PDT 1992 By kalsow     
+      Modified On Fri Dec 21 01:19:11 1990 By muller         
+
+<P><PRE>INTERFACE <interface><A HREF="ArrayExpr.m3.html">ArrayExpr</A></interface>;
+
+IMPORT <A HREF="../types/Type.i3.html">Type</A>, <A HREF="Expr.i3.html">Expr</A>, <A HREF="../../../m3middle/src/Target.i3.html">Target</A>;
+
+PROCEDURE <A HREF="ArrayExpr.m3.html#New">New</A> (type: Type.T;  args: Expr.List;  dots: BOOLEAN): Expr.T;
+
+PROCEDURE <A HREF="ArrayExpr.m3.html#Is">Is</A> (e: Expr.T): BOOLEAN;
+
+PROCEDURE <A HREF="ArrayExpr.m3.html#GetBounds">GetBounds</A> (array: Expr.T; VAR min, max: Target.Int): BOOLEAN;
+
+PROCEDURE <A HREF="ArrayExpr.m3.html#Subscript">Subscript</A> (array, index: Expr.T;  VAR e: Expr.T): BOOLEAN;
+
+END ArrayExpr.
+</PRE>
+</inInterface>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

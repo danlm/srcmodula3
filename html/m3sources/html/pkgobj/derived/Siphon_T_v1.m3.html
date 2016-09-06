@@ -1,0 +1,515 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: pkgobj/derived/Siphon_T_v1.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>pkgobj/derived/Siphon_T_v1.m3</H2></A><HR>
+<inModule>
+<PRE>MODULE <module>Siphon_T_v1</module> EXPORTS <A HREF="../src/Common/Siphon.i3.html"><implements>Siphon</A></implements>, <A HREF="Siphon_T_v1.i3.html"><implements>Siphon_T_v1</A></implements>;
+
+IMPORT <A HREF="../src/Common/NetPath.i3.html">NetPath</A>, <A HREF="../../thread/src/Common/Thread.i3.html">Thread</A>, <A HREF="../../netobjrt/src/NetObj.i3.html">NetObj</A>, <A HREF="../../netobjrt/src/StubLib.i3.html">StubLib</A>, <A HREF="../../rw/src/Common/Rd.i3.html">Rd</A>, <A HREF="../../libm3/derived/TextList.i3.html">TextList</A>, <A HREF="../../libm3/derived/AtomList.i3.html">AtomList</A>, <A HREF="../../rw/src/Common/Wr.i3.html">Wr</A>,
+       <A HREF="../src/Common/PackageObj.i3.html">PackageObj</A>, <A HREF="../src/Common/Siphon.i3.html">Siphon</A>, <A HREF="../src/Common/LockOps.i3.html">LockOps</A>, <A HREF="../src/Common/PkgErr.i3.html">PkgErr</A>;
+CONST Protocol: StubLib.StubProtocol = 1;
+
+TYPE
+      Methods = {status, lockserver, synch, dequeue, enqueue, ship};
+      ReturnCodes = {OK, PkgErr_E};
+
+  PROCEDURE <A NAME="Surrogate_ship"><procedure>Surrogate_ship</procedure></A>(
+      self: Siphon.T;
+      package_arg: NetPath.PN;
+      source_arg: PackageObj.Source;
+      version_arg: PackageObj.Version;
+      caller_arg: TEXT;
+      manager_arg: TEXT;
+      fwdSites_arg: TextList.T) RAISES {PkgErr.E, NetObj.Error,
+      Thread.Alerted} =
+
+    VAR reuse := FALSE;
+        rep: StubLib.DataRep;
+        c: StubLib.Conn;
+        dataPresent: BOOLEAN; &lt;* NOWARN *&gt;
+
+    BEGIN
+      TRY
+        c := StubLib.StartCall(self, Protocol);
+        TRY
+          StubLib.OutInt32(c, ORD(Methods.ship));
+          dataPresent := TRUE;
+          StubLib.OutBoolean(c, dataPresent);
+          IF dataPresent THEN
+            StubLib.OutRef(c, package_arg.dir);
+            StubLib.OutRef(c, package_arg.arc);
+            END;
+            StubLib.OutRef(c, source_arg);
+          dataPresent := TRUE;
+          StubLib.OutBoolean(c, dataPresent);
+          IF dataPresent THEN
+            StubLib.OutInteger(c, version_arg.t);
+            StubLib.OutInteger(c, version_arg.vn);
+            END;
+            StubLib.OutRef(c, caller_arg);
+          StubLib.OutRef(c, manager_arg);
+          StubLib.OutRef(c, fwdSites_arg);
+          rep := StubLib.AwaitResult(c);
+          CASE StubLib.InInt32(c, rep) OF
+          | ORD(ReturnCodes.OK) =&gt;
+            reuse := TRUE;
+          | ORD(ReturnCodes.PkgErr_E) =&gt;
+            VAR arg: AtomList.T;
+            BEGIN
+              arg := StubLib.InRef(c, rep, TYPECODE(AtomList.T));
+              reuse := TRUE;
+              RAISE PkgErr.E(arg);
+
+            END;
+          ELSE
+            StubLib.RaiseUnmarshalFailure();
+          END
+        FINALLY
+          StubLib.EndCall(c, reuse);
+        END;
+
+      EXCEPT
+      | Rd.Failure(ec) =&gt; StubLib.RaiseCommFailure(ec);
+      | Wr.Failure(ec) =&gt; StubLib.RaiseCommFailure(ec);
+      END;
+    END Surrogate_ship;
+
+  PROCEDURE <A NAME="Surrogate_enqueue"><procedure>Surrogate_enqueue</procedure></A>(
+      self: Siphon.T;
+      package_arg: NetPath.PN;
+      version_arg: PackageObj.Version;
+      manager_arg: TEXT;
+      forSite_arg: TEXT;
+      urgent_arg: BOOLEAN) RAISES {PkgErr.E, NetObj.Error, Thread.Alerted} =
+
+    VAR reuse := FALSE;
+        rep: StubLib.DataRep;
+        c: StubLib.Conn;
+        dataPresent: BOOLEAN; &lt;* NOWARN *&gt;
+
+    BEGIN
+      TRY
+        c := StubLib.StartCall(self, Protocol);
+        TRY
+          StubLib.OutInt32(c, ORD(Methods.enqueue));
+          dataPresent := TRUE;
+          StubLib.OutBoolean(c, dataPresent);
+          IF dataPresent THEN
+            StubLib.OutRef(c, package_arg.dir);
+            StubLib.OutRef(c, package_arg.arc);
+            END;
+            dataPresent := TRUE;
+          StubLib.OutBoolean(c, dataPresent);
+          IF dataPresent THEN
+            StubLib.OutInteger(c, version_arg.t);
+            StubLib.OutInteger(c, version_arg.vn);
+            END;
+            StubLib.OutRef(c, manager_arg);
+          StubLib.OutRef(c, forSite_arg);
+          StubLib.OutInteger(c, ORD(urgent_arg));
+          rep := StubLib.AwaitResult(c);
+          CASE StubLib.InInt32(c, rep) OF
+          | ORD(ReturnCodes.OK) =&gt;
+            reuse := TRUE;
+          | ORD(ReturnCodes.PkgErr_E) =&gt;
+            VAR arg: AtomList.T;
+            BEGIN
+              arg := StubLib.InRef(c, rep, TYPECODE(AtomList.T));
+              reuse := TRUE;
+              RAISE PkgErr.E(arg);
+
+            END;
+          ELSE
+            StubLib.RaiseUnmarshalFailure();
+          END
+        FINALLY
+          StubLib.EndCall(c, reuse);
+        END;
+
+      EXCEPT
+      | Rd.Failure(ec) =&gt; StubLib.RaiseCommFailure(ec);
+      | Wr.Failure(ec) =&gt; StubLib.RaiseCommFailure(ec);
+      END;
+    END Surrogate_enqueue;
+
+  PROCEDURE <A NAME="Surrogate_dequeue"><procedure>Surrogate_dequeue</procedure></A>(
+      self: Siphon.T;
+      package_arg: NetPath.PN;
+      forSite_arg: TEXT;
+      interruptSend_arg: BOOLEAN): BOOLEAN RAISES {PkgErr.E, NetObj.Error,
+      Thread.Alerted} =
+
+    VAR reuse := FALSE;
+        rep: StubLib.DataRep;
+        c: StubLib.Conn;
+        dataPresent: BOOLEAN; &lt;* NOWARN *&gt;
+        res: BOOLEAN;
+
+    BEGIN
+      TRY
+        c := StubLib.StartCall(self, Protocol);
+        TRY
+          StubLib.OutInt32(c, ORD(Methods.dequeue));
+          dataPresent := TRUE;
+          StubLib.OutBoolean(c, dataPresent);
+          IF dataPresent THEN
+            StubLib.OutRef(c, package_arg.dir);
+            StubLib.OutRef(c, package_arg.arc);
+            END;
+            StubLib.OutRef(c, forSite_arg);
+          StubLib.OutInteger(c, ORD(interruptSend_arg));
+          rep := StubLib.AwaitResult(c);
+          CASE StubLib.InInt32(c, rep) OF
+          | ORD(ReturnCodes.OK) =&gt;
+            res := VAL(StubLib.InInteger(c, rep, 0,1), BOOLEAN);
+            reuse := TRUE;
+          | ORD(ReturnCodes.PkgErr_E) =&gt;
+            VAR arg: AtomList.T;
+            BEGIN
+              arg := StubLib.InRef(c, rep, TYPECODE(AtomList.T));
+              reuse := TRUE;
+              RAISE PkgErr.E(arg);
+
+            END;
+          ELSE
+            StubLib.RaiseUnmarshalFailure();
+          END
+        FINALLY
+          StubLib.EndCall(c, reuse);
+        END;
+
+      EXCEPT
+      | Rd.Failure(ec) =&gt; StubLib.RaiseCommFailure(ec);
+      | Wr.Failure(ec) =&gt; StubLib.RaiseCommFailure(ec);
+      END;
+      RETURN res;
+    END Surrogate_dequeue;
+
+  PROCEDURE <A NAME="Surrogate_synch"><procedure>Surrogate_synch</procedure></A>(
+      self: Siphon.T;
+      kind_arg: Siphon.SynchKind;
+      package_arg: NetPath.PN): TEXT RAISES {NetObj.Error, Thread.Alerted} =
+
+    VAR reuse := FALSE;
+        rep: StubLib.DataRep;
+        c: StubLib.Conn;
+        dataPresent: BOOLEAN; &lt;* NOWARN *&gt;
+        res: TEXT;
+
+    BEGIN
+      TRY
+        c := StubLib.StartCall(self, Protocol);
+        TRY
+          StubLib.OutInt32(c, ORD(Methods.synch));
+          StubLib.OutInteger(c, ORD(kind_arg));
+          dataPresent := TRUE;
+          StubLib.OutBoolean(c, dataPresent);
+          IF dataPresent THEN
+            StubLib.OutRef(c, package_arg.dir);
+            StubLib.OutRef(c, package_arg.arc);
+            END;
+            rep := StubLib.AwaitResult(c);
+          CASE StubLib.InInt32(c, rep) OF
+          | ORD(ReturnCodes.OK) =&gt;
+            res := StubLib.InRef(c, rep, -1);
+            reuse := TRUE;
+          ELSE
+            StubLib.RaiseUnmarshalFailure();
+          END
+        FINALLY
+          StubLib.EndCall(c, reuse);
+        END;
+
+      EXCEPT
+      | Rd.Failure(ec) =&gt; StubLib.RaiseCommFailure(ec);
+      | Wr.Failure(ec) =&gt; StubLib.RaiseCommFailure(ec);
+      END;
+      RETURN res;
+    END Surrogate_synch;
+
+  PROCEDURE <A NAME="Surrogate_lockserver"><procedure>Surrogate_lockserver</procedure></A>(self: Siphon.T): LockOps.T
+       RAISES {PkgErr.E, NetObj.Error, Thread.Alerted} =
+
+    VAR reuse := FALSE;
+        rep: StubLib.DataRep;
+        c: StubLib.Conn;
+        dataPresent: BOOLEAN; &lt;* NOWARN *&gt;
+        res: LockOps.T;
+
+    BEGIN
+      TRY
+        c := StubLib.StartCall(self, Protocol);
+        TRY
+          StubLib.OutInt32(c, ORD(Methods.lockserver));
+          rep := StubLib.AwaitResult(c);
+          CASE StubLib.InInt32(c, rep) OF
+          | ORD(ReturnCodes.OK) =&gt;
+            res := StubLib.InRef(c, rep, TYPECODE(LockOps.T));
+            reuse := TRUE;
+          | ORD(ReturnCodes.PkgErr_E) =&gt;
+            VAR arg: AtomList.T;
+            BEGIN
+              arg := StubLib.InRef(c, rep, TYPECODE(AtomList.T));
+              reuse := TRUE;
+              RAISE PkgErr.E(arg);
+
+            END;
+          ELSE
+            StubLib.RaiseUnmarshalFailure();
+          END
+        FINALLY
+          StubLib.EndCall(c, reuse);
+        END;
+
+      EXCEPT
+      | Rd.Failure(ec) =&gt; StubLib.RaiseCommFailure(ec);
+      | Wr.Failure(ec) =&gt; StubLib.RaiseCommFailure(ec);
+      END;
+      RETURN res;
+    END Surrogate_lockserver;
+
+  PROCEDURE <A NAME="Surrogate_status"><procedure>Surrogate_status</procedure></A>(self: Siphon.T): TEXT RAISES {NetObj.Error,
+      Thread.Alerted} =
+
+    VAR reuse := FALSE;
+        rep: StubLib.DataRep;
+        c: StubLib.Conn;
+        dataPresent: BOOLEAN; &lt;* NOWARN *&gt;
+        res: TEXT;
+
+    BEGIN
+      TRY
+        c := StubLib.StartCall(self, Protocol);
+        TRY
+          StubLib.OutInt32(c, ORD(Methods.status));
+          rep := StubLib.AwaitResult(c);
+          CASE StubLib.InInt32(c, rep) OF
+          | ORD(ReturnCodes.OK) =&gt;
+            res := StubLib.InRef(c, rep, -1);
+            reuse := TRUE;
+          ELSE
+            StubLib.RaiseUnmarshalFailure();
+          END
+        FINALLY
+          StubLib.EndCall(c, reuse);
+        END;
+
+      EXCEPT
+      | Rd.Failure(ec) =&gt; StubLib.RaiseCommFailure(ec);
+      | Wr.Failure(ec) =&gt; StubLib.RaiseCommFailure(ec);
+      END;
+      RETURN res;
+    END Surrogate_status;
+
+PROCEDURE <A NAME="Invoke"><procedure>Invoke</procedure></A>(
+    c: StubLib.Conn;
+    obj: NetObj.T;
+    rep: StubLib.DataRep;
+    stubProt: StubLib.StubProtocol)
+    RAISES {NetObj.Error, Rd.Failure,
+            Wr.Failure, Thread.Alerted} =
+  VAR t := NARROW(obj, Siphon.T);
+  BEGIN
+    IF stubProt # Protocol THEN StubLib.RaiseUnmarshalFailure() END;
+    TRY
+      CASE StubLib.InInt32(c, rep) OF
+      | ORD(Methods.ship) =&gt; Stub_ship(t, c, rep);
+      | ORD(Methods.enqueue) =&gt; Stub_enqueue(t, c, rep);
+      | ORD(Methods.dequeue) =&gt; Stub_dequeue(t, c, rep);
+      | ORD(Methods.synch) =&gt; Stub_synch(t, c, rep);
+      | ORD(Methods.lockserver) =&gt; Stub_lockserver(t, c, rep);
+      | ORD(Methods.status) =&gt; Stub_status(t, c, rep);
+      ELSE
+        StubLib.RaiseUnmarshalFailure();
+      END;
+    EXCEPT
+    | PkgErr.E(arg) =&gt;
+        StubLib.StartResult(c);
+        StubLib.OutInt32(c, ORD(ReturnCodes.PkgErr_E));
+        StubLib.OutRef(c, arg);
+    END;
+  END Invoke;
+
+PROCEDURE <A NAME="Stub_ship"><procedure>Stub_ship</procedure></A>(
+    self: Siphon.T;
+    c: StubLib.Conn;
+    &lt;* NOWARN *&gt; rep: StubLib.DataRep) RAISES {NetObj.Error, Rd.Failure,
+    Wr.Failure, Thread.Alerted, PkgErr.E}=
+  VAR package_arg: NetPath.PN;
+      source_arg: PackageObj.Source;
+      version_arg: PackageObj.Version;
+      caller_arg: TEXT;
+      manager_arg: TEXT;
+      fwdSites_arg: TextList.T;
+      dataPresent: BOOLEAN &lt;* NOWARN *&gt;;
+
+  BEGIN
+    dataPresent := StubLib.InBoolean(c);
+    IF dataPresent THEN
+      package_arg.dir := StubLib.InRef(c, rep, TYPECODE(TextList.T));
+      package_arg.arc := StubLib.InRef(c, rep, -1);
+      END;
+      source_arg := StubLib.InRef(c, rep, TYPECODE(PackageObj.Source));
+    dataPresent := StubLib.InBoolean(c);
+    IF dataPresent THEN
+      version_arg.t := StubLib.InInteger(c, rep, -2147483647, 2147483647);
+      version_arg.vn := StubLib.InInteger(c, rep, -2147483647, 2147483647);
+      END;
+      caller_arg := StubLib.InRef(c, rep, -1);
+    manager_arg := StubLib.InRef(c, rep, -1);
+    fwdSites_arg := StubLib.InRef(c, rep, TYPECODE(TextList.T));
+    self.ship(package_arg, source_arg, version_arg, caller_arg, manager_arg, fwdSites_arg);
+    StubLib.StartResult(c);
+    StubLib.OutInt32(c, ORD(ReturnCodes.OK));
+
+  END Stub_ship;
+
+PROCEDURE <A NAME="Stub_enqueue"><procedure>Stub_enqueue</procedure></A>(
+    self: Siphon.T;
+    c: StubLib.Conn;
+    &lt;* NOWARN *&gt; rep: StubLib.DataRep) RAISES {NetObj.Error, Rd.Failure,
+    Wr.Failure, Thread.Alerted, PkgErr.E}=
+  VAR package_arg: NetPath.PN;
+      version_arg: PackageObj.Version;
+      manager_arg: TEXT;
+      forSite_arg: TEXT;
+      urgent_arg: BOOLEAN;
+      dataPresent: BOOLEAN &lt;* NOWARN *&gt;;
+
+  BEGIN
+    dataPresent := StubLib.InBoolean(c);
+    IF dataPresent THEN
+      package_arg.dir := StubLib.InRef(c, rep, TYPECODE(TextList.T));
+      package_arg.arc := StubLib.InRef(c, rep, -1);
+      END;
+      dataPresent := StubLib.InBoolean(c);
+    IF dataPresent THEN
+      version_arg.t := StubLib.InInteger(c, rep, -2147483647, 2147483647);
+      version_arg.vn := StubLib.InInteger(c, rep, -2147483647, 2147483647);
+      END;
+      manager_arg := StubLib.InRef(c, rep, -1);
+    forSite_arg := StubLib.InRef(c, rep, -1);
+    urgent_arg := VAL(StubLib.InInteger(c, rep, 0,1), BOOLEAN);
+    self.enqueue(package_arg, version_arg, manager_arg, forSite_arg, urgent_arg);
+    StubLib.StartResult(c);
+    StubLib.OutInt32(c, ORD(ReturnCodes.OK));
+
+  END Stub_enqueue;
+
+PROCEDURE <A NAME="Stub_dequeue"><procedure>Stub_dequeue</procedure></A>(
+    self: Siphon.T;
+    c: StubLib.Conn;
+    &lt;* NOWARN *&gt; rep: StubLib.DataRep) RAISES {NetObj.Error, Rd.Failure,
+    Wr.Failure, Thread.Alerted, PkgErr.E}=
+  VAR package_arg: NetPath.PN;
+      forSite_arg: TEXT;
+      interruptSend_arg: BOOLEAN;
+      res: BOOLEAN;
+      dataPresent: BOOLEAN &lt;* NOWARN *&gt;;
+
+  BEGIN
+    dataPresent := StubLib.InBoolean(c);
+    IF dataPresent THEN
+      package_arg.dir := StubLib.InRef(c, rep, TYPECODE(TextList.T));
+      package_arg.arc := StubLib.InRef(c, rep, -1);
+      END;
+      forSite_arg := StubLib.InRef(c, rep, -1);
+    interruptSend_arg := VAL(StubLib.InInteger(c, rep, 0,1), BOOLEAN);
+    res := self.dequeue(package_arg, forSite_arg, interruptSend_arg);
+    StubLib.StartResult(c);
+    StubLib.OutInt32(c, ORD(ReturnCodes.OK));
+    StubLib.OutInteger(c, ORD(res));
+
+  END Stub_dequeue;
+
+PROCEDURE <A NAME="Stub_synch"><procedure>Stub_synch</procedure></A>(
+    self: Siphon.T;
+    c: StubLib.Conn;
+    &lt;* NOWARN *&gt; rep: StubLib.DataRep) RAISES {NetObj.Error, Rd.Failure,
+    Wr.Failure, Thread.Alerted}=
+  VAR kind_arg: Siphon.SynchKind;
+      package_arg: NetPath.PN;
+      res: TEXT;
+      dataPresent: BOOLEAN &lt;* NOWARN *&gt;;
+
+  BEGIN
+    kind_arg := VAL(StubLib.InInteger(c, rep, 0,2), Siphon.SynchKind);
+    dataPresent := StubLib.InBoolean(c);
+    IF dataPresent THEN
+      package_arg.dir := StubLib.InRef(c, rep, TYPECODE(TextList.T));
+      package_arg.arc := StubLib.InRef(c, rep, -1);
+      END;
+      res := self.synch(kind_arg, package_arg);
+    StubLib.StartResult(c);
+    StubLib.OutInt32(c, ORD(ReturnCodes.OK));
+    StubLib.OutRef(c, res);
+
+  END Stub_synch;
+
+PROCEDURE <A NAME="Stub_lockserver"><procedure>Stub_lockserver</procedure></A>(
+    self: Siphon.T;
+    c: StubLib.Conn;
+    &lt;* NOWARN *&gt; rep: StubLib.DataRep) RAISES {NetObj.Error, Rd.Failure,
+    Wr.Failure, Thread.Alerted, PkgErr.E}=
+  VAR res: LockOps.T;
+      dataPresent: BOOLEAN &lt;* NOWARN *&gt;;
+
+  BEGIN
+    res := self.lockserver();
+    StubLib.StartResult(c);
+    StubLib.OutInt32(c, ORD(ReturnCodes.OK));
+    StubLib.OutRef(c, res);
+
+  END Stub_lockserver;
+
+PROCEDURE <A NAME="Stub_status"><procedure>Stub_status</procedure></A>(
+    self: Siphon.T;
+    c: StubLib.Conn;
+    &lt;* NOWARN *&gt; rep: StubLib.DataRep) RAISES {NetObj.Error, Rd.Failure,
+    Wr.Failure, Thread.Alerted}=
+  VAR res: TEXT;
+      dataPresent: BOOLEAN &lt;* NOWARN *&gt;;
+
+  BEGIN
+    res := self.status();
+    StubLib.StartResult(c);
+    StubLib.OutInt32(c, ORD(ReturnCodes.OK));
+    StubLib.OutRef(c, res);
+
+  END Stub_status;
+
+BEGIN
+  StubLib.Register(TYPECODE(Siphon.T), 1, TYPECODE(Surrogate_Siphon_T), Invoke);
+END Siphon_T_v1.
+</PRE>
+</inModule>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

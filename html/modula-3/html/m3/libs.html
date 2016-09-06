@@ -1,0 +1,61 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: Finding objects and libraries</TITLE>
+</HEAD>
+<BODY BGCOLOR="#ffffff" VLINK="#006633">
+
+<H2>Finding objects and libraries</H2>
+<P>
+
+Objects and libraries are linked together by the driver to
+produce an executable program.  These modules may be divided into
+three classes: (1) objects that are produced by the compiler as
+a result of a compilation; (2) objects that are specified on
+the compiler command line by the user; (3) libraries.
+<P>
+
+The driver needs to know where to get these files to create a
+command line for the linker.  It knows where type (1) objects are
+(since it created them). Type (2) objects must be fully specified
+either as absolute or relative paths.  Libraries can be specified 
+either by their full names or using the <B>-L</B>/<B>-l</B>
+combination.
+<P>
+
+<B>m3</B> does not have a built-in default search path for libraries.
+The search path provided by
+<A HREF="../m3build/m3build.html">m3build</A>
+contains the standard SRC Modula-3 libraries.
+<P>
+
+When linking a program, <B>m3</B>
+adds a built-in list of standard libraries (e.g. the C math library).
+This list of libraries is part of the
+<A HREF="../m3build/m3build.html">m3build</A>
+configuration.
+The <B>-nostd</B> option stops the automatic addition of these libraries.
+<P>
+
+If the <B>-Z</B> option has been specified,
+an object that collects and dumps the coverage tables
+is added to the list of files to be linked.
+The name of this object is part of the
+<A HREF="../m3build/m3build.html">m3build</A>
+configuration.
+<P>
+
+<HR>
+<A HREF="../home.html">[Modula-3 home page]</A>
+<P>
+<A HREF="mailto:m3-request@src.dec.com">
+<ADDRESS>m3-request@src.dec.com</ADDRESS></A>
+<PRE>
+Last modified on Thu Jan  4 11:09:10 PST 1996 by heydon
+     modified on Thu Apr 21 14:56:29 PDT 1994 by kalsow
+     modified on Fri Feb  7 00:38:19 PST 1992 by muller
+</PRE>
+
+Copyright (C) 1992, 1996, Digital Equipment Corporation. All rights reserved.<BR>
+See the <A HREF="http://www.research.digital.com/SRC/m3sources/html/COPYRIGHT.html">COPYRIGHT</A> for a full description.
+</BODY>
+</HTML>

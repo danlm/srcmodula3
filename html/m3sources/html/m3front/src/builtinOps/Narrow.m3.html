@@ -1,0 +1,200 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: m3front/src/builtinOps/Narrow.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>m3front/src/builtinOps/Narrow.m3</H2></A><HR>
+<inModule>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE> File: Narrow.m3                                             
+ Last Modified On Wed Jun 29 17:29:43 PDT 1994 By kalsow     
+      Modified On Sat Dec  8 00:54:20 1990 By muller         
+
+<P><PRE>MODULE <module><implements><A HREF="Narrow.i3.html">Narrow</A></implements></module>;
+
+IMPORT <A HREF="../misc/CG.i3.html">CG</A>, <A HREF="../exprs/CallExpr.i3.html">CallExpr</A>, <A HREF="../exprs/Expr.i3.html">Expr</A>, <A HREF="../exprs/ExprRep.i3.html">ExprRep</A>, <A HREF="../types/Type.i3.html">Type</A>, <A HREF="../misc/Error.i3.html">Error</A>, <A HREF="../exprs/TypeExpr.i3.html">TypeExpr</A>;
+IMPORT <A HREF="../values/Procedure.i3.html">Procedure</A>, <A HREF="../types/ObjectType.i3.html">ObjectType</A>, <A HREF="../builtinTypes/Reff.i3.html">Reff</A>, <A HREF="../builtinTypes/Null.i3.html">Null</A>, <A HREF="../../../m3middle/src/M3RT.i3.html">M3RT</A>, <A HREF="../types/RefType.i3.html">RefType</A>;
+
+VAR Z: CallExpr.MethodList;
+
+PROCEDURE <A NAME="TypeOf"><procedure>TypeOf</procedure></A> (ce: CallExpr.T): Type.T =
+  VAR t: Type.T;
+  BEGIN
+    IF TypeExpr.Split (ce.args[1], t)
+      THEN RETURN t;
+      ELSE RETURN Expr.TypeOf (ce.args[0]);
+    END;
+  END TypeOf;
+
+PROCEDURE <A NAME="Check"><procedure>Check</procedure></A> (ce: CallExpr.T;  &lt;*UNUSED*&gt; VAR cs: Expr.CheckState) =
+  VAR dest: Type.T;  src := Expr.TypeOf (ce.args[0]);
+  BEGIN
+    IF NOT TypeExpr.Split (ce.args[1], dest) THEN
+      Error.Msg (&quot;NARROW: second argument must be a type&quot;);
+      dest := src;
+    END;
+
+    IF NOT Type.IsAssignable (dest, src) THEN
+      Error.Msg (&quot;NARROW: types must be assignable&quot;);
+    ELSIF ObjectType.Is (dest) OR Type.IsSubtype (dest, Reff.T) THEN
+      (* ok *)
+    ELSE (* untraced ref type *)
+      Error.Msg (&quot;NARROW: must be a traced reference or object type&quot;);
+    END;
+
+    ce.type := dest;
+  END Check;
+
+PROCEDURE <A NAME="Prep"><procedure>Prep</procedure></A> (ce: CallExpr.T) =
+  VAR t: Type.T;
+  BEGIN
+    EVAL TypeExpr.Split (ce.args[1], t);
+    Type.Compile (t);
+    Expr.Prep (ce.args[0]);
+    Expr.Compile (ce.args[0]);
+    ce.tmp := EmitCore (t, Expr.TypeOf (ce.args[0]));
+    IF (ce.tmp = NIL) THEN
+      (* capture the ref value *)
+      ce.tmp := CG.Pop_temp ();
+    END;
+  END Prep;
+
+PROCEDURE <A NAME="Compile"><procedure>Compile</procedure></A> (ce: CallExpr.T) =
+  BEGIN
+    (* all the work was done by Prep *)
+    CG.Push (ce.tmp);
+    CG.Free (ce.tmp);
+    ce.tmp := NIL;
+  END Compile;
+
+PROCEDURE <A NAME="Emit"><procedure>Emit</procedure></A> (tlhs, trhs: Type.T) =
+  VAR tmp := EmitCore (tlhs, trhs);
+  BEGIN
+    IF (tmp # NIL) THEN
+      (* reload the ref value on the stack *)
+      CG.Push (tmp);
+      CG.Free (tmp);
+    END;
+  END Emit;
+
+PROCEDURE <A NAME="EmitCore"><procedure>EmitCore</procedure></A> (tlhs, trhs: Type.T): CG.Val =
+  VAR
+    ok: CG.Label;
+    ref, tc: CG.Val;
+    is_object := ObjectType.Is (tlhs);
+    target: Type.T;
+    align: INTEGER;
+    lhs_info, info: Type.Info;
+  BEGIN
+    tlhs := Type.CheckInfo (tlhs, lhs_info);
+    IF is_object THEN
+      align := ObjectType.FieldAlignment (tlhs);
+      CG.Boost_alignment (align);
+    ELSIF RefType.Split (tlhs, target) THEN
+      target := Type.CheckInfo (target, info);
+      align := info.alignment;
+      CG.Boost_alignment (align);
+    END;
+
+    (* test for the no-check cases... *)
+    IF Type.IsSubtype (trhs, tlhs) THEN RETURN NIL; END;
+    IF (NOT is_object) AND (NOT lhs_info.isTraced) THEN RETURN NIL; END;
+
+    (* capture the right-hand side and get a couple labels *)
+    ref := CG.Pop ();
+    CG.Push (ref);
+    ok := CG.Next_label (2);
+
+    (* check for rhs = NIL *)
+    CG.Load_nil ();
+    CG.If_eq (ok, CG.Type.Addr, CG.Maybe);
+
+    IF (Type.IsEqual (tlhs, Null.T, NIL)) THEN
+      (* no more checking is needed *)
+    ELSIF NOT is_object THEN
+      CG.Push (ref);
+      CG.Ref_to_typecode ();
+      Type.LoadInfo (tlhs, M3RT.TC_typecode);
+      CG.If_eq (ok, CG.Type.Int, CG.Always);
+    ELSE (* object *)
+      CG.Push (ref);
+      CG.Ref_to_typecode ();
+      tc := CG.Pop ();
+      CG.Push (tc);
+      Type.LoadInfo (tlhs, M3RT.TC_typecode);
+      CG.If_lt (ok+1, CG.Type.Int, CG.Never);
+      CG.Push (tc);
+      Type.LoadInfo (tlhs, M3RT.TC_lastSubTypeTC);
+      CG.If_le (ok, CG.Type.Int, CG.Always);
+      CG.Free (tc);
+      CG.Set_label (ok+1);
+    END;
+
+    (* generate the fault and the by-pass label *)
+    CG.Narrow_fault ();
+    CG.Set_label (ok);
+
+    RETURN ref;
+  END EmitCore;
+
+PROCEDURE <A NAME="Fold"><procedure>Fold</procedure></A> (ce: CallExpr.T): Expr.T =
+  BEGIN
+    RETURN Expr.ConstValue (ce.args[0]);
+  END Fold;
+
+PROCEDURE <A NAME="NoteWrites"><procedure>NoteWrites</procedure></A> (ce: CallExpr.T) =
+  BEGIN
+    Expr.NoteWrite (ce.args[0]);
+  END NoteWrites;
+
+PROCEDURE <A NAME="Initialize"><procedure>Initialize</procedure></A> () =
+  BEGIN
+    Z := CallExpr.NewMethodList (2, 2, TRUE, FALSE, TRUE, NIL,
+                                 TypeOf,
+                                 CallExpr.NotAddressable,
+                                 Check,
+                                 Prep,
+                                 Compile,
+                                 CallExpr.NoLValue,
+                                 CallExpr.NoLValue,
+                                 CallExpr.NotBoolean,
+                                 CallExpr.NotBoolean,
+                                 Fold,
+                                 CallExpr.IsNever, (* writable *)
+                                 CallExpr.IsNever, (* designator *)
+                                 NoteWrites);
+    Procedure.Define (&quot;NARROW&quot;, Z, TRUE);
+  END Initialize;
+
+BEGIN
+END Narrow.
+</PRE>
+</inModule>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

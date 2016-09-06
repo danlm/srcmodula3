@@ -1,0 +1,126 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: C/src/Common/M3toC.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>C/src/Common/M3toC.m3</H2></A><HR>
+<inModule>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM>                                                             </EM></BLOCKQUOTE><PRE>
+
+UNSAFE MODULE <module><implements><A HREF="M3toC.i3.html">M3toC</A></implements></module>;
+
+IMPORT <A HREF="Ctypes.i3.html">Ctypes</A>, <A HREF="Cstdlib.i3.html">Cstdlib</A>, <A HREF="#x1">Cstring</A>, <A HREF="../../../text/src/TextF.i3.html">TextF</A>, <A HREF="../../../runtime/src/common/RT0.i3.html">RT0</A>;
+
+VAR
+  zeroValue := 0;
+  zeroPtr   := LOOPHOLE (ADR (zeroValue), Ctypes.char_star);
+
+TYPE
+  M3Text = UNTRACED REF RT0.TextHeader;
+
+  M3TextWithHeader = UNTRACED REF RECORD
+    header : RT0.RefHeader;
+    body   : RT0.TextHeader;
+  END;
+
+PROCEDURE <A NAME="TtoS"><procedure>TtoS</procedure></A> (t: TEXT): Ctypes.char_star =
+  BEGIN
+    IF (t = NIL) OR (NUMBER (t^) &lt;= 1)
+      THEN RETURN zeroPtr;
+      ELSE RETURN LOOPHOLE (LOOPHOLE (t, M3Text).chars, Ctypes.char_star);
+    END;
+  END TtoS;
+
+PROCEDURE <A NAME="CopyTtoS"><procedure>CopyTtoS</procedure></A> (t: TEXT): Ctypes.char_star =
+  VAR len: INTEGER;
+  BEGIN
+    IF (t = NIL) THEN RETURN zeroPtr; END;
+    len := NUMBER (t^);
+    IF (len &lt;= 1) THEN RETURN zeroPtr; END;
+    RETURN Cstring.memcpy (Cstdlib.malloc (len), ADR (t[0]), len);
+  END CopyTtoS;
+
+PROCEDURE <A NAME="FreeCopiedS"><procedure>FreeCopiedS</procedure></A> (s: Ctypes.char_star) =
+  BEGIN
+    IF (s # zeroPtr) THEN Cstdlib.free (s); END;
+  END FreeCopiedS;
+
+PROCEDURE <A NAME="StoT"><procedure>StoT</procedure></A> (s: Ctypes.char_star): TEXT =
+  VAR t := NEW (M3TextWithHeader);
+  BEGIN
+    t.header.typecode := RT0.TextTypecode;
+    t.body.chars      := LOOPHOLE (s, ADDRESS);
+    t.body.length     := 1 + Cstring.strlen (s);
+    RETURN LOOPHOLE (ADR (t.body), TEXT);
+  END StoT;
+
+PROCEDURE <A NAME="CopyStoT"><procedure>CopyStoT</procedure></A> (s: Ctypes.char_star): TEXT =
+  VAR len := Cstring.strlen (s) + 1;  t := NEW (TEXT, len);
+  BEGIN
+    EVAL Cstring.memcpy (ADR (t[0]), s, len);
+    RETURN t;
+  END CopyStoT;
+
+BEGIN
+END M3toC.
+</PRE>
+</inModule>
+<HR>
+<A NAME="x1">interface Cstring is in:
+</A><UL>
+<LI><A HREF="../AIX386/Cstring.i3.html#0TOP0">C/src/AIX386/Cstring.i3</A>
+<LI><A HREF="../ALPHA_OSF/Cstring.i3.html#0TOP0">C/src/ALPHA_OSF/Cstring.i3</A>
+<LI><A HREF="../AP3000/Cstring.i3.html#0TOP0">C/src/AP3000/Cstring.i3</A>
+<LI><A HREF="../ARM/Cstring.i3.html#0TOP0">C/src/ARM/Cstring.i3</A>
+<LI><A HREF="../DS3100/Cstring.i3.html#0TOP0">C/src/DS3100/Cstring.i3</A>
+<LI><A HREF="../FreeBSD/Cstring.i3.html#0TOP0">C/src/FreeBSD/Cstring.i3</A>
+<LI><A HREF="../FreeBSD2/Cstring.i3.html#0TOP0">C/src/FreeBSD2/Cstring.i3</A>
+<LI><A HREF="../HP300/Cstring.i3.html#0TOP0">C/src/HP300/Cstring.i3</A>
+<LI><A HREF="../HPPA/Cstring.i3.html#0TOP0">C/src/HPPA/Cstring.i3</A>
+<LI><A HREF="../IBMR2/Cstring.i3.html#0TOP0">C/src/IBMR2/Cstring.i3</A>
+<LI><A HREF="../IBMRT/Cstring.i3.html#0TOP0">C/src/IBMRT/Cstring.i3</A>
+<LI><A HREF="../IRIX5/Cstring.i3.html#0TOP0">C/src/IRIX5/Cstring.i3</A>
+<LI><A HREF="../LINUX/Cstring.i3.html#0TOP0">C/src/LINUX/Cstring.i3</A>
+<LI><A HREF="../LINUXELF/Cstring.i3.html#0TOP0">C/src/LINUXELF/Cstring.i3</A>
+<LI><A HREF="../NEXT/Cstring.i3.html#0TOP0">C/src/NEXT/Cstring.i3</A>
+<LI><A HREF="../NT386/Cstring.i3.html#0TOP0">C/src/NT386/Cstring.i3</A>
+<LI><A HREF="../OKI/Cstring.i3.html#0TOP0">C/src/OKI/Cstring.i3</A>
+<LI><A HREF="../SEQUENT/Cstring.i3.html#0TOP0">C/src/SEQUENT/Cstring.i3</A>
+<LI><A HREF="../SOLgnu/Cstring.i3.html#0TOP0">C/src/SOLgnu/Cstring.i3</A>
+<LI><A HREF="../SOLsun/Cstring.i3.html#0TOP0">C/src/SOLsun/Cstring.i3</A>
+<LI><A HREF="../SPARC/Cstring.i3.html#0TOP0">C/src/SPARC/Cstring.i3</A>
+<LI><A HREF="../SUN3/Cstring.i3.html#0TOP0">C/src/SUN3/Cstring.i3</A>
+<LI><A HREF="../SUN386/Cstring.i3.html#0TOP0">C/src/SUN386/Cstring.i3</A>
+<LI><A HREF="../UMAX/Cstring.i3.html#0TOP0">C/src/UMAX/Cstring.i3</A>
+<LI><A HREF="../VAX/Cstring.i3.html#0TOP0">C/src/VAX/Cstring.i3</A>
+</UL>
+<P>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

@@ -1,0 +1,68 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: runtime/src/common/RTProcess.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>runtime/src/common/RTProcess.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+
+INTERFACE <interface><A HREF="RTProcess.m3.html">RTProcess</A></interface>;
+</PRE> This interface provides the runtime shutdown routines. 
+
+<P><PRE>PROCEDURE <A HREF="RTProcess.m3.html#RegisterExitor">RegisterExitor</A> (p: PROCEDURE ());
+</PRE><BLOCKQUOTE><EM> Registers the procedure p to be executed when Exit is called.
+   The registered procedures are executed in reverse of the order
+   they were registered. </EM></BLOCKQUOTE><PRE>
+
+PROCEDURE <A HREF="RTProcess.m3.html#Exit">Exit</A> (n: INTEGER);
+</PRE><BLOCKQUOTE><EM> call the registered exitors and terminate the program with status <CODE>n</CODE>.
+   Terminating a Modula-3 program by ``falling off the end'' is like
+   calling <CODE>Exit(0)</CODE>.</EM></BLOCKQUOTE><PRE>
+
+PROCEDURE <A HREF="RTProcess.m3.html#Crash">Crash</A> (msg: TEXT);
+</PRE><BLOCKQUOTE><EM> Call the registered exitors and terminate the program with the
+   error message <CODE>msg</CODE>.  If possible, invoke a debugger or generate a
+   core dump. </EM></BLOCKQUOTE><PRE>
+
+PROCEDURE <A HREF="RTProcess.m3.html#InvokeExitors">InvokeExitors</A> ();
+</PRE><BLOCKQUOTE><EM> Run the registered exit procedures, at most once. </EM></BLOCKQUOTE><PRE>
+
+PROCEDURE <A HREF="RTProcess.m3.html#OnInterrupt">OnInterrupt</A> (p: InterruptHandler): InterruptHandler;
+</PRE><BLOCKQUOTE><EM> Register 'p' as the handler to be called on the next <CODE>interrupt</CODE> signal
+   and return the currently registered handler.  Note that 'p' must be NIL
+   or a top-level procedure. </EM></BLOCKQUOTE><PRE>
+
+TYPE InterruptHandler = PROCEDURE ();
+
+END RTProcess.
+</PRE>
+</inInterface>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

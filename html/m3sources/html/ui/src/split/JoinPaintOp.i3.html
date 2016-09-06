@@ -1,0 +1,54 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: ui/src/split/JoinPaintOp.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>ui/src/split/JoinPaintOp.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM>                                                                           </EM></BLOCKQUOTE><PRE>
+&lt;*PRAGMA LL*&gt;
+
+INTERFACE <interface><A HREF="JoinPaintOp.m3.html">JoinPaintOp</A></interface>;
+
+IMPORT <A HREF="../vbt/ScrnPaintOp.i3.html">ScrnPaintOp</A>, <A HREF="JoinScreen.i3.html">JoinScreen</A>, <A HREF="../vbt/Palette.i3.html">Palette</A>, <A HREF="../vbt/PaintOp.i3.html">PaintOp</A>;
+
+TYPE
+  <A HREF="JoinPaintOp.m3.html#Oracle">Oracle</A> &lt;: ScrnPaintOp.Oracle;
+
+PROCEDURE <A HREF="JoinPaintOp.m3.html#New">New</A>(st: JoinScreen.T): Oracle;
+
+PROCEDURE <A HREF="JoinPaintOp.m3.html#Apply">Apply</A> (st: JoinScreen.T; cl: Palette.OpClosure; op: PaintOp.T):
+  ScrnPaintOp.T;
+
+END JoinPaintOp.
+</PRE>
+</inInterface>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

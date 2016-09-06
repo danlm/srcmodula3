@@ -1,0 +1,370 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: runtime/src/FreeBSD/RTHeapDep.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>runtime/src/FreeBSD/RTHeapDep.m3</H2></A><HR>
+<inModule>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM>                                                               </EM></BLOCKQUOTE><PRE>
+
+UNSAFE MODULE <module><implements><A HREF="../common/RTHeapDep.i3.html">RTHeapDep</A></implements></module>;
+
+IMPORT <A HREF="#x1">RT0u</A>, <A HREF="#x2">RTMachine</A>, <A HREF="../common/RTHeapRep.i3.html">RTHeapRep</A>, <A HREF="../common/RTCollectorSRC.i3.html">RTCollectorSRC</A>;
+IMPORT <A HREF="../../../C/src/Common/Cstdlib.i3.html">Cstdlib</A>, <A HREF="../../../C/src/Common/Ctypes.i3.html">Ctypes</A>, <A HREF="#x3">Umman</A>, <A HREF="#x4">Unix</A>, <A HREF="#x5">Uresource</A>, <A HREF="#x6">Usignal</A>, <A HREF="#x7">Utypes</A>, <A HREF="../../../word/src/Word.i3.html">Word</A>;
+
+VAR
+  initialized                           := FALSE;
+  defaultSIGSEGV: Usignal.SignalHandler := NIL; (* previous handler *)
+  defaultSIGBUS:  Usignal.SignalHandler := NIL; (* previous handler *)
+
+PROCEDURE <A NAME="Protect"><procedure>Protect</procedure></A> (p: Page; n: CARDINAL; readable, writable: BOOLEAN) =
+  BEGIN
+    IF NOT initialized THEN Init(); initialized := TRUE; END;
+    IF NOT readable THEN writable := FALSE; END; (* processor limitation *)
+    VAR prot: Ctypes.int := 0;
+    BEGIN
+      IF readable THEN prot := Word.Or(prot, Umman.PROT_READ); END;
+      IF writable THEN prot := Word.Or(prot, Umman.PROT_WRITE); END;
+      VAR
+        ret := Umman.mprotect(LOOPHOLE(p * BytesPerPage, Utypes.caddr_t),
+                              n * BytesPerPage, prot);
+      BEGIN
+        (*
+        &lt;* ASSERT ret = n * BytesPerPage *&gt;
+        *)
+        &lt;* ASSERT ret = 0 *&gt;
+      END;
+    END;
+  END Protect;
+</PRE> Init establishes a handler for SIGSEGV, caused by VM faults, and for all
+   other signals that cause core dumps. 
+
+<P><PRE>PROCEDURE <A NAME="Init"><procedure>Init</procedure></A> () =
+  BEGIN
+    (* sanity check *)
+    VAR vmPageBytes := Unix.getpagesize();
+    BEGIN
+      &lt;* ASSERT BytesPerPage &gt;= vmPageBytes *&gt;
+      &lt;* ASSERT BytesPerPage MOD vmPageBytes = 0 *&gt;
+    END;
+
+    (* establish SIGSEGV handler; remember previous handler *)
+    VAR
+      vec := Usignal.struct_sigvec{
+               sv_handler := Fault, sv_mask :=
+               Word.LeftShift(1, Usignal.SIGVTALRM - 1), sv_flags := 0};
+      ovec: Usignal.struct_sigvec;
+      ret := Usignal.sigvec(Usignal.SIGSEGV, vec, ovec);
+      vecb := Usignal.struct_sigvec{
+               sv_handler := Fault, sv_mask :=
+               Word.LeftShift(1, Usignal.SIGVTALRM - 1), sv_flags := 0};
+      ovecb: Usignal.struct_sigvec;
+      retb := Usignal.sigvec(Usignal.SIGBUS, vecb, ovecb);
+    BEGIN
+      &lt;* ASSERT ret = 0 *&gt;
+      &lt;* ASSERT retb = 0 *&gt;
+      defaultSIGSEGV := ovec.sv_handler;
+      defaultSIGBUS := ovecb.sv_handler;
+    END;
+
+    (* establish signal handler for all other signals that dump core, if no
+       handler exists *)
+    PROCEDURE OverrideDefault (sig: Ctypes.int) =
+      VAR
+        vec := Usignal.struct_sigvec{
+                 sv_handler := Core, sv_mask :=
+                 Word.LeftShift(1, Usignal.SIGVTALRM - 1), sv_flags := 0};
+        ovec: Usignal.struct_sigvec;
+        ret                         := Usignal.sigvec(sig, vec, ovec);
+      BEGIN
+        &lt;* ASSERT ret = 0 *&gt;
+        IF ovec.sv_handler # Usignal.SIG_DFL THEN
+          ret := Usignal.sigvec(sig, ovec, vec);
+          &lt;* ASSERT ret = 0 *&gt;
+        END;
+      END OverrideDefault;
+    BEGIN
+      OverrideDefault(Usignal.SIGQUIT);
+      OverrideDefault(Usignal.SIGILL);
+      OverrideDefault(Usignal.SIGTRAP);
+      OverrideDefault(Usignal.SIGIOT);
+      OverrideDefault(Usignal.SIGEMT);
+      OverrideDefault(Usignal.SIGFPE);
+      OverrideDefault(Usignal.SIGSYS);
+    END;
+  END Init;
+</PRE> Fault is called upon a SIGSEGV signal, caused by a VM fault.  If
+   RTHeapRep.Fault is not able to handle the fault, it invokes the previous
+   action. 
+
+<P><PRE>PROCEDURE <A NAME="Fault"><procedure>Fault</procedure></A> (sig : Ctypes.int;
+                 code: Ctypes.int;
+                 scp : UNTRACED REF Usignal.struct_sigcontext) =
+  VAR sf_addr_addr: UNTRACED REF ARRAY[0..1] OF ADDRESS;
+      sf_addr     : ADDRESS;
+  (*
+   * Signal frame of FreeBSD 1.1.5
+   *
+   *  struct sigframe {
+   *    int     sf_signum;
+   *    int     sf_code;
+   *    struct  sigcontext *sf_scp;
+   *    char    *sf_addr;            &lt;-- this is the faulting address
+   *    sig_t   sf_handler;
+   *    struct  sigcontext sf_sc;    &lt;-- this address is passed in scp
+   *   };
+   *)
+
+  BEGIN
+    sf_addr_addr := scp - ( 2 * BYTESIZE(ADDRESS));
+    sf_addr      := sf_addr_addr[0];
+    IF scp # NIL AND RTHeapRep.Fault(sf_addr) THEN
+      RETURN;
+    END;
+    IF defaultSIGSEGV = Usignal.SIG_IGN THEN RETURN; END;
+    IF defaultSIGSEGV = Usignal.SIG_DFL THEN
+      Core(sig, code, scp);
+    ELSE
+      defaultSIGSEGV(sig, code, scp);
+    END;
+  END Fault;
+</PRE> Core is a signal handler for signals that dump core, to complete the
+   current collection before dumping core.  This makes core files easier to
+   debug, and avoids an Ultrix bug that creates incomplete core files if
+   heap pages are read-protected. 
+
+<P><PRE>VAR dumped_core := FALSE;
+
+PROCEDURE <A NAME="Core"><procedure>Core</procedure></A> (             sig : Ctypes.int;
+                &lt;* UNUSED *&gt; code: Ctypes.int;
+                &lt;* UNUSED *&gt; scp : UNTRACED REF Usignal.struct_sigcontext) =
+  VAR
+    ovec: Usignal.struct_sigvec;
+    vec := Usignal.struct_sigvec{sv_handler := Usignal.SIG_DFL,
+                                 sv_mask := 0, sv_flags := 0};
+  BEGIN
+    INC(RT0u.inCritical);
+    IF NOT dumped_core THEN
+      dumped_core := TRUE;
+      EVAL RTHeapRep.Crash();      (* clean up the heap *)
+      EVAL Usignal.sigvec(sig, vec, ovec); (* establish default action *)
+      EVAL Usignal.sigsetmask(0);
+      (** EVAL Usignal.kill(Uprocess.getpid(), sig); (* dump core *) **)
+      Cstdlib.abort (); (* dump core *)
+      &lt;* ASSERT FALSE *&gt;
+    END;
+    DEC(RT0u.inCritical);
+  END Core;
+</PRE> System-call faults are handled in RTHeapDepC.c 
+
+<P><PRE>PROCEDURE <A NAME="TimeUsed"><procedure>TimeUsed</procedure></A> (): REAL =
+  VAR usage: Uresource.struct_rusage;
+  BEGIN
+    VAR ret := Uresource.getrusage(Uresource.RUSAGE_SELF, ADR(usage));
+    BEGIN
+      &lt;* ASSERT ret # -1 *&gt;
+    END;
+    RETURN (FLOAT(usage.ru_utime.tv_sec)
+              + FLOAT(usage.ru_utime.tv_usec) / 1000000.0)
+             + (FLOAT(usage.ru_utime.tv_sec)
+                  + FLOAT(usage.ru_utime.tv_usec) / 1000000.0);
+  END TimeUsed;
+
+PROCEDURE <A NAME="VMFaultTime"><procedure>VMFaultTime</procedure></A> (): REAL =
+  BEGIN
+    RETURN 0.010;                (* guess 10ms to handle a page fault *)
+  END VMFaultTime;
+
+BEGIN
+  IF VM THEN
+    RTMachine.RTHeapRep_Fault  := LOOPHOLE (RTHeapRep.Fault, ADDRESS);
+    RTMachine.RTCSRC_FinishVM  := LOOPHOLE (RTCollectorSRC.FinishVM, ADDRESS);
+  END;
+END RTHeapDep.
+</PRE>
+</inModule>
+<HR>
+<A NAME="x1">interface RT0u is in:
+</A><UL>
+<LI><A HREF="../POSIX/RT0u.i3.html#0TOP0">runtime/src/POSIX/RT0u.i3</A>
+<LI><A HREF="../WIN32/RT0u.i3.html#0TOP0">runtime/src/WIN32/RT0u.i3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x2">interface RTMachine is in:
+</A><UL>
+<LI><A HREF="../AIX386/RTMachine.i3.html#0TOP0">runtime/src/AIX386/RTMachine.i3</A>
+<LI><A HREF="../ALPHA_OSF/RTMachine.i3.html#0TOP0">runtime/src/ALPHA_OSF/RTMachine.i3</A>
+<LI><A HREF="../AP3000/RTMachine.i3.html#0TOP0">runtime/src/AP3000/RTMachine.i3</A>
+<LI><A HREF="../ARM/RTMachine.i3.html#0TOP0">runtime/src/ARM/RTMachine.i3</A>
+<LI><A HREF="../DS3100/RTMachine.i3.html#0TOP0">runtime/src/DS3100/RTMachine.i3</A>
+<LI><A HREF="RTMachine.i3.html#0TOP0">runtime/src/FreeBSD/RTMachine.i3</A>
+<LI><A HREF="../FreeBSD2/RTMachine.i3.html#0TOP0">runtime/src/FreeBSD2/RTMachine.i3</A>
+<LI><A HREF="../HP300/RTMachine.i3.html#0TOP0">runtime/src/HP300/RTMachine.i3</A>
+<LI><A HREF="../HPPA/RTMachine.i3.html#0TOP0">runtime/src/HPPA/RTMachine.i3</A>
+<LI><A HREF="../IBMR2/RTMachine.i3.html#0TOP0">runtime/src/IBMR2/RTMachine.i3</A>
+<LI><A HREF="../IBMRT/RTMachine.i3.html#0TOP0">runtime/src/IBMRT/RTMachine.i3</A>
+<LI><A HREF="../IRIX5/RTMachine.i3.html#0TOP0">runtime/src/IRIX5/RTMachine.i3</A>
+<LI><A HREF="../LINUX/RTMachine.i3.html#0TOP0">runtime/src/LINUX/RTMachine.i3</A>
+<LI><A HREF="../LINUXELF/RTMachine.i3.html#0TOP0">runtime/src/LINUXELF/RTMachine.i3</A>
+<LI><A HREF="../NEXT/RTMachine.i3.html#0TOP0">runtime/src/NEXT/RTMachine.i3</A>
+<LI><A HREF="../NT386/RTMachine.i3.html#0TOP0">runtime/src/NT386/RTMachine.i3</A>
+<LI><A HREF="../OKI/RTMachine.i3.html#0TOP0">runtime/src/OKI/RTMachine.i3</A>
+<LI><A HREF="../SEQUENT/RTMachine.i3.html#0TOP0">runtime/src/SEQUENT/RTMachine.i3</A>
+<LI><A HREF="../SOLgnu/RTMachine.i3.html#0TOP0">runtime/src/SOLgnu/RTMachine.i3</A>
+<LI><A HREF="../SOLsun/RTMachine.i3.html#0TOP0">runtime/src/SOLsun/RTMachine.i3</A>
+<LI><A HREF="../SPARC/RTMachine.i3.html#0TOP0">runtime/src/SPARC/RTMachine.i3</A>
+<LI><A HREF="../SUN3/RTMachine.i3.html#0TOP0">runtime/src/SUN3/RTMachine.i3</A>
+<LI><A HREF="../SUN386/RTMachine.i3.html#0TOP0">runtime/src/SUN386/RTMachine.i3</A>
+<LI><A HREF="../UMAX/RTMachine.i3.html#0TOP0">runtime/src/UMAX/RTMachine.i3</A>
+<LI><A HREF="../VAX/RTMachine.i3.html#0TOP0">runtime/src/VAX/RTMachine.i3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x3">interface Umman is in:
+</A><UL>
+<LI><A HREF="../../../unix/src/aix-3-2/Umman.i3.html#0TOP0">unix/src/aix-3-2/Umman.i3</A>
+<LI><A HREF="../../../unix/src/freebsd-1/Umman.i3.html#0TOP0">unix/src/freebsd-1/Umman.i3</A>
+<LI><A HREF="../../../unix/src/freebsd-2/Umman.i3.html#0TOP0">unix/src/freebsd-2/Umman.i3</A>
+<LI><A HREF="../../../unix/src/irix-5.2/Umman.i3.html#0TOP0">unix/src/irix-5.2/Umman.i3</A>
+<LI><A HREF="../../../unix/src/linux/Umman.i3.html#0TOP0">unix/src/linux/Umman.i3</A>
+<LI><A HREF="../../../unix/src/osf-1.ALPHA_OSF/Umman.i3.html#0TOP0">unix/src/osf-1.ALPHA_OSF/Umman.i3</A>
+<LI><A HREF="../../../unix/src/osf-1.DS3100/Umman.i3.html#0TOP0">unix/src/osf-1.DS3100/Umman.i3</A>
+<LI><A HREF="../../../unix/src/solaris-2-x/Umman.i3.html#0TOP0">unix/src/solaris-2-x/Umman.i3</A>
+<LI><A HREF="../../../unix/src/sunos-4-x/Umman.i3.html#0TOP0">unix/src/sunos-4-x/Umman.i3</A>
+<LI><A HREF="../../../unix/src/sysv-4.0/Umman.i3.html#0TOP0">unix/src/sysv-4.0/Umman.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.DS3100/Umman.i3.html#0TOP0">unix/src/ultrix-3-1.DS3100/Umman.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.SEQUENT/Umman.i3.html#0TOP0">unix/src/ultrix-3-1.SEQUENT/Umman.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.SUN3/Umman.i3.html#0TOP0">unix/src/ultrix-3-1.SUN3/Umman.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.SUN386/Umman.i3.html#0TOP0">unix/src/ultrix-3-1.SUN386/Umman.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.VAX/Umman.i3.html#0TOP0">unix/src/ultrix-3-1.VAX/Umman.i3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x4">interface Unix is in:
+</A><UL>
+<LI><A HREF="../../../unix/src/aix-3-2/Unix.i3.html#0TOP0">unix/src/aix-3-2/Unix.i3</A>
+<LI><A HREF="../../../unix/src/aix-ps2-1-2/Unix.i3.html#0TOP0">unix/src/aix-ps2-1-2/Unix.i3</A>
+<LI><A HREF="../../../unix/src/freebsd-1/Unix.i3.html#0TOP0">unix/src/freebsd-1/Unix.i3</A>
+<LI><A HREF="../../../unix/src/freebsd-2/Unix.i3.html#0TOP0">unix/src/freebsd-2/Unix.i3</A>
+<LI><A HREF="../../../unix/src/hpux-7-0/Unix.i3.html#0TOP0">unix/src/hpux-7-0/Unix.i3</A>
+<LI><A HREF="../../../unix/src/ibm-4-3/Unix.i3.html#0TOP0">unix/src/ibm-4-3/Unix.i3</A>
+<LI><A HREF="../../../unix/src/irix-5.2/Unix.i3.html#0TOP0">unix/src/irix-5.2/Unix.i3</A>
+<LI><A HREF="../../../unix/src/linux/Unix.i3.html#0TOP0">unix/src/linux/Unix.i3</A>
+<LI><A HREF="../../../unix/src/osf-1.ALPHA_OSF/Unix.i3.html#0TOP0">unix/src/osf-1.ALPHA_OSF/Unix.i3</A>
+<LI><A HREF="../../../unix/src/osf-1.DS3100/Unix.i3.html#0TOP0">unix/src/osf-1.DS3100/Unix.i3</A>
+<LI><A HREF="../../../unix/src/solaris-2-x/Unix.i3.html#0TOP0">unix/src/solaris-2-x/Unix.i3</A>
+<LI><A HREF="../../../unix/src/sunos-4-x/Unix.i3.html#0TOP0">unix/src/sunos-4-x/Unix.i3</A>
+<LI><A HREF="../../../unix/src/sysv-4.0/Unix.i3.html#0TOP0">unix/src/sysv-4.0/Unix.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.AP3000/Unix.i3.html#0TOP0">unix/src/ultrix-3-1.AP3000/Unix.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.ARM/Unix.i3.html#0TOP0">unix/src/ultrix-3-1.ARM/Unix.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.DS3100/Unix.i3.html#0TOP0">unix/src/ultrix-3-1.DS3100/Unix.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.NEXT/Unix.i3.html#0TOP0">unix/src/ultrix-3-1.NEXT/Unix.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.SEQUENT/Unix.i3.html#0TOP0">unix/src/ultrix-3-1.SEQUENT/Unix.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.SUN3/Unix.i3.html#0TOP0">unix/src/ultrix-3-1.SUN3/Unix.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.SUN386/Unix.i3.html#0TOP0">unix/src/ultrix-3-1.SUN386/Unix.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.UMAX/Unix.i3.html#0TOP0">unix/src/ultrix-3-1.UMAX/Unix.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.VAX/Unix.i3.html#0TOP0">unix/src/ultrix-3-1.VAX/Unix.i3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x5">interface Uresource is in:
+</A><UL>
+<LI><A HREF="../../../unix/src/aix-3-2/Uresource.i3.html#0TOP0">unix/src/aix-3-2/Uresource.i3</A>
+<LI><A HREF="../../../unix/src/aix-ps2-1-2/Uresource.i3.html#0TOP0">unix/src/aix-ps2-1-2/Uresource.i3</A>
+<LI><A HREF="../../../unix/src/freebsd-1/Uresource.i3.html#0TOP0">unix/src/freebsd-1/Uresource.i3</A>
+<LI><A HREF="../../../unix/src/freebsd-2/Uresource.i3.html#0TOP0">unix/src/freebsd-2/Uresource.i3</A>
+<LI><A HREF="../../../unix/src/hpux-7-0/Uresource.i3.html#0TOP0">unix/src/hpux-7-0/Uresource.i3</A>
+<LI><A HREF="../../../unix/src/ibm-4-3/Uresource.i3.html#0TOP0">unix/src/ibm-4-3/Uresource.i3</A>
+<LI><A HREF="../../../unix/src/irix-5.2/Uresource.i3.html#0TOP0">unix/src/irix-5.2/Uresource.i3</A>
+<LI><A HREF="../../../unix/src/linux/Uresource.i3.html#0TOP0">unix/src/linux/Uresource.i3</A>
+<LI><A HREF="../../../unix/src/osf-1.generic/Uresource.i3.html#0TOP0">unix/src/osf-1.generic/Uresource.i3</A>
+<LI><A HREF="../../../unix/src/solaris-2-x/Uresource.i3.html#0TOP0">unix/src/solaris-2-x/Uresource.i3</A>
+<LI><A HREF="../../../unix/src/sunos-4-x/Uresource.i3.html#0TOP0">unix/src/sunos-4-x/Uresource.i3</A>
+<LI><A HREF="../../../unix/src/sysv-4.0/Uresource.i3.html#0TOP0">unix/src/sysv-4.0/Uresource.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.generic/Uresource.i3.html#0TOP0">unix/src/ultrix-3-1.generic/Uresource.i3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x6">interface Usignal is in:
+</A><UL>
+<LI><A HREF="../../../unix/src/aix-3-2/Usignal.i3.html#0TOP0">unix/src/aix-3-2/Usignal.i3</A>
+<LI><A HREF="../../../unix/src/aix-ps2-1-2/Usignal.i3.html#0TOP0">unix/src/aix-ps2-1-2/Usignal.i3</A>
+<LI><A HREF="../../../unix/src/freebsd-1/Usignal.i3.html#0TOP0">unix/src/freebsd-1/Usignal.i3</A>
+<LI><A HREF="../../../unix/src/freebsd-2/Usignal.i3.html#0TOP0">unix/src/freebsd-2/Usignal.i3</A>
+<LI><A HREF="../../../unix/src/hpux-7-0/Usignal.i3.html#0TOP0">unix/src/hpux-7-0/Usignal.i3</A>
+<LI><A HREF="../../../unix/src/ibm-4-3/Usignal.i3.html#0TOP0">unix/src/ibm-4-3/Usignal.i3</A>
+<LI><A HREF="../../../unix/src/irix-5.2/Usignal.i3.html#0TOP0">unix/src/irix-5.2/Usignal.i3</A>
+<LI><A HREF="../../../unix/src/linux/Usignal.i3.html#0TOP0">unix/src/linux/Usignal.i3</A>
+<LI><A HREF="../../../unix/src/osf-1.ALPHA_OSF/Usignal.i3.html#0TOP0">unix/src/osf-1.ALPHA_OSF/Usignal.i3</A>
+<LI><A HREF="../../../unix/src/osf-1.DS3100/Usignal.i3.html#0TOP0">unix/src/osf-1.DS3100/Usignal.i3</A>
+<LI><A HREF="../../../unix/src/solaris-2-x/Usignal.i3.html#0TOP0">unix/src/solaris-2-x/Usignal.i3</A>
+<LI><A HREF="../../../unix/src/sunos-4-x/Usignal.i3.html#0TOP0">unix/src/sunos-4-x/Usignal.i3</A>
+<LI><A HREF="../../../unix/src/sysv-4.0/Usignal.i3.html#0TOP0">unix/src/sysv-4.0/Usignal.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.AP3000/Usignal.i3.html#0TOP0">unix/src/ultrix-3-1.AP3000/Usignal.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.ARM/Usignal.i3.html#0TOP0">unix/src/ultrix-3-1.ARM/Usignal.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.DS3100/Usignal.i3.html#0TOP0">unix/src/ultrix-3-1.DS3100/Usignal.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.NEXT/Usignal.i3.html#0TOP0">unix/src/ultrix-3-1.NEXT/Usignal.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.SEQUENT/Usignal.i3.html#0TOP0">unix/src/ultrix-3-1.SEQUENT/Usignal.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.SUN3/Usignal.i3.html#0TOP0">unix/src/ultrix-3-1.SUN3/Usignal.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.SUN386/Usignal.i3.html#0TOP0">unix/src/ultrix-3-1.SUN386/Usignal.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.UMAX/Usignal.i3.html#0TOP0">unix/src/ultrix-3-1.UMAX/Usignal.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.VAX/Usignal.i3.html#0TOP0">unix/src/ultrix-3-1.VAX/Usignal.i3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x7">interface Utypes is in:
+</A><UL>
+<LI><A HREF="../../../unix/src/aix-3-2/Utypes.i3.html#0TOP0">unix/src/aix-3-2/Utypes.i3</A>
+<LI><A HREF="../../../unix/src/aix-ps2-1-2/Utypes.i3.html#0TOP0">unix/src/aix-ps2-1-2/Utypes.i3</A>
+<LI><A HREF="../../../unix/src/freebsd-1/Utypes.i3.html#0TOP0">unix/src/freebsd-1/Utypes.i3</A>
+<LI><A HREF="../../../unix/src/freebsd-2/Utypes.i3.html#0TOP0">unix/src/freebsd-2/Utypes.i3</A>
+<LI><A HREF="../../../unix/src/hpux-7-0/Utypes.i3.html#0TOP0">unix/src/hpux-7-0/Utypes.i3</A>
+<LI><A HREF="../../../unix/src/ibm-4-3/Utypes.i3.html#0TOP0">unix/src/ibm-4-3/Utypes.i3</A>
+<LI><A HREF="../../../unix/src/irix-5.2/Utypes.i3.html#0TOP0">unix/src/irix-5.2/Utypes.i3</A>
+<LI><A HREF="../../../unix/src/linux/Utypes.i3.html#0TOP0">unix/src/linux/Utypes.i3</A>
+<LI><A HREF="../../../unix/src/osf-1.ALPHA_OSF/Utypes.i3.html#0TOP0">unix/src/osf-1.ALPHA_OSF/Utypes.i3</A>
+<LI><A HREF="../../../unix/src/osf-1.DS3100/Utypes.i3.html#0TOP0">unix/src/osf-1.DS3100/Utypes.i3</A>
+<LI><A HREF="../../../unix/src/solaris-2-x/Utypes.i3.html#0TOP0">unix/src/solaris-2-x/Utypes.i3</A>
+<LI><A HREF="../../../unix/src/sunos-4-x/Utypes.i3.html#0TOP0">unix/src/sunos-4-x/Utypes.i3</A>
+<LI><A HREF="../../../unix/src/sysv-4.0/Utypes.i3.html#0TOP0">unix/src/sysv-4.0/Utypes.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.AP3000/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.AP3000/Utypes.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.ARM/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.ARM/Utypes.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.DS3100/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.DS3100/Utypes.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.NEXT/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.NEXT/Utypes.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.SEQUENT/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.SEQUENT/Utypes.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.SUN3/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.SUN3/Utypes.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.SUN386/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.SUN386/Utypes.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.UMAX/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.UMAX/Utypes.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.VAX/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.VAX/Utypes.i3</A>
+</UL>
+<P>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

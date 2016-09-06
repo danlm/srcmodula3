@@ -1,0 +1,76 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: mg/src/MGRsrc.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>mg/src/MGRsrc.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM>                                                                           </EM></BLOCKQUOTE><PRE>
+</PRE> by Steve Glassman and Stephen Harrison                                    
+
+<P><PRE>INTERFACE <interface>MGRsrc</interface>;
+
+&lt;* PRAGMA LL *&gt;
+
+IMPORT <A HREF="../../ui/src/vbt/Font.i3.html">Font</A>, <A HREF="../../ui/src/vbt/ScrnFont.i3.html">ScrnFont</A>;
+
+PROCEDURE ScaleableFont (family   : TEXT             := NIL;
+                         pointSize                   := 12.0;
+                         slant    : ScrnFont.Slant;
+                         weightName: TEXT := ScrnFont.AnyMatch;
+                         version   : TEXT := &quot;&quot;;
+                         foundry   : TEXT := ScrnFont.AnyMatch;
+                         width     : TEXT := ScrnFont.AnyMatch;
+                         spacing: ScrnFont.Spacing := ScrnFont.Spacing.Any;
+                         charsetRegistry: TEXT := &quot;ISO8859&quot;;
+                         charsetEncoding: TEXT := &quot;1&quot;        ): Font.T;
+</PRE><BLOCKQUOTE><EM> returns a scaleable font that matches the specified font name.  It works
+   by finding a font on the server that matches the desired font
+   characterstics and is close to the scaled size of the font. </EM></BLOCKQUOTE><PRE>
+
+CONST
+  DefaultScaleableFont = Font.T{-8231955};
+  (* a distinguisheable value for a default Font.T  An Mg.T with font =
+     DefaultScaleableFont will actually use defaultScaleable as its font
+  *)
+
+VAR
+  defaultScaleable: Font.T;
+
+PROCEDURE ScaleFont(font: Font.T; scale: REAL);
+  (* if &quot;font&quot; is a scaleable font, then ScaleFont(font, scale) will
+     adjust &quot;font&quot; to display in a font close to the scaled size of
+     &quot;font&quot; *)
+
+END MGRsrc.
+</PRE>
+</inInterface>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

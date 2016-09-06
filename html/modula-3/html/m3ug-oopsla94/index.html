@@ -1,0 +1,225 @@
+<HTML>
+<HEAD>
+<TITLE>The Third Modula-3 User Group Meeting at OOPSLA'94</TITLE>
+</HEAD>
+<BODY BGCOLOR="#ffffff" VLINK="#006633">
+
+<A href="poster.ps"><IMG SRC="poster.gif" ALT=""></A>
+<h2>The Third Modula-3 User Group Meeting</h2>
+<h3>OOPSLA'94, Portland, Oregon. Report by Farshad Nayeri.</h3>
+<hr>
+
+<p>
+The third Modula-3 User Group meeting was a success thanks to the
+participants and presenters! In the short time of two hours,
+six presenters talked about their experiences with Modula-3 and
+what they are doing with it. The
+attendance was solid (20-30 people), given our limited public
+announcement and the timing of the event. 
+
+<p>
+Although there was no discussion section during the meeting itself,
+some of the participants joined us at a round-table discussion of
+Modula-3 and its needs before it can become a popular programming
+platform.
+
+<hr>
+
+<h2>Presentations</h2>
+<p>
+
+<dl>
+<dt><b>Geoff Wyant</b>,
+Sun Microsystems Laboratories, geoff.wyant@sun.com
+<p>
+<dd><b>Modula-3 at Sun Microsystems Laboratories</b>
+
+<p> The Vantage Project at Sun Microsystems Laboratories is
+investigating structuring and reliability mechanisms for very large
+distributed object systems. Modula-3 is the principal implementation
+language for the project.  The project has built several protocols on
+top of Modula-3 Network Objects, and is building some tools for
+programming with Network Objects, among which are IDLNO, an OMG
+translator for Modula-3 Network Objects, and CM3, a tool for easy
+integration of C clients of Modula-3 libraries.(See <a
+HREF="slides-Sun.ps">Geoff's slides</a>.)<p>
+
+<dt><b>Luca Cardelli</b>, Digital Systems Research Center, luca@src.dec.com
+<p>
+<dd><b>Obliq
+and Visual Obliq</b> <p> Obliq is a lexically-scoped untyped interpreted
+language that supports distributed object-oriented computation.  An
+Obliq computation may involve multiple threads of control within an
+address space, multiple address spaces on a machine, heterogeneous
+machines over a local network, and multiple networks over the
+Internet.  Obliq objects have state and are local to a site. Obliq
+computations can roam over the network, while maintaining network
+connections. 
+
+(See the <A
+HREF="http://www.research.digital.com/SRC/Obliq/Obliq.html">Obliq
+Quick Start</A>, or <A
+HREF="http://www.research.digital.com/SRC/personal/Luca_Cardelli/Slides/ObliqSlides.ps.Z">Luca's
+slides</A> [suitable for Mac-compatible laser printers])
+
+<p> 
+
+Luca also gave some hints about M3/Lite, the small foot-print version
+of Modula-3 to run on PCs running Chicago. As we all know by now, Bill
+Kalsow is in the process of releasing version 3.4 as a step towards
+M3/Lite. Luca also said a couple of words about Juno-2, Greg Nelson's
+constraint-based drawing package will be released sometime soon.
+
+<p>
+
+<dt><b>Eliot Moss</b>,
+University of Massachusetts at Amherst, moss@cs.umass.edu
+<p>
+<dd><b>History and status of UMass work on Modula-3 compilers</b>
+
+
+<p> Object Systems Laboratory of UMass at Amherst have been working on
+various aspects of Modula-3 implementations, including support for
+advanced garbage collection and persistence mechanisms for several
+years. Eliot gave an informal presentation about what some of his
+students are working on for providing optimization and persistence
+support for Modula-3.
+
+<p>
+
+<dt><b>Steve Freeman</b>, Xerox Grenoble, France, steve.freeman@xerox.fr
+<p><dd><b>Adding video
+capabilities to Trestle/Modula-3</b>
+
+<p>VideoVBT is the integration of digital video into Trestle, an
+object-oriented user interface toolkit written in Modula-3. The
+display of video frames is managed within the application process
+using, where possible, shared memory to transmit images to the window
+system. VideoVBT takes advantage of Modula-3's type system,
+lightweight threads and garbage collection to develop a flexible
+architecture that supports the reuse of image data within an
+application; the object-oriented features of Modula-3 we found most
+useful were inheritance, partial revelations, and encapsulation.
+VideoVBT is also integrated into several higher-level tools, such as
+FormsVBT (a user interface management system) and Obliq (a distributed
+scripting language; see above) which allow us to dynamically
+experiment with video applications.
+
+(See the <A
+HREF=http://www.research.digital.com/SRC/argo/ecoop/ecoop.html>
+ECOOP'94 paper.</A>)
+
+<p>
+
+<dt><b>Mike Spreitzer</b>,
+Xerox Palo Alto Research Center, mike_spreitzer.parc@xerox.com
+<p><dd><b>Inter-Language Unification</b> 
+
+<p> ILU (pronounced eye'-loo) is a system that promotes software
+interoperability via interfaces.  Interfaces between what? Whatever
+units of program structure are desired. They could be parts of one
+process, all written in the same language; they could be parts written
+in different languages, sharing runtime support in one memory image;
+they could be parts running in different memory images on different
+machines. ILU supports a variety of languages, including Modula-3.
+(See <A HREF="slides-ILU.ps">Mike's slides</A>, or the
+<A HREF=ftp://parcftp.parc.xerox.com/pub/ilu/ilu.html>ILU Home
+Page.</A>) <p>
+
+
+<dt><b>Farshad Nayeri,</b> Critical Mass, farshad@cmass.com
+<p><dd><b>Building a prototype distributed object systems using
+Modula-3</b> <p> The Distributed Object Management project at GTE
+Laboratories has been using Modula-3 as their main programming
+language for their DOM-3 prototype for more than two years, which
+allowed for features similar to ILU and Obliq (See above). We have
+found the Modula-3 language and the libraries to be a great boost in
+our development. More recently we developed <A
+HREF=ftp://ftp.gte.com/pub/dom/software/idlm3/README>idlm3</A>, an OMG
+IDL translator for Modula-3. (See <A
+HREF=ftp://ftp.gte.com/pub/dom/reports/NAYE93e.ps>ECOOP'94 paper</A>
+for a description of DOM-3.)
+
+</dl>
+
+<hr>
+
+<h2>Discussions</h2>
+
+Due to lack of time we didn't get to have much of a public discussion
+during the meeting. However, several of the participants did end up
+at a round-table to discuss the future of Modula-3. Issues discussed
+include:
+
+<ul>
+
+<li> <b> Modula-3 as a low-level language</b> and a competitor of C.
+The idea here is to make the compiler fast enough and run-time
+footprint small enough that Modula-3 could compete favorably against
+C. For example, if you only program an unsafe code that doesn't
+require garbage collection, can the garbage collector be excluded from
+the run-time?
+
+<li> <b> Modula-3 as a high-level language</b> and a competitor of
+Eiffel, Smalltalk, and Ada. "Sell" Modula-3 as a high-level language
+that helps you write more robust code faster.
+
+<li> <b>Exposure</b>. Modula-3 is not mentioned that much (ever?) in
+most computer media. How can we change this?
+
+<li> <b>Commercial Support</b>. You know the drill: many managers and
+companies have trouble supporting the change over to a language that
+does not have commercial support.  Having a big name compiler vendor
+behind Modula-3 would be ideal for some, but this seems quite
+unlikely at the moment.
+
+</ul>
+
+<hr>
+<H2>What Is Modula-3?</H2> 
+    
+Modula-3 is a modular programming language; while preserving a safe
+type system, Modula-3 provides facilities for exception handling,
+concurrency, object-oriented programming, automatic garbage
+collection, and systems programming, making it both a practical
+implementation language for large software projects and an
+excellent teaching language. An implementation of Modula-3 is
+available freely from Digital Equipment Corporation's Systems
+Research Center.
+
+<p>For more information, see the
+<A HREF="http://www.research.digital.com/SRC/modula-3/html/home.html">Modula-3
+Home Page </A>.
+
+<hr>
+
+<H2>Miscellaneous Information</H2>
+<UL>
+<LI><b>Poster:</b> <A href="poster.ps">PostScript</a>
+<LI><b>When</b>: Monday 24 October, 7.30pm.
+<LI><b>Where</b>: Red Lion Inn Lloyd Center.
+<LI><b>Address</b>: 1000 NE Multnomah Str, Portland, Oregon.
+<LI><b>Organizers</b>: Geoff Wyant and Farshad Nayeri.
+<LI><b>Comments</b>: <A HREF="mailto:farshad@cmass.com">farshad@cmass.com</A>.
+</UL>
+
+<hr>
+
+<h2>Next Meeting</h2>
+<P>
+The next Modula-3 Users Group Meeting was held at OOPSLA '95 in
+Austin, Texas.
+<UL>
+<LI><A HREF="../m3ug-oopsla95/announcement.html">Announcement of the
+1995 User Group Meeting</A>
+<LI><A HREF="../m3ug-oopsla95/summary.html">Summary of the 1995 User
+Group Meeting</A>
+</UL>
+
+<PRE>
+Last modified on Tue Jun 11 09:16:27 PDT 1996 by heydon
+</PRE>
+Copyright (C) 1992, 1996, Digital Equipment Corporation. All rights reserved.<BR>
+See the <A HREF="http://www.research.digital.com/SRC/m3sources/html/COPYRIGHT.html">COPYRIGHT</A> for a full description.
+</BODY>
+</HTML>

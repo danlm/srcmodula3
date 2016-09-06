@@ -1,0 +1,78 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: ui/src/trestle/InstalledVBT.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>ui/src/trestle/InstalledVBT.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM> </EM></BLOCKQUOTE><PRE>
+</PRE> by Steve Glassman, Mark Manasse and Greg Nelson 
+
+<P><PRE>&lt;*PRAGMA LL*&gt;
+</PRE> A <CODE>InstalledVBT.T</CODE><CODE> is a series of filters that are useful at the root
+   of applications. 
+
+<P><PRE>INTERFACE <interface><A HREF="InstalledVBT.m3.html">InstalledVBT</A></interface>;
+
+IMPORT <A HREF="DpyFilter.i3.html">DpyFilter</A>, <A HREF="../vbt/VBT.i3.html">VBT</A>, <A HREF="../split/JoinedVBT.i3.html">JoinedVBT</A>;
+
+TYPE
+  <A HREF="InstalledVBT.m3.html#T">T</A> &lt;: DpyFilter.T;
+  <A HREF="InstalledVBT.m3.html#Join">Join</A> &lt;: JoinedVBT.T;
+
+PROCEDURE <A HREF="InstalledVBT.m3.html#New">New</A> (ch: VBT.T; p: DeleteProc := NIL): T;
+</PRE><BLOCKQUOTE><EM> Return a stack of filters over <CODE>ch</CODE> that implement et-agenting,
+   teleportation, highlighting, palette initialization on rescreening, and
+   calls <CODE>p(ch)</CODE> before forwarding a deleted or disconnected code to <CODE>ch</CODE>,
+   if <CODE>p # NIL</CODE>.  In any case, after a deleted or disconnected code it
+   removes the child from the filter. </EM></BLOCKQUOTE><PRE>
+
+PROCEDURE <A HREF="InstalledVBT.m3.html#NewParent">NewParent</A>(ch: VBT.T): T;
+</PRE><BLOCKQUOTE><EM> If ch is attached, return a new parent for the Join above ch.  Otherwise,
+   return NIL </EM></BLOCKQUOTE><PRE>
+
+PROCEDURE <A HREF="InstalledVBT.m3.html#InitChild">InitChild</A>(j: Join; ch: VBT.T; p: DeleteProc := NIL);
+</PRE><BLOCKQUOTE><EM> Like New, except without the topmost VBT, and you allocate </EM></BLOCKQUOTE><PRE>
+
+PROCEDURE <A HREF="InstalledVBT.m3.html#InitParent">InitParent</A>(p: T; ch: Join);
+</PRE><BLOCKQUOTE><EM> Like NewParent, except you pass the parent and the
+   Join, and it doesn't check to see if ch is attached. </EM></BLOCKQUOTE><PRE>
+
+PROCEDURE <A HREF="InstalledVBT.m3.html#Child">Child</A> (v: VBT.T): VBT.T; &lt;* LL.sup = VBT.mu *&gt;
+</PRE><BLOCKQUOTE><EM> Return the installed child of the tree containing <CODE>v</CODE>, or the root
+   of the tree containing <CODE>v</CODE> if it isn't installed. </EM></BLOCKQUOTE><PRE>
+
+TYPE DeleteProc = PROCEDURE(v: VBT.T) &lt;* LL.sup = VBT.mu *&gt;;
+
+END InstalledVBT.
+</PRE>
+</inInterface>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

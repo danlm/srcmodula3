@@ -1,0 +1,76 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: C/src/Common/M3toC.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>C/src/Common/M3toC.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM>                                                             </EM></BLOCKQUOTE><PRE>
+
+UNSAFE INTERFACE <interface><A HREF="M3toC.m3.html">M3toC</A></interface>;
+
+IMPORT <A HREF="Ctypes.i3.html">Ctypes</A>;
+
+PROCEDURE <A HREF="M3toC.m3.html#CopyTtoS">CopyTtoS</A>(t: TEXT): Ctypes.char_star;
+</PRE><BLOCKQUOTE><EM> Return a null-terminated C string with the same contents as <CODE>t</CODE>,
+   but not sharing any storage with <CODE>t</CODE>.  The result should be passed
+   to <CODE>FreeCopiedS</CODE> after it is irrelevant. </EM></BLOCKQUOTE><PRE>
+
+PROCEDURE <A HREF="M3toC.m3.html#FreeCopiedS">FreeCopiedS</A>(s: Ctypes.char_star);
+</PRE><BLOCKQUOTE><EM> Free the storage for <CODE>s</CODE>, which must have been returned from a call
+   of <CODE>CopyTtoS</CODE>.  It is an unchecked runtime error to free <CODE>s</CODE> more
+   than once or to use <CODE>s</CODE> after calling <CODE>FreeCopiedS(s)</CODE>. </EM></BLOCKQUOTE><PRE>
+
+PROCEDURE <A HREF="M3toC.m3.html#TtoS">TtoS</A>(t: TEXT): Ctypes.char_star;
+</PRE><BLOCKQUOTE><EM> Return a null-terminated C string with the same contents as <CODE>t</CODE>,
+   and sharing storage with <CODE>t</CODE>.  <CODE>FreeCopiedS</CODE> should {\em not} 
+   be called on the value returned by <CODE>TtoS</CODE>. </EM></BLOCKQUOTE><PRE>
+</PRE> It is the client's responsibility to prevent the garbage collector
+   from collecting or moving <CODE>t</CODE> while the result of <CODE>TtoS(t)</CODE> is
+   being used. One way to accomplish this is to maintain a reference
+   to (or into) <CODE>t</CODE> on the stack or in the registers of any thread.
+   Alternatively, the collector can be disabled.  See the
+   <CODE>RTCollector</CODE> interface for details. 
+
+<P><PRE>PROCEDURE <A HREF="M3toC.m3.html#StoT">StoT</A>(s: Ctypes.char_star): TEXT;
+</PRE><BLOCKQUOTE><EM> Return a text with the same contents as the null-terminated C
+   string <CODE>s</CODE> and sharing storage with <CODE>t</CODE>.  The result is invalid
+   after <CODE>s</CODE> is freed. </EM></BLOCKQUOTE><PRE>
+
+PROCEDURE <A HREF="M3toC.m3.html#CopyStoT">CopyStoT</A>(s: Ctypes.char_star): TEXT;
+</PRE><BLOCKQUOTE><EM> Return a text with the same contents as the null-terminated C
+   string <CODE>s</CODE>. This copies <CODE>s</CODE>, so the result is valid even if <CODE>s</CODE> is
+   later freed. </EM></BLOCKQUOTE><PRE>
+
+END M3toC.
+</PRE>
+</inInterface>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

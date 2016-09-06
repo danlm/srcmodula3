@@ -1,0 +1,74 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: rw/src/Common/UnsafeRd.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>rw/src/Common/UnsafeRd.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE> The UnsafeRd interface is similar to Rd, but GetChar, GetSub and
+Eof are the only operations that are sufficiently performance-critical
+to be included.
+<P>
+Note that if you import this interface along with RdClass that you must
+include the following line:
+<P>
+   REVEAL RdClass.Private &lt;: MUTEX
+<P>
+in order to satisfy the constraint that the revealed supertypes of an
+opaque type be totally ordered.  
+
+<P><PRE>INTERFACE <interface><A HREF="RdMove.m3.html">UnsafeRd</A></interface>;
+IMPORT <A HREF="Rd.i3.html">Rd</A>, <A HREF="../../../thread/src/Common/Thread.i3.html">Thread</A>;
+FROM <A HREF="../../../thread/src/Common/Thread.i3.html">Thread</A> IMPORT Alerted;
+FROM <A HREF="Rd.i3.html">Rd</A> IMPORT Failure, EndOfFile;
+
+REVEAL
+  Rd.T &lt;: Thread.Mutex;
+
+PROCEDURE <A HREF="RdMove.m3.html#FastGetChar">FastGetChar</A>(rd: Rd.T): CHAR RAISES {EndOfFile, Failure, Alerted};
+</PRE><BLOCKQUOTE><EM> Like Rd.GetChar, but rd must be locked. </EM></BLOCKQUOTE><PRE>
+
+PROCEDURE <A HREF="RdMove.m3.html#FastGetSub">FastGetSub</A>(rd: Rd.T; VAR (*OUT*) str: ARRAY OF CHAR): CARDINAL
+    RAISES {Failure, Alerted};
+</PRE><BLOCKQUOTE><EM> Like Rd.GetSub, but rd must be locked. </EM></BLOCKQUOTE><PRE>
+
+PROCEDURE <A HREF="RdMove.m3.html#FastEOF">FastEOF</A>(rd: Rd.T): BOOLEAN RAISES {Failure, Alerted};
+</PRE><BLOCKQUOTE><EM> Like Rd.EOF, but rd must be locked. </EM></BLOCKQUOTE><PRE>
+
+PROCEDURE <A HREF="RdMove.m3.html#FastUnGetChar">FastUnGetChar</A>(rd: Rd.T) RAISES {};
+</PRE><BLOCKQUOTE><EM> Like Rd.UnGetChar, but rd must be locked. </EM></BLOCKQUOTE><PRE>
+
+PROCEDURE <A HREF="RdMove.m3.html#FastClose">FastClose</A> (rd: Rd.T) RAISES {Failure, Alerted};
+
+END UnsafeRd.
+</PRE>
+</inInterface>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

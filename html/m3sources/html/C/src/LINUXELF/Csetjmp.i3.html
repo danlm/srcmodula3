@@ -1,0 +1,57 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: C/src/LINUXELF/Csetjmp.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>C/src/LINUXELF/Csetjmp.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+
+INTERFACE <interface>Csetjmp</interface>;		(* for LINUX *)
+
+FROM <A HREF="../Common/Ctypes.i3.html">Ctypes</A> IMPORT long, int, void_star;
+
+TYPE
+  ptr_t = void_star;
+
+  jmp_buf = RECORD
+        bx, si, di: long;
+        bp, sp, pc: ptr_t; END;
+
+&lt;*EXTERNAL &quot;__setjmp&quot; *&gt; PROCEDURE setjmp (VAR env: jmp_buf): int;
+&lt;*EXTERNAL*&gt; PROCEDURE longjmp (VAR env: jmp_buf; val: int);
+
+&lt;*EXTERNAL &quot;__setjmp&quot; *&gt;  PROCEDURE usetjmp (VAR env: jmp_buf): int;
+&lt;*EXTERNAL &quot;_longjmp&quot; *&gt; PROCEDURE ulongjmp (VAR env: jmp_buf; val: int);
+
+END Csetjmp.
+</PRE>
+</inInterface>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

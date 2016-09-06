@@ -1,0 +1,9 @@
+(* A client for TimeServer. *)
+
+module TimeClient;
+
+let timeServer = 
+  net_import("ObliqTimeServer", "");
+
+let time =
+  proc() timeServer.time end;

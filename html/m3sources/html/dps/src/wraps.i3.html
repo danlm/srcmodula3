@@ -1,0 +1,86 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: dps/src/wraps.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>dps/src/wraps.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+
+INTERFACE <interface><A HREF="wraps.m3.html">wraps</A></interface>;
+
+PROCEDURE <A HREF="wraps.m3.html#GetTransform">GetTransform</A> ( ctxt: INTEGER;
+  VAR ctm, invctm: ARRAY [0..5] OF REAL;
+  VAR xOffset, yOffset: INTEGER);
+
+PROCEDURE <A HREF="wraps.m3.html#FetchInteger">FetchInteger</A> ( ctxt: INTEGER;
+ u: TEXT; alreadyLocked: BOOLEAN := FALSE ): INTEGER;
+PROCEDURE <A HREF="wraps.m3.html#FetchNumber">FetchNumber</A> ( ctxt: INTEGER;
+ u: TEXT; alreadyLocked: BOOLEAN := FALSE ): REAL;
+PROCEDURE <A HREF="wraps.m3.html#FetchString">FetchString</A> ( ctxt: INTEGER;
+ u: TEXT; alreadyLocked: BOOLEAN := FALSE ): TEXT;
+
+PROCEDURE <A HREF="wraps.m3.html#XYHit">XYHit</A> ( ctxt: INTEGER;
+  x, y: REAL;
+  u: TEXT ): BOOLEAN;
+
+PROCEDURE <A HREF="wraps.m3.html#Stringwidth">Stringwidth</A> ( ctxt: INTEGER;
+  f: TEXT; s: TEXT;
+  VAR x, y: REAL );
+
+&lt;*EXTERNAL*&gt; PROCEDURE GetTransformWrap ( ctxt: INTEGER;
+   ctm, invctm: UNTRACED REF ARRAY [0..5] OF REAL;
+   xOffset, yOffset: UNTRACED REF INTEGER );
+
+&lt;*EXTERNAL*&gt; PROCEDURE FetchIntegerWrap ( ctxt: INTEGER;
+   u: UNTRACED REF CHAR;
+   r: UNTRACED REF INTEGER );
+
+&lt;*EXTERNAL*&gt; PROCEDURE FetchNumberWrap ( ctxt: INTEGER;
+   u: UNTRACED REF CHAR;
+   r: UNTRACED REF REAL );
+
+&lt;*EXTERNAL*&gt; PROCEDURE FetchStringWrap ( ctxt: INTEGER;
+   u: UNTRACED REF CHAR;
+   s: UNTRACED REF CHAR );
+
+&lt;*EXTERNAL*&gt; PROCEDURE XYHitWrap ( ctxt: INTEGER;
+   x, y: REAL;
+   u: UNTRACED REF CHAR;
+   b: UNTRACED REF BOOLEAN );
+
+&lt;*EXTERNAL*&gt; PROCEDURE StringwidthWrap ( ctxt: INTEGER;
+   f, s: UNTRACED REF CHAR;
+   x, y: UNTRACED REF REAL );
+
+  END wraps.
+</PRE>
+</inInterface>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

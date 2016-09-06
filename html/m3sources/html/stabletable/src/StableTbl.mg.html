@@ -1,0 +1,275 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: stabletable/src/StableTbl.mg</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>stabletable/src/StableTbl.mg</H2></A><HR>
+<inModule>
+<PRE><A HREF="../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM>                                                          	</EM></BLOCKQUOTE><PRE>
+
+GENERIC MODULE <genericModule><A HREF="StableTbl.ig.html">StableTbl</A></genericModule>(Tbl, Key, Value);
+</PRE> The <CODE>Tbl</CODE>, <CODE>Key</CODE>, and <CODE>Value</CODE> interfaces should the same
+   as those passed to the generic <CODE>StableTbl</CODE> interface. 
+
+<P><PRE>IMPORT <A HREF="../../smalldb/src/SmallDB.i3.html">SmallDB</A>, <A HREF="../../rw/src/Common/Rd.i3.html">Rd</A>, <A HREF="../../rw/src/Common/Wr.i3.html">Wr</A>, <A HREF="../../pickle/src/Pickle.i3.html">Pickle</A>, <A HREF="../../os/src/Common/OSError.i3.html">OSError</A>, <A HREF="../../atom/src/Atom.i3.html">Atom</A>, <A HREF="../../libm3/DS/AtomList.i3.html">AtomList</A>;
+
+IMPORT <A HREF="../../thread/src/Common/Thread.i3.html">Thread</A>;
+&lt;* FATAL Thread.Alerted *&gt;
+</PRE> We define contant TEXT brands for each of the types
+   written to pickles so that unpickling will be reliable. 
+   
+<P><PRE>CONST
+  TBrand = &quot;(Stable &quot; &amp; Tbl.Brand &amp; &quot;)&quot;;
+  ClearBrand = &quot;(Clear &quot; &amp; TBrand &amp; &quot;)&quot;;
+  AddBrand = &quot;(Add &quot; &amp; TBrand &amp; &quot;)&quot;;
+  DeleteBrand = &quot;(Delete &quot; &amp; TBrand &amp; &quot;)&quot;;
+</PRE> The type <CODE>StableTbl.T</CODE> has an embedded <CODE>Tbl.Default</CODE> (the
+   real table where entries are stored) and an instance of
+   a <CODE>SmallDB.T</CODE> for this instance of the table. 
+
+<P><PRE>REVEAL
+  <A NAME="T">T</A> = Public BRANDED TBrand OBJECT
+    tbl: Tbl.Default;
+    db: SmallDB.T;
+  OVERRIDES
+    init := Init;
+    get := Get;
+    put := Put;
+    delete := Delete;
+    size := Size;
+    iterate := Iterate;
+    checkpoint := Checkpoint;
+    close := Close;
+    checkpointSize := CheckpointSize;
+    logSize := LogSize;
+    status := Status;
+  END;
+</PRE> We define our own <CODE>SmallDB.Closure</CODE> object for creating
+   new <CODE>Tbl.Default</CODE> objects, reading and writing them from/to
+   disk, and for reading and writing table updates from/to
+   disk. The closure has a <CODE>sizeHint</CODE> field so the client's
+   <CODE>sizeHint</CODE> can be respected if the underlying table is
+   being created for the first time. The closure's <CODE>sizeHint</CODE>
+   is only used by the implementation of the <CODE>new</CODE> method. 
+
+<P><PRE>TYPE
+  Closure = SmallDB.Closure OBJECT
+    (* for use by &quot;NewTbl&quot; *)
+    sizeHint: CARDINAL;
+  OVERRIDES
+    new := NewTbl;
+    recover := Recover;
+    snapshot := Snapshot;
+    readUpdate := ReadUpdate;
+    logUpdate := LogUpdate;
+  END;
+</PRE> We also define object for the various types of table
+   updates. The three specific update types are declared
+   to be subtypes of a base <CODE>Update</CODE> type. 
+
+<P><PRE>TYPE
+  Update = ROOT OBJECT END;
+  ClearUpdate = Update BRANDED ClearBrand OBJECT
+    sizeHint: CARDINAL;
+  END;
+  AddUpdate = Update BRANDED AddBrand OBJECT
+    key: Key.T;
+    value: Value.T;
+  END;
+  DeleteUpdate = Update BRANDED DeleteBrand OBJECT
+    key: Key.T;
+  END;
+
+PROCEDURE <A NAME="New"><procedure>New</procedure></A>(dir: TEXT; sizeHint: CARDINAL): T
+    RAISES { OSError.E, SmallDB.Failed } =
+  VAR res := NEW(T); BEGIN
+    (* first create the database for this table *)
+    VAR cl := NEW(Closure, sizeHint := sizeHint); BEGIN
+      res.db := SmallDB.New(dir, cl, pad := FALSE)
+    END;
+
+    (* then recover the &quot;Tbl.Default&quot; from the database *)
+    res.tbl := res.db.recover();
+    RETURN res
+  END New;
+</PRE> ----- StableTbl.T methods --------------------------------------------- 
+
+<P> We create one global instance of each update type; these are
+   re-used by the methods that write updates to the database. 
+
+<P><PRE>VAR
+  clear := NEW(ClearUpdate);
+  add := NEW(AddUpdate);
+  delete := NEW(DeleteUpdate);
+
+PROCEDURE <A NAME="Init"><procedure>Init</procedure></A>(t: T; sizeHint: CARDINAL): T
+    RAISES { OSError.E } =
+  BEGIN
+    (* log the update *)
+    clear.sizeHint := sizeHint;
+    t.db.update(clear);
+
+    (* invoke the method on the underlying table *)
+    EVAL t.tbl.init(sizeHint);
+    RETURN t
+  END Init;
+
+PROCEDURE <A NAME="Put"><procedure>Put</procedure></A>(t: T; READONLY k: Key.T; READONLY v: Value.T): BOOLEAN
+    RAISES { OSError.E } =
+  BEGIN
+    (* log the update *)
+    add.key := k; add.value := v;
+    t.db.update(add);
+
+    (* invoke the method on the underlying table *)
+    RETURN t.tbl.put(k, v)
+  END Put;
+
+PROCEDURE <A NAME="Delete"><procedure>Delete</procedure></A>(t: T; READONLY k: Key.T; VAR v: Value.T): BOOLEAN
+    RAISES { OSError.E } =
+  BEGIN
+    (* log the update *)
+    delete.key := k;
+    t.db.update(delete);
+
+    (* invoke the method on the underlying table *)
+    RETURN t.tbl.delete(k, (*OUT*) v)
+  END Delete;
+</PRE> The following methods do not modify the table, so they
+   are implemented by simply invoking the same method on the
+   underlying table. 
+
+<P><PRE>PROCEDURE <A NAME="Get"><procedure>Get</procedure></A>(t: T; READONLY k: Key.T; VAR v: Value.T): BOOLEAN =
+  BEGIN RETURN t.tbl.get(k, v) END Get;
+
+PROCEDURE <A NAME="Size"><procedure>Size</procedure></A>(t: T): CARDINAL =
+  BEGIN RETURN t.tbl.size() END Size;
+
+PROCEDURE <A NAME="Iterate"><procedure>Iterate</procedure></A>(t: T): Tbl.Iterator =
+  BEGIN RETURN t.tbl.iterate() END Iterate;
+</PRE> The database methods are implemented by invoking the appropriate
+   methods on the underlying database object. 
+
+<P><PRE>PROCEDURE <A NAME="Checkpoint"><procedure>Checkpoint</procedure></A>(t: T) RAISES { OSError.E } =
+  BEGIN t.db.snapshot(t.tbl) END Checkpoint;
+
+PROCEDURE <A NAME="Close"><procedure>Close</procedure></A>(t: T) RAISES { OSError.E } =
+  BEGIN t.db.close() END Close;
+
+PROCEDURE <A NAME="CheckpointSize"><procedure>CheckpointSize</procedure></A>(t: T): CARDINAL =
+  BEGIN RETURN t.db.snapshotBytes() END CheckpointSize;
+
+PROCEDURE <A NAME="LogSize"><procedure>LogSize</procedure></A>(t: T): CARDINAL =
+  BEGIN RETURN t.db.logBytes() END LogSize;
+
+PROCEDURE <A NAME="Status"><procedure>Status</procedure></A>(t: T): TEXT =
+  BEGIN RETURN t.db.status() END Status;
+</PRE> ----- Closure methods ------------------------------------------------- 
+
+<P> First we define procedures used by several of the closure
+   method implementations. 
+
+<P><PRE>PROCEDURE <A NAME="TextToAtomList"><procedure>TextToAtomList</procedure></A>(t: TEXT): AtomList.T =
+  (* Returns a 1-element &quot;AtomList.T&quot; of the text &quot;t&quot;. *)
+  BEGIN RETURN AtomList.List1(Atom.FromText(t)) END TextToAtomList;
+
+PROCEDURE <A NAME="PickleRead"><procedure>PickleRead</procedure></A>(rd: Rd.T): REFANY
+    RAISES { Rd.Failure } =
+  (* Like &quot;Pickle.Read(rd)&quot;, but converts &quot;Pickle.Error&quot; and
+     &quot;Rd.EndOfFile&quot; exceptions to a &quot;Rd.Failure&quot; exception. *)
+  VAR res: REFANY; BEGIN
+    TRY res := Pickle.Read(rd) EXCEPT
+    | Pickle.Error (msg) =&gt; RAISE Rd.Failure(TextToAtomList(msg))
+    | Rd.EndOfFile =&gt; RAISE Rd.Failure(TextToAtomList(&quot;premature EOF&quot;))
+    END;
+    RETURN res
+  END PickleRead;
+
+PROCEDURE <A NAME="PickleWrite"><procedure>PickleWrite</procedure></A>(wr: Wr.T; r: REFANY)
+    RAISES { Wr.Failure } =
+  (* Like &quot;Pickle.Write(wr, r)&quot;, but converts the &quot;Pickle.Error&quot;
+     exception to a &quot;Wr.Failure&quot; exception. *)
+  BEGIN
+    TRY Pickle.Write(wr, r) EXCEPT
+    | Pickle.Error (msg) =&gt; RAISE Wr.Failure(TextToAtomList(msg))
+    END;
+  END PickleWrite;
+</PRE> The closure methods themselves are implemented using
+   Modula-3 Pickles. 
+
+<P><PRE>PROCEDURE <A NAME="NewTbl"><procedure>NewTbl</procedure></A>(cl: Closure): REFANY RAISES { } =
+  BEGIN RETURN NEW(Tbl.Default).init(cl.sizeHint) END NewTbl;
+
+PROCEDURE <A NAME="Recover"><procedure>Recover</procedure></A>(&lt;*UNUSED*&gt; cl: Closure; rd: Rd.T): REFANY
+    RAISES { Rd.Failure } =
+  VAR res: Tbl.Default := PickleRead(rd); BEGIN
+    RETURN res
+  END Recover;
+
+PROCEDURE <A NAME="Snapshot"><procedure>Snapshot</procedure></A>(&lt;*UNUSED*&gt; cl: Closure; wr: Wr.T; r: REFANY)
+    RAISES { Wr.Failure } =
+  VAR t: Tbl.Default := r; BEGIN
+    PickleWrite(wr, t);
+  END Snapshot;
+
+PROCEDURE <A NAME="ReadUpdate"><procedure>ReadUpdate</procedure></A>(&lt;*UNUSED*&gt; cl: Closure; rd: Rd.T;
+    state: REFANY): REFANY RAISES { Rd.Failure } =
+  VAR
+    (* read the update *)
+    update: Update := PickleRead(rd);
+    t: Tbl.Default := state;
+  BEGIN
+    (* apply the update based on its type *)
+    TYPECASE update OF &lt;* NOWARN *&gt;
+    | NULL =&gt; &lt;* ASSERT FALSE *&gt;
+    | ClearUpdate (clr) =&gt;
+        EVAL t.init(clr.sizeHint)
+    | AddUpdate (add) =&gt;
+        EVAL t.put(add.key, add.value)
+    | DeleteUpdate (del) =&gt;
+        VAR value: Value.T; BEGIN
+          EVAL t.delete(del.key, (*OUT*) value)
+        END
+    END;
+    RETURN t
+  END ReadUpdate;
+
+PROCEDURE <A NAME="LogUpdate"><procedure>LogUpdate</procedure></A>(&lt;*UNUSED*&gt; cl: Closure; wr: Wr.T;
+    r: REFANY) RAISES { Wr.Failure } =
+  VAR update: Update := r; BEGIN
+    PickleWrite(wr, update)
+  END LogUpdate;
+
+BEGIN
+END StableTbl.
+</PRE>
+</inModule>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

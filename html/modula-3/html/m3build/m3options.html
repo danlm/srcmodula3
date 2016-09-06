@@ -1,0 +1,58 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: Changing compiler options</TITLE>
+</HEAD>
+<BODY BGCOLOR="#ffffff" VLINK="#006633">
+
+<H2>Changing compiler options</H2>
+<P>
+
+<B> m3_option(x) </B>  
+    adds option <TT>x</TT> to the set of arguments passed to the compiler.
+ 
+<P>
+
+<B> remove_m3_option(x) </B>  
+   removes option <TT>x</TT> from the set of arguments passed to the compiler.
+ 
+<P>
+
+Specifically, <TT>m3_option</TT> adds <TT>x</TT> to the <TT>M3OPTIONS</TT>
+<A HREF="variables.html">variable</A>.
+<TT>x</TT> should be a single string preceded
+with a hyphen, e.g. <TT>m3_option("-O")</TT>.
+<P>
+
+<B>Important:</B> For the specified compiler options to take effect, your
+<TT>m3_option</TT> lines must preceed any <TT>program</TT> or
+<TT>library</TT> directives in the <TT>m3makefile</TT>.
+
+Some of the more useful
+<A HREF="../m3/options.html">compiler options</A> include:
+<PRE>
+-why        Explain why each compilation is needed (default).
+-commands   Print the compilation commands as they are started.
+-verbose    Print what happens to each file.
+-times      Print a breakdown of elapsed time.
+-g          Generate debugging symbols (default).
+-O          Optimize code.
+-keep       Preserve intermediate files.
+-once       Don't recompile modules with new opaque info.
+</PRE>
+<P>
+
+<HR>
+<A HREF="../home.html">[Modula-3 home page]</A>
+<P>
+<A HREF="mailto:m3-request@src.dec.com">
+<ADDRESS>m3-request@src.dec.com</ADDRESS></A>
+<PRE>
+Last modified on Thu Jan  4 11:07:53 PST 1996 by heydon 
+     modified on Fri Sep 16 08:01:52 PDT 1994 by kalsow 
+     modified on Thu Jan  7 18:40:57 PST 1993 by muller 
+</PRE>
+
+Copyright (C) 1992, 1996, Digital Equipment Corporation. All rights reserved.<BR>
+See the <A HREF="http://www.research.digital.com/SRC/m3sources/html/COPYRIGHT.html">COPYRIGHT</A> for a full description.
+</BODY>
+</HTML>

@@ -1,0 +1,60 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: thread/src/POSIX/ThreadEvent.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>thread/src/POSIX/ThreadEvent.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+
+INTERFACE <interface>ThreadEvent</interface>;
+
+IMPORT <A HREF="#x1">ThreadF</A>;
+
+TYPE
+  Kind = {Changed, Running, Deleted};
+
+  T = RECORD
+        kind: Kind;
+        id: ThreadF.Id := 0;
+        state := ThreadF.State.dead; END;
+
+END ThreadEvent.
+</PRE>
+</inInterface>
+<HR>
+<A NAME="x1">interface ThreadF is in:
+</A><UL>
+<LI><A HREF="../NOOP/ThreadF.i3.html#0TOP0">thread/src/NOOP/ThreadF.i3</A>
+<LI><A HREF="ThreadF.i3.html#0TOP0">thread/src/POSIX/ThreadF.i3</A>
+<LI><A HREF="../WIN32/ThreadF.i3.html#0TOP0">thread/src/WIN32/ThreadF.i3</A>
+</UL>
+<P>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

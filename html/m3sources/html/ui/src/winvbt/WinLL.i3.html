@@ -1,0 +1,78 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: ui/src/winvbt/WinLL.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>ui/src/winvbt/WinLL.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM> Digital Internal Use Only                                                 </EM></BLOCKQUOTE><PRE>
+</PRE>                                                                           
+       Created on Thu Feb  2 13:15:05 PST 1995 by najork                   
+
+<P>
+<P><PRE>INTERFACE <interface><A HREF="WinLL.m3.html">WinLL</A></interface>;
+</PRE> WinLL provides infrastructure for deciding whether the current thread holds
+   a lock or not. 
+<P>
+   The rationale for this module is as follows: The <CODE>window procedure</CODE> of a 
+   Windows program is called in response to client actions, from the 
+   GetMessage-DispatchMessage loop in the client program. But it is also 
+   directly called by certain Windows operations (CreateWindow, ShowWindow,
+   UpdateWindow, ...). In the former case, the locking level of WindowProc 
+   is 0, in the latter case, it is the same as the locking level of the 
+   context of the Windows operation (eg ShowWindow). So, we can't decide 
+   statically what the locking level of WindowProc is. 
+<P>
+   However, if we want to call other Trestle operations from the window 
+   procedure, we have to ensure that the call occurs at the right locking 
+   level. One way to do this is by explicitly keeping track of locking levels,
+   when we cross the boundary from Trestle into winvbt. This module provides
+   support for this. 
+
+<P><PRE>PROCEDURE <A HREF="WinLL.m3.html#Assert">Assert</A> (m: MUTEX);
+</PRE><BLOCKQUOTE><EM> Assert that the current thread holds the lock <CODE>m</CODE>. 
+   (However, is does not acquire <CODE>m</CODE>) </EM></BLOCKQUOTE><PRE>
+
+PROCEDURE <A HREF="WinLL.m3.html#Retract">Retract</A> (m: MUTEX);
+</PRE><BLOCKQUOTE><EM> Retract the assertion that the current thread holds <CODE>m</CODE>. </EM></BLOCKQUOTE><PRE>
+
+PROCEDURE <A HREF="WinLL.m3.html#Acquire">Acquire</A> (m: MUTEX);
+</PRE><BLOCKQUOTE><EM> Acquire <CODE>m</CODE> if the current thread is not within an assert-retract 
+   bracket. Otherwise, do nothing. </EM></BLOCKQUOTE><PRE>
+
+PROCEDURE <A HREF="WinLL.m3.html#Release">Release</A> (m: MUTEX);
+</PRE><BLOCKQUOTE><EM> Release <CODE>m</CODE> if the current thread is not within an assert-retract 
+   bracket. Otherwise, do nothing. </EM></BLOCKQUOTE><PRE>
+
+END WinLL.
+</PRE>
+</inInterface>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

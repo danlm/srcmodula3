@@ -1,0 +1,77 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: ui/src/xvbt/XScrnTpRep.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>ui/src/xvbt/XScrnTpRep.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM> </EM></BLOCKQUOTE><PRE>
+</PRE> by Steve Glassman, Mark Manasse and Greg Nelson 
+
+<P><PRE>&lt;*PRAGMA LL*&gt;
+
+UNSAFE INTERFACE <interface><A HREF="XScrnTpRep.m3.html">XScrnTpRep</A></interface>;
+
+IMPORT <A HREF="../../../X11R4/src/Common/X.i3.html">X</A>, <A HREF="../vbt/PaintPrivate.i3.html">PaintPrivate</A>, <A HREF="../../../geometry/src/Rect.i3.html">Rect</A>, <A HREF="../../../C/src/Common/Ctypes.i3.html">Ctypes</A>, <A HREF="XScreenType.i3.html">XScreenType</A>;
+
+REVEAL
+  XScreenType.T &lt;: Public;
+
+TYPE
+  Public = XScreenType.Public OBJECT
+             optable: REF ARRAY OF OpRecord;
+             pmtable: REF ARRAY OF PixmapRecord;
+             empty                                := 0
+           END;
+
+  (* If pm is a ScrnPixmap.T whose screentype is st, a T, then pm.id is
+     either SolidPixmap, or pm.id is the index into st.pmtable of the
+     PixmapRecord describing pm, unless st.bits = st, in which case
+     SolidPixmap - pm.id is the index in st.bits.pmtable. *)
+
+  OpRecord = RECORD
+               function, fill_style              : Ctypes.int;
+               plane_mask, foreground, background: Ctypes.unsigned_long;
+             END;
+
+  PixmapRecord = RECORD
+                   pixmap: X.Drawable;
+                   isLazy: BOOLEAN;
+                   domain: Rect.T;
+                   depth : INTEGER
+                 END;
+
+CONST SolidPixmap: PaintPrivate.Pixmap = -1;
+
+END XScrnTpRep.
+</PRE>
+</inInterface>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

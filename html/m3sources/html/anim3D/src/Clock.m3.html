@@ -1,0 +1,68 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: anim3D/src/Clock.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>anim3D/src/Clock.m3</H2></A><HR>
+<inModule>
+<PRE><A HREF="../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM>                                                                           </EM></BLOCKQUOTE><PRE>
+</PRE> Created by Marc Najork                                                    
+
+<P>
+<P><PRE>MODULE <module><implements><A HREF="Clock.i3.html">Clock</A></implements></module>;
+
+FROM <A HREF="../../time/src/Common/Time.i3.html">Time</A> IMPORT Now;
+
+REVEAL
+  <A NAME="T">T</A> = Public BRANDED OBJECT
+  OVERRIDES
+    init := Init;
+    time := Time;
+  END;
+
+PROCEDURE <A NAME="Init"><procedure>Init</procedure></A> (self : T) : T =
+  BEGIN
+    RETURN self;
+  END Init;
+
+PROCEDURE <A NAME="Time"><procedure>Time</procedure></A> (&lt;* UNUSED *&gt; self : T) : LONGREAL =
+  BEGIN
+    RETURN Now () - clockstart;
+  END Time;
+
+VAR
+  clockstart := Now ();
+
+BEGIN
+END Clock.
+</PRE>
+</inModule>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

@@ -1,0 +1,221 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: uid/src/Common/TimeStamp.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>uid/src/Common/TimeStamp.m3</H2></A><HR>
+<inModule>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM>                                                             </EM></BLOCKQUOTE><PRE>
+</PRE>      Modified On Mon Jun 29 22:11:02 PDT 1992 by muller     
+      Modified on Thu Mar 30 18:30:10 1989 by hisgen         
+      Modified On Tue Jan 19 11:18:19 PST 1988 by denning    
+      Modified On Mon Oct 13 17:01:19 1986 by levin          
+      Modified On Wed Dec  5 13:10:00 1984 by Andrew Birrell 
+
+<P><PRE>UNSAFE MODULE <module><implements><A HREF="TimeStamp.i3.html">TimeStamp</A></implements></module>;
+
+IMPORT <A HREF="../../../time/src/Common/Date.i3.html">Date</A>, <A HREF="../../../thread/src/Common/Thread.i3.html">Thread</A>, <A HREF="../../../time/src/Common/Time.i3.html">Time</A>, <A HREF="#x1">Cstring</A>, <A HREF="../../../word/src/Word.i3.html">Word</A>, <A HREF="TimeStampRep.i3.html">TimeStampRep</A>,
+       <A HREF="Swap.i3.html">Swap</A>, <A HREF="../../../float/src/Common/LongFloat.i3.html">LongFloat</A>, <A HREF="#x2">FloatMode</A>, <A HREF="../../../os/src/Common/Process.i3.html">Process</A>, <A HREF="MachineID.i3.html">MachineID</A>;
+
+TYPE
+  Counter = MUTEX OBJECT
+    time        : [0 .. LAST(Swap.Int32)] := 0;
+    fineTime    : [0..255]                := 0;
+    fineCounter : [0..255]                := 0;
+  END;
+
+VAR
+  counter     := NEW(Counter);
+  init_done   := FALSE;
+  myPIDHigh   : Swap.UInt16;
+  myPIDLow    : Swap.UInt16;
+  myMachineID : MachineID.T;
+  epoch       : Time.T;
+
+PROCEDURE <A NAME="Init"><procedure>Init</procedure></A> () =
+  &lt;*FATAL Date.Error*&gt;
+  CONST
+    epochDate = Date.T{1970, Date.Month.Jan, 2, 0,0,0,0, &quot;&quot;, Date.WeekDay.Sun};
+    oneDay    = 24.0d0 * 3600.0d0;
+  VAR
+    pid := Process.GetMyID ();
+  BEGIN
+    EVAL MachineID.CanGet (myMachineID); (* if we can't get it, too bad. *)
+    myPIDHigh   := Word.Extract(pid, 0, 16);
+    myPIDLow    := Word.Extract(pid, 16, 16);
+    epoch       := Date.ToTime(epochDate) - oneDay;
+    init_done   := TRUE;
+  END Init;
+
+PROCEDURE <A NAME="New"><procedure>New</procedure></A> (): T =
+  VAR
+    fineTime   : INTEGER;
+    fineCounter: [0 .. 255];
+    time       : [0 .. LAST(Swap.Int32)];
+    ts         : TimeStampRep.T;
+    now        : Time.T;
+  &lt;*FATAL FloatMode.Trap*&gt;
+  BEGIN
+    LOCK counter DO
+      IF NOT init_done THEN Init () END;
+      LOOP
+        now := Time.Now() - epoch;
+        time := TRUNC(now);
+        fineTime := ROUND(LongFloat.Scalb(now - FLOAT(time, LONGREAL), 8));
+        IF fineTime &gt; 255 THEN fineTime := 0; INC(time); END;
+        IF counter.time # time OR counter.fineTime # fineTime THEN
+          fineCounter := 0;
+          counter.fineCounter := 0;
+          counter.time := time;
+          counter.fineTime := fineTime;
+          EXIT
+        ELSIF counter.fineCounter &lt; 255 THEN
+          INC(counter.fineCounter);
+          fineCounter := counter.fineCounter;
+          EXIT
+        ELSE
+          Thread.Release(counter);
+          TRY
+            Thread.Pause(1.0D0 / 256.0D0);
+          FINALLY
+            Thread.Acquire(counter);
+          END;
+        END;
+      END;
+    END;
+    IF Swap.endian = Swap.Endian.Big
+      THEN ts.time := time;
+      ELSE ts.time := Swap.Swap4(time);
+    END;
+    ts.fineTime       := fineTime;
+    ts.fineCounter    := fineCounter;
+    ts.machineHigh[0] := myMachineID.r[0];
+    ts.machineHigh[1] := myMachineID.r[1];
+    ts.machineLow[0]  := myMachineID.r[2];
+    ts.machineLow[1]  := myMachineID.r[3];
+    ts.machineLow[2]  := myMachineID.r[4];
+    ts.machineLow[3]  := myMachineID.r[5];
+    ts.pidHigh        := myPIDHigh;
+    ts.pidLow         := myPIDLow;
+    RETURN LOOPHOLE(ts, T);
+  END New;
+
+PROCEDURE <A NAME="Compare"><procedure>Compare</procedure></A> (READONLY t1, t2: T): [-1 .. 1] =
+  VAR res := Cstring.memcmp(ADR(t1), ADR(t2), BYTESIZE(T));
+  BEGIN
+    IF    res = 0 THEN  RETURN 0;
+    ELSIF res &lt; 0 THEN  RETURN -1;
+    ELSE                RETURN 1;
+    END;
+  END Compare;
+
+PROCEDURE <A NAME="Equal"><procedure>Equal</procedure></A>(READONLY t1, t2: T): BOOLEAN =
+  BEGIN
+    RETURN t1 = t2;
+  END Equal;
+
+PROCEDURE <A NAME="Max"><procedure>Max</procedure></A>(READONLY t1, t2: T): T =
+  BEGIN
+    IF Compare(t1, t2) = 1 THEN RETURN t2 ELSE RETURN t1; END;
+  END Max;
+
+PROCEDURE <A NAME="Min"><procedure>Min</procedure></A>(READONLY t1, t2: T): T =
+  BEGIN
+    IF Compare(t1, t2) = 1 THEN RETURN t1 ELSE RETURN t2; END;
+  END Min;
+
+PROCEDURE <A NAME="Hash"><procedure>Hash</procedure></A> (READONLY t: T): INTEGER =
+  VAR i: INTEGER;
+  BEGIN
+    WITH a = LOOPHOLE(t, ARRAY [0 .. 3] OF Swap.Int32) DO
+      i := Word.Xor(Word.Xor(a[0], a[1]), Word.Xor(a[2], a[3]));
+    END;
+    IF Swap.endian = Swap.Endian.Big THEN i := Swap.Swap4 (i) END;
+    RETURN i;
+  END Hash;
+
+PROCEDURE <A NAME="ToTime"><procedure>ToTime</procedure></A> (READONLY t: T): Time.T =
+  VAR
+    frac := FLOAT(LOOPHOLE(t, TimeStampRep.T).fineTime, LONGREAL) / 256.0D0;
+    time := LOOPHOLE(t, TimeStampRep.T).time;
+  BEGIN
+    IF NOT init_done THEN Init () END;
+    IF Swap.endian = Swap.Endian.Little THEN time := Swap.Swap4 (time); END;
+    RETURN FLOAT(time, LONGREAL) + epoch + frac;
+  END ToTime;
+
+BEGIN
+END TimeStamp.
+</PRE>
+</inModule>
+<HR>
+<A NAME="x1">interface Cstring is in:
+</A><UL>
+<LI><A HREF="../../../C/src/AIX386/Cstring.i3.html#0TOP0">C/src/AIX386/Cstring.i3</A>
+<LI><A HREF="../../../C/src/ALPHA_OSF/Cstring.i3.html#0TOP0">C/src/ALPHA_OSF/Cstring.i3</A>
+<LI><A HREF="../../../C/src/AP3000/Cstring.i3.html#0TOP0">C/src/AP3000/Cstring.i3</A>
+<LI><A HREF="../../../C/src/ARM/Cstring.i3.html#0TOP0">C/src/ARM/Cstring.i3</A>
+<LI><A HREF="../../../C/src/DS3100/Cstring.i3.html#0TOP0">C/src/DS3100/Cstring.i3</A>
+<LI><A HREF="../../../C/src/FreeBSD/Cstring.i3.html#0TOP0">C/src/FreeBSD/Cstring.i3</A>
+<LI><A HREF="../../../C/src/FreeBSD2/Cstring.i3.html#0TOP0">C/src/FreeBSD2/Cstring.i3</A>
+<LI><A HREF="../../../C/src/HP300/Cstring.i3.html#0TOP0">C/src/HP300/Cstring.i3</A>
+<LI><A HREF="../../../C/src/HPPA/Cstring.i3.html#0TOP0">C/src/HPPA/Cstring.i3</A>
+<LI><A HREF="../../../C/src/IBMR2/Cstring.i3.html#0TOP0">C/src/IBMR2/Cstring.i3</A>
+<LI><A HREF="../../../C/src/IBMRT/Cstring.i3.html#0TOP0">C/src/IBMRT/Cstring.i3</A>
+<LI><A HREF="../../../C/src/IRIX5/Cstring.i3.html#0TOP0">C/src/IRIX5/Cstring.i3</A>
+<LI><A HREF="../../../C/src/LINUX/Cstring.i3.html#0TOP0">C/src/LINUX/Cstring.i3</A>
+<LI><A HREF="../../../C/src/LINUXELF/Cstring.i3.html#0TOP0">C/src/LINUXELF/Cstring.i3</A>
+<LI><A HREF="../../../C/src/NEXT/Cstring.i3.html#0TOP0">C/src/NEXT/Cstring.i3</A>
+<LI><A HREF="../../../C/src/NT386/Cstring.i3.html#0TOP0">C/src/NT386/Cstring.i3</A>
+<LI><A HREF="../../../C/src/OKI/Cstring.i3.html#0TOP0">C/src/OKI/Cstring.i3</A>
+<LI><A HREF="../../../C/src/SEQUENT/Cstring.i3.html#0TOP0">C/src/SEQUENT/Cstring.i3</A>
+<LI><A HREF="../../../C/src/SOLgnu/Cstring.i3.html#0TOP0">C/src/SOLgnu/Cstring.i3</A>
+<LI><A HREF="../../../C/src/SOLsun/Cstring.i3.html#0TOP0">C/src/SOLsun/Cstring.i3</A>
+<LI><A HREF="../../../C/src/SPARC/Cstring.i3.html#0TOP0">C/src/SPARC/Cstring.i3</A>
+<LI><A HREF="../../../C/src/SUN3/Cstring.i3.html#0TOP0">C/src/SUN3/Cstring.i3</A>
+<LI><A HREF="../../../C/src/SUN386/Cstring.i3.html#0TOP0">C/src/SUN386/Cstring.i3</A>
+<LI><A HREF="../../../C/src/UMAX/Cstring.i3.html#0TOP0">C/src/UMAX/Cstring.i3</A>
+<LI><A HREF="../../../C/src/VAX/Cstring.i3.html#0TOP0">C/src/VAX/Cstring.i3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x2">interface FloatMode is in:
+</A><UL>
+<LI><A HREF="../../../float/src/DS3100/FloatMode.i3.html#0TOP0">float/src/DS3100/FloatMode.i3</A>
+<LI><A HREF="../../../float/src/IEEE-default/FloatMode.i3.html#0TOP0">float/src/IEEE-default/FloatMode.i3</A>
+<LI><A HREF="../../../float/src/IRIX5/FloatMode.i3.html#0TOP0">float/src/IRIX5/FloatMode.i3</A>
+<LI><A HREF="../../../float/src/SOLsun/FloatMode.i3.html#0TOP0">float/src/SOLsun/FloatMode.i3</A>
+<LI><A HREF="../../../float/src/SPARC/FloatMode.i3.html#0TOP0">float/src/SPARC/FloatMode.i3</A>
+<LI><A HREF="../../../float/src/SUN386/FloatMode.i3.html#0TOP0">float/src/SUN386/FloatMode.i3</A>
+<LI><A HREF="../../../float/src/VAX/FloatMode.i3.html#0TOP0">float/src/VAX/FloatMode.i3</A>
+</UL>
+<P>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

@@ -1,0 +1,66 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: dps/src/DLWindow.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>dps/src/DLWindow.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+
+INTERFACE <interface><A HREF="DLWindow.m3.html">DLWindow</A></interface>;
+
+IMPORT <A HREF="DisplayList.i3.html">DisplayList</A>, <A HREF="DPS.i3.html">DPS</A>, <A HREF="DPSWindow.i3.html">DPSWindow</A>;
+
+TYPE T = DPSWindow.T OBJECT
+   displayList: DisplayList.R;
+  OVERRIDES
+   Paint := Paint;
+   Mouse := Mouse;
+   Char := Char;
+   Key := Key;
+   KillInputFocus := KillInputFocus;
+  END;
+</PRE> The first element in the list is the furthest from the user. 
+ The list is painted in normal order and mouse-scanned in reverse order. 
+
+<P><PRE>CONST BackgroundGray = 1.00;
+
+PROCEDURE <A HREF="DLWindow.m3.html#Paint">Paint</A> (t: T; box: DPS.Box; only: REFANY);
+PROCEDURE <A HREF="DLWindow.m3.html#Mouse">Mouse</A> (t: T; event: DPS.MouseEvent): BOOLEAN;
+PROCEDURE <A HREF="DLWindow.m3.html#Char">Char</A> (t: T; char: CHAR): BOOLEAN;
+
+PROCEDURE <A HREF="DLWindow.m3.html#Key">Key</A> (t: T; event: DPS.KeyEvent);
+
+PROCEDURE <A HREF="DLWindow.m3.html#KillInputFocus">KillInputFocus</A> (t: T);
+
+  END DLWindow.
+</PRE>
+</inInterface>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

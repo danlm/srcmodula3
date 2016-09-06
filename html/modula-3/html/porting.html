@@ -1,0 +1,209 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: Hints for porting </TITLE>
+</HEAD>
+<BODY BGCOLOR="#ffffff" VLINK="#006633">
+
+<H2>Hints for porting</H2>
+<P>
+
+Anyone who is interested in porting this system is encouraged!  We
+would like to know how it goes.  The primary concerns when doing a
+port will be the size and alignment constraints of the target machine
+and the runtime.
+<P>
+
+The directions in this section are somewhat sparse. We tried to make
+the installation of SRC Modula-3 smooth, but it is another story to make
+the development of ports smooth. Please bear with us and tell us what
+we can do to improve this section.
+<P>
+
+If you want to a port to an unsupported system you should:
+<UL>
+<LI> decide on the name of the new architecture; in the rest, we
+  assume that it is <EM>new</EM>
+<LI> describe the target machine for the compiler
+<LI> implement the machine-specific part of the base libraries for
+  the new machine
+<LI> create a cross-compiled bootstrap archive
+<LI> install the bootstrap on the target machine
+</UL>
+<P>
+
+In the following, all the paths are relative to the directory in which
+you unpacked the <TT>m3.tar.gz</TT> archive.
+<P>
+
+<H3>Describing the target machine</H3>
+<P>
+
+The compiler has a small number of parameters that are used to
+describe the target machine.  These parameters are defined in the
+interface <TT>m3middle/src/Target.i3</TT> and its implementation.  Edit <TT>Target.m3</TT> to add a new machine description.
+<P>
+
+In <TT>m3build/templates</TT> create a file named <EM>new</EM> and add
+<EM>new</EM> to the list of known platforms in <TT>PLATFORMS</TT>.  Use the
+other machine descriptions as a model.
+<P>
+
+<H3>Porting the runtime and base libraries</H3>
+<P>
+
+Some of the Modula-3 code (and a few little pieces of C) are
+machine-dependent.  Of course, it may be that some code we
+thought was machine-independent will turn out to require changes for
+your <EM>new</EM> architecture, so we cannot guarantee that the list
+below is exhaustive.  In general, look at what is done for the other
+machines, and use the most similar one as a starting point.
+<P>
+
+In <TT>m3core/src/Csupport</TT>, add a directory <EM>new</EM> and put in it
+the files:
+<UL>
+<LI>
+<TT>m3makefile</TT> to describe the contents of the directory
+<LI>
+<TT>dtoa.c</TT> to configure <TT>../generic/dtoa.h</TT>; look at
+that file for the things to configure.
+<LI>
+<TT>float.h</TT> if your system does not have one. You can build
+it using a program called <TT>enquire</TT>, which can be found 
+on the net or in the directory <TT>compiler/src/enquire</TT>
+</UL>
+<P>
+
+In <TT>m3core/src/C</TT>, add a directory <EM>new</EM> and put in it the
+files:
+<UL>
+<LI>
+<TT>m3makefile</TT> to describe the contents of the directory
+<LI>
+<TT>Csetjmp.i3</TT> to describe the interface to <TT>setjmp</TT>,
+<TT>longjmp</TT>, <TT>_setjmp</TT> and <TT>_longjmp</TT>.  Be careful to
+get the size of the <TT>jmp_buf</TT> right.
+<LI>
+<TT>Cstdio.i3</TT>, essentially a Modula-3 translation of <TT>stdio.h</TT>
+<LI>
+<TT>Cstring.i3</TT>, a translation of <TT>string.h</TT>
+</UL>
+<P>
+
+In <TT>m3core/src/runtime</TT>, add a directory <EM>new</EM>.  Then copy
+one of the other platform-dependent directories into your
+<EM>new</EM> directory and adapt its contents to match your platform.
+
+<BLOCKQUOTE>
+<EM>WARNING: ENTERING VERY OLD SECTION.</EM><P>
+
+put in it the files: 
+<UL>
+<LI>
+<TT>m3makefile</TT> to describe the contents of the directory
+<LI>
+<TT>WildJmp.i3</TT>: this interface provides functions that are
+similar to <TT>_setjmp</TT> and <TT>_longjmp</TT>, but that do not
+impose any restriction on what is possible.  The <TT>DS3100</TT>
+version is the simplest, because on that architecture, <TT>_setjmp</TT>
+and <TT>_longjmp</TT> are just fine.  The <TT>VAX</TT> version is the most
+complex, we had to rewrite our own versions because <TT>longjmp</TT>
+requires that the stack be popped (remember the <TT>longjmp botch</TT>
+message?).
+</UL>
+<P>
+
+In <TT>libm3/src/runtime</TT>, you can either reuse one of the
+<TT>StackInc-</TT><EM>n</EM> component, or you may have to create a new one
+(i.e., you need a different value of <EM>n</EM>).  The dependency
+described there is for the benefit of the garbage collector.  At the
+beginning of a collection, the collector must find all the roots, that
+is, all the heap objects that are referenced from outside the heap
+itself.  The stacks contain such pointers, and the collector scans
+them to find roots.  However, the collector does not know the full
+structure of the stacks (frames, argument lists and so on); rather, it
+just looks at the values that are there and make conservative
+decisions by interpreting these values as possible pointers.  For each
+stack, the collector initializes a pointer $P$ to the bottom of the
+stack; then it repeatedly tries to interpret the bits pointed by $P$ as
+a pointer in the heap, marks the root if the interpretation is
+successfull and advances $P$.  The question is by how much $P$ should be
+advanced; if all entries in the stack are aligned at $n$-bytes
+boundaries, it is sufficient to increment $P$ by $n$ bytes; a smaller value
+would be an overkill.  We have found that some machines require $n$ to
+be 2, and that 4 is enough for others.
+<P>
+
+<EM>LEAVING VERY OLD SECTION.</EM>
+</BLOCKQUOTE>
+<P>
+
+In <TT>m3core/src/float</TT>, add a directory <EM>new</EM> and copy the files
+that are in <TT>MODEL</TT> in that directory.  The routines in these
+modules provide access the floating point control (to set exceptions
+and so on).  The version in <TT>MODEL</TT> is a template, and most of the
+routines will fail (because of an <TT>&lt;*ASSERT FALSE*&gt;</TT>) if
+executed.  The <TT>DS3100</TT> and <TT>SPARC</TT> directories are examples
+of implementations for IEEE machines, the <TT>VAX</TT> directory is an
+example for non-IEEE machines.  It is not essential that you implement
+the proper procedures right now: the versions in <TT>MODEL</TT> are good
+enough for the compiler, the driver and simple test programs.  But you
+will have to take care of that at some point.
+<P>
+
+In <TT>libm3/src/random</TT>, you can either reuse one of the
+directories <TT>VAX</TT>, <TT>IEEE-le</TT> or <TT>IEEE-be</TT>, or
+create your own on those models. The goal is to describe enough of the
+floating point representation for the random number generator. There
+is probably some overlap with the <TT>libm3/float</TT> stuff, we will
+take care of that at some point.
+<P>
+
+In <TT>m3core/src/unix</TT>, you will find a bunch of interfaces to the
+procedures of sections 2 and 3 of U**X.  Not everything is there, but
+we sometime dream to have a complete set; in other words, it's quite a
+bit of work to make sure that you have the proper descriptions, and of
+course, there is nothing from which these interfaces could be
+mechanically derived.  Fortunately, the driver and the compiler rely
+on very few of these procedures, and any version is probably good
+enough for your machine.  We suggest that you do the work only when
+you find some problems (at least, wait until you get a basic port running).
+<P>
+
+<H3>Creating a cross-compiled bootstrap</H3>
+<P>
+
+At the top level, type to the shell:
+<PRE>
+    $ mkdir new-world
+    $ cd new-world
+    $ ln -s &lt;wherever you unpacked m3utils/m3export&gt; M3EXPORT
+    &lt;edit M3EXPORT/build-boot to point at your modified sources&gt;
+    $ M3EXPORT/build-boot <EM>new</EM>
+</PRE>
+<P>
+
+After a while, you should get a compressed tar file,
+RELEASE/boot-<EM>new</EM>.tar.gz.  Copy it to the
+new machine and proceed as you did for the original
+installation of SRC Modula-3.
+<P>
+
+Good Luck!
+<P>
+
+<HR>
+<A HREF="home.html">[Modula-3 home page]</A>
+<P>
+<A HREF="mailto:m3-request@src.dec.com">
+<ADDRESS>m3-request@src.dec.com</ADDRESS></A>
+<PRE>
+Last modified on Tue Mar 26 09:29:18 PST 1996 by heydon
+     modified on Thu Jun 22 16:01:41 PDT 1995 by kalsow
+     modified on Tue Feb 18 13:23:15 PST 1992 by muller
+</PRE>
+
+Copyright (C) 1992, 1996, Digital Equipment Corporation. All rights reserved.<BR>
+See the <A HREF="http://www.research.digital.com/SRC/m3sources/html/COPYRIGHT.html">COPYRIGHT</A> for a full description.
+</BODY>
+</HTML>

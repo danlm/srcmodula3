@@ -1,0 +1,63 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: tcp/src/POSIX/TCPHack.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>tcp/src/POSIX/TCPHack.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM> Created on Sat Jan 11 15:49:00 PST 1992 by wobber </EM></BLOCKQUOTE><PRE>
+
+INTERFACE <interface><A HREF="#x1">TCPHack</A></interface>;
+
+PROCEDURE <A HREF="#x2">RefetchError</A>(fd: INTEGER): BOOLEAN;
+  (* Awful hack to retrieve a meaningful error from a TCP accept
+     socket.  Only works on Ultrix and OSF.  Leaves result
+     in Cerrno.errno.  Returns &quot;TRUE&quot; if and only if it might
+     possibly have succeeded. *)
+
+END TCPHack.
+</PRE>
+</inInterface>
+<HR>
+<A NAME="x1">TCPHack's implementation  is in:
+</A><UL>
+<LI><A HREF="TCPHack.m3.html#0TOP0">tcp/src/POSIX/TCPHack.m3</A>
+<LI><A HREF="TCPHackNull.m3.html#0TOP0">tcp/src/POSIX/TCPHackNull.m3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x2">procedure TCPHack.RefetchError is in:
+</A><UL>
+<LI><A HREF="TCPHack.m3.html#RefetchError">tcp/src/POSIX/TCPHack.m3</A>
+<LI><A HREF="TCPHackNull.m3.html#RefetchError">tcp/src/POSIX/TCPHackNull.m3</A>
+</UL>
+<P>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

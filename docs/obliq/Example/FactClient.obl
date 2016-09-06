@@ -1,0 +1,7 @@
+(* A client for FactServer. *)
+
+module FactClient;
+
+let fact = net_import("fact","");
+
+let count = net_import("count","");

@@ -1,0 +1,111 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: os/src/POSIX/OSErrorPosix.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>os/src/POSIX/OSErrorPosix.m3</H2></A><HR>
+<inModule>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+
+MODULE <module>OSErrorPosix</module> EXPORTS <A HREF="../Common/OSError.i3.html"><implements>OSError</A></implements>, <A HREF="OSErrorPosix.i3.html"><implements>OSErrorPosix</A></implements>;
+
+IMPORT <A HREF="../../../atom/src/Atom.i3.html">Atom</A>, <A HREF="../../../libm3/DS/AtomList.i3.html">AtomList</A>, <A HREF="../../../fmtlex/src/Fmt.i3.html">Fmt</A>, <A HREF="../Common/OSError.i3.html">OSError</A>, <A HREF="../../../text/src/Text.i3.html">Text</A>, <A HREF="#x1">Uerror</A>;
+
+VAR cache := ARRAY [0..Uerror.Max] OF Atom.T {NIL, ..};
+</PRE><BLOCKQUOTE><EM> The table is initialized lazily. </EM></BLOCKQUOTE><PRE>
+
+PROCEDURE <A NAME="NewAtom"><procedure>NewAtom</procedure></A> (n: CARDINAL): Atom.T =
+  BEGIN
+    RETURN Atom.FromText(&quot;errno=&quot; &amp; Fmt.Int(n));
+  END NewAtom;
+
+PROCEDURE <A NAME="ErrnoAtom"><procedure>ErrnoAtom</procedure></A>(n: CARDINAL): Atom.T =
+  BEGIN
+    IF (n &lt; NUMBER (cache)) THEN
+      IF cache[n] = NIL THEN cache[n] := NewAtom(n) END;
+      RETURN cache[n]
+    ELSE
+      RETURN NewAtom (n);
+    END;
+  END ErrnoAtom;
+
+EXCEPTION CheckedRuntimeError; &lt;*FATAL CheckedRuntimeError*&gt;
+
+PROCEDURE <A NAME="AtomToErrno"><procedure>AtomToErrno</procedure></A>(a: Atom.T): CARDINAL =
+  VAR t := Atom.ToText(a); n := 0; c: CHAR;
+  BEGIN
+    IF NOT Text.Equal(Text.Sub(t, 0, 6), &quot;errno=&quot;) THEN
+      RAISE CheckedRuntimeError
+    END;
+    FOR i := 6 TO Text.Length(t)-1 DO
+      c := Text.GetChar(t, i);
+      IF '0' &lt;= c AND c &lt;= '9' THEN
+        n := n * 10 + (ORD(c) - ORD('0'))
+      ELSE
+        RAISE CheckedRuntimeError
+      END
+    END;
+    RETURN n
+  END AtomToErrno;
+
+PROCEDURE <A NAME="Raise0"><procedure>Raise0</procedure></A>(errno: INTEGER) RAISES {OSError.E} =
+  BEGIN
+    RAISE OSError.E(
+      NEW(AtomList.T, head := ErrnoAtom(errno), tail := NIL))
+  END Raise0;
+
+PROCEDURE <A NAME="Raise"><procedure>Raise</procedure></A>() RAISES {OSError.E} =
+  BEGIN
+    Raise0(Uerror.errno)
+  END Raise;
+
+BEGIN
+END OSErrorPosix.
+</PRE>
+</inModule>
+<HR>
+<A NAME="x1">interface Uerror is in:
+</A><UL>
+<LI><A HREF="../../../unix/src/aix-3-2/Uerror.i3.html#0TOP0">unix/src/aix-3-2/Uerror.i3</A>
+<LI><A HREF="../../../unix/src/aix-ps2-1-2/Uerror.i3.html#0TOP0">unix/src/aix-ps2-1-2/Uerror.i3</A>
+<LI><A HREF="../../../unix/src/freebsd-1/Uerror.i3.html#0TOP0">unix/src/freebsd-1/Uerror.i3</A>
+<LI><A HREF="../../../unix/src/freebsd-2/Uerror.i3.html#0TOP0">unix/src/freebsd-2/Uerror.i3</A>
+<LI><A HREF="../../../unix/src/hpux-7-0/Uerror.i3.html#0TOP0">unix/src/hpux-7-0/Uerror.i3</A>
+<LI><A HREF="../../../unix/src/ibm-4-3/Uerror.i3.html#0TOP0">unix/src/ibm-4-3/Uerror.i3</A>
+<LI><A HREF="../../../unix/src/irix-5.2/Uerror.i3.html#0TOP0">unix/src/irix-5.2/Uerror.i3</A>
+<LI><A HREF="../../../unix/src/linux/Uerror.i3.html#0TOP0">unix/src/linux/Uerror.i3</A>
+<LI><A HREF="../../../unix/src/osf-1.generic/Uerror.i3.html#0TOP0">unix/src/osf-1.generic/Uerror.i3</A>
+<LI><A HREF="../../../unix/src/solaris-2-x/Uerror.i3.html#0TOP0">unix/src/solaris-2-x/Uerror.i3</A>
+<LI><A HREF="../../../unix/src/sunos-4-x/Uerror.i3.html#0TOP0">unix/src/sunos-4-x/Uerror.i3</A>
+<LI><A HREF="../../../unix/src/sysv-4.0/Uerror.i3.html#0TOP0">unix/src/sysv-4.0/Uerror.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.generic/Uerror.i3.html#0TOP0">unix/src/ultrix-3-1.generic/Uerror.i3</A>
+</UL>
+<P>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

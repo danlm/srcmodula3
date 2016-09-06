@@ -1,0 +1,54 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: m3front/src/builtinTypes/Addr.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>m3front/src/builtinTypes/Addr.m3</H2></A><HR>
+<inModule>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE> File: Addr.m3                                               
+ Last Modified On Fri Jun 24 09:42:33 PDT 1994 By kalsow     
+      Modified On Fri Feb  9 06:19:03 1990 By muller         
+
+<P><PRE>MODULE <module><implements><A HREF="Addr.i3.html">Addr</A></implements></module>;
+
+IMPORT <A HREF="../misc/M3String.i3.html">M3String</A>, <A HREF="../types/RefType.i3.html">RefType</A>, <A HREF="../values/Tipe.i3.html">Tipe</A>, <A HREF="../exprs/TextExpr.i3.html">TextExpr</A>;
+
+PROCEDURE <A NAME="Initialize"><procedure>Initialize</procedure></A> () =
+  BEGIN
+    T := RefType.New (NIL, FALSE, TextExpr.New (M3String.Add (&quot;$address$&quot;)));
+    Tipe.Define (&quot;ADDRESS&quot;, T, TRUE);
+  END Initialize;
+
+BEGIN
+END Addr.
+</PRE>
+</inModule>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

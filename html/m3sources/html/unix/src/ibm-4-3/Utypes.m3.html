@@ -1,0 +1,121 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: unix/src/ibm-4-3/Utypes.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>unix/src/ibm-4-3/Utypes.m3</H2></A><HR>
+<inModule>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM>                                                            </EM></BLOCKQUOTE><PRE>
+
+MODULE <module><implements><A HREF="#x1">Utypes</A></implements></module>;
+
+IMPORT <A HREF="../../../word/src/Word.i3.html">Word</A>;
+FROM <A HREF="../../../C/src/Common/Ctypes.i3.html">Ctypes</A> IMPORT int;
+
+PROCEDURE <A NAME="major"><procedure>major</procedure></A> (x: int): int =
+  BEGIN
+    RETURN Word.And (Word.Shift (x, -8), 8_0377);
+  END major;
+
+PROCEDURE <A NAME="minor"><procedure>minor</procedure></A> (x: int): int =
+  BEGIN
+    RETURN Word.And (x, 8_0377);
+  END minor;
+
+PROCEDURE <A NAME="makedev"><procedure>makedev</procedure></A> (x, y: int): dev_t =
+  BEGIN
+    RETURN Word.Or (Word.Shift (x, 8), y);
+  END makedev;
+
+PROCEDURE <A NAME="howmany"><procedure>howmany</procedure></A> (x, y: int): int =
+  BEGIN
+    RETURN (x + (y - 1)) DIV y;
+  END howmany;
+
+PROCEDURE <A NAME="FD_SET"><procedure>FD_SET</procedure></A> (n: int; p: UNTRACED REF fd_set): int =
+  BEGIN
+    WITH l = p.fds_bits [n DIV NFDBITS] DO
+      l := Word.Or (l, Word.Shift (1, n MOD NFDBITS));
+      RETURN l; END;
+  END FD_SET;
+
+PROCEDURE <A NAME="FD_CLEAR"><procedure>FD_CLEAR</procedure></A> (n: int; p: UNTRACED REF fd_set): int =
+  BEGIN
+    WITH l = p.fds_bits [n DIV NFDBITS] DO
+      l := Word.And (l, Word.Not (Word.Shift (1, n MOD NFDBITS)));
+      RETURN l; END;
+  END FD_CLEAR;
+
+PROCEDURE <A NAME="FD_ISSET"><procedure>FD_ISSET</procedure></A> (n: int; p: UNTRACED REF fd_set): int =
+  BEGIN
+    WITH l = p.fds_bits [n DIV NFDBITS] DO
+      RETURN Word.And (l, Word.Shift (1, n MOD NFDBITS)); END;
+  END FD_ISSET;
+
+PROCEDURE <A NAME="FD_ZERO"><procedure>FD_ZERO</procedure></A> (p: UNTRACED REF fd_set) =
+  BEGIN
+    WITH a = p.fds_bits DO
+      FOR i := FIRST (a) TO LAST (a) DO
+        a[i] := 0; END; END;
+  END FD_ZERO;
+
+BEGIN
+END Utypes.
+</PRE>
+</inModule>
+<HR>
+<A NAME="x1">interface Utypes is in:
+</A><UL>
+<LI><A HREF="../aix-3-2/Utypes.i3.html#0TOP0">unix/src/aix-3-2/Utypes.i3</A>
+<LI><A HREF="../aix-ps2-1-2/Utypes.i3.html#0TOP0">unix/src/aix-ps2-1-2/Utypes.i3</A>
+<LI><A HREF="../freebsd-1/Utypes.i3.html#0TOP0">unix/src/freebsd-1/Utypes.i3</A>
+<LI><A HREF="../freebsd-2/Utypes.i3.html#0TOP0">unix/src/freebsd-2/Utypes.i3</A>
+<LI><A HREF="../hpux-7-0/Utypes.i3.html#0TOP0">unix/src/hpux-7-0/Utypes.i3</A>
+<LI><A HREF="Utypes.i3.html#0TOP0">unix/src/ibm-4-3/Utypes.i3</A>
+<LI><A HREF="../irix-5.2/Utypes.i3.html#0TOP0">unix/src/irix-5.2/Utypes.i3</A>
+<LI><A HREF="../linux/Utypes.i3.html#0TOP0">unix/src/linux/Utypes.i3</A>
+<LI><A HREF="../osf-1.ALPHA_OSF/Utypes.i3.html#0TOP0">unix/src/osf-1.ALPHA_OSF/Utypes.i3</A>
+<LI><A HREF="../osf-1.DS3100/Utypes.i3.html#0TOP0">unix/src/osf-1.DS3100/Utypes.i3</A>
+<LI><A HREF="../solaris-2-x/Utypes.i3.html#0TOP0">unix/src/solaris-2-x/Utypes.i3</A>
+<LI><A HREF="../sunos-4-x/Utypes.i3.html#0TOP0">unix/src/sunos-4-x/Utypes.i3</A>
+<LI><A HREF="../sysv-4.0/Utypes.i3.html#0TOP0">unix/src/sysv-4.0/Utypes.i3</A>
+<LI><A HREF="../ultrix-3-1.AP3000/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.AP3000/Utypes.i3</A>
+<LI><A HREF="../ultrix-3-1.ARM/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.ARM/Utypes.i3</A>
+<LI><A HREF="../ultrix-3-1.DS3100/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.DS3100/Utypes.i3</A>
+<LI><A HREF="../ultrix-3-1.NEXT/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.NEXT/Utypes.i3</A>
+<LI><A HREF="../ultrix-3-1.SEQUENT/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.SEQUENT/Utypes.i3</A>
+<LI><A HREF="../ultrix-3-1.SUN3/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.SUN3/Utypes.i3</A>
+<LI><A HREF="../ultrix-3-1.SUN386/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.SUN386/Utypes.i3</A>
+<LI><A HREF="../ultrix-3-1.UMAX/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.UMAX/Utypes.i3</A>
+<LI><A HREF="../ultrix-3-1.VAX/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.VAX/Utypes.i3</A>
+</UL>
+<P>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

@@ -1,0 +1,117 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: unix/src/irix-5.2/Upwd.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>unix/src/irix-5.2/Upwd.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+
+INTERFACE <interface>Upwd</interface>;
+
+FROM <A HREF="../../../C/src/Common/Ctypes.i3.html">Ctypes</A> IMPORT char_star, int;
+FROM <A HREF="#x1">Utypes</A> IMPORT uid_t;
+</PRE>** &lt;pwd.h&gt; **
+
+<P><PRE>TYPE
+  struct_passwd = RECORD
+    pw_name:     char_star;
+    pw_passwd:   char_star;
+    pw_uid:      uid_t;
+    pw_gid:      uid_t;
+    pw_age:      char_star;
+    pw_comment:  char_star;
+    pw_gecos:    char_star;
+    pw_dir:      char_star;
+    pw_shell:    char_star;
+    pw_origin:   int;            (* type of entry, defined below. *)
+    pw_yp_passwd: char_star;	 (* if non-null, yp passwd value *)
+    pw_yp_gecos: char_star;	 (* if non-null, yp gecos field *)
+    pw_yp_dir: char_star;	 (* if non-null, yp home directory *)
+    pw_yp_shell: char_star;	 (* if non-null, yp login shell *)
+    pw_yp_netgroup: char_star;   (* if non-null, yp netgroup name *)
+  END;
+</PRE> pw_origin values: 
+<PRE>CONST
+  PW_LOCAL	 = 0;
+  PW_YP_USER	 = 1;
+  PW_YP_NETGROUP	 = 2;
+  PW_YP_ALL	 = 3;
+  PW_YP_REMOTE	 = 4;
+
+TYPE
+  struct_comment = RECORD
+    c_dept:      char_star;
+    c_name:      char_star;
+    c_acct:      char_star;
+    c_bin:       char_star;
+  END;
+
+  struct_passwd_star = UNTRACED REF struct_passwd;
+</PRE>** getpwent, getpwuid, getpwnam, setpwent, endpwent(2) - get
+     password file entry **
+
+<P><PRE>&lt;*EXTERNAL*&gt; PROCEDURE getpwuid (uid: uid_t): struct_passwd_star;
+&lt;*EXTERNAL*&gt; PROCEDURE getpwnam (name: char_star): struct_passwd_star;
+&lt;*EXTERNAL*&gt; PROCEDURE getpwent (): struct_passwd_star;
+&lt;*EXTERNAL*&gt; PROCEDURE setpwent();
+&lt;*EXTERNAL*&gt; PROCEDURE endpwent();
+
+END Upwd.
+</PRE>
+</inInterface>
+<HR>
+<A NAME="x1">interface Utypes is in:
+</A><UL>
+<LI><A HREF="../aix-3-2/Utypes.i3.html#0TOP0">unix/src/aix-3-2/Utypes.i3</A>
+<LI><A HREF="../aix-ps2-1-2/Utypes.i3.html#0TOP0">unix/src/aix-ps2-1-2/Utypes.i3</A>
+<LI><A HREF="../freebsd-1/Utypes.i3.html#0TOP0">unix/src/freebsd-1/Utypes.i3</A>
+<LI><A HREF="../freebsd-2/Utypes.i3.html#0TOP0">unix/src/freebsd-2/Utypes.i3</A>
+<LI><A HREF="../hpux-7-0/Utypes.i3.html#0TOP0">unix/src/hpux-7-0/Utypes.i3</A>
+<LI><A HREF="../ibm-4-3/Utypes.i3.html#0TOP0">unix/src/ibm-4-3/Utypes.i3</A>
+<LI><A HREF="Utypes.i3.html#0TOP0">unix/src/irix-5.2/Utypes.i3</A>
+<LI><A HREF="../linux/Utypes.i3.html#0TOP0">unix/src/linux/Utypes.i3</A>
+<LI><A HREF="../osf-1.ALPHA_OSF/Utypes.i3.html#0TOP0">unix/src/osf-1.ALPHA_OSF/Utypes.i3</A>
+<LI><A HREF="../osf-1.DS3100/Utypes.i3.html#0TOP0">unix/src/osf-1.DS3100/Utypes.i3</A>
+<LI><A HREF="../solaris-2-x/Utypes.i3.html#0TOP0">unix/src/solaris-2-x/Utypes.i3</A>
+<LI><A HREF="../sunos-4-x/Utypes.i3.html#0TOP0">unix/src/sunos-4-x/Utypes.i3</A>
+<LI><A HREF="../sysv-4.0/Utypes.i3.html#0TOP0">unix/src/sysv-4.0/Utypes.i3</A>
+<LI><A HREF="../ultrix-3-1.AP3000/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.AP3000/Utypes.i3</A>
+<LI><A HREF="../ultrix-3-1.ARM/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.ARM/Utypes.i3</A>
+<LI><A HREF="../ultrix-3-1.DS3100/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.DS3100/Utypes.i3</A>
+<LI><A HREF="../ultrix-3-1.NEXT/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.NEXT/Utypes.i3</A>
+<LI><A HREF="../ultrix-3-1.SEQUENT/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.SEQUENT/Utypes.i3</A>
+<LI><A HREF="../ultrix-3-1.SUN3/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.SUN3/Utypes.i3</A>
+<LI><A HREF="../ultrix-3-1.SUN386/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.SUN386/Utypes.i3</A>
+<LI><A HREF="../ultrix-3-1.UMAX/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.UMAX/Utypes.i3</A>
+<LI><A HREF="../ultrix-3-1.VAX/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.VAX/Utypes.i3</A>
+</UL>
+<P>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

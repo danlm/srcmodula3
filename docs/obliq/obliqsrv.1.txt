@@ -1,0 +1,132 @@
+
+
+
+                                                                  obliqsrv(1)
+
+
+
+   Name
+     Obliq Server - start an Obliq server
+
+
+   Syntax
+     oobblliiqqssrrvv [options] &
+
+
+   Description
+
+     An Obliq server. The command obliqsrv -X, where "X" is "std" or "ui",
+     starts netobjd on the local machine M, if needed, and exports an
+     execution engine to it. From any machine M1 one can then issue the Obliq
+     command net_importEngine("XObliqEngine","M")(p) to execute the procedure
+     p on machine M, where "X" is either "std" or "ui". Here M must be an IP
+     address, and p must be a procedure of one arguments. The argument given
+     to p is the IP address of the server, as a string. The result of p is
+     returned to machine M1.  Obliq servers are linked without a
+     parser/printer.
+
+     A server has the privileges of the account that starts it. Every client
+     acquires the privileges of the server while running in the server.  A
+     server is not an inherent security risk: a server's operating system and
+     file system are not avaliable to clients, unless the server allows it.
+
+     To start an Obliq server on another machine M2, issue the following
+     command:
+
+     rsh M2 exec obliqsrv [options] &
+
+
+   Options
+
+
+     --ssttdd obliq server with standard libraries
+
+     --uuii  obliq server with user-iterface libraries
+
+
+   SRC Documentation
+
+         /src/hypertext/SRC/obliq/Obliq.html    (quick start, for mosaic)
+
+
+   External Site Documentation
+
+         ...obliqdoc/src/Obliq.html/           (quick start, for mosaic)
+         ...obliqdoc/src/ObliqPaper.ps         (paper/manual, for printing)
+         ...obliqdoc/src/ObliqPaper-html/ObliqPaper.html (same, for mosaic)
+         ...obliqdoc/src/Example/*.obl         (example programs)
+
+
+   Files
+
+         /tmp/obliqsrvstd.log
+         /tmp/obliqsrvui.log
+
+
+
+   See Also
+
+         obliq
+         netobjd
+         The Modula-3 Network Objects documentation
+         "Obliq: A language with distributed scope" (Obliq.ps, above)
+
+
+   Author Of Object
+
+       Luca Cardelli
+
+
+   Author Of Documentation
+
+       Luca Cardelli
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

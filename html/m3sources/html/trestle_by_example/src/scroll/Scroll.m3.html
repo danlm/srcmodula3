@@ -1,0 +1,88 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: trestle_by_example/src/scroll/Scroll.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>trestle_by_example/src/scroll/Scroll.m3</H2></A><HR>
+<inModule>
+<PRE>MODULE <module>Scroll</module> EXPORTS <A HREF="../../../main/src/Main.i3.html"><implements>Main</A></implements>;
+
+IMPORT <A HREF="../../../ui/src/vbt/Trestle.i3.html">Trestle</A>, <A HREF="../../../ui/src/vbt/VBT.i3.html">VBT</A>, <A HREF="../../../ui/src/split/TextVBT.i3.html">TextVBT</A>, <A HREF="../../../lego/src/ScrollerVBT.i3.html">ScrollerVBT</A>, <A HREF="../../../geometry/src/Axis.i3.html">Axis</A>, <A HREF="../../../ui/src/vbt/PaintOp.i3.html">PaintOp</A>, <A HREF="../../../ui/src/vbt/Font.i3.html">Font</A>;
+IMPORT <A HREF="../../../ui/src/split/HVSplit.i3.html">HVSplit</A>, <A HREF="../../../ui/src/split/RigidVBT.i3.html">RigidVBT</A>, <A HREF="../../../lego/src/FlexVBT.i3.html">FlexVBT</A>;
+IMPORT <A HREF="../../../ui/src/vbt/Latin1Key.i3.html">Latin1Key</A>, <A HREF="../../../text/src/Text.i3.html">Text</A>, <A HREF="../../../fmtlex/src/Fmt.i3.html">Fmt</A>;
+
+PROCEDURE <A NAME="Scroller"><procedure>Scroller</procedure></A> (min, max, step: INTEGER): ScrollerVBT.T =
+  VAR v := NEW(ScrollerVBT.T, callback := Degrees);
+  BEGIN
+    RETURN (v.init(Axis.T.Ver, min, max, quad, step));
+  END Scroller;
+
+PROCEDURE <A NAME="Degrees"><procedure>Degrees</procedure></A> (v: ScrollerVBT.T; READONLY cd: VBT.MouseRec) =
+  VAR
+    deg := ScrollerVBT.Get(scr1);
+    min := ScrollerVBT.Get(scr2);
+    sec := ScrollerVBT.Get(scr3);
+    cir := Text.FromChar(VAL(Latin1Key.degree, CHAR));
+    text := Fmt.Int(deg) &amp; cir &amp; &quot; &quot; &amp; Fmt.Int(min) &amp; &quot;' &quot; &amp; Fmt.Int(sec)
+              &amp; &quot;\&quot;&quot;;
+  BEGIN
+    TextVBT.Put(display, text);
+  END Degrees;
+
+CONST
+  hMin    = 10.0;                (* size in millimeters *)
+  vMin    = 50.0;                (* size in millimeters *)
+  times14 = &quot;-*-times-*-r-*-*-14-*-*-*-*-*-*-*&quot;;
+VAR
+  font    := Font.FromName(ARRAY OF TEXT{times14});
+  display := TextVBT.New(&quot;&quot;, fnt := font);
+  quad    := PaintOp.MakeColorQuad(PaintOp.Bg, PaintOp.Fg);
+  scr1    := Scroller(-180, 180, 15);
+  scr2    := Scroller(0, 59, 5);
+  scr3    := Scroller(0, 59, 5);
+  hor     := FlexVBT.Shape{FlexVBT.StretchyRange, FlexVBT.FixedRange};
+  deg     := FlexVBT.New(TextVBT.New(&quot;deg&quot;, fnt := font), hor);
+  min     := FlexVBT.New(TextVBT.New(&quot;min&quot;, fnt := font), hor);
+  sec     := FlexVBT.New(TextVBT.New(&quot;sec&quot;, fnt := font), hor);
+  col1 := RigidVBT.FromHV(HVSplit.Cons(Axis.T.Ver, deg, scr1), hMin, vMin);
+  col2 := RigidVBT.FromHV(HVSplit.Cons(Axis.T.Ver, min, scr2), hMin, vMin);
+  col3 := RigidVBT.FromHV(HVSplit.Cons(Axis.T.Ver, sec, scr3), hMin, vMin);
+  scs  := HVSplit.Cons(Axis.T.Hor, col1, col2, col3);
+  main := HVSplit.Cons(Axis.T.Ver, scs, display);
+BEGIN
+  ScrollerVBT.Put(scr1, 0);
+  ScrollerVBT.Put(scr2, 0);
+  ScrollerVBT.Put(scr3, 0);
+  Trestle.Install(main);
+  Trestle.AwaitDelete(main)
+END Scroll.
+</PRE>
+</inModule>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

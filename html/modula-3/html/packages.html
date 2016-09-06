@@ -1,0 +1,87 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: Packages</TITLE>
+</HEAD>
+<BODY BGCOLOR="#ffffff" VLINK="#006633">
+
+<H2>Packages</H2>
+<P>
+
+SRC Modula-3 is distributed as a set of packages.  Each package
+is contained in a single directory which conforms to a standard
+structure.
+The top level directory should contain a <TT>README</TT> file, a
+<A HREF="../../m3sources/html/COPYRIGHT.html"><TT>COPYRIGHT</TT></A> file,
+and a <TT>src</TT> subdirectory containing Modula-3 source
+files, and a derived directory for each platform on which the package has
+been built.
+<P>
+
+Public packages are located in a fixed location in the file system that
+is determined at configuration time (e.g. <TT>/proj/m3/pkg</TT> or
+<TT>/usr/local/lib/m3/pkg</TT>).  The public packages include the shared
+interfaces, libraries and programs available at your site.
+<P>
+
+There are three primary types of packages: source, program, and library.
+A source package contains
+a collection of Modula-3 sources; it builds nothing.
+Consequently it will contain no derived sub-directories.
+A program package constructs a single executable program by compiling
+and linking the contents of a set of source packages.
+Similarly, a library package constructs a
+single library from a set of source packages.
+<P>
+
+The <TT>m3makefile</TT>, that describes the package, resides in the
+<TT>src</TT> subdirectory of the package. Although it is common for all the
+Modula-3 sources to also reside in the src directory, they may be
+distributed in a more complex directory structure rooted at <TT>src</TT>.
+<P>
+
+The <TT>m3makefile</TT> for a source package simply lists the pieces of
+source that are to be included in programs or libraries that include the
+source package.
+<P>
+
+The <TT>m3makefile</TT> for a program package names the sources
+needed to build the program, and the packages that it uses to
+satisfy its imports.  It ends with a
+single <TT>program()</TT> or <TT>Program()</TT> invocation.
+See the <A HREF="example.html">example</A>.
+<P>
+
+The <TT>m3makefile</TT> for a library package names the sources to be
+included in the library, and the packages that it uses to
+satisfy its imports.  It ends with a single
+<TT>library()</TT> or <TT>Library()</TT> invocation.
+<P>
+
+Note that as in a program, all the imports of a package must be
+satisfied.  If a package A builds a library and any of the objects in
+that library import interfaces from another library package B, then
+<TT>import(B)</TT> must be specified in A's <TT>m3makefile</TT>.
+<P>
+
+Use
+<A HREF="m3ship.html"><TT>m3ship</TT></A>
+to install a private package in the public repository.
+Note that on some systems, you must have special privileges to install
+public packages.
+<P>
+
+<HR>
+<A HREF="home.html">[Modula-3 home page]</A>
+<P>
+<A HREF="mailto:m3-request@src.dec.com">
+<ADDRESS>m3-request@src.dec.com</ADDRESS></A>
+<PRE>
+Last modified on Thu Jan  4 11:08:01 PST 1996 by heydon 
+     modified on Thu Apr 28 08:20:49 PDT 1994 by kalsow 
+     modified on Thu Jan  7 18:40:57 PST 1993 by muller 
+</PRE>
+
+Copyright (C) 1992, 1996, Digital Equipment Corporation. All rights reserved.<BR>
+See the <A HREF="http://www.research.digital.com/SRC/m3sources/html/COPYRIGHT.html">COPYRIGHT</A> for a full description.
+</BODY>
+</HTML>

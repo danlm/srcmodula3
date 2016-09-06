@@ -1,0 +1,62 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: vtext/src/VTRd.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>vtext/src/VTRd.m3</H2></A><HR>
+<inModule>
+<PRE><A HREF="../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM>                                                                           </EM></BLOCKQUOTE><PRE>
+
+MODULE <module><implements><A HREF="VTRd.i3.html">VTRd</A></implements></module>;
+
+IMPORT <A HREF="../../mtext/src/MTextRd.i3.html">MTextRd</A>, <A HREF="../../rw/src/Common/Rd.i3.html">Rd</A>, <A HREF="../../thread/src/Common/Thread.i3.html">Thread</A>;
+
+PROCEDURE <A NAME="InitReaderIx"><procedure>InitReaderIx</procedure></A> (vt: T; index: I) RAISES {Rd.Failure, Thread.Alerted} =
+  BEGIN
+    IF vt.rdDirty THEN
+      IF vt.rd = NIL THEN vt.rd := NEW (MTextRd.T) ELSE Rd.Close (vt.rd) END;
+      EVAL vt.rd.init (vt.mtext, index);
+      vt.rdDirty := FALSE;
+    ELSE
+      Rd.Seek (vt.rd, index);
+    END;
+  END InitReaderIx;
+
+PROCEDURE <A NAME="Rev"><procedure>Rev</procedure></A> (vt: T) RAISES {Rd.Failure, Thread.Alerted} =
+  BEGIN
+    IF vt.rrd = NIL THEN vt.rrd := NEW (MTextRd.T) ELSE Rd.Close (vt.rrd) END;
+    EVAL vt.rrd.init (vt.mtext, Rd.Index (vt.rd), reverse := TRUE)
+  END Rev;
+
+BEGIN END VTRd.
+</PRE>
+</inModule>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

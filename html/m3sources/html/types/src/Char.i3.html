@@ -1,0 +1,60 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: types/src/Char.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>types/src/Char.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE> A <CODE>Char.T</CODE> is an <CODE>CHAR</CODE>.  This interface is intended to be
+   used as an actual interface for generic interfaces and modules such
+   as <CODE>Table</CODE>. 
+
+<P><PRE>INTERFACE <interface><A HREF="Char.m3.html">Char</A></interface>;
+
+IMPORT <A HREF="../../word/src/Word.i3.html">Word</A>;
+
+TYPE T = CHAR;
+
+CONST Brand = &quot;Char&quot;;
+
+PROCEDURE <A HREF="Char.m3.html#Compare">Compare</A> (a, b: T): [-1..1];
+</PRE><BLOCKQUOTE><EM> == RETURN (a - b) </EM></BLOCKQUOTE><PRE>
+
+PROCEDURE <A HREF="Char.m3.html#Equal">Equal</A> (a, b: T): BOOLEAN;
+</PRE><BLOCKQUOTE><EM> == RETURN (a = b) </EM></BLOCKQUOTE><PRE>
+
+PROCEDURE <A HREF="Char.m3.html#Hash">Hash</A> (a: T): Word.T;
+</PRE><BLOCKQUOTE><EM> == RETURN ORD (a) </EM></BLOCKQUOTE><PRE>
+
+END Char.
+</PRE>
+</inInterface>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

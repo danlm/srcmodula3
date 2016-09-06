@@ -1,0 +1,54 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: m3tk/src/asttrans/M3CImportASTrans.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>m3tk/src/asttrans/M3CImportASTrans.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+
+INTERFACE <interface><A HREF="M3CImportASTrans.m3.html">M3CImportASTrans</A></interface>;
+
+IMPORT <A HREF="../ast/M3AST_AS.i3.html">M3AST_AS</A>;
+
+PROCEDURE <A HREF="M3CImportASTrans.m3.html#Set">Set</A>(cu: M3AST_AS.Compilation_Unit; genericFormalsOnly := FALSE);
+</PRE><BLOCKQUOTE><EM> Transform 'cu' so that statements of the form <CODE>IMPORT A AS B</CODE>
+   are eliminated, and all instances of <CODE>B.x</CODE> are replaced by
+   <CODE>A.x</CODE>. This is destructive, naturally. 
+<P>
+   If 'genericFormalsOnly =TRUE', then 'cu' must be a generic instantiation, 
+   and the transformation is restricted to values of B in <CODE>IMPORT A AS B</CODE>,
+   such that B was a generic formal parameter.
+</EM></BLOCKQUOTE><PRE>
+
+END M3CImportASTrans.
+</PRE>
+</inInterface>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

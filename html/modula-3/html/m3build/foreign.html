@@ -1,0 +1,38 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: Importing foreign object files and libraries</TITLE>
+</HEAD>
+<BODY BGCOLOR="#ffffff" VLINK="#006633">
+
+<H2>Importing foreign object files and libraries</H2>
+<P>
+
+These procedures allow foreign objects and/or libraries to be included
+in a Modula-3 program.
+<P>
+
+<B> import_lib(X, P) </B>  
+           If <TT>P/libX.a</TT> is a library, includes <TT>-LP -lX</TT>
+           in the final link command.  Otherwise, includes <TT>-lX</TT>
+           in the final link command.
+<P>
+
+<B> import_obj(X) </B>  
+          Include <TT>X</TT> in the final link command.
+<P>
+
+<HR>
+<A HREF="../home.html">[Modula-3 home page]</A>
+<P>
+<A HREF="mailto:m3-request@src.dec.com">
+<ADDRESS>m3-request@src.dec.com</ADDRESS></A>
+<PRE>
+Last modified on Thu Jan  4 11:07:54 PST 1996 by heydon 
+     modified on Mon Jun 20 14:51:17 PDT 1994 by kalsow 
+     modified on Thu Jan  7 18:40:57 PST 1993 by muller 
+</PRE>
+
+Copyright (C) 1992, 1996, Digital Equipment Corporation. All rights reserved.<BR>
+See the <A HREF="http://www.research.digital.com/SRC/m3sources/html/COPYRIGHT.html">COPYRIGHT</A> for a full description.
+</BODY>
+</HTML>

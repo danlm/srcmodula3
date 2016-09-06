@@ -1,0 +1,69 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: lego/src/BorderedFeedbackVBT.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>lego/src/BorderedFeedbackVBT.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM>                                                                   </EM></BLOCKQUOTE><PRE>
+&lt;* PRAGMA LL *&gt;
+&lt;* PRAGMA SUBTYPE *&gt;
+</PRE> A <CODE>BorderedFeedbackVBT</CODE> is a multi-filter feedback that
+   displays a border as visual feedback to another <CODE>VBT</CODE>. 
+
+<P><PRE>INTERFACE <interface><A HREF="BorderedFeedbackVBT.m3.html">BorderedFeedbackVBT</A></interface>;
+
+IMPORT <A HREF="FeedbackVBT.i3.html">FeedbackVBT</A>, <A HREF="../../ui/src/vbt/PaintOp.i3.html">PaintOp</A>, <A HREF="../../ui/src/vbt/VBT.i3.html">VBT</A>;
+
+TYPE
+  &lt;* SUBTYPE T &lt;: MultiFilter.T *&gt;
+  <A HREF="BorderedFeedbackVBT.m3.html#T">T</A> &lt;: Public;
+  Public =
+    FeedbackVBT.T OBJECT
+    METHODS
+      &lt;* LL &lt;= VBT.mu *&gt;
+      init (
+        ch: VBT.T;
+        size: REAL := 0.5;
+        op: PaintOp.T := PaintOp.BgFg): T
+    END;
+</PRE> The call <CODE>v.init(ch, size, op)</CODE> initializes <CODE>v</CODE> as a
+   <CODE>BorderedFeedbackVBT</CODE>.  The size of the border is <CODE>size</CODE>
+   millimeters.  In the ``on'' state, the default <CODE>normal</CODE> method
+   draws the border with paint op <CODE>op</CODE> using texture
+   <CODE>Pixmap.Solid</CODE>.  In the ``off'' state, the default <CODE>normal</CODE>
+   method uses <CODE>Pixmap.Empty</CODE> instead.  The default <CODE>excited</CODE>
+   method draws the border with text <CODE>Pixmap.Gray</CODE>. 
+
+<P><PRE>END BorderedFeedbackVBT.
+</PRE>
+</inInterface>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

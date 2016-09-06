@@ -1,0 +1,65 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: ui/src/winvbt/WinAux.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>ui/src/winvbt/WinAux.m3</H2></A><HR>
+<inModule>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM> Digital Internal Use Only                                                 </EM></BLOCKQUOTE><PRE>
+</PRE>                                                                           
+       Created on Wed Jan 18 14:27:10 PST 1995 by najork                   
+
+<P>
+<P><PRE>MODULE <module><implements><A HREF="WinAux.i3.html">WinAux</A></implements></module>;
+
+IMPORT <A HREF="../vbt/VBT.i3.html">VBT</A>, <A HREF="../vbt/VBTClass.i3.html">VBTClass</A>, <A HREF="../../../win32/src/WinDef.i3.html">WinDef</A>, <A HREF="WinTrestle.i3.html">WinTrestle</A>;
+
+PROCEDURE <A NAME="WindowHandle"><procedure>WindowHandle</procedure></A> (v: VBT.T): WinDef.HWND =
+  BEGIN
+    WHILE v # NIL DO
+      TYPECASE v.upRef OF
+      | WinTrestle.Child (ch) =&gt;
+          IF ch # NIL THEN
+            RETURN ch.hwnd
+          END
+      ELSE
+        (* skip *)
+      END;
+      v := v.parent;
+    END;
+    RETURN NIL;
+  END WindowHandle;
+
+BEGIN
+END WinAux.
+</PRE>
+</inModule>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

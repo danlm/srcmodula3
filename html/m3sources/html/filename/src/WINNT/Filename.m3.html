@@ -1,0 +1,113 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: filename/src/WINNT/Filename.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>filename/src/WINNT/Filename.m3</H2></A><HR>
+<inModule>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM>                                                              </EM></BLOCKQUOTE><PRE>
+
+MODULE <module><implements><A HREF="#x1">Filename</A></implements></module>;
+
+IMPORT <A HREF="../../../os/src/Common/Process.i3.html">Process</A>;
+
+PROCEDURE <A NAME="FileIsReadable"><procedure>FileIsReadable</procedure></A> (filename: TEXT): BOOLEAN =
+  BEGIN
+    Die ();
+    RETURN FALSE;
+  END FileIsReadable;
+
+PROCEDURE <A NAME="Root"><procedure>Root</procedure></A> (filename: TEXT): TEXT =
+  BEGIN
+    Die ();
+    RETURN NIL;
+  END Root;
+
+PROCEDURE <A NAME="Extension"><procedure>Extension</procedure></A> (filename: TEXT): TEXT =
+  BEGIN
+    Die ();
+    RETURN NIL;
+  END Extension;
+
+PROCEDURE <A NAME="Head"><procedure>Head</procedure></A> (filename: TEXT): TEXT =
+  BEGIN
+    Die ();
+    RETURN NIL;
+  END Head;
+
+PROCEDURE <A NAME="Tail"><procedure>Tail</procedure></A> (filename: TEXT): TEXT =
+  BEGIN
+    Die ();
+    RETURN NIL;
+  END Tail;
+
+PROCEDURE <A NAME="DefaultExtension"><procedure>DefaultExtension</procedure></A> (filename, ext: TEXT): TEXT =
+  BEGIN
+    Die ();
+    RETURN NIL;
+  END DefaultExtension;
+
+PROCEDURE <A NAME="ExpandTilde"><procedure>ExpandTilde</procedure></A> (filename: TEXT): TEXT RAISES {Error} =
+  BEGIN
+    Die ();
+    RAISE Error;
+  END ExpandTilde;
+
+PROCEDURE <A NAME="SearchPath"><procedure>SearchPath</procedure></A> (path, filename: TEXT;
+                      pred: FilePredicate := FileIsReadable): TEXT =
+  BEGIN
+    Die ();
+    RETURN NIL;
+  END SearchPath;
+
+PROCEDURE <A NAME="RdFromPath"><procedure>RdFromPath</procedure></A> (path, filename: TEXT): Rd.T  RAISES {Rd.Failure} =
+  BEGIN
+    Die ();
+    RETURN NIL;
+  END RdFromPath;
+
+PROCEDURE <A NAME="Die"><procedure>Die</procedure></A> () =
+  BEGIN
+    Process.Crash (&quot;Filename is not implemented on NT, use Pathname&quot;);
+  END Die;
+
+BEGIN
+END Filename.
+</PRE>
+</inModule>
+<HR>
+<A NAME="x1">interface Filename is in:
+</A><UL>
+<LI><A HREF="../POSIX/Filename.i3.html#0TOP0">filename/src/POSIX/Filename.i3</A>
+<LI><A HREF="Filename.i3.html#0TOP0">filename/src/WINNT/Filename.i3</A>
+</UL>
+<P>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

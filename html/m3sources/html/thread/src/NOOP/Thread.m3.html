@@ -1,0 +1,182 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: thread/src/NOOP/Thread.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>thread/src/NOOP/Thread.m3</H2></A><HR>
+<inModule>
+<PRE>MODULE <module>Thread</module> EXPORTS <A HREF="../Common/Thread.i3.html"><implements>Thread</A></implements>, <A HREF="#x1"><implements>ThreadF</A></implements>, <A HREF="../Common/Scheduler.i3.html"><implements>Scheduler</A></implements>, <A HREF="../../../runtime/src/common/RTThreadInit.i3.html"><implements>RTThreadInit</A></implements>;
+
+IMPORT <A HREF="#x2">FloatMode</A>;
+</PRE> Null implementation 
+
+<P><PRE>REVEAL
+  <A NAME="MUTEX">MUTEX</A> = BRANDED &quot;Mutex 1.0&quot; OBJECT END;
+  <A NAME="Condition">Condition</A> = BRANDED &quot;Thread.Condition v1.0&quot; OBJECT END;
+  <A NAME="T">T</A> = BRANDED &quot;Thread.T v1.5&quot; OBJECT END;
+
+EXCEPTION NotImplemented;
+</PRE>--------------------------------------------- exception handling support --
+
+<P><PRE>PROCEDURE <A NAME="GetCurrentHandlers"><procedure>GetCurrentHandlers</procedure></A>(): ADDRESS=
+  BEGIN
+    RETURN currentHandlers;
+  END GetCurrentHandlers;
+
+PROCEDURE <A NAME="SetCurrentHandlers"><procedure>SetCurrentHandlers</procedure></A>(h: ADDRESS)=
+  BEGIN
+    currentHandlers := h;
+  END SetCurrentHandlers;
+
+PROCEDURE <A NAME="Init"><procedure>Init</procedure></A>()=
+  BEGIN
+  END Init;
+
+PROCEDURE <A NAME="GetDefaultStackSize"><procedure>GetDefaultStackSize</procedure></A>(): CARDINAL=
+  BEGIN RAISE NotImplemented
+  END GetDefaultStackSize;
+
+PROCEDURE <A NAME="MinDefaultStackSize"><procedure>MinDefaultStackSize</procedure></A>(min: CARDINAL)=
+  BEGIN RAISE NotImplemented
+  END MinDefaultStackSize;
+
+PROCEDURE <A NAME="IncDefaultStackSize"><procedure>IncDefaultStackSize</procedure></A>(inc: CARDINAL)=
+  BEGIN RAISE NotImplemented
+  END IncDefaultStackSize;
+
+PROCEDURE <A NAME="NewMutex"><procedure>NewMutex</procedure></A>(): Mutex=
+  BEGIN RETURN NEW(MUTEX);
+  END NewMutex;
+
+PROCEDURE <A NAME="NewCondition"><procedure>NewCondition</procedure></A>(): Condition=
+  BEGIN RETURN NEW(Condition)
+  END NewCondition;
+
+PROCEDURE <A NAME="Fork"><procedure>Fork</procedure></A>(cl: Closure): T=
+  BEGIN RAISE NotImplemented
+  END Fork;
+
+PROCEDURE <A NAME="Join"><procedure>Join</procedure></A>(t: T): REFANY=
+  BEGIN RAISE NotImplemented
+  END Join;
+
+PROCEDURE <A NAME="Wait"><procedure>Wait</procedure></A>(m: Mutex; c: Condition)=
+  BEGIN
+  END Wait;
+
+PROCEDURE <A NAME="Acquire"><procedure>Acquire</procedure></A>(m: Mutex)=
+  BEGIN
+  END Acquire;
+
+PROCEDURE <A NAME="Release"><procedure>Release</procedure></A>(m: Mutex)=
+  BEGIN
+  END Release;
+
+PROCEDURE <A NAME="Broadcast"><procedure>Broadcast</procedure></A>(c: Condition)=
+  BEGIN
+  END Broadcast;
+
+PROCEDURE <A NAME="Signal"><procedure>Signal</procedure></A>(c: Condition)=
+  BEGIN
+  END Signal;
+
+PROCEDURE <A NAME="Self"><procedure>Self</procedure></A>(): T=
+  BEGIN RAISE NotImplemented
+  END Self;
+
+PROCEDURE <A NAME="Alert"><procedure>Alert</procedure></A>(t: T)=
+  BEGIN RAISE NotImplemented
+  END Alert;
+
+PROCEDURE <A NAME="TestAlert"><procedure>TestAlert</procedure></A>(): BOOLEAN=
+  BEGIN RETURN FALSE
+  END TestAlert;
+
+PROCEDURE <A NAME="AlertWait"><procedure>AlertWait</procedure></A>(m: Mutex; c: Condition) RAISES {Alerted}=
+  BEGIN
+  END AlertWait;
+
+PROCEDURE <A NAME="AlertJoin"><procedure>AlertJoin</procedure></A>(t: T): REFANY RAISES {Alerted}=
+  BEGIN RAISE NotImplemented
+  END AlertJoin;
+
+PROCEDURE <A NAME="Yield"><procedure>Yield</procedure></A>()=
+  BEGIN
+  END Yield;
+
+PROCEDURE <A NAME="ProcessStacks"><procedure>ProcessStacks</procedure></A> (p: PROCEDURE (start, stop: ADDRESS)) =
+  BEGIN
+  END ProcessStacks;
+
+PROCEDURE <A NAME="Pause"><procedure>Pause</procedure></A>(n: LONGREAL)=
+  BEGIN
+  END Pause;
+
+PROCEDURE <A NAME="AlertPause"><procedure>AlertPause</procedure></A>(n: LONGREAL) RAISES {Alerted}=
+  BEGIN
+  END AlertPause;
+
+PROCEDURE <A NAME="MyFPState"><procedure>MyFPState</procedure></A> (): UNTRACED REF FloatMode.ThreadState =
+  BEGIN
+  END MyFPState;
+
+PROCEDURE <A NAME="RegisterHooks"><procedure>RegisterHooks</procedure></A>(h: Hooks; init := TRUE): Hooks RAISES {}=
+  BEGIN
+  END RegisterHooks;
+
+PROCEDURE <A NAME="MyId"><procedure>MyId</procedure></A>(): Id RAISES {}=
+  BEGIN
+  END MyId;
+
+BEGIN
+END Thread.
+</PRE>
+</inModule>
+<HR>
+<A NAME="x1">interface ThreadF is in:
+</A><UL>
+<LI><A HREF="ThreadF.i3.html#0TOP0">thread/src/NOOP/ThreadF.i3</A>
+<LI><A HREF="../POSIX/ThreadF.i3.html#0TOP0">thread/src/POSIX/ThreadF.i3</A>
+<LI><A HREF="../WIN32/ThreadF.i3.html#0TOP0">thread/src/WIN32/ThreadF.i3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x2">interface FloatMode is in:
+</A><UL>
+<LI><A HREF="../../../float/src/DS3100/FloatMode.i3.html#0TOP0">float/src/DS3100/FloatMode.i3</A>
+<LI><A HREF="../../../float/src/IEEE-default/FloatMode.i3.html#0TOP0">float/src/IEEE-default/FloatMode.i3</A>
+<LI><A HREF="../../../float/src/IRIX5/FloatMode.i3.html#0TOP0">float/src/IRIX5/FloatMode.i3</A>
+<LI><A HREF="../../../float/src/SOLsun/FloatMode.i3.html#0TOP0">float/src/SOLsun/FloatMode.i3</A>
+<LI><A HREF="../../../float/src/SPARC/FloatMode.i3.html#0TOP0">float/src/SPARC/FloatMode.i3</A>
+<LI><A HREF="../../../float/src/SUN386/FloatMode.i3.html#0TOP0">float/src/SUN386/FloatMode.i3</A>
+<LI><A HREF="../../../float/src/VAX/FloatMode.i3.html#0TOP0">float/src/VAX/FloatMode.i3</A>
+</UL>
+<P>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

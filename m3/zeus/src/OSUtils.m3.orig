@@ -1,0 +1,69 @@
+(* Copyright 1989 Digital Equipment Corporation.               *)
+(* Distributed only by permission.                             *)
+(* OSUtils.mod                                                 *)
+(* Last modified on Wed Feb 23 08:12:21 PST 1994 by kalsow     *)
+(*      modified on Wed Oct 14 10:56:42 PDT 1992 by steveg     *)
+(*      modified on Wed Jul 15 20:22:10 PDT 1992 by johnh      *)
+(*      modified on Thu Apr 30 10:36:46 PDT 1992 by birrell    *)
+
+(* Stolen from Postcard. *)
+(* Much of the implementation was taken from Ted Wobber's FileSys.m3 *)
+
+UNSAFE MODULE OSUtils;
+
+IMPORT Fmt, Text;
+IMPORT M3toC, Uerror, Unix, Ustat;
+
+FROM Ctypes IMPORT char_star, int;
+
+(* *)
+(* Internal subroutines; mostly intact from FileSys.m3 *)
+(* *)
+
+TYPE
+  EC = CARDINAL;
+
+PROCEDURE ErrorMessage (ec: EC): Text.T =
+  VAR
+    p: char_star;
+  BEGIN
+    IF ec <= Uerror.Max THEN
+      p := Uerror.GetFrom_sys_errlist(ec);
+      RETURN M3toC.StoT(p);  (* assumes sys err list is static *)
+    ELSE
+      RETURN "Error code " & Fmt.Int(ec);
+    END;
+  END ErrorMessage;
+
+CONST
+  rwMode = Ustat.S_IREAD + Ustat.S_IWRITE + Ustat.S_GREAD + Ustat.S_OREAD;
+  rwxMode = rwMode + Ustat.S_IEXEC + Ustat.S_GEXEC + Ustat.S_OEXEC;
+
+(* *)
+(* File system operations *)
+(* *)
+
+PROCEDURE Delete(path: TEXT) RAISES { FileError } =
+  VAR
+    p: char_star := M3toC.TtoS(path);
+    status: int;
+  BEGIN
+    status := Unix.unlink(p);
+    IF status = -1 THEN
+      RAISE FileError(ErrorMessage(Uerror.errno));
+    END;
+  END Delete;
+  
+PROCEDURE MakeDir(path: TEXT) RAISES { FileError } =
+  VAR
+    status: int;
+    p := M3toC.TtoS(path);
+  BEGIN
+    status := Unix.mkdir(p, rwxMode);
+    IF status = -1 THEN
+      RAISE FileError(ErrorMessage(Uerror.errno));
+    END;
+  END MakeDir;
+
+BEGIN
+END OSUtils.

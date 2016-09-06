@@ -1,0 +1,85 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: ui/src/picture/Completion.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>ui/src/picture/Completion.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM>                                                           </EM></BLOCKQUOTE><PRE>
+
+INTERFACE <interface><A HREF="Completion.m3.html">Completion</A></interface>;
+
+IMPORT <A HREF="#x1">Picture</A>, <A HREF="../../../thread/src/Common/Thread.i3.html">Thread</A>;
+</PRE> a Completion is a mechanism for notifying the caller when an Image has
+   been processed.  Each user of the image should increment the Completion
+   when it starts using the image and decrement when it has finished.  When
+   the count returns to 0, if /freeProc/ # NIL then the Completion.T will
+   be put on a queue for /freeProc/ to be called and those threads blocked
+   in /waitUntilFree/ to be signalled to continue.  /Dispose/ will be
+   called on the T after /freeProc/ has returned.  If /freeProc/ = NIL,
+   then the threads blocked in /waitForFree/ will be signalled
+   immediately 
+
+<P><PRE>CONST
+  Brand = &quot;Completion&quot;;
+
+TYPE
+  <A HREF="Completion.m3.html#T">T</A> &lt;: Public;
+  Public = MUTEX OBJECT
+           METHODS
+             init (initialCount                   := 1;
+                   freeProc    : Picture.FreeProc := NIL;
+                   freeParam   : REFANY           := NIL  ): T;
+             id  (): CARDINAL;
+             inc ();
+             dec ();
+
+             isFree (): BOOLEAN;
+             (* non-blocking check to see if Completion is free *)
+             waitUntilFree () RAISES {Thread.Alerted};
+             (* block thread until Completion is freed *)
+           END;
+</PRE> get T from free list.  do not forget to call t.init() and Dispose(t) on
+   Ts got from this procedure 
+<PRE>PROCEDURE <A HREF="Completion.m3.html#New">New</A> (): T;
+PROCEDURE <A HREF="Completion.m3.html#Dispose">Dispose</A> (t: T);        (* return to the free list *)
+
+END Completion.
+</PRE>
+</inInterface>
+<HR>
+<A NAME="x1">interface Picture is in:
+</A><UL>
+<LI><A HREF="../../../trestle_by_example/src/common/Picture.i3.html#0TOP0">trestle_by_example/src/common/Picture.i3</A>
+<LI><A HREF="Picture.i3.html#0TOP0">ui/src/picture/Picture.i3</A>
+</UL>
+<P>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

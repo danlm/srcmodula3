@@ -1,0 +1,64 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: float/src/IEEE-default/FPU.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>float/src/IEEE-default/FPU.m3</H2></A><HR>
+<inModule>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM>                                                                           </EM></BLOCKQUOTE><PRE>
+
+MODULE <module><implements><A HREF="#x1">FPU</A></implements></module>;
+</PRE> Formerly, we <CODE>implemented</CODE> scaleb with
+PROCEDURE scalb (x: LONGREAL; n: INTEGER): LONGREAL =
+  BEGIN
+    &lt;*ASSERT FALSE*&gt;
+   END scalb;
+<P>
+Now we're equating it to the externally-defined (ANSI C math library)
+procedure ldexp--see FPU.i3. 
+
+<P><PRE>BEGIN
+END FPU.
+</PRE>
+</inModule>
+<HR>
+<A NAME="x1">interface FPU is in:
+</A><UL>
+<LI><A HREF="../DS3100/FPU.i3.html#0TOP0">float/src/DS3100/FPU.i3</A>
+<LI><A HREF="FPU.i3.html#0TOP0">float/src/IEEE-default/FPU.i3</A>
+<LI><A HREF="../IRIX5/FPU.i3.html#0TOP0">float/src/IRIX5/FPU.i3</A>
+<LI><A HREF="../SOLsun/FPU.i3.html#0TOP0">float/src/SOLsun/FPU.i3</A>
+<LI><A HREF="../SPARC/FPU.i3.html#0TOP0">float/src/SPARC/FPU.i3</A>
+<LI><A HREF="../SUN386/FPU.i3.html#0TOP0">float/src/SUN386/FPU.i3</A>
+<LI><A HREF="../VAX/FPU.i3.html#0TOP0">float/src/VAX/FPU.i3</A>
+</UL>
+<P>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

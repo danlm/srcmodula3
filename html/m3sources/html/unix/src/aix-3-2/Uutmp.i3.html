@@ -1,0 +1,75 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: unix/src/aix-3-2/Uutmp.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>unix/src/aix-3-2/Uutmp.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE> File: Uutmp.i3                                             
+
+<P><PRE>INTERFACE <interface>Uutmp</interface>;
+
+FROM <A HREF="../../../C/src/Common/Ctypes.i3.html">Ctypes</A> IMPORT char, char_star, long;
+</PRE>** &lt;utmp.h&gt; **
+
+<P>
+ * Structure of utmp and wtmp files.
+ *
+ 
+
+<P><PRE>TYPE
+    struct_utmp = RECORD
+	ut_line: ARRAY [0..7] OF char;		(* tty name *)
+	ut_name: ARRAY [0..7] OF char;		(* user id *)
+	ut_host: ARRAY [0..15] OF char;		(* host name, if remote *)
+	ut_time: long				(* time on *)
+     END;
+
+CONST
+   UTMP_FILE	= &quot;/etc/utmp&quot;;
+   WTMP_FILE	= &quot;/usr/adm/wtmp&quot;;
+</PRE>	Special strings or formats used in the <CODE>ut_line</CODE> field when	
+	accounting for something other than a process.			
+	No string for the ut_line field can be more than 7 chars +	
+	a NULL in length.						
+
+<P>   <PRE>EMPTY	= &quot;&quot;;
+   BOOT_MSG	= &quot;~&quot;;
+   OTIME_MSG	= &quot;|&quot;;
+   NTIME_MSG	= &quot;}&quot;;
+</PRE>** getlogin(3) **
+
+<P><PRE>&lt;*EXTERNAL*&gt; PROCEDURE getlogin (): char_star;
+
+END Uutmp.
+</PRE>
+</inInterface>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

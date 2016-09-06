@@ -1,0 +1,60 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: intpair/src/IntPair.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>intpair/src/IntPair.m3</H2></A><HR>
+<inModule>
+<PRE><A HREF="../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM>                                                                           </EM></BLOCKQUOTE><PRE>
+
+MODULE <module><implements><A HREF="IntPair.i3.html">IntPair</A></implements></module>;
+
+IMPORT <A HREF="../../types/src/Integer.i3.html">Integer</A>, <A HREF="../../word/src/Word.i3.html">Word</A>;
+
+PROCEDURE <A NAME="Compare"><procedure>Compare</procedure></A>(p1, p2: T): [-1..1] =
+  BEGIN RETURN Integer.Compare(p1.i, p2.i) END Compare;
+
+PROCEDURE <A NAME="CompareJ"><procedure>CompareJ</procedure></A>(p1, p2: T): [-1..1] =
+  BEGIN RETURN Integer.Compare(p1.j, p2.j) END CompareJ;
+
+PROCEDURE <A NAME="Equal"><procedure>Equal</procedure></A>(ip1, ip2: T): BOOLEAN =
+  BEGIN RETURN ip1.i = ip2.i AND ip1.j = ip2.j
+  END Equal;
+
+PROCEDURE <A NAME="Hash"><procedure>Hash</procedure></A>(ip: T): Word.T =
+  BEGIN RETURN Word.Xor(Word.Not(ip.i), ip.j)
+  END Hash;
+
+BEGIN
+END IntPair.
+</PRE>
+</inModule>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

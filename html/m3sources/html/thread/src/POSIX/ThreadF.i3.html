@@ -1,0 +1,199 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: thread/src/POSIX/ThreadF.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>thread/src/POSIX/ThreadF.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM>                                                             </EM></BLOCKQUOTE><PRE>
+
+INTERFACE <interface><A HREF="#x1">ThreadF</A></interface>;
+
+IMPORT <A HREF="#x2">FloatMode</A>, <A HREF="../Common/Thread.i3.html">Thread</A>;
+</PRE>--------------------------------------------- exception handling support --
+
+<P><PRE>PROCEDURE <A HREF="#x3">GetCurrentHandlers</A>(): ADDRESS;
+</PRE><BLOCKQUOTE><EM> == RETURN RTThread.handlerStack </EM></BLOCKQUOTE><PRE>
+
+PROCEDURE <A HREF="#x4">SetCurrentHandlers</A>(h: ADDRESS);
+</PRE><BLOCKQUOTE><EM> == RTThread.handlerStack := h </EM></BLOCKQUOTE><PRE>
+</PRE>--------------------------------------------- garbage collector support ---
+
+<P><PRE>PROCEDURE <A HREF="#x5">SuspendOthers</A> ();
+</PRE><BLOCKQUOTE><EM> Suspend all threads except the caller's </EM></BLOCKQUOTE><PRE>
+
+PROCEDURE <A HREF="#x6">ResumeOthers</A> ();
+</PRE><BLOCKQUOTE><EM> Resume the threads suspended by <CODE>SuspendOthers</CODE> </EM></BLOCKQUOTE><PRE>
+
+PROCEDURE <A HREF="#x7">ProcessStacks</A> (p: PROCEDURE (start, stop: ADDRESS));
+</PRE><BLOCKQUOTE><EM> Apply p to each thread stack, with start and stop being the limits
+   of the stack.  All other threads must be suspended.  ProcessStacks
+   exists solely for the garbage collector.  </EM></BLOCKQUOTE><PRE>
+</PRE>------------------------------------------------ floating point support ---
+
+<P><PRE>PROCEDURE <A HREF="#x8">MyFPState</A> (): UNTRACED REF FloatMode.ThreadState;
+</PRE><BLOCKQUOTE><EM> returns the saved floating point state for the current thread.
+   WARNING: the return value is an untraced pointer to a traced Thread.T!!  </EM></BLOCKQUOTE><PRE>
+</PRE>-------------------------------------------------- showthreads support ---
+
+<P><PRE>TYPE
+  State = {
+        alive    (* can run *),
+        waiting  (* waiting for a condition via Wait *),
+        locking  (* waiting for a mutex to be unlocked *),
+        pausing  (* waiting until some time is arrived *),
+        blocking (* waiting for some IO *),
+        dying    (* done, but not yet joined *),
+        dead     (* done and joined *)
+	};
+
+TYPE
+  Id = INTEGER;
+</PRE>--------------------------------------------------------- hooks support ---
+
+<P> PRIVATE VAR hooks: Hooks := NIL 
+
+<P><PRE>TYPE
+  Hooks = OBJECT METHODS
+    fork (t: Thread.T);  (* called with RT0u.inCritical &gt; 0 *)
+    die  (t: Thread.T);  (* called with RT0u.inCritical &gt; 0 *)
+  END;
+
+PROCEDURE <A HREF="#x9">RegisterHooks</A> (h: Hooks; init := TRUE): Hooks RAISES {};
+</PRE><BLOCKQUOTE><EM> return current hooks and set hooks := h.   If init is true, 
+   call hooks.fork (t) for every thread t in the ring in a single
+   critical section. </EM></BLOCKQUOTE><PRE>
+
+PROCEDURE <A HREF="#x10">MyId</A>(): Id RAISES {};
+</PRE><BLOCKQUOTE><EM> return Id of caller </EM></BLOCKQUOTE><PRE>
+
+&lt;*EXTERNAL &quot;ThreadF__myId&quot;*&gt;
+VAR
+  myId: Id;
+  (* The id of the currently running thread *)
+</PRE>------------------------------------------------------------ preemption ---
+
+<P><PRE>PROCEDURE <A HREF="#x11">SetSwitchingInterval</A> (usec: CARDINAL);
+</PRE><BLOCKQUOTE><EM> Sets the time between thread preemptions to 'usec' microseconds.
+   Note that most Unix systems dont guarantee much if any precision
+   on timer interrupts.  The default value is 100 milliseconds. </EM></BLOCKQUOTE><PRE>
+
+END ThreadF.
+</PRE>
+</inInterface>
+<HR>
+<A NAME="x1">ThreadF's implementation  is in:
+</A><UL>
+<LI><A HREF="../NOOP/Thread.m3.html#0TOP0">thread/src/NOOP/Thread.m3</A>
+<LI><A HREF="ThreadPosix.m3.html#0TOP0">thread/src/POSIX/ThreadPosix.m3</A>
+<LI><A HREF="../WIN32/ThreadWin32.m3.html#0TOP0">thread/src/WIN32/ThreadWin32.m3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x2">interface FloatMode is in:
+</A><UL>
+<LI><A HREF="../../../float/src/DS3100/FloatMode.i3.html#0TOP0">float/src/DS3100/FloatMode.i3</A>
+<LI><A HREF="../../../float/src/IEEE-default/FloatMode.i3.html#0TOP0">float/src/IEEE-default/FloatMode.i3</A>
+<LI><A HREF="../../../float/src/IRIX5/FloatMode.i3.html#0TOP0">float/src/IRIX5/FloatMode.i3</A>
+<LI><A HREF="../../../float/src/SOLsun/FloatMode.i3.html#0TOP0">float/src/SOLsun/FloatMode.i3</A>
+<LI><A HREF="../../../float/src/SPARC/FloatMode.i3.html#0TOP0">float/src/SPARC/FloatMode.i3</A>
+<LI><A HREF="../../../float/src/SUN386/FloatMode.i3.html#0TOP0">float/src/SUN386/FloatMode.i3</A>
+<LI><A HREF="../../../float/src/VAX/FloatMode.i3.html#0TOP0">float/src/VAX/FloatMode.i3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x3">procedure ThreadF.GetCurrentHandlers is in:
+</A><UL>
+<LI><A HREF="../NOOP/Thread.m3.html#GetCurrentHandlers">thread/src/NOOP/Thread.m3</A>
+<LI><A HREF="ThreadPosix.m3.html#GetCurrentHandlers">thread/src/POSIX/ThreadPosix.m3</A>
+<LI><A HREF="../WIN32/ThreadWin32.m3.html#GetCurrentHandlers">thread/src/WIN32/ThreadWin32.m3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x4">procedure ThreadF.SetCurrentHandlers is in:
+</A><UL>
+<LI><A HREF="../NOOP/Thread.m3.html#SetCurrentHandlers">thread/src/NOOP/Thread.m3</A>
+<LI><A HREF="ThreadPosix.m3.html#SetCurrentHandlers">thread/src/POSIX/ThreadPosix.m3</A>
+<LI><A HREF="../WIN32/ThreadWin32.m3.html#SetCurrentHandlers">thread/src/WIN32/ThreadWin32.m3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x5">procedure ThreadF.SuspendOthers is in:
+</A><UL>
+<LI><A HREF="ThreadPosix.m3.html#SuspendOthers">thread/src/POSIX/ThreadPosix.m3</A>
+<LI><A HREF="../WIN32/ThreadWin32.m3.html#SuspendOthers">thread/src/WIN32/ThreadWin32.m3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x6">procedure ThreadF.ResumeOthers is in:
+</A><UL>
+<LI><A HREF="ThreadPosix.m3.html#ResumeOthers">thread/src/POSIX/ThreadPosix.m3</A>
+<LI><A HREF="../WIN32/ThreadWin32.m3.html#ResumeOthers">thread/src/WIN32/ThreadWin32.m3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x7">procedure ThreadF.ProcessStacks is in:
+</A><UL>
+<LI><A HREF="../NOOP/Thread.m3.html#ProcessStacks">thread/src/NOOP/Thread.m3</A>
+<LI><A HREF="ThreadPosix.m3.html#ProcessStacks">thread/src/POSIX/ThreadPosix.m3</A>
+<LI><A HREF="../WIN32/ThreadWin32.m3.html#ProcessStacks">thread/src/WIN32/ThreadWin32.m3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x8">procedure ThreadF.MyFPState is in:
+</A><UL>
+<LI><A HREF="../NOOP/Thread.m3.html#MyFPState">thread/src/NOOP/Thread.m3</A>
+<LI><A HREF="ThreadPosix.m3.html#MyFPState">thread/src/POSIX/ThreadPosix.m3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x9">procedure ThreadF.RegisterHooks is in:
+</A><UL>
+<LI><A HREF="../NOOP/Thread.m3.html#RegisterHooks">thread/src/NOOP/Thread.m3</A>
+<LI><A HREF="ThreadPosix.m3.html#RegisterHooks">thread/src/POSIX/ThreadPosix.m3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x10">procedure ThreadF.MyId is in:
+</A><UL>
+<LI><A HREF="../NOOP/Thread.m3.html#MyId">thread/src/NOOP/Thread.m3</A>
+<LI><A HREF="ThreadPosix.m3.html#MyId">thread/src/POSIX/ThreadPosix.m3</A>
+<LI><A HREF="../WIN32/ThreadWin32.m3.html#MyId">thread/src/WIN32/ThreadWin32.m3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x11">procedure ThreadF.SetSwitchingInterval is in:
+</A><UL>
+<LI><A HREF="ThreadPosix.m3.html#SetSwitchingInterval">thread/src/POSIX/ThreadPosix.m3</A>
+<LI><A HREF="../WIN32/ThreadWin32.m3.html#SetSwitchingInterval">thread/src/WIN32/ThreadWin32.m3</A>
+</UL>
+<P>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

@@ -1,0 +1,353 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: dps/src/SlideLineDLE.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>dps/src/SlideLineDLE.m3</H2></A><HR>
+<inModule>
+<PRE><A HREF="../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+
+MODULE <module><implements><A HREF="SlideLineDLE.i3.html">SlideLineDLE</A></implements></module>;
+
+IMPORT <A HREF="DisplayList.i3.html">DisplayList</A>, <A HREF="DPS.i3.html">DPS</A>, <A HREF="DPSWindow.i3.html">DPSWindow</A>, <A HREF="Linked2Tree.i3.html">Linked2Tree</A>;
+IMPORT <A HREF="../../text/src/Text.i3.html">Text</A>, <A HREF="#x1">Err</A>, <A HREF="../../fmtlex/src/Fmt.i3.html">Fmt</A>, <A HREF="wraps.i3.html">wraps</A>;
+
+CONST aboveLeadingDefault = 8.0;
+CONST heightDefault = 30.0;
+CONST belowLeadingDefault = 0.0;
+CONST leftLeadingDefault = 0.0;
+CONST pointsDefault = 30.0;
+
+CONST fontDescender = 2.0;
+
+CONST PointsBump = 4.0;
+
+CONST BumpX = 9.0; (* BumpY = 9.0; *)
+</PRE><BLOCKQUOTE><EM> CONST ReturnBoxSeparationY = 36.0; </EM></BLOCKQUOTE><PRE>
+
+PROCEDURE <A NAME="LooksLikePostscript"><procedure>LooksLikePostscript</procedure></A> (t: TEXT): BOOLEAN =
+  BEGIN
+  RETURN Text.Equal (Text.Sub(t,0,2), &quot;%!&quot;);
+  END LooksLikePostscript;
+
+PROCEDURE <A NAME="PostscriptContent"><procedure>PostscriptContent</procedure></A> (t: TEXT): TEXT =
+  BEGIN
+  RETURN Text.Sub (t, 2, Text.Length(t)-2)
+  END PostscriptContent;
+
+PROCEDURE <A NAME="Repaint"><procedure>Repaint</procedure></A> (e: E; box: DPS.Box; &lt;*UNUSED*&gt;only: REFANY := NIL): TEXT =
+ VAR data: TEXT := &quot;&quot;;
+ VAR caretX: REAL;
+ VAR caretBox: DPS.Box;
+  BEGIN
+  IF NOT DPS.BoxesIntersect (e.box, box) THEN RETURN NIL; END;
+  IF e.isPostscript THEN
+    data := Fmt.Real(e.box.low.x + e.leftLeading) &amp; &quot; &quot;
+     &amp; Fmt.Real(e.box.low.y + e.belowLeading + fontDescender)
+     &amp; &quot; moveto &quot;
+     &amp; &quot;/&quot; &amp; DPS.PreferredFontName()
+     &amp; &quot; findfont &quot; &amp; Fmt.Real(e.typefacePoints) &amp; &quot; scalefont setfont &quot;
+     &amp; PostscriptContent(e.text);
+    RETURN &quot; gsave &quot; &amp; data &amp; &quot; grestore &quot;;
+    END;
+  IF e.hasInputFocus THEN
+    data := DPS.EdgedBoxClipAndPaint (e.box) &amp; &quot; &quot;
+     &amp; Fmt.Real(e.box.low.x + e.leftLeading) &amp; &quot; &quot;
+     &amp; Fmt.Real(e.box.low.y + e.belowLeading + fontDescender) &amp; &quot; moveto &quot;
+     &amp; e.fontName &amp; &quot; setfont &quot; &amp; e.showPostScript;
+    caretX := e.box.low.x + e.leftLeading;
+    FOR k := 0 TO e.insertAfterIndex DO caretX := caretX + e.widths[k]; END;
+    caretBox := e.box;
+    caretBox.low.x := caretX + 0.5;
+    caretBox.high.x := caretBox.low.x + 1.0;
+    data := data &amp; DPS.NewPathBox(caretBox) &amp; &quot; 0.0 1.0 1.0 sethsbcolor fill&quot;;
+   ELSE
+    data := Fmt.Real(e.box.low.x + e.leftLeading) &amp; &quot; &quot;
+     &amp; Fmt.Real(e.box.low.y + e.belowLeading + fontDescender) &amp; &quot; moveto &quot;
+     &amp; e.fontName &amp; &quot; setfont &quot; &amp; e.showPostScript;
+    END;
+  RETURN &quot; gsave &quot; &amp; data &amp; &quot; grestore &quot;;
+  END Repaint;
+
+PROCEDURE <A NAME="Init"><procedure>Init</procedure></A> (e: E; window: DPSWindow.T) =
+  BEGIN
+  IF e.initialized THEN RETURN; END;
+  e.isPostscript := LooksLikePostscript (e.text);
+  RecalculatePoints (e, window);
+  RecalculatePostScript (e, window);
+  RecalculateArea (e, window);
+  e.initialized := TRUE;
+  END Init;
+
+PROCEDURE <A NAME="RecalculatePoints"><procedure>RecalculatePoints</procedure></A> (e: E; window: DPSWindow.T) =
+ VAR centipoints: INTEGER;
+  BEGIN
+  IF e.typefacePoints &lt; 0.0 THEN e.typefacePoints := pointsDefault; END;
+  IF e.aboveLeading &lt; 0.0 THEN e.aboveLeading := aboveLeadingDefault; END;
+  IF e.height &lt; 0.0 THEN e.height := heightDefault; END;
+  IF e.belowLeading &lt; 0.0 THEN e.belowLeading := belowLeadingDefault; END;
+  IF e.leftLeading &lt; 0.0 THEN e.leftLeading := leftLeadingDefault; END;
+   IF e.isPostscript THEN
+    TRY DPS.AcquireDPSMutex();
+      TRY DPS.SendNervously ( window,
+       &quot; /points &quot; &amp; Fmt.Real(e.typefacePoints) &amp; &quot; def &quot;
+       &amp; &quot; /aboveLeading &quot; &amp; Fmt.Real(e.aboveLeading) &amp; &quot; def &quot;
+       &amp; &quot; /height &quot; &amp; Fmt.Real(e.height) &amp; &quot; def &quot;
+       &amp; &quot; /belowLeading &quot; &amp; Fmt.Real(e.belowLeading) &amp; &quot; def &quot;
+       &amp; &quot; /leftLeading &quot; &amp; Fmt.Real(e.leftLeading) &amp; &quot; def &quot;
+       &amp; &quot; /Helvetica findfont 10 scalefont setfont &quot;
+       &amp; &quot;999999 999999 moveto &quot;
+       &amp; PostscriptContent(e.text) &amp; &quot; &quot;,
+        TRUE (* regardless *), TRUE (* alreadyLocked *) );
+      e.typefacePoints := wraps.FetchNumber ( window.ctx, &quot;points&quot;, TRUE);
+      e.aboveLeading := wraps.FetchNumber ( window.ctx, &quot;aboveLeading&quot;, TRUE);
+      e.height := wraps.FetchNumber ( window.ctx, &quot;height&quot;, TRUE);
+      e.belowLeading := wraps.FetchNumber ( window.ctx, &quot;belowLeading&quot;, TRUE);
+      e.leftLeading := wraps.FetchNumber ( window.ctx, &quot;leftLeading&quot;, TRUE );
+     EXCEPT DPS.BadPostScript =&gt;
+        Err.Msg (&quot;Got invalid PostScript: &quot;, e.text);
+        e.isPostscript := FALSE; (* Vital. *)
+        END;
+     FINALLY DPS.ReleaseDPSMutex();
+      END;
+   END;
+  centipoints := ROUND (e.typefacePoints * 100.0);
+  e.fontName := DPS.PreferredFontName() &amp; &quot;-&quot; &amp; Fmt.Int(centipoints);
+  (* Could use nonce id here ^^. *)
+  window.SendFoundation ( &quot; /&quot; &amp; e.fontName &amp; &quot; /&quot; &amp; DPS.PreferredFontName()
+   &amp; &quot; findfont &quot; &amp; Fmt.Real(e.typefacePoints) &amp; &quot; scalefont def &quot; );
+  (* Many times alas. *)
+  END RecalculatePoints;
+
+PROCEDURE <A NAME="RecalculatePostScript"><procedure>RecalculatePostScript</procedure></A> (e: E; &lt;*UNUSED*&gt; window: DPSWindow.T) =
+  BEGIN
+  e.showPostScript := DPS.ShowItAccentedPostScript(e.text);
+  END RecalculatePostScript;
+
+PROCEDURE <A NAME="RecalculateArea"><procedure>RecalculateArea</procedure></A> ( e: E; window: DPSWindow.T;
+ measureOK: BOOLEAN := FALSE ) =
+ VAR textWidth: REAL;
+ VAR b: DPS.Box;
+  BEGIN
+  IF NOT measureOK THEN
+    e.widths := DPS.MeasureText (e.text, window, e.fontName);
+    END;
+  textWidth := 0.0;
+  FOR j := 0 TO NUMBER(e.widths^)-1 DO
+    textWidth := textWidth + e.widths^[j];
+    END;
+  (* wraps.Stringwidth (window.ctx, e.fontName, e.text, height, textWidth); *)
+  b := e.box;
+  b.high.x := b.low.x + e.leftLeading + textWidth;
+  b.high.y := b.low.y + e.aboveLeading + e.height + e.belowLeading;
+  e.NewBox (b);
+  END RecalculateArea;
+
+PROCEDURE <A NAME="AfterWhich"><procedure>AfterWhich</procedure></A> (a: REF ARRAY OF REAL; x: REAL): INTEGER =
+ VAR sum: REAL := 0.0;
+ VAR k: INTEGER;
+  BEGIN
+  FOR j := 0 TO NUMBER(a^)-1 DO
+    IF x &lt; (sum + a^[j] / 2.0) THEN (* Here, but skip accents. *)
+      k := j;
+      WHILE (k &lt; NUMBER(a^)) AND (a^[k] &lt; 0.001) DO INC (k); END;
+      RETURN k - 1;
+      END;
+    sum := sum + a^[j];
+    END;
+  RETURN NUMBER(a^) - 1;
+  END AfterWhich;
+
+PROCEDURE <A NAME="Mouse"><procedure>Mouse</procedure></A> (e: E; window: DPSWindow.T; event: DPS.MouseEvent): BOOLEAN =
+ VAR in: BOOLEAN;
+ VAR loc: INTEGER;
+ VAR affected: DisplayList.E;
+  BEGIN
+  Init (e, window);
+  in := DPS.PlaceIsInBox (event.place, e.box);
+  IF in THEN
+    IF event.clickType = DPS.ClickType.LastUp THEN
+      loc := AfterWhich ( e.widths,
+       event.place.x - (e.box.low.x+e.leftLeading) );
+      &lt;* ASSERT loc &lt; NUMBER(e.widths^) *&gt;
+      IF e.hasInputFocus THEN (* Maybe move insert point. *)
+        IF loc # e.insertAfterIndex THEN
+          e.insertAfterIndex := loc;
+          e.Dirty (e.box, NIL); (* May it be not on top? *)
+          END;
+       ELSE (* Need to get input focus. *)
+        e.insertAfterIndex := loc;
+        e.GetInputFocus (NIL);
+        e.hasInputFocus := TRUE;
+        affected := e.MoveToLast();
+        IF affected=NIL THEN affected := e; END;
+        affected.Dirty (affected.box, affected);
+        END;
+      END;
+    END;
+  RETURN in;
+  END Mouse;
+
+PROCEDURE <A NAME="SloppyBox"><procedure>SloppyBox</procedure></A> (box: DPS.Box): DPS.Box =
+  BEGIN (* DisplayPostScript clipping is a bit buggy. *)
+  box.low.x := box.low.x - 1.0;
+  box.high.x := box.high.x + 1.0;
+  box.low.y := box.low.y - 1.0;
+  box.high.y := box.high.y + 1.0;
+  RETURN box;
+  END SloppyBox;
+
+PROCEDURE <A NAME="BumpBoxX"><procedure>BumpBoxX</procedure></A> (box: DPS.Box; bump: REAL): DPS.Box =
+  BEGIN
+  box.low.x := box.low.x + bump;
+  box.high.x := box.high.x + bump;
+  RETURN box;
+  END BumpBoxX;
+</PRE>**
+PROCEDURE BumpBoxY (box: DPS.Box; bump: REAL): DPS.Box =
+  BEGIN
+  box.low.y := box.low.y + bump;
+  box.high.y := box.high.y + bump;
+  RETURN box;
+  END BumpBoxY;
+**
+
+<P><PRE>PROCEDURE <A NAME="WidthsDelete"><procedure>WidthsDelete</procedure></A> (w: REF ARRAY OF REAL; i: INTEGER): REF ARRAY OF REAL =
+ VAR ret: REF ARRAY OF REAL;
+  BEGIN
+  IF NUMBER(w^) &lt; 1 THEN RETURN w; END;
+  &lt;* ASSERT i &gt;= 0 *&gt;
+  &lt;* ASSERT i &lt; NUMBER(w^) *&gt;
+  ret := NEW (REF ARRAY OF REAL, NUMBER(w^) - 1);
+  FOR k := 0 TO i-1 DO ret^[k] := w^[k]; END;
+  FOR k := i+1 TO NUMBER(w^)-1 DO ret^[k-1] := w^[k]; END;
+  RETURN ret;
+  END WidthsDelete;
+
+PROCEDURE <A NAME="WidthsInsert"><procedure>WidthsInsert</procedure></A> (w: REF ARRAY OF REAL; i: INTEGER; r: REAL): REF ARRAY OF REAL =
+ VAR ret: REF ARRAY OF REAL;
+  BEGIN
+  &lt;* ASSERT i &gt;= 0 *&gt;
+  &lt;* ASSERT i &lt;= NUMBER(w^) *&gt;
+  ret := NEW (REF ARRAY OF REAL, NUMBER(w^) + 1);
+  FOR k := 0 TO i-1 DO ret^[k] := w^[k]; END;
+  ret^[i] := r;
+  FOR k := i TO NUMBER(w^)-1 DO ret^[k+1] := w^[k]; END;
+  RETURN ret;
+  END WidthsInsert;
+
+PROCEDURE <A NAME="Char"><procedure>Char</procedure></A> (e: E; window: DPSWindow.T; char: CHAR): BOOLEAN =
+ VAR oldBox: DPS.Box;
+ VAR parent: Linked2Tree.T;
+ VAR new: E;
+  BEGIN
+  IF NOT e.hasInputFocus THEN RETURN FALSE; END;
+  Init (e, window);
+  IF e.hasInputFocus THEN
+    oldBox := e.box;
+    IF ORD(char) &gt; 127 THEN
+      CASE VAL (ORD(char) - 128, CHAR) OF
+      | 'l' =&gt; e.NewBox ( BumpBoxX (e.box, -BumpX) );
+      | 'r' =&gt; e.NewBox ( BumpBoxX (e.box, BumpX) );
+      | 'b' =&gt; e.height := e.height + PointsBump;
+               e.typefacePoints := e.typefacePoints + PointsBump;
+               RecalculatePoints (e, window);
+               RecalculatePostScript (e, window);
+               RecalculateArea (e, window);
+      | 's' =&gt; e.height := e.height - PointsBump;
+               e.typefacePoints := e.typefacePoints - PointsBump;
+               RecalculatePoints (e, window);
+               RecalculatePostScript (e, window);
+               RecalculateArea (e, window);
+       ELSE RETURN TRUE;
+        END;
+      e.Dirty (DPS.BoxUnion(oldBox, e.box));
+      RETURN TRUE;
+      END;
+    IF char = '\n' THEN
+      new := NEW ( E, text := e.text, box := e.box,
+       typefacePoints := e.typefacePoints, height := e.height );
+      Init (new, window);
+      parent := e.parent; (* See remark in Linked2Tree.i3. *)
+      parent.InsertAfter (new, e);
+      new.GetInputFocus (NIL);
+      new.hasInputFocus := TRUE;
+      new.Dirty (new.box, new);
+      RETURN TRUE;
+      END;
+    IF char = '\010' THEN
+      IF Text.Length(e.text) &lt;= 0 THEN RETURN TRUE; END;
+      IF e.insertAfterIndex &lt; 0 THEN RETURN TRUE; END;
+      e.text := Text.Sub (e.text, 0, e.insertAfterIndex)
+       &amp; Text.Sub (
+         e.text,
+         e.insertAfterIndex+1,
+         Text.Length(e.text) - (e.insertAfterIndex+1) );
+      e.widths := WidthsDelete (e.widths, e.insertAfterIndex);
+      DEC (e.insertAfterIndex);
+     ELSE
+      e.text := Text.Sub (e.text, 0, e.insertAfterIndex + 1)
+       &amp; Text.FromChar(char)
+       &amp; Text.Sub (
+         e.text,
+         e.insertAfterIndex+1,
+         Text.Length(e.text) - (e.insertAfterIndex+1) );
+      e.widths := WidthsInsert ( e.widths, e.insertAfterIndex + 1,
+        DPS.MeasureChar (char, window, e.fontName) );
+      INC (e.insertAfterIndex);
+      END;
+    RecalculateArea (e, window, TRUE);
+    RecalculatePostScript (e, window);
+    (* e.Dirty (DPS.BoxUnion(oldBox, e.box)); *)
+    END;
+  RETURN TRUE;
+  END Char;
+
+PROCEDURE <A NAME="LoseInputFocus"><procedure>LoseInputFocus</procedure></A> (e: E) =
+  BEGIN
+  IF e.hasInputFocus THEN
+    e.hasInputFocus := FALSE;
+    e.Dirty (SloppyBox(e.box)); (* It may not be on top now! *)
+    END;
+  END LoseInputFocus;
+
+  BEGIN
+
+  END SlideLineDLE.
+</PRE>
+</inModule>
+<HR>
+<A NAME="x1">interface Err is in:
+</A><UL>
+<LI><A HREF="Err.i3.html#0TOP0">dps/src/Err.i3</A>
+<LI><A HREF="../../m3tk/src/misc/Err.i3.html#0TOP0">m3tk/src/misc/Err.i3</A>
+</UL>
+<P>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

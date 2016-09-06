@@ -1,0 +1,72 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: etext/src/TextEditVBT.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>etext/src/TextEditVBT.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM>                                                                           </EM></BLOCKQUOTE><PRE>
+&lt;* PRAGMA LL *&gt;
+</PRE> A <CODE>TextEditVBT</CODE> combines a textport with a scrollbar. 
+
+<P><PRE>INTERFACE <interface><A HREF="TextEditVBT.m3.html">TextEditVBT</A></interface>;
+
+IMPORT <A HREF="TextPort.i3.html">TextPort</A>, <A HREF="TextPortClass.i3.html">TextPortClass</A>, <A HREF="../../ui/src/vbt/VBT.i3.html">VBT</A>;
+
+TYPE
+  <A HREF="TextEditVBT.m3.html#T">T</A> &lt;: Public;
+  Public = Private BRANDED OBJECT
+             (* READONLY after init *)
+             tp: TextPort.T := NIL;
+             sb: Scrollbar  := NIL;
+           METHODS
+             &lt;* LL.sup = VBT.mu *&gt;
+             init (scrollable := TRUE): T
+           END;
+  <A HREF="TextEditVBT.m3.html#Private">Private</A> &lt;: VBT.T;
+  <A HREF="TextEditVBT.m3.html#Scrollbar">Scrollbar</A> &lt;: TextPortClass.Scrollbar;
+</PRE> The call <CODE>v.init()</CODE> initializes <CODE>v</CODE> as a <CODE>TextEditVBT</CODE> and returns
+   <CODE>v</CODE>. If the textport, <CODE>v.tp</CODE>, is <CODE>NIL</CODE>, then a new textport will be
+   allocated, initialized (with default parameters), and assigned to
+   <CODE>v.tp</CODE>. If <CODE>scrollable</CODE> is <CODE>FALSE</CODE>, then there will be no
+   scrollbar.  If <CODE>scrollable</CODE> is <CODE>TRUE</CODE> but <CODE>v.sb</CODE> is <CODE>NIL</CODE>, then a
+   new scrollbar will be allocated, initialized as a vertical
+   scrollbar with the textport's color scheme, and assigned to <CODE>v.sb</CODE>.
+<P>
+   If <CODE>v</CODE> is scrollable, then the default layout will contain a
+   scrollbar, either on the leftside or rightside of the textport,
+   depending on the value of the <CODE>SCROLLBARLOC</CODE> environment variable
+   (see the <CODE>VBTKitEnv</CODE> interface for details). 
+
+<P><PRE>END TextEditVBT.
+</PRE>
+</inInterface>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

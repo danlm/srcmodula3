@@ -1,0 +1,190 @@
+(* Copyright (C) 1994, Digital Equipment Corporation           *)
+(* All rights reserved.                                        *)
+(* See the file COPYRIGHT for a full description.              *)
+(*                                                             *)
+(* Created by Carsten Weich                                    *)
+(*                                                             *)
+(* Last modified on Thu Jan 19 12:57:28 PST 1995 by kalsow     *)
+(*      modified on Thu Sep 22 17:14:45 PDT 1994 by weich      *)
+
+(* The "LogManager" provides an object whose methods take a
+    "Pathname.T" and produce readers and writers for log and 
+    checkpoint files. Usually it is only used by stable objects internally.
+    But application that want to look for available checkpoints
+    {\em before} initializing the stable object might want to
+    use the log manager directly.
+
+    Application that do not want to use the file system to store their
+    stable objects or logs have to implement their own log manager
+    object.
+
+    The default log mananger uses the "nm" parameter as the name
+    of a directory in the file system. In this directory it will put the
+    log and checkpoint files. *)
+
+INTERFACE LogManager;
+
+  IMPORT Pathname, Wr, Rd, OSError;
+
+  TYPE T <: Public;
+
+    Public = OBJECT METHODS
+        reOpenLog(nm: Pathname.T): Wr.T RAISES {OSError.E};
+
+        beginCheckpoint(nm: Pathname.T): Wr.T (* new checkpoint *)
+            RAISES {OSError.E};
+        endCheckpoint(nm: Pathname.T):Wr.T (* new log *)
+            RAISES {OSError.E};
+
+        recover(nm: Pathname.T; VAR log, checkp: Rd.T)
+            RAISES {OSError.E};
+
+        recoverable(nm: Pathname.T): BOOLEAN
+            RAISES {OSError.E};
+        emptyLog(nm: Pathname.T): BOOLEAN
+            RAISES {OSError.E};
+
+        dispose(nm: Pathname.T) 
+            RAISES {OSError.E};
+      END;
+
+  Default <: T;
+
+VAR
+  default: Default;
+
+END LogManager.
+
+(* \subsubsection*{Looking for Checkpoints}
+    Clients that want to look for available checkpoints before
+    initializing stable objects use the log manager object directly
+    (instead of passing it to a stable object). They use
+    "recoverable()" to find out, whether there is a checkpoint
+    (possibly together with a log) connected to the pathname
+    "nm". Another method "emptyLog()" can be called to test the
+    existence of an non empty log. The log will be empty if the
+    program that created a stable object called "Stable.Checkpoint()"
+    before terminating ("emptlylog()" will return "TRUE" then).
+    "emptyLog()" will raise an exception if there is no checkpoint. The
+    default methods will look for a directory in the file system. If
+    there is one and if it contains a checkpoint and may be a log
+    file, it will return "TRUE". The method "cleanup()" can be used to
+    delete an existing checkpoint (and possibly a log and temporary
+    data that is connected to it). The default removes the directory
+    "nm" and everything that is in it. It is used by stable objects to
+    implement "closeStableObj()".
+
+\smallskip
+
+     The remaining describes methods that are only used by
+     stable objects internally. The following methods implement
+     means to allocate log and checkpoints and to write checkpoints
+     as atomic actions.
+
+    \subsubsection*{Log}
+     The "openLog()" method produces a newly intialized writer
+     out of a "Pathname.T". The default interprets "nm" as a name
+     of a directory in the file system. If there is no such directory, it
+     tries to create one. It then creates a new logfile in this directory
+     (overwriting an already existing one) and returns a writer to it
+     ("FileWr.Open()" is used).
+     A call to "reOpenLog()" returns an open writer to a logfile
+     created with "openLog()". The file is created if it does not exist.
+     If it exits it is openend without destroying the current contents.
+     The default opens the logfile with "FileWr.OpenAppend()". It
+     assumes that the directory is already created.
+
+     \subsubsection*{Checkpoint}
+     In order to make writing a checkpoint atomic with respect to crashes
+     there are two methods to be called: One that opens a writer that points
+     to a temporary location. A second to commit the changes, removes
+     the old log and returns a writer to a fresh log.
+     These two phases are necessary to make it possible for
+     "recover()" to detect a crash during checkpointing. A client that
+     wants to make a checkpoint calls
+     \begin{enumerate}
+     \item	"beginCheckpoint()" to get a writer,
+     \item	writes the current status of the stable object to that
+	writer (i.e.\ ``writes a checkpoint''),
+     \item	finally calls "endCheckpoint()" to commit the changes
+	and get a new log writer.
+     \end{enumerate}
+     The default "beginCheckpoint()" renames the existing checkpoint file
+     by appending ".old" to its filename. It then creates a file in "nm" with
+     ".new" appended to the checkpoint filename. The call to 
+     "endCheckpoint()" removes the -".old" backup checkpoint file.
+     When called the first time, "beginCheckpoint()" creates the directory
+     "nm" if it does not exist. Then it creates a dummy named
+     checkpoint filename ".dummy". This dummy is deleted by "endCheckpoint()". 
+     Afterwards it truncates the log by reopening it and renames 
+     the -".new" file to the  checkpoint filename. This renaming commits
+     the changes to the log file (see next).
+
+    \subsubsection*{Recovery}
+     The "recover()" method opens readers to the log and the checkpoint
+     and returns them. The "log" reader may be "NIL" or point to an 
+     empty location.
+
+     The recovery process is the same after crashes and normal
+     terminations that left a checkpoint to make an object persistent.
+     In case of a crash, a reader to a non empty logfile is returned
+     by "recover()". To check whether there is data stored to recover from,
+     call "recoverable()". It returns "TRUE" if can
+     find either a checkpoint, a log or leftovers from a crashed
+     checkpoint process.
+
+     The recovery method detects crashes during the checkpoint process.
+     Thus writing a checkpoint using the protocol described
+     above can be seen as an atomic action. "recover()" always either
+     returns consistent data that was there before writing the checkpoint or
+     completely finished checkpoint data. The following describes the algorithm
+     used by the default "recover()" method:
+     \begin{enumerate}
+     \item    {\em Crashes during backup move:}
+                    Moving the checkpoint to a backup location has to be
+                    an atomic action (moving a file in the file system is such).
+                    A crash immedeatly after the move
+                    can be detected by the fact that there is a backup
+                    but no new checkpoint.
+
+                    The method will move the backup checkpoint to the
+                    original position and return readers
+                    to this and the log (which is untouched in such a case).
+
+    \item    {\em A crash during writing the checkpoint}
+                   can be detected by the fact that there is a backup 
+                   checkpoint {\em and} a temporary checkpoint.
+
+                   The method will remove the temporary checkpoint
+                   and move to backup to the original position. It then
+                   returns readers to the checkpoint and the log.
+
+    \item   {\em A crash during deleting the backup checkpoint.}
+                 Deleting the backup must be an atomic action.
+                 A crash immedeatly afterwards means the log is
+                 invalidated. This can be detected by the fact that
+                 there is a backup copy of AND checkpoint {\em and}
+                 a checkpoint on the temporal position. In such a
+                 case the log and the backup checkpoint is erased.
+                 The checkpoint is moved from its temporal to
+                 its final position.
+                 A reader to the checkpoint and "NIL" as reader
+                 to the log is returned.
+
+    \item  {\em A crash during reinitializing the log}
+                 is detected by the fact that there is no backup checkpoint
+                 but a checkpoint at the temporary position. This means
+                 that the temporal checkpoint must be valid and the
+                 log invalid. "recover()" moves the checkpoint from its 
+                 temporal to its final position.
+                 A reader to the checkpoint and "NIL" as reader
+                 to the log is returned.
+
+    \item  {\em A crash immedeatly after reinitializing the log}
+                 is handled the same way than the above two cases:
+                 The checkpoint is moved from its temporal to
+                 its final position.
+                 A reader to the checkpoint and "NIL" as reader
+                 to the log is returned.
+    \end{enumerate}
+*)

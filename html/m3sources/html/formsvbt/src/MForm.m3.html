@@ -1,0 +1,127 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: formsvbt/src/MForm.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>formsvbt/src/MForm.m3</H2></A><HR>
+<inModule>
+<PRE><A HREF="../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM>                                                              </EM></BLOCKQUOTE><PRE>
+&lt;* PRAGMA LL *&gt;
+
+MODULE <module><implements><A HREF="MForm.i3.html">MForm</A></implements></module>;
+
+IMPORT <A HREF="FormsVBT.i3.html">FormsVBT</A>, <A HREF="../../text/src/Text.i3.html">Text</A>, <A HREF="../../etext/src/TextPort.i3.html">TextPort</A>, <A HREF="../../ui/src/vbt/VBT.i3.html">VBT</A>;
+
+TYPE
+  PublicButtonClosure =
+    FormsVBT.Closure OBJECT
+    METHODS
+      init (model: TextPort.Model; setDefault := TRUE): ButtonClosure
+    END;
+
+REVEAL
+  <A NAME="ButtonClosure">ButtonClosure</A> = PublicButtonClosure BRANDED OBJECT
+                    model     : TextPort.Model;
+                    setDefault: BOOLEAN
+                  OVERRIDES
+                    init  := InitButtonClosure;
+                    apply := DoButton
+                  END;
+
+PROCEDURE <A NAME="InitButtonClosure"><procedure>InitButtonClosure</procedure></A> (cl        : ButtonClosure;
+                             model     : TextPort.Model;
+                             setDefault                   := TRUE):
+  ButtonClosure =
+  BEGIN
+    cl.model := model;
+    cl.setDefault := setDefault;
+    RETURN cl
+  END InitButtonClosure;
+
+PROCEDURE <A NAME="DoButton"><procedure>DoButton</procedure></A> (             cl  : ButtonClosure;
+                    &lt;* UNUSED *&gt; fv  : FormsVBT.T;
+                    &lt;* UNUSED *&gt; name: TEXT;
+                    &lt;* UNUSED *&gt; time: VBT.TimeStamp  ) =
+  BEGIN
+    TextPort.ChangeAllTextPorts (cl.model);
+    IF cl.setDefault THEN TextPort.DefaultModel := cl.model END
+  END DoButton;
+
+TYPE
+  PublicRadioClosure =
+    FormsVBT.Closure OBJECT
+    METHODS
+      init (READONLY map: Map; setDefault := TRUE): RadioClosure
+    END;
+
+REVEAL
+  <A NAME="RadioClosure">RadioClosure</A> = PublicRadioClosure BRANDED OBJECT
+                   map       : Map;
+                   setDefault: BOOLEAN
+                 OVERRIDES
+                   init  := InitRadioClosure;
+                   apply := DoRadio
+                 END;
+
+PROCEDURE <A NAME="InitRadioClosure"><procedure>InitRadioClosure</procedure></A> (         cl        : RadioClosure;
+                            READONLY map       : Map;
+                                     setDefault                 := TRUE):
+  RadioClosure =
+  BEGIN
+    cl.map := map;
+    cl.setDefault := setDefault;
+    RETURN cl
+  END InitRadioClosure;
+
+PROCEDURE <A NAME="DoRadio"><procedure>DoRadio</procedure></A> (             cl  : RadioClosure;
+                                fv  : FormsVBT.T;
+                                name: TEXT;
+                   &lt;* UNUSED *&gt; time: VBT.TimeStamp ) =
+  VAR choice: TEXT;
+  BEGIN
+    TRY
+      choice := FormsVBT.GetChoice (fv, name)
+    EXCEPT
+    | FormsVBT.Error, FormsVBT.Unimplemented =&gt; RETURN
+    END;
+    FOR model := FIRST (TextPort.Model) TO LAST (TextPort.Model) DO
+      IF cl.map [model] # NIL AND Text.Equal (cl.map [model], choice) THEN
+        TextPort.ChangeAllTextPorts (model);
+        IF cl.setDefault THEN TextPort.DefaultModel := model END;
+        RETURN
+      END
+    END
+  END DoRadio;
+
+BEGIN END MForm.
+</PRE>
+</inModule>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

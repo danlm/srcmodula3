@@ -1,0 +1,59 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: jvideo/src/WIN32/JVDecomp.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>jvideo/src/WIN32/JVDecomp.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM> Digital Internal Use Only                                                 </EM></BLOCKQUOTE><PRE>
+</PRE>                                                                           
+       Created on Wed Sep  6 16:19:37 PDT 1995 by najork                   
+
+<P>
+<P><PRE>INTERFACE <interface><A HREF="../POSIX/JVDecomp.m3.html">JVDecomp</A></interface>;
+
+IMPORT <A HREF="../../../time/src/Common/Tick.i3.html">Tick</A>;
+
+TYPE
+  T = MUTEX OBJECT END;                               (* used in VideoVBT.i3 *)
+
+TYPE
+  Statistics = OBJECT                                 (* used in VideoVBT.i3 *)
+    framesStarted  : CARDINAL;
+    framesProcessed: CARDINAL;
+    timesBlocked   : CARDINAL;
+    cumLatency     : Tick.T;
+  END;
+
+END JVDecomp.
+</PRE>
+</inInterface>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

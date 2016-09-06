@@ -1,0 +1,209 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: gef/src/GEFE.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>gef/src/GEFE.m3</H2></A><HR>
+<inModule>
+<PRE><A HREF="../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM>                                                                           </EM></BLOCKQUOTE><PRE>
+
+MODULE <module>GEFE</module> EXPORTS <A HREF="GEF.i3.html"><implements>GEF</A></implements>, <A HREF="GEFInternal.i3.html"><implements>GEFInternal</A></implements>;
+
+IMPORT <A HREF="../../fmtlex/src/Fmt.i3.html">Fmt</A>, <A HREF="GEFClass.i3.html">GEFClass</A>, <A HREF="GEFError.i3.html">GEFError</A>, <A HREF="../../thread/src/Common/Thread.i3.html">Thread</A>;
+
+&lt;* PRAGMA LL *&gt;
+
+&lt;* FATAL Fatal *&gt;
+EXCEPTION Fatal;
+
+TYPE
+  ParseObject = GEFClass.ParseObject;
+
+TYPE
+  EventPO = ParseObject OBJECT
+            OVERRIDES
+              create  := EventCreate;
+              getId   := EventGetId;
+              setElem := EventSetElem;
+              finish  := EventFinish;
+              isType  := EventIsType;
+            END;
+
+TYPE
+  EventFieldType = {Actions};
+
+  Actions = REF ARRAY OF GEFClass.S_exp;
+  Event = OBJECT
+            id     : INTEGER;
+            actions: Actions;
+          END;
+
+PROCEDURE <A NAME="EventCreate"><procedure>EventCreate</procedure></A> (&lt;* UNUSED *&gt; po: ParseObject;
+                       &lt;* UNUSED *&gt; t : T;
+                                    id: INTEGER      ): REFANY =
+  BEGIN
+    RETURN NEW(Event, id := id);
+  END EventCreate;
+
+PROCEDURE <A NAME="EventGetId"><procedure>EventGetId</procedure></A> (&lt;* UNUSED *&gt; po  : ParseObject;
+                      &lt;* UNUSED *&gt; t   : T;
+                                   elem: REFANY       ): INTEGER =
+  BEGIN
+    RETURN NARROW(elem, Event).id
+  END EventGetId;
+
+PROCEDURE <A NAME="EventFinish"><procedure>EventFinish</procedure></A> (&lt;* UNUSED *&gt; po  : ParseObject;
+                       &lt;* UNUSED *&gt; t   : T;
+                       &lt;* UNUSED *&gt; elem: REFANY       )
+  RAISES {GEFError.T, Thread.Alerted} =
+  BEGIN
+  END EventFinish;
+
+PROCEDURE <A NAME="EventIsType"><procedure>EventIsType</procedure></A> (&lt;* UNUSED *&gt; po: ParseObject; elem: REFANY):
+  BOOLEAN =
+  BEGIN
+    RETURN ISTYPE(elem, Event);
+  END EventIsType;
+
+PROCEDURE <A NAME="EventSetElem"><procedure>EventSetElem</procedure></A> (&lt;* UNUSED *&gt; po    : ParseObject;
+                        &lt;* UNUSED *&gt; t     : T;
+                                     elem  : REFANY;
+                                     field : INTEGER;
+                                     values: GEFClass.Elems)
+  RAISES {GEFError.T} =
+  VAR event := NARROW(elem, Event);
+  BEGIN
+    CASE VAL(field, EventFieldType) OF
+    | EventFieldType.Actions =&gt;
+        event.actions := NEW(Actions, NUMBER(values^));
+        event.actions^ := values^;
+    ELSE
+      RAISE Fatal;
+    END;
+  END EventSetElem;
+
+TYPE
+  InvokePO = ParseObject OBJECT
+            OVERRIDES
+              create  := InvokeCreate;
+              getId   := InvokeGetId;
+              setElem := InvokeSetElem;
+              finish  := InvokeFinish;
+              isType  := InvokeIsType;
+            END;
+
+TYPE
+  InvokeFieldType = {Event, Args};
+
+  Invoke = OBJECT
+             id   : INTEGER;
+             event: Event;
+             args : GEFClass.S_exp;
+           END;
+
+PROCEDURE <A NAME="InvokeCreate"><procedure>InvokeCreate</procedure></A> (&lt;* UNUSED *&gt; po: ParseObject;
+                        &lt;* UNUSED *&gt; t : T;
+                                     id: INTEGER      ): REFANY =
+  BEGIN
+    RETURN NEW(Invoke, id := id);
+  END InvokeCreate;
+
+PROCEDURE <A NAME="InvokeGetId"><procedure>InvokeGetId</procedure></A> (&lt;* UNUSED *&gt; po  : ParseObject;
+                       &lt;* UNUSED *&gt; t   : T;
+                                    elem: REFANY       ): INTEGER =
+  BEGIN
+    RETURN NARROW(elem, Invoke).id
+  END InvokeGetId;
+
+PROCEDURE <A NAME="InvokeFinish"><procedure>InvokeFinish</procedure></A> (&lt;* UNUSED *&gt; po: ParseObject; t: T; elem: REFANY)
+  RAISES {GEFError.T, Thread.Alerted} =
+  VAR invoke := NARROW(elem, Invoke);
+  BEGIN
+    GEFClass.IncrementalParse(t, invoke.event.actions);
+  END InvokeFinish;
+
+PROCEDURE <A NAME="InvokeIsType"><procedure>InvokeIsType</procedure></A> (&lt;* UNUSED *&gt; po: ParseObject; elem: REFANY):
+  BOOLEAN =
+  BEGIN
+    RETURN ISTYPE(elem, Invoke);
+  END InvokeIsType;
+
+PROCEDURE <A NAME="InvokeSetElem"><procedure>InvokeSetElem</procedure></A> (&lt;* UNUSED *&gt; po    : ParseObject;
+                         &lt;* UNUSED *&gt; t     : T;
+                                      elem  : REFANY;
+                                      field : INTEGER;
+                                      values: GEFClass.Elems)
+  RAISES {GEFError.T} =
+  VAR invoke := NARROW(elem, Invoke);
+  BEGIN
+    CASE VAL(field, InvokeFieldType) OF
+    | InvokeFieldType.Event =&gt;
+        TYPECASE values[0] OF
+        | NULL =&gt; RAISE GEFError.T(&quot;No \&quot;Event\&quot; given for \&quot;Invoke\&quot;&quot;);
+        | Event (ev) =&gt; invoke.event := ev;
+        ELSE
+          RAISE GEFError.T(&quot;\&quot;Invoke\&quot; requires an \&quot;Event\&quot;&quot;);
+        END;
+    | InvokeFieldType.Args =&gt; invoke.args := values[0]
+    ELSE
+      RAISE Fatal;
+    END;
+  END InvokeSetElem;
+
+PROCEDURE <A NAME="InvokeEvent"><procedure>InvokeEvent</procedure></A> (t: T; event: TEXT; &lt;* UNUSED *&gt; args: S_exp)
+  RAISES {GEFError.T, Thread.Alerted} =
+  BEGIN
+    TYPECASE GEFClass.ElemFromName(t, event) OF
+    | NULL =&gt; RAISE Fatal;
+    | Event (event) =&gt;
+        FOR i := 0 TO LAST(event.actions^) DO
+          GEFClass.IncrementalParse(t, event.actions[i]);
+        END;
+    ELSE
+      RAISE GEFError.T(&quot;\&quot;Invoke\&quot; requires an \&quot;Event\&quot;&quot;);
+    END;
+  END InvokeEvent;
+
+BEGIN
+  GEFClass.RegisterParseObject(
+    NEW(EventPO, args := &quot;((Name Event)&quot;
+                           &amp; Fmt.F(&quot;(Field %s Actions Sx Infinity () ()))&quot;,
+                                   Fmt.Int(ORD(EventFieldType.Actions)))));
+  GEFClass.RegisterParseObject(
+    NEW(InvokePO, args := &quot;((Name Invoke)&quot;
+     &amp; Fmt.F(&quot;(Field %s Event Elem 1 () ())&quot;,
+                                   Fmt.Int(ORD(InvokeFieldType.Event)))
+     &amp; Fmt.F(&quot;(Field %s Args Sx 1 () ()))&quot;,
+                                   Fmt.Int(ORD(InvokeFieldType.Args)))));
+END GEFE.
+</PRE>
+</inModule>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

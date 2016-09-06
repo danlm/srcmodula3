@@ -1,0 +1,83 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: dps/src/Linked2List.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>dps/src/Linked2List.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+
+INTERFACE <interface>Linked2List</interface>;
+
+IMPORT <A HREF="../../text/src/Text.i3.html">Text</A>;
+
+TYPE T = OBJECT
+  monitor: MUTEX;
+  first: E; last: E
+ METHODS
+  Prepend (e: E) := Prepend;
+  Append (e: E) := Append;
+  Remove (e: E) := Remove;
+  First (): E := First;
+  Next (e: E): E := Next;
+  Last (): E := Last;
+  Previous (e: E): E := Previous;
+  MoveToFirst (e: E): BOOLEAN := MoveToFirst;
+  MoveToLast (e: E): BOOLEAN := MoveToLast;
+  END;
+
+TYPE E = OBJECT
+  list: T;
+  next: E; previous: E;
+ METHODS
+  MakeFirst (): BOOLEAN := MakeFirst;
+  MakeLast (): BOOLEAN := MakeLast;
+  END;
+
+PROCEDURE New (): T;
+PROCEDURE Init (t: T);
+
+PROCEDURE Prepend (t: T; e: E);
+PROCEDURE Append (t: T; e: E);
+PROCEDURE Remove (t: T; e: E);
+PROCEDURE First (t: T): E;
+PROCEDURE Next (t: T; e: E): E;
+PROCEDURE Last (t: T): E;
+PROCEDURE Previous (t: T; e: E): E;
+PROCEDURE MoveToFirst (t: T; e: E): BOOLEAN;
+PROCEDURE MoveToLast (t: T; e: E): BOOLEAN;
+
+PROCEDURE MakeFirst (e: E): BOOLEAN;
+PROCEDURE MakeLast (e: E): BOOLEAN;
+
+  END Linked2List.
+</PRE>
+</inInterface>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

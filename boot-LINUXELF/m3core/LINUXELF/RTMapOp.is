@@ -1,0 +1,453 @@
+	.file	"RTMapOp.ic"
+	.version	"01.01"
+gcc2_compiled.:
+
+.section	.text
+.L_text_b:
+	.previous
+
+.section	.data
+.L_data_b:
+	.previous
+
+.section	.rodata
+.L_rodata_b:
+	.previous
+
+.section	.bss
+.L_bss_b:
+	.previous
+
+.section	.debug_sfnames
+.L_sfnames_b:
+	.string	"/tmp_mnt/swindle/r/misc1/m3-export/new/boot-LINUXELF/m3core/LINUXELF/"
+	.previous
+
+.section	.line
+.L_line_b:
+	.4byte	.L_line_e-.L_line_b
+	.4byte	.L_text_b
+	.previous
+
+.section	.debug_srcinfo
+.L_srcinfo_b:
+	.4byte	.L_line_b
+	.4byte	.L_sfnames_b
+	.4byte	.L_text_b
+	.4byte	.L_text_e
+	.4byte	0xffffffff
+	.previous
+
+.section	.debug_pubnames
+	.4byte	.L_debug_b
+	.previous
+
+.section	.debug_aranges
+	.4byte	.L_debug_b
+	.previous
+
+.section	.debug
+.L_debug_b:
+.L_D1:
+	.4byte	.L_D1_e-.L_D1
+	.2byte	0x11
+	.2byte	0x12
+	.4byte	.L_D2
+	.2byte	0x38
+	.string	"RTMapOp.ic"
+	.2byte	0x258
+	.string	"SRC Modula-3 2.6.3"
+	.2byte	0x136
+	.4byte	0x1
+	.2byte	0x111
+	.4byte	.L_text_b
+	.2byte	0x121
+	.4byte	.L_text_e
+	.2byte	0x106
+	.4byte	.L_line_b
+	.2byte	0x1b8
+	.string	"/tmp_mnt/swindle/r/misc1/m3-export/new/boot-LINUXELF/m3core/LINUXELF"
+	.2byte	0x8006
+	.4byte	.L_sfnames_b
+	.2byte	0x8016
+	.4byte	.L_srcinfo_b
+.L_D1_e:
+	.previous
+
+.globl MI_RTMapOp
+.data
+	.align 4
+	.type	 MI_RTMapOp,@object
+	.size	 MI_RTMapOp,796
+MI_RTMapOp:
+	.long MI_RTMapOp+712
+	.long MI_RTMapOp+44
+	.zero	44
+	.long 160538455
+.byte 6
+.byte 153
+.byte 194
+.byte 6
+.byte 81
+.byte 6
+.byte 83
+.byte 15
+	.zero	8
+	.long 1
+	.long 1
+	.zero	20
+	.long MI_RTMapOp+781
+	.zero	36
+	.long MI_RTMapOp+783
+	.long MI_RTMapOp+148
+	.zero	8
+	.long 690206623
+.byte 228
+.byte 52
+.byte 218
+.byte 38
+.byte 123
+.byte 131
+.byte 249
+.byte 15
+	.zero	8
+	.long 4
+	.long 4
+	.zero	20
+	.long MI_RTMapOp+768
+	.zero	36
+	.long MI_RTMapOp+770
+	.long MI_RTMapOp+252
+	.zero	8
+	.long -1357738594
+.byte 116
+.byte 1
+.byte 9
+.byte 175
+.byte 234
+.byte 140
+.byte 27
+.byte 0
+	.zero	8
+	.long 1
+	.long 1
+	.zero	20
+	.long MI_RTMapOp+755
+	.zero	36
+	.long MI_RTMapOp+757
+	.zero	4
+.byte 2
+.byte 2
+.byte 2
+.byte 2
+.byte 0
+.byte 1
+.byte 2
+.byte 3
+.byte 4
+.byte 5
+.byte 14
+.byte 15
+.byte 6
+.byte 7
+.byte 8
+.byte 9
+.byte 10
+.byte 11
+.byte 12
+.byte 13
+.byte 16
+.byte 16
+.byte 16
+.byte 16
+.byte 2
+.byte 2
+.byte 2
+.byte 2
+.byte 2
+.byte 2
+.byte 2
+.byte 2
+.byte 2
+.byte 2
+.byte 2
+.byte 2
+.byte 2
+.byte 2
+.byte 2
+.byte 2
+.byte 2
+.byte 2
+.byte 2
+.byte 2
+.byte 2
+.byte 2
+.byte 2
+.byte 2
+.byte 2
+.byte 2
+.byte 2
+.byte 2
+.byte 2
+.byte 2
+.byte 2
+.byte 2
+.byte 2
+.byte 2
+.byte 0
+.byte 0
+.byte 0
+.byte 0
+.byte 0
+.byte 0
+.byte 0
+.byte 0
+.byte 0
+.byte 0
+.byte 2
+.byte 2
+.byte 0
+.byte 0
+.byte 0
+.byte 0
+.byte 0
+.byte 0
+.byte 0
+.byte 0
+.byte 1
+.byte 2
+.byte 3
+.byte 4
+.byte 1
+.byte 2
+.byte 1
+.byte 2
+.byte 3
+.byte 4
+.byte 5
+.byte 6
+.byte 7
+.byte 8
+.byte 0
+.byte 0
+.byte 0
+.byte 0
+.byte 0
+.byte 0
+.byte 0
+.byte 0
+.byte 1
+.byte 2
+.byte 3
+.byte 4
+.byte 5
+.byte 6
+.byte 7
+.byte 8
+.byte 1
+.byte 2
+.byte 3
+.byte 4
+.byte 5
+.byte 6
+.byte 7
+.byte 8
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	.long 4
+	.long 4
+	.long 4
+	.long 4
+	.long 8
+	.long 8
+	.long 0
+	.long 0
+	.long 1
+	.long 2
+	.long 4
+	.long 8
+	.long 1
+	.long 2
+	.long 4
+	.long 8
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	.long 1
+	.long 2
+	.long 3
+	.long 4
+	.long 5
+	.long 6
+	.long 7
+	.long 8
+	.zero	72
+	.ascii	"/proj/m3/pkg/runtime/src/common/RTMapOp.i3"
+	.zero	1
+.byte 16
+.byte 0
+	.ascii	"RTMapOp.PC"
+	.zero	1
+.byte 5
+.byte 0
+	.ascii	"RTMapOp.AP"
+	.zero	1
+.byte 16
+.byte 0
+	.ascii	"RTMapOp.BP"
+	.zero	3
+
+.section	.debug_pubnames
+	.4byte	.L_P0
+	.string	"MI_RTMapOp"
+	.previous
+
+.section	.debug
+.L_D3:
+	.4byte	.L_D3_e-.L_D3
+	.2byte	0x13
+	.2byte	0x12
+	.4byte	.L_D4
+	.set	.L_T59,.L_D3
+	.2byte	0xb6
+	.4byte	0x31c
+.L_D3_e:
+.L_D5:
+	.4byte	0x4
+.L_P0:
+.L_D4:
+	.4byte	.L_D4_e-.L_D4
+	.2byte	0x7
+	.2byte	0x12
+	.4byte	.L_D6
+	.2byte	0x38
+	.string	"MI_RTMapOp"
+	.2byte	0x72
+	.4byte	.L_T59
+	.2byte	0x23
+	.2byte	.L_l4_e-.L_l4
+.L_l4:
+	.byte	0x3
+	.4byte	MI_RTMapOp
+.L_l4_e:
+.L_D4_e:
+	.previous
+
+.section	.debug
+.L_D6:
+	.4byte	.L_D6_e-.L_D6
+	.2byte	0x13
+	.2byte	0x12
+	.4byte	.L_D7
+	.set	.L_T38,.L_D6
+	.2byte	0xb6
+	.4byte	0xd8
+.L_D6_e:
+.L_D8:
+	.4byte	0x4
+.L_P1:
+.L_D7:
+	.4byte	.L_D7_e-.L_D7
+	.2byte	0x7
+	.2byte	0x12
+	.4byte	.L_D9
+	.2byte	0x38
+	.string	"MI_RTTypeMap"
+	.2byte	0x72
+	.4byte	.L_T38
+.L_D7_e:
+	.previous
+
+.section	.debug
+.L_D9:
+	.4byte	.L_D9_e-.L_D9
+	.2byte	0x13
+	.2byte	0x12
+	.4byte	.L_D10
+	.set	.L_T39,.L_D9
+	.2byte	0xb6
+	.4byte	0x38c
+.L_D9_e:
+.L_D11:
+	.4byte	0x4
+.L_P2:
+.L_D10:
+	.4byte	.L_D10_e-.L_D10
+	.2byte	0x7
+	.2byte	0x12
+	.4byte	.L_D12
+	.2byte	0x38
+	.string	"MI_RTHooks"
+	.2byte	0x72
+	.4byte	.L_T39
+.L_D10_e:
+	.previous
+
+.section	.debug
+.L_D12:
+	.4byte	.L_D12_e-.L_D12
+	.align 4
+.L_D12_e:
+.L_D2:
+	.previous
+
+.section	.text
+.L_text_e:
+	.previous
+
+.section	.data
+.L_data_e:
+	.previous
+
+.section	.rodata
+.L_rodata_e:
+	.previous
+
+.section	.bss
+.L_bss_e:
+	.previous
+
+.section	.line
+.L_line_last:
+	.4byte	0x0
+	.2byte	0xffff
+	.4byte	.L_text_e-.L_text_b
+.L_line_e:
+	.previous
+
+.section	.debug_srcinfo
+	.4byte	.L_line_last-.L_line_b
+	.4byte	0xffffffff
+	.previous
+
+.section	.debug_pubnames
+	.4byte	0x0
+	.string	""
+	.previous
+
+.section	.debug_aranges
+	.4byte	.L_text_b
+	.4byte	.L_text_e-.L_text_b
+	.4byte	.L_data_b
+	.4byte	.L_data_e-.L_data_b
+	.4byte	.L_rodata_b
+	.4byte	.L_rodata_e-.L_rodata_b
+	.4byte	.L_bss_b
+	.4byte	.L_bss_e-.L_bss_b
+	.4byte	0x0
+	.4byte	0x0
+	.previous
+	.ident	"GCC: (GNU) 2.6.3"

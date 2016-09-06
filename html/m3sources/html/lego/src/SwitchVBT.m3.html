@@ -1,0 +1,117 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: lego/src/SwitchVBT.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>lego/src/SwitchVBT.m3</H2></A><HR>
+<inModule>
+<PRE><A HREF="../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM>                                                                           </EM></BLOCKQUOTE><PRE>
+
+MODULE <module><implements><A HREF="SwitchVBT.i3.html">SwitchVBT</A></implements></module>;
+
+IMPORT <A HREF="../../ui/src/split/ButtonVBT.i3.html">ButtonVBT</A>, <A HREF="FeedbackVBT.i3.html">FeedbackVBT</A>, <A HREF="../../ui/src/split/Filter.i3.html">Filter</A>, <A HREF="MultiClass.i3.html">MultiClass</A>, <A HREF="MultiFilter.i3.html">MultiFilter</A>, <A HREF="../../ui/src/vbt/VBT.i3.html">VBT</A>;
+
+REVEAL
+  <A NAME="T">T</A> = Public BRANDED OBJECT
+      OVERRIDES
+        init     := Init;
+        callback := Callback;
+        pre      := Pre;
+        post     := Post;
+        cancel   := Cancel;
+      END;
+
+  <A NAME="MC">MC</A> = MultiClass.Filter BRANDED OBJECT
+       OVERRIDES
+         succ    := Succ;
+         pred    := Succ;
+         replace := Replace;
+       END;
+
+PROCEDURE <A NAME="Init"><procedure>Init</procedure></A> (v: T; f: FeedbackVBT.T): T =
+  BEGIN
+    EVAL ButtonVBT.T.init (v, f, Action);
+    MultiClass.Be (v, NEW(MC));
+    MultiClass.BeChild (v, MultiFilter.Child (f));
+    RETURN v
+  END Init;
+
+PROCEDURE <A NAME="Callback"><procedure>Callback</procedure></A> (&lt;* UNUSED *&gt;          v : T;
+                    &lt;* UNUSED *&gt; READONLY cd: VBT.MouseRec) =
+  BEGIN
+  END Callback;
+
+PROCEDURE <A NAME="Action"><procedure>Action</procedure></A> (         selfAsButtonVBT: ButtonVBT.T;
+                  READONLY cd             : VBT.MouseRec ) =
+  BEGIN
+    NARROW (selfAsButtonVBT, T).callback (cd)
+  END Action;
+
+PROCEDURE <A NAME="Pre"><procedure>Pre</procedure></A> (v: ButtonVBT.T) =
+  BEGIN
+    FeedbackVBT.Excited (Filter.Child (v));
+  END Pre;
+
+PROCEDURE <A NAME="Post"><procedure>Post</procedure></A> (v: ButtonVBT.T) =
+  BEGIN
+    FeedbackVBT.Normal (Filter.Child (v));
+  END Post;
+
+PROCEDURE <A NAME="Cancel"><procedure>Cancel</procedure></A> (v: ButtonVBT.T) =
+  BEGIN
+    FeedbackVBT.Normal (Filter.Child(v));
+  END Cancel;
+
+PROCEDURE <A NAME="Replace"><procedure>Replace</procedure></A> (m: MC; &lt;* UNUSED *&gt; ch: VBT.T; new: VBT.T) =
+  BEGIN
+    WITH switch = m.vbt,
+         feedback = Filter.Child (switch) DO
+      EVAL MultiFilter.Replace (feedback, new);
+    END
+  END Replace;
+
+PROCEDURE <A NAME="Succ"><procedure>Succ</procedure></A> (m: MC; ch: VBT.T): VBT.T =
+  BEGIN
+    WITH switch = m.vbt,
+         feedback = Filter.Child (switch) DO
+      IF ch = NIL THEN
+        RETURN MultiFilter.Child (feedback);
+      ELSE
+        RETURN NIL
+      END;
+    END
+  END Succ;
+
+BEGIN
+END SwitchVBT.
+</PRE>
+</inModule>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

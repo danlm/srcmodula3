@@ -1,0 +1,59 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: netobjrt/src/NetObjInit.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>netobjrt/src/NetObjInit.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM> NetObjInit.i3 </EM></BLOCKQUOTE><PRE>
+</PRE> The <CODE>NetObjInit</CODE> interface is integral to network object runtime
+   initialization.  It is carefully crafted to avoid initialization
+   circularities.  Beware of changing it. 
+
+<P><PRE>INTERFACE <interface><A HREF="#x1">NetObjInit</A></interface>;
+
+PROCEDURE <A HREF="AgentStubs.m3.html#InitAgentStubs">InitAgentStubs</A>();
+</PRE> <CODE>InitAgentStubs</CODE> registers stubs for the type <CODE>SpecialObj.T</CODE>. 
+
+<P><PRE>PROCEDURE <A HREF="VoucherStubs.m3.html#InitVoucherStubs">InitVoucherStubs</A>();
+</PRE> <CODE>InitVoucherStubs</CODE> registers stubs for the type <CODE>Voucher.T</CODE>. 
+
+<P><PRE>END NetObjInit.
+</PRE>
+</inInterface>
+<HR>
+<A NAME="x1">NetObjInit's implementation  is in:
+</A><UL>
+<LI><A HREF="AgentStubs.m3.html#0TOP0">netobjrt/src/AgentStubs.m3</A>
+<LI><A HREF="VoucherStubs.m3.html#0TOP0">netobjrt/src/VoucherStubs.m3</A>
+</UL>
+<P>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

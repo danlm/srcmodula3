@@ -1,0 +1,859 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: Bugs and patches v3.3</TITLE>
+</HEAD>
+<BODY BGCOLOR="#ffffff" VLINK="#006633">
+
+<H2>Bugs and patches: version 3.3</H2>
+<P>
+
+Listed below are the known bugs and patches or workarounds for
+version 3.3 of SRC Modula-3:
+<UL>
+<LI>All platforms:
+  <UL>
+  <LI><A HREF="#x001">m3ship: cannot locate a .M3SHIP file, run m3build first</A>
+  <LI><A HREF="#x004">m3gdb: Memory corruption</A>
+  <LI><A HREF="#x005">mentor build fails</A>
+  <LI><A HREF="#x006">DPS.m3 doesn't compile</A>
+  <LI><A HREF="#x009">gcc optimizer (Tick.m3)</A>
+  <LI><A HREF="#x010">missing debugging info</A>
+  <LI><A HREF="#x011">bad floating-point values</A>
+  <LI><A HREF="#x014">bad arguments passed to quake</A>
+  <LI><A HREF="#x017">stalls while writing on stdout</A>
+  <LI><A HREF="#x023">Formsvbt(J-video) doesn't build</A>
+  <LI><A HREF="#x024">Random integers are out of range</A>
+  <LI><A HREF="#x003">ld: Undefined symbol _getmnt</A>
+  </UL>
+<LI>ALPHA_OSF
+  <UL>
+  <LI><A HREF="#x015">bad object file during m3boot (ALPHA_OSF)</A>
+  <LI><A HREF="#x016">multiply defined symbols in libm3ui.so (ALPHA_OSF)</A>
+  </UL>
+<LI>SOLsun, SOLgnu (Solaris)
+  <UL>
+  <LI><A HREF="#x007">Wrong socket types (Solaris)</A>
+  <LI><A HREF="#x008">missing debugging info (Solaris)</A>
+  <LI><A HREF="#x012">bad SP/FP offsets (Solaris)</A>
+  <LI><A HREF="#x013">shared libraries vs. X11 (SPARC and Solaris)</A>
+  <LI><A HREF="#x018">network objects hang on big-endian machines</A>
+  <LI><A HREF="#x020">Ushm.shmat signature (Solaris)</A>
+  <LI><A HREF="#x022">TCP patches (Solaris)</A>
+  </UL>
+<LI>SPARC
+  <UL>
+  <LI><A HREF="#x000">PIC vs. pic (SPARC)</A>
+  <LI><A HREF="#x002">libm3: struct_tm (SPARC)</A>
+  <LI><A HREF="#x013">shared libraries vs. X11 (SPARC and Solaris)</A>
+  <LI><A HREF="#x018">network objects hang on big-endian machines</A>
+  <LI><A HREF="#x019">Trestle crashes under OpenWindows 3.0 (SPARC)</A>
+  <LI><A HREF="#x025">Network objects cause system panic on SunOS (SPARC)</A>
+  <LI><A HREF="#x026">Obliq doesn't compile on all platforms (SPARC)</A>
+  <LI><A HREF="#x027">shmctl system call wrapper (SPARC)</A>
+  </UL>
+<LI>SUN386
+  <UL>
+  <LI><A HREF="#x021">misc. patches for SUN386/SunOS 4.0.2</A>
+  </UL>
+</UL>
+<P>
+
+There is a natural tension between the frequency of new
+releases and the number of patches that must be applied
+to an old release.  We try to make the right choice.
+If you have any wisdom or advice on how this tradeoff
+should be made, please send e-mail to
+<b>m3-request@src.dec.com</b>.
+<P>
+
+<!-------------------------------------------------------------------------->
+<HR>
+<H2><A NAME="x001">m3ship: cannot locate a .M3SHIP file,
+run m3build first</A></H2>
+<P>
+Some packages (e.g. tools/m3tohtml, compiler/driver, and visualobliq)
+don't export anything, so m3ship complains.
+<P>
+
+The driver package should export "m3".  Add
+<PRE>
+    LibdExport ("m3")
+</PRE>
+at the end of its m3makefile.
+<P>
+
+<EM>Patch:</EM><P>
+Near line 1120 of
+<TT>boot-XYZ/m3build/templates/COMMON</TT>,
+change
+<PRE>
+    if defined("_all")
+      delete_file(M3SHIP_FILE)
+      delete_file(M3OVERRIDES)
+    end
+</PRE>
+to
+<PRE>
+    if defined("_all")
+      delete_file(M3SHIP_FILE)
+      delete_file(M3OVERRIDES)
+      > M3SHIP_FILE in write (CR) end % let m3ship know we've been here
+    end
+</PRE>
+This change will cause m3build to always create a .M3SHIP file.
+<P>
+
+<!-------------------------------------------------------------------------->
+<HR>
+<H2><A NAME="x004">m3gdb: Memory corruption</A></H2>
+<P>
+On some platforms m3gdb crashes immediately with
+"gdb internal error: Memory corruption".  The bug
+is in the Modula-3 extensions -- m3_demangle is
+not returning the address of a malloc'ed string.
+<P>
+
+<EM>Patch:</EM><P>
+In <TT>m3gdb/gdb/gdb/m3-lang.c</TT>, in procedure m3_demangle
+(lines 899-966) make the following changes:
+<UL>
+<LI> Change the declaration of demangled from "<B>static char demangled[100];</B>"
+     to "<B>char demangled[100]</B>".
+<LI> Change each occurance (5 of them) of "<B>return demangled</B>"
+     to "<B>return strsave (demangled)</B>".
+</UL>
+<P>
+
+<!-------------------------------------------------------------------------->
+<HR>
+<H2><A NAME="x005">mentor build fails</A></H2>
+<P>
+The mentor m3makefile doesn't evaluate properly.
+<P>
+
+<EM>Patch:</EM><P>
+Replace <B>include_dir(pqueue)</B> with <B>include_dir("pqueue")</B>
+in <TT>mentor/src/m3makefile</TT>.
+<P>
+
+<!-------------------------------------------------------------------------->
+<HR>
+<H2><A NAME="x006">DPS.m3 doesn't compile</A></H2>
+<P>
+The display postscript package is stale.
+<TT>misc/dps/src/DPS.m3</TT> doesn't compile
+because it calls <B>SchedulerPosix.IOSelect</B>.
+<P>
+
+<EM>Patch:</EM>
+<PRE>
+Date: Tue, 07 Jun 94 10:53:40 -0700
+From: wobber
+
+>>    It seems misc/dps/src/DPS.m3 needs updating; it accesses (in line 897) an
+>>    obsolete procedure SchedulerPosix.IOSelect, which has been superseded by
+>>    SchedulerPosix.IOWait (or so it seems). How do we change it?
+
+Although I've never looked at this code before, it looks as if the 
+DPS code depends on all windows existing on a single display and 
+X connection.  Look at the code and comment at line 750 of DPS.m3.
+I believe that the "fd" in the variable "displaySource" is the 
+only one that the code as written will ever wait upon.  This implies
+that replacing the call to WaitForX() near the end of TalkToX() with
+
+       SchedulerPosix.IOWait(displaySource.fd, TRUE)
+
+might do the trick.
+
+Ted Wobber
+DEC SRC
+</PRE>
+
+<!-------------------------------------------------------------------------->
+<HR>
+<H2><A NAME="x009">gcc optimizer (Tick.m3)</A></H2>
+<P>
+The combination of the gcc optimizer and the m3 IL -> gcc tree
+translator is buggy.  It generates bad code for:
+<PRE>
+   Word.LT (16_80000000, x)
+</PRE>
+This code exists in the the Tick implementation.
+<P>
+
+<EM>Work-around:</EM><P>
+Don't turn on the optimizer.
+<P>
+
+<!-------------------------------------------------------------------------->
+<HR>
+<H2><A NAME="x010">missing debugging info</A></H2>
+<P>
+The compiler front-end doesn't pass the following information
+to the back-end and therefore never gets into the debugger:
+<UL>
+<LI>the names and values of scalar constants
+<LI>the renaming that "IMPORT A AS B" introduces
+<LI>the Modula-3 type of procedure return values
+</UL>
+
+<EM>Work-around:</EM><P>
+None.
+<P>
+
+<!-------------------------------------------------------------------------->
+<HR>
+<H2><A NAME="x011">bad floating-point values</A></H2>
+<P>
+The compiler front-end doesn't use the recommended
+Lex interface to read floating point values.  Hence,
+very large, very small and very precise values may
+not be read correctly by the compiler.
+<P>
+
+The front-end uses host floating-point arithmetic to
+fold floating-point constants -- even when being used
+as a cross-compiler.  Hence, cross-compilers may not
+compute the correct constants.
+<P>
+
+The front-end doesn't generate IEEE infinities for FIRST(REAL)
+and LAST(REAL).
+<P>
+
+<EM>Work-around:</EM><P>
+None.
+<P>
+
+<!-------------------------------------------------------------------------->
+<HR>
+<H2><A NAME="x014">bad arguments passed to quake</A></H2>
+<P>
+The m3build, m3ship, m3where and m3mkdir programs
+may pass bad arguments to quake.
+The function
+<B>pathhead()</B> uses <B>strncpy()</B> but fails to terminate
+the resulting string.
+[ANSI <B>strncpy()</B> adds a <TT>\0</TT> only if the source string
+is shorter than n.]
+<P>
+
+<EM>Patch:</EM><P>
+Before building the bootstrap,
+edit m3build.cq, m3where.cq, m3ship.cq1, and m3mkdir.cq
+in <TT>boot-XYZ/m3build/src</TT>.
+Or, after installing the bootstrap,
+edit the same files in
+<TT>m3utils/m3build/src</TT>
+and reship the package.
+<P>
+
+Here are the context diffs for m3utils/m3build/src/m3build.cq:
+<PRE>
+*** m3build.cq.dist     Thu May 26 15:58:35 1994
+--- m3build.cq  Fri Jun 10 12:22:34 1994
+***************
+*** 202,207 ****
+--- 202,208 ----
+    "    len = last_sep - name;",
+    "    head = malloc (len + 1);",
+    "    strncpy (head, name, len);",
++   "    head[len] = 0;",
+    "    DPRINTF((\"pathhead (%s) = %s\\n\", name, head))",
+    "    return head;",
+    "  }",
+</PRE>
+
+<!-------------------------------------------------------------------------->
+<HR>
+<H2><A NAME="x017">stalls while writing on stdout</A></H2>
+<P>
+If your program generates output faster than the OS can
+consume it, you program may stall until another I/O event
+wakes it up.
+<P>
+
+<EM>Patch:</EM><P>
+In <TT>libm3/src/os/POSIX/FilePosix.m3</TT>, line 273 at
+the end of the procedure <TT>IntermittentWrite</TT>, the
+call to <TT>IOWait</TT> should be:
+<PRE>
+     EVAL SchedulerPosix.IOWait(h.fd, FALSE)
+</PRE>
+
+<!-------------------------------------------------------------------------->
+<HR>
+<H2><A NAME="x023">Formsvbt(J-video) doesn't build</A></H2>
+<P>
+The J-video sources which are part of the formsvbt library
+don't compile on some platforms.
+<PRE>
+  --- building in SOLgnu ---
+  m3 -w1 -why -g -a libjvideo.a -F/tmp/qkAAAa001lQ 
+  new source -> compiling ../src/JvsBuffer.m3
+  "../src/JvsBuffer.m3", line 85: value is not assignable to field (address)
+  1 error encountered
+  compilation failed => not building library "libjvideo.a"
+  *** error code 1 (ignored)
+</PRE>
+<P>
+
+<EM>Patch:</EM><P>
+Since the only J-video hardware is at SRC, substitute
+<PRE>
+    &lt;*ASSERT FALSE*&gt;
+</PRE>
+for the body of the offending procedure.
+<P>
+
+<!-------------------------------------------------------------------------->
+<HR>
+<H2><A NAME="x024">Random integers are out of range</A></H2>
+<P>
+For some ranges, <TT>[a .. b]</TT>, the <TT>Random.Default.integer</TT>
+method returns values in the range <TT>[0 .. b-a]</TT>.
+<P>
+
+<EM>Patch:</EM>
+<P>
+In the procedure Integer in <TT>libm3/src/random/Common/Random.m3</TT>
+(near line 132) it says:
+<PRE>
+      res := xl * range;
+      res := Word.RightShift(res, halfWordSize);
+      res := res + xh * range;
+      res := Word.RightShift(res, halfWordSize);
+      RETURN res
+    END (* BEGIN *)
+</PRE>
+But, the return statement should be
+<PRE>
+      res := xl * range;
+      res := Word.RightShift(res, halfWordSize);
+      res := res + xh * range;
+      res := Word.RightShift(res, halfWordSize);
+      RETURN res + min;
+    END (* BEGIN *)
+</PRE>
+
+
+<!-------------------------------------------------------------------------->
+<HR>
+<H2><A NAME="x003">ld: Undefined symbol _getmnt
+(ALPHA_OSF, SPARC, Solaris)</A></H2>
+<P>
+Apparrently <EM>getmnt</EM> is not a universal C library
+function.  In OSF and SunOS there's a function called <EM>getmntent</EM>,
+possibly it can be used as a replacement.
+<P>
+
+<EM>Patch:</EM><P>
+In pkgtools/pkgobj/src/POSIX/m3makefile change
+<PRE>
+   if equal (BUILD_DIR, "AOSF")
+      include_dir(osf)
+   else
+      include_dir(ultrix)
+   end
+</PRE>
+to
+<PRE>
+   readonly _osf_like_systems = { "ALPHA_OSF", "SPARC", "SOLsun", "SOLgnu" }
+
+   if _osf_like_systems contains TARGET
+      include_dir("osf")
+   else
+      include_dir("ultrix")
+   end
+</PRE>
+
+The original bug report and patch was:
+<PRE>
+   Date: Fri, 03 Jun 94 18:30:23 +0100
+   From: Quentin &lt;Quentin.Stafford-Fraser@cl.cam.ac.uk&gt;
+
+   Ah! It turns out that SunOS is more osf-like than ultrix-like here.
+   In pkgtools/pkgobj/src/POSIX/m3makefile there is:
+
+   if equal (BUILD_DIR, "AOSF")
+      include_dir(osf)
+   else
+      include_dir(ultrix)
+   end
+
+   The ultrix directory uses getmnt(), and the osf directory uses statfs(), which 
+   exists in SunOS. Changing it to:
+
+   if equal (BUILD_DIR, "AOSF") or equal (BUILD_DIR, "SPARC")
+
+   allows things to build. PackageServer still dies, but that's a different 
+   problem. I'm working on it.
+
+   Quentin
+</PRE>
+
+<!-------------------------------------------------------------------------->
+<HR>
+<H2><A NAME="x015">bad object file during m3boot (ALPHA_OSF)</A></H2>
+<P>
+On some systems the C compiler complains while linking the
+driver and compiler during m3boot that a bad object file was produced.
+The default ALPHA_OSF configuration file should build
+stand-alone executables during the boot phase.
+<P>
+
+<EM>Patch:</EM><P>
+In <TT>boot-ALPHA_OSF/m3build/templates/ALPHA_OSF</TT>,
+change the definition of <TT>BOOT_LINK</TT> to:
+<PRE>
+     BOOT_LINK = "cc -ieee_with_inexact -non_shared"
+</PRE>
+
+<!-------------------------------------------------------------------------->
+<HR>
+<H2><A NAME="x016">multiply defined symbols in libm3ui.so
+(ALPHA_OSF)</A></H2>
+<P>
+While building trestle, the loader produces the following:
+<PRE>
+    -ld:
+    /usr/lib/libc.a(find_rtfunc.o): __exc_add_pc_range_table: multiply defined
+    /usr/lib/libc.a(find_rtfunc.o): __exc_remove_pc_range_table: multiply defined
+    /usr/lib/libc.a(find_rtfunc.o): __exc_add_gp_range: multiply defined
+    /usr/lib/libc.a(find_rtfunc.o): __exc_remove_gp_range: multiply defined
+    Warning: Unresolved:
+    _end
+</PRE>
+<P>
+
+The problem is caused by using GNU ld.
+<P>
+
+<EM>Patch:</EM><P>
+In <TT>boot-ALPHA_OSF/m3build/templates/ALPHA_OSF</TT> in
+the <TT>library_hooks</TT> procedure, change the invocation
+of "ld" to explicity use "/usr/bin/ld".
+<P>
+
+<!-------------------------------------------------------------------------->
+<HR>
+<H2><A NAME="x007">Wrong socket types (Solaris)</A></H2>
+<P>
+The wrong values are defined for socket types in Solaris.
+Applications using TCP will be adversely affected.
+The incorrect values cause a datagram socket to be created when a
+stream socket is requested. Later stream oriented operations then
+fail.
+<P>
+
+<EM>Patch:</EM><P>
+Edit <TT>libm3/src/unix/solaris-2-x/Usocket.i3</TT> to
+match this:
+<PRE>
+  (*
+   * Types
+   *)
+  CONST
+    SOCK_STREAM    = 2;            (* stream socket *)
+    SOCK_DGRAM     = 1;            (* datagram socket *)
+    SOCK_RAW       = 4;            (* raw-protocol interface *)
+    SOCK_RDM       = 5;            (* reliably-delivered message *)
+    SOCK_SEQPACKET = 6;            (* sequenced packet stream *)
+</PRE>
+
+
+
+<!-------------------------------------------------------------------------->
+<HR>
+<H2><A NAME="x008">missing debugging info (Solaris)</A></H2>
+<P>
+The debugging stabs are not passed into the final executable.
+<P>
+
+<EM>Patch:</EM><P>
+Modify the template, <TT>m3build/templates/SOLsun</TT>, so that
+"-s" is passed to the assembler:
+<PRE>
+     "-Y7@/usr/ccs/bin/as@-s@",
+     % --- the assembler
+</PRE>
+
+<!-------------------------------------------------------------------------->
+<HR>
+<H2><A NAME="x012">bad SP/FP offsets (Solaris)</A></H2>
+<P>
+The SP and FP offsets used during thread switching
+are incorrect on Solaris.
+<P>
+
+<EM>Patch:</EM><P>
+In
+<TT>libm3/src/runtime/SOLsun/RTThread.m3</TT>,
+define
+<PRE>
+    CONST
+      SP_pos = 1;
+      FP_pos = 3;
+</PRE>
+
+
+<!-------------------------------------------------------------------------->
+<HR>
+<H2><A NAME="x013">shared libraries vs. X11 (SPARC and
+Solaris)</A></H2>
+<P>
+To run Modula-3 applications built against the X11 shared
+libraries you must set <B>LD_LIBRARY_PATH</B> to
+<B>/usr/openwin/bin</B> (or wherever your libraries
+hide).
+<P>
+
+David Goldberg explains:
+<BLOCKQUOTE>
+The problem with setting LD_LIBRARY_PATH holds for the SPARC release as
+well.  The problem appears to be due to a bug in the standard
+libXt.sa.4.0 file.  It includes the symbols __XtInherit and ___XtInherit,
+but the libXt.so.4.0 file only includes __XtInherit.  This is a bug.
+<P>
+The libXt.so file distributed with openwin does include ___XtInherit.
+</BLOCKQUOTE>
+<P>
+
+<!-------------------------------------------------------------------------->
+<HR>
+<H2><A NAME="x018">network objects hang on big-endian
+machines</A></H2>
+<P>
+On big-endian machines, the network object runtime will
+hang trying to import instances.
+<P>
+
+<EM>Patch:</EM><P>
+In <TT>netobj/tcp/src/generic/ConnMsgRW.m3</TT>
+and <TT>trestle/tcp/src/generic/ConnMsgRW.m3</TT>,
+the procedure <TT>Swap</TT> should be:
+<PRE>
+    PROCEDURE Swap(VAR i: Int32) =
+      VAR b: Byte8;
+      BEGIN
+        WITH p = LOOPHOLE(ADR(i), UNTRACED REF ARRAY [0..3] OF Byte8) DO
+          b := p[3];
+          p[3] := p[0];
+          p[0] := b;
+          b := p[2];
+          p[2] := p[1];
+          p[1] := b;
+        END;
+      END Swap;
+</PRE>
+
+<!-------------------------------------------------------------------------->
+<HR>
+<H2><A NAME="x020">Ushm.shmat signature (Solaris)</A></H2>
+<P>
+The return type for <B>Ushm.shmat</B> on Solaris is incorrect.
+<P>
+
+<EM>Patch:</EM><P>
+The diffs for <TT>libm3/src/unix/solaris-2.x/Ushm.i3</TT> are:
+<PRE> 
+  9c9
+  &lt; FROM Ctypes IMPORT char, short, int, void_star;
+  ---
+  &gt; FROM Ctypes IMPORT char, short, int;
+  192c192
+  &lt; &lt;*EXTERNAL*&gt; PROCEDURE shmat (shmid: int; shmaddr: ADDRESS; shmflg: int): void_star; 
+  ---
+  &gt; &lt;*EXTERNAL*&gt; PROCEDURE shmat (shmid: int; shmaddr: ADDRESS; shmflg: int): int;
+</PRE>
+
+<!-------------------------------------------------------------------------->
+<HR>
+<H2><A NAME="x022">TCP patches (Solaris)</A></H2>
+<P>
+<ADDRESS>gwyant@cloyd.East.Sun.COM (Geoff Wyant) </ADDRESS>
+<P>
+
+Due to changes in errno values, there needs to be a Solaris-2
+specific version of
+<PRE>
+     netobj/tcp/src/POSIX/TCP.m3
+     trestle/tcp/src/POSIX/TCP.m3
+</PRE>
+<P>
+
+<EM>Patch:</EM><P>
+Substitute this version of <A HREF="tcp.html">TCP.m3</A>.
+<P>
+
+<!-------------------------------------------------------------------------->
+<HR>
+<H2><A NAME="x000">PIC vs. pic (SPARC)</A></H2>
+<P>
+The default SPARC templates generate "pic" code, but
+when built standalone the network objects stub generator
+is too big.
+<P>
+
+<EM>Workaround:</EM><P>
+Change "pic" to "PIC" throughout
+<TT>boot-SPARC/m3build/templates/SPARC</TT>
+and rebuild the system.
+<P>
+
+To get over the immediate problem with stubgen and not
+rebuild the entire world, comment out the "build_standalone()" call in
+<TT>netobj/stubgen/src/m3makefile</TT>.
+<P>
+
+
+<!-------------------------------------------------------------------------->
+<HR>
+<H2><A NAME="x002">libm3: struct_tm (SPARC)</A></H2>
+<P>
+The order of fields in
+<TT>libm3/src/unix/ultrix-3-1.SPARC/Utime.i3</TT>
+is incorrect.
+
+<PRE>
+Date: Fri, 03 Jun 94 20:34:34 +0100
+From: Quentin &lt;Quentin.Stafford-Fraser@cl.cam.ac.uk&gt;
+
+Ah! Fairly important bug in libm3. It was also in 3.1 - I'm surprised nobody 
+discovered it. I found it because packageserver died with a strlen error, as 
+would anything else which used timezones.
+
+Heaven knows why, but on SunOS 4.1.3 the last 2 elements of a 'struct tm' in 
+time.h are
+        char    *tm_zone;
+        long    tm_gmtoff;
+
+where most other systems have them the other way round - ie:
+
+        long    tm_gmtoff;
+        char    *tm_zone;
+
+This means that the M3 equivalent defined in 
+  libm3/src/unix/Utime.i3 
+is not valid for SunOS.  The proper way to fix it (I think) is as follows:
+
+* copy all of the interfaces and modules of ultrix-3-1.generic into 
+ultrix-3-1.SPARC
+
+* update the m3makefile in ultrix-3-1.SPARC to include the new files - you can 
+just insert the contents of the ultrix-3-1.generic m3makefile.
+
+* change the m3makefile in the parent directory (libm3/src/unix) so that the 
+generic directory is not used for SPARCs. This involves changing the line
+  "SPARC"      : [ "ultrix-3-1.generic", "ultrix-3-1.SPARC" ],
+to
+  "SPARC"      : [ "ultrix-3-1.SPARC" ],
+
+* in the Utime.i3 which is now in the ultrix-3-1.SPARC directory, change the 
+definition of struct_tm by swapping the positions of tm_zone and tm_gmtoff.
+
+* rebuild and ship libm3, then rebuild everything everything else to use it.
+
+Quentin
+</PRE>
+
+
+<!-------------------------------------------------------------------------->
+<HR>
+<H2><A NAME="x019">Trestle crashes under OpenWindows 3.0 (SPARC)</A></H2>
+<P>
+<ADDRESS> From: goldberg@parc.xerox.com (David Goldberg) </ADDRESS>
+<P>
+
+Trestle works fine on Openwin-2.0.  There is a bug in the xnews openwin 3.0
+server.  If you are using 3.0, trestle will work if you make the following
+change to XClient.m3:
+<PRE>
+        (* XXX: Workaround for bug in openwin-3.0 server *)
+
+        (*
+        X.XGrabKey(trsl.dpy, X.AnyKey, X.AnyModifier, ur.w, X.True,
+          X.GrabModeAsync, X.GrabModeAsync);
+        *)
+
+        VAR min, max: INTEGER;
+        BEGIN
+          X.XDisplayKeycodes(trsl.dpy, ADR(min), ADR(max));
+          FOR i := min TO max DO
+            X.XGrabKey(trsl.dpy, i, X.AnyModifier, ur.w, X.True,
+                       X.GrabModeAsync, X.GrabModeAsync);
+          END;
+        END;
+
+</PRE>
+
+<!-------------------------------------------------------------------------->
+<HR>
+<H2><A NAME="x025">Network objects cause system panic
+on SunOS (SPARC)</A></H2>
+<P>
+When a program using network objects tries to connect to
+a missing netobjd, SunOS will crash.
+The problem is in some TCP code that was added help diagnose
+socket errors when using non-blocking IO on Ultrix.
+<P>
+
+<EM>Patch:</EM>
+<P>
+Delete or comment out the following code (near line 172)
+in procedure CheckConnect in <TT>tcp/src/POSIX/TCP.m3</TT>:
+<PRE>
+   IF Cerrno.errno = Uerror.EINVAL THEN
+     (* special hack to try to get real errno, hidden due to NBIO bug in connect *)
+     VAR optbuf: INTEGER := 0;
+         optlen := BYTESIZE(optbuf);
+     BEGIN
+       EVAL Usocket.getsockopt(fd, Uin.IPPROTO_TCP, TCP_NODELAY, ADR(optbuf), ADR(optlen));
+     END;
+   END;
+</PRE>
+
+<!-------------------------------------------------------------------------->
+<HR>
+<H2><A NAME="x026">Obliq doesn't compile on all platforms (SPARC)</A></H2>
+<P>
+The signatures of signal handlers on are system dependent.
+Obliq contains a signal handler to catch control-C that must
+be edited on some platforms.
+<P>
+
+<EM>Patch:</EM><P>
+The procedure OnSIGINT near line 192 in <TT>obliq/src/ObliqOnline.m3</TT>
+needs an additional ADDRESS parameter under SunOS:
+<PRE>
+  PROCEDURE OnSIGINT(sig, code: Ctypes.int; 
+    scp: UNTRACED REF Usignal.struct_sigcontext;
+    (* SPARC *) addr: ADDRESS) =
+    BEGIN
+      (* Thread.Alert(mainThread); *)
+      ObEval.interrupt := TRUE;
+    END OnSIGINT;
+</PRE>
+
+
+<!-------------------------------------------------------------------------->
+<HR>
+<H2><A NAME="x027">shmctl system call wrapper (SPARC)</A></H2>
+<P>
+<ADDRESS>kendall@pot.East.Sun.COM (Sam Kendall)</ADDRESS>
+<P>
+
+The <TT>shmctl</TT> system call wrapper fails to pass one of
+its arguments.
+<P>
+
+<EM>Patch:</EM><P>
+In procedure shmctl near line 1075 in
+<TT>libm3/src/runtime/SPARC/RTHeapDepC.C</TT>,
+add the <TT>shmid</TT> parameter:
+<PRE>
+*** RTHeapDepC.c.orig	Thu Mar  3 12:01:35 1994
+--- RTHeapDepC.c	Wed Aug 24 15:24:45 1994
+***************
+*** 1072,1078 ****
+    if (cmd == IPC_STAT || cmd == IPC_SET) {
+      MAKE_WRITABLE(buf);
+    }
+!   result = syscall(SYS_shmsys, 1, cmd, buf);
+    EXIT_CRITICAL;
+    return result;
+  }
+--- 1072,1078 ----
+    if (cmd == IPC_STAT || cmd == IPC_SET) {
+      MAKE_WRITABLE(buf);
+    }
+!   result = syscall(SYS_shmsys, 1, shmid, cmd, buf);
+    EXIT_CRITICAL;
+    return result;
+  }
+</PRE>
+
+
+<!-------------------------------------------------------------------------->
+<HR>
+<H2><A NAME="x021">misc. patches for SUN386/SunOS 4.0.2</A></H2>
+<P>
+<ADDRESS>thomas@mw.lpc.ethz.ch (Thomas Brupbacher) </ADDRESS>
+<P>
+
+<PRE>
+=======================================================================
+Hardware: Sun386i, 16MB RAM, 327 MB Disk, (25 MHz i386/i387)
+Software: SunOS4.0.2, gcc v 2.5.6, SunOS /bin/as
+
+Compiling quake:
+================
+
+quake/src/makefile:	added -liberty
+
+quake/src/fileio.c:
+	Symptom: R_OK/W_OK/X_OK not known
+	Fix:	 #include &lt;sys/file.h&gt;
+
+	Symptom: warning: passing arg 1 of `tempnam' makes pointer
+		 from integer without a cast
+	Fix:	 extern char *getenv();
+
+quake/src/operator.c:
+	Symptom: warning: initialization makes pointer from integer
+		 without a cast
+	Fix:	 extern char *getenv();
+
+quake/src/path.c:
+	Symptom: warning: assignment makes pointer from integer
+		 without a cast
+	Fix:	 extern char *strstr();
+
+quake/src/builtin.c:
+	Symptom: No WEXITSTATUS supported on SunOS 4.0.2
+	Fix:	 Use the code fragment for SYSTEM_FOR_WIN32
+
+Compiling m3build/m3where:
+==========================
+
+m3build/src/m3build.cp:
+m3build/src/m3where.cp:
+m3build/src/m3mkdir.cp:
+	Symptom: Various messages about converting integer to pointer
+	Fix:	   "#ifdef sun386",
+		   "#include &lt;malloc.h&gt;",
+		   "#endif",
+
+Compiling the rest:
+===================
+
+m3c:
+	Symptom: No waitpid() supported on SunOS 4.0.2
+	Fix:	 Use waitpid.c from the tcl distribution.
+		 A better fix would be to write a M3 version...
+		 - Add
+		   boot_c ("waitpid")
+		 to libm3/SUN386/make.boot
+		 - copy waitpid.c to libm3/SUN386
+
+======================================================================
+</PRE>
+
+<!-------------------------------------------------------------------------->
+<HR>
+<A HREF="home.html">[Modula-3 home page]</A>
+<P>
+<A HREF="mailto:m3-request@src.dec.com">
+<ADDRESS>m3-request@src.dec.com</ADDRESS></A>
+<PRE>
+Last modified on Thu Jan  4 11:08:01 PST 1996 by heydon
+     modified on Thu Sep  1 08:46:46 PDT 1994 by kalsow
+</PRE>
+
+Copyright (C) 1992, 1996, Digital Equipment Corporation. All rights reserved.<BR>
+See the <A HREF="http://www.research.digital.com/SRC/m3sources/html/COPYRIGHT.html">COPYRIGHT</A> for a full description.
+</BODY>
+</HTML>
+
+
+

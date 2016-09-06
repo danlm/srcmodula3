@@ -1,0 +1,72 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: ui/src/trestle/TrestleGoo.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>ui/src/trestle/TrestleGoo.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM>                                                                           </EM></BLOCKQUOTE><PRE>
+&lt;*PRAGMA LL*&gt;
+</PRE> A mechanism for attaching arbitrary sets of properties to an installed
+   window that can be set and retrieved by a TrestleClass.  The interface
+   is like VBT's property set, but supports enumeration. 
+
+<P><PRE>INTERFACE <interface><A HREF="TrestleGoo.m3.html">TrestleGoo</A></interface>;
+
+IMPORT <A HREF="../vbt/VBT.i3.html">VBT</A>;
+
+PROCEDURE <A HREF="TrestleGoo.m3.html#PutProp">PutProp</A>(v: VBT.T; ref: REFANY); &lt;* LL.sup &lt; v *&gt;
+</PRE><BLOCKQUOTE><EM> Add <CODE>ref</CODE> to <CODE>v</CODE>'s property set, replacing any existing reference of 
+   the same type as <CODE>ref</CODE>.  This is a checked runtime error if <CODE>ref</CODE> is 
+   <CODE>NIL</CODE>. </EM></BLOCKQUOTE><PRE>
+
+PROCEDURE <A HREF="TrestleGoo.m3.html#GetProp">GetProp</A>(v: VBT.T; tc: INTEGER): REFANY;
+&lt;* LL.sup &lt; v *&gt;
+</PRE><BLOCKQUOTE><EM> Return the element of <CODE>v</CODE>'s property set with typecode <CODE>tc</CODE>, or  
+   <CODE>NIL</CODE> if no such element exists. </EM></BLOCKQUOTE><PRE>
+
+PROCEDURE <A HREF="TrestleGoo.m3.html#RemProp">RemProp</A>(v: VBT.T; tc: INTEGER); &lt;* LL.sup &lt; v *&gt;
+</PRE><BLOCKQUOTE><EM> Remove the element with typecode <CODE>tc</CODE> from <CODE>v</CODE>'s property set, if one 
+   exists. </EM></BLOCKQUOTE><PRE>
+
+TYPE <A HREF="TrestleGoo.m3.html#Enum">Enum</A> &lt;: REFANY;
+
+PROCEDURE <A HREF="TrestleGoo.m3.html#Next">Next</A>(v: VBT.T; VAR enum: Enum): REFANY;
+</PRE><BLOCKQUOTE><EM> Start with enum = NIL, continue until NIL is returned </EM></BLOCKQUOTE><PRE>
+
+PROCEDURE <A HREF="TrestleGoo.m3.html#Alias">Alias</A>(v, ch: VBT.T);
+</PRE><BLOCKQUOTE><EM> Establish v as a TrestleGoo alias for ch; that is, GetProp, etc. will all
+   work on v as if it were ch </EM></BLOCKQUOTE><PRE>
+
+END TrestleGoo.
+</PRE>
+</inInterface>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

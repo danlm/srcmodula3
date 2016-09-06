@@ -1,0 +1,464 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: os/src/POSIX/FSPosix.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>os/src/POSIX/FSPosix.m3</H2></A><HR>
+<inModule>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE> Version for Unix 
+
+<P><PRE>UNSAFE MODULE <module>FSPosix</module> EXPORTS <A HREF="../Common/FS.i3.html"><implements>FS</A></implements>;
+
+IMPORT <A HREF="../../../atom/src/Atom.i3.html">Atom</A>, <A HREF="../../../libm3/DS/AtomList.i3.html">AtomList</A>, <A HREF="../../../C/src/Common/Ctypes.i3.html">Ctypes</A>, <A HREF="../Common/File.i3.html">File</A>, <A HREF="FilePosix.i3.html">FilePosix</A>, <A HREF="../../../C/src/Common/M3toC.i3.html">M3toC</A>, <A HREF="../Common/OSError.i3.html">OSError</A>,
+       <A HREF="OSErrorPosix.i3.html">OSErrorPosix</A>, <A HREF="../Common/Pathname.i3.html">Pathname</A>, <A HREF="../Common/Process.i3.html">Process</A>, <A HREF="../../../time/src/Common/Time.i3.html">Time</A>, <A HREF="../../../text/src/Text.i3.html">Text</A>, <A HREF="../../../libm3/DS/TextSeq.i3.html">TextSeq</A>, <A HREF="#x1">Unix</A>,
+       <A HREF="#x2">Udir</A>, <A HREF="#x3">Uerror</A>, <A HREF="#x4">Ustat</A>, <A HREF="#x5">Utime</A>, <A HREF="../../../word/src/Word.i3.html">Word</A>;
+
+FROM <A HREF="#x1">Unix</A> IMPORT O_RDWR, O_CREAT, O_TRUNC, O_EXCL;
+
+PROCEDURE <A NAME="GetAbsolutePathname"><procedure>GetAbsolutePathname</procedure></A>(pn: Pathname.T): Pathname.T RAISES {OSError.E} =
+  VAR arcs, prefix: Pathname.Arcs;
+  BEGIN
+    TRY
+      arcs := Pathname.Decompose(pn);
+      WITH rootDir = arcs.remlo() DO
+        IF rootDir = NIL THEN (* &quot;pn&quot; is relative *)
+          prefix := Pathname.Decompose(Process.GetWorkingDirectory())
+        ELSE (* &quot;pn&quot; is absolute *)
+          prefix := Seq1(rootDir)
+       END
+      END;
+      arcs := Expand(prefix, arcs); (* expand symbolic links *)
+      Contract(arcs); (* eliminate relative arcs *)
+      RETURN Pathname.Compose(arcs)
+    EXCEPT Pathname.Invalid =&gt; RAISE OSError.E(AtomList.List1(Invalid))
+    END;
+  END GetAbsolutePathname;
+
+VAR Invalid := Atom.FromText(&quot;Invalid Pathname&quot;); (* ??? *)
+
+PROCEDURE <A NAME="Expand"><procedure>Expand</procedure></A>(prefix: Pathname.Arcs; tail: TextSeq.T): Pathname.Arcs
+  RAISES {OSError.E, Pathname.Invalid} =
+  (* &quot;tail&quot; is a sequence of arcs relative to &quot;prefix&quot;. &quot;Expand&quot;
+     returns an absolute pathname with no &quot;&quot;, &quot;.&quot;, or &quot;..&quot; arcs that
+     names the same object as &quot;TextSeq.Cat(prefix, tail)&quot;. *)
+  VAR arc, rootDir: TEXT;
+  BEGIN
+    WHILE tail.size() &gt; 0 DO
+      arc := tail.remlo();
+      prefix.addhi(arc);
+      WITH link = CheckLink(prefix) DO
+        IF link # NIL THEN
+          tail := TextSeq.Cat(link, tail);
+          rootDir := tail.remlo();
+          IF rootDir = NIL THEN (* &quot;link&quot; is relative *)
+            EVAL prefix.remhi() (* use previous &quot;prefix&quot; *)
+          ELSE (* &quot;link&quot; is absolute *)
+            prefix := Seq1(rootDir)
+          END
+        END
+      END
+    END;
+    RETURN prefix
+  END Expand;
+
+PROCEDURE <A NAME="Contract"><procedure>Contract</procedure></A>(arcs: Pathname.Arcs) =
+</PRE><BLOCKQUOTE><EM> Eliminate relative arcs (<CODE>..</CODE>, <CODE>.</CODE>, or <CODE></CODE>). </EM></BLOCKQUOTE><PRE>
+  VAR i := 1;
+  BEGIN
+    (* Invariant: Sub(arcs, 0, i) contains no relative arc. *)
+    WHILE i &lt; arcs.size() DO
+      WITH arc = arcs.get(i) DO
+        IF Text.Equal(arc, Pathname.Current) OR Text.Equal(arc, &quot;&quot;) THEN
+          (* a/./b =&gt; a/b; a//b =&gt; a/./b =&gt; a/b *)
+          Rem(arcs, i)
+        ELSIF Text.Equal(arc, Pathname.Parent) THEN
+          IF i = 1 AND Text.Equal(arcs.get(0), &quot;/&quot;) THEN
+            (* Special case: /../a =&gt; /a *)
+            Rem(arcs, 1)
+          ELSE
+            (* a/b/../c =&gt; a/c *)
+            Rem(arcs, i); DEC(i); Rem(arcs, i)
+          END
+        ELSE
+          INC(i)
+        END
+      END
+    END
+  END Contract;
+</PRE> TextSeq utility procedures: 
+<PRE>PROCEDURE <A NAME="Seq1"><procedure>Seq1</procedure></A>(t: TEXT): TextSeq.T =
+  (* Return a new sequence whose only element is &quot;t&quot;. *)
+  BEGIN RETURN NEW(TextSeq.T).fromArray(ARRAY OF TEXT{t}) END Seq1;
+
+PROCEDURE <A NAME="Rem"><procedure>Rem</procedure></A>(s: TextSeq.T; i: CARDINAL) =
+  (* Remove the &quot;i&quot;th element of &quot;s&quot;. *)
+  BEGIN
+    FOR j := i TO s.size()-2 DO s.put(j, s.get(j+1)) END;
+    EVAL s.remhi()
+  END Rem;
+
+PROCEDURE <A NAME="CheckLink"><procedure>CheckLink</procedure></A>(arcs: Pathname.Arcs): Pathname.Arcs
+  RAISES {OSError.E, Pathname.Invalid} =
+  VAR
+    buf: ARRAY [0 .. 1023] OF CHAR;
+    path := Pathname.Compose(arcs);
+    cc := Unix.readlink(M3toC.TtoS(path), ADR(buf [0]), NUMBER(buf));
+    p_buf: ADDRESS := ADR (buf[0]);
+  BEGIN
+    IF cc &lt;= 0 THEN
+      IF Uerror.errno = Uerror.EINVAL THEN (* not a symbolic link *)
+        RETURN NIL
+      END;
+      (* Some component is not a directory, or the file doesn't exist, or too
+         many links (shouldn't happen, since we're expanding them one by one),
+         or timeout, or ... *)
+      OSErrorPosix.Raise()
+    END;
+    buf[cc] := '\000'; (* terminate the string *)
+    RETURN Pathname.Decompose(M3toC.CopyStoT(p_buf))
+  END CheckLink;
+
+TYPE ABW = ARRAY BOOLEAN OF Word.T;
+
+CONST OpenFlags = ARRAY CreateOption OF ABW{
+  (* truncate =    FALSE                  TRUE                 *)
+  (* Never  *) ABW{O_RDWR,                O_RDWR+O_TRUNC        },
+  (* Ok     *) ABW{O_RDWR+O_CREAT,        O_RDWR+O_CREAT+O_TRUNC},
+  (* Always *) ABW{O_RDWR+O_CREAT+O_EXCL, O_RDWR+O_CREAT+O_EXCL }
+  };
+
+CONST AllAccessModes =
+  Unix.MSETUID + Unix.MSETGID + Unix.MSTICKY +
+  Unix.MROWNER + Unix.MWOWNER + Unix.MXOWNER +
+  Unix.MRGROUP + Unix.MWGROUP + Unix.MXGROUP +
+  Unix.MROTHER + Unix.MWOTHER + Unix.MXOTHER;
+
+CONST OpenMode = ARRAY AccessOption OF Ctypes.int{
+  (*OnlyOwnerCanRead*) Unix.MROWNER+Unix.MWOWNER,
+  (*ReadOnly*)         Unix.MROWNER+Unix.MRGROUP+Unix.MROTHER,
+  (*Default*)          Unix.Mrwrwrw (* should this be AllAccessModes? *)
+  };
+
+PROCEDURE <A NAME="OpenFile"><procedure>OpenFile</procedure></A>(pn: Pathname.T; truncate: BOOLEAN := TRUE;
+    create: CreateOption := CreateOption.Ok; template: File.T := NIL;
+    access: AccessOption := AccessOption.Default
+    ): File.T RAISES {OSError.E}=
+  VAR
+    fd: INTEGER;
+    statBuf: Ustat.struct_stat;
+    mode: Ctypes.int;
+  BEGIN
+    IF template # NIL THEN
+      IF Ustat.fstat(template.fd, ADR(statBuf)) &lt; 0 THEN
+         OSErrorPosix.Raise()
+      END;
+      mode := Word.And(statBuf.st_mode, AllAccessModes)
+    ELSE
+      mode := OpenMode[access]
+    END;
+    fd := Unix.open(M3toC.TtoS(pn), OpenFlags[create, truncate], mode);
+    IF fd &lt; 0 THEN OSErrorPosix.Raise() END;
+    RETURN FilePosix.New(fd, FilePosix.ReadWrite)
+  END OpenFile;
+
+PROCEDURE <A NAME="OpenFileReadonly"><procedure>OpenFileReadonly</procedure></A>(pn: Pathname.T): File.T RAISES {OSError.E}=
+  BEGIN
+    WITH fd = Unix.open(M3toC.TtoS(pn), Unix.O_RDONLY, Unix.Mrwrwrw) DO
+      IF fd &lt; 0 THEN OSErrorPosix.Raise() END;
+      RETURN FilePosix.New(fd, FilePosix.Read)
+    END
+  END OpenFileReadonly;
+
+PROCEDURE <A NAME="CreateDirectory"><procedure>CreateDirectory</procedure></A>(pn: Pathname.T) RAISES {OSError.E}=
+  CONST
+    (* Default access is rwxrwxrwx. The umask is applied by Unix *)
+    RWXRWXRWX = Ustat.S_IREAD + Ustat.S_IWRITE + Ustat.S_IEXEC +
+        Ustat.S_GREAD + Ustat.S_GWRITE + Ustat.S_GEXEC +
+        Ustat.S_OREAD + Ustat.S_OWRITE + Ustat.S_OEXEC;
+  BEGIN
+    IF Unix.mkdir(M3toC.TtoS(pn), RWXRWXRWX) &lt; 0 THEN
+      OSErrorPosix.Raise()
+    END
+  END CreateDirectory;
+
+PROCEDURE <A NAME="DeleteDirectory"><procedure>DeleteDirectory</procedure></A>(pn: Pathname.T) RAISES {OSError.E}=
+  BEGIN
+    IF Unix.rmdir(M3toC.TtoS(pn)) &lt; 0 THEN OSErrorPosix.Raise() END
+  END DeleteDirectory;
+
+PROCEDURE <A NAME="DeleteFile"><procedure>DeleteFile</procedure></A>(pn: Pathname.T) RAISES {OSError.E}=
+  BEGIN
+    IF Unix.unlink(M3toC.TtoS(pn)) &lt; 0 THEN OSErrorPosix.Raise() END
+  END DeleteFile;
+
+PROCEDURE <A NAME="Rename"><procedure>Rename</procedure></A>(pn0, pn1: Pathname.T) RAISES {OSError.E}=
+  BEGIN
+    IF Unix.rename(M3toC.TtoS(pn0), M3toC.TtoS(pn1)) &lt; 0 THEN
+      OSErrorPosix.Raise()
+    END
+  END Rename;
+
+REVEAL <A NAME="Iterator">Iterator</A> = PublicIterator BRANDED OBJECT
+    pn: Pathname.T; (* pathname of directory being iterated over *)
+    d: Udir.DIR_star;
+    closed := FALSE; (* has close() been called? *)
+  OVERRIDES
+    next := IterNext;
+    nextWithStatus := IterNextWithStatus;
+    close := IterClose
+  END;
+
+EXCEPTION IterClosed; &lt;* FATAL IterClosed *&gt;
+
+PROCEDURE <A NAME="Iterate"><procedure>Iterate</procedure></A>(pn: Pathname.T): Iterator RAISES {OSError.E} =
+  BEGIN
+    IF NOT Pathname.Absolute(pn) THEN
+      pn := Pathname.Join(Process.GetWorkingDirectory(), pn, NIL)
+    END;
+    WITH d = Udir.opendir(M3toC.TtoS(pn)) DO
+      IF d = NIL THEN OSErrorPosix.Raise() END;
+      RETURN NEW(Iterator, d := d, pn := pn)
+    END
+  END Iterate;
+
+PROCEDURE <A NAME="IterNext"><procedure>IterNext</procedure></A>(iter: Iterator; VAR (*OUT*) name: TEXT): BOOLEAN =
+  BEGIN
+    IF IterRaw(iter, name) THEN RETURN TRUE END;
+    RETURN FALSE
+  END IterNext;
+
+PROCEDURE <A NAME="IterNextWithStatus"><procedure>IterNextWithStatus</procedure></A>(
+    iter: Iterator; VAR (*OUT*) name: TEXT; VAR (*OUT*) status: File.Status)
+  : BOOLEAN RAISES {OSError.E} =
+  BEGIN
+    IF IterRaw(iter, name) THEN
+      IF CStatus(M3toC.TtoS(Pathname.Join(iter.pn, name, NIL)), status) &lt; 0
+        THEN OSErrorPosix.Raise()
+      END;
+      RETURN TRUE
+    END;
+    RETURN FALSE
+  END IterNextWithStatus;
+
+TYPE NamePrefix = UNTRACED REF ARRAY [0..2] OF Ctypes.char;
+
+PROCEDURE <A NAME="IterRaw"><procedure>IterRaw</procedure></A>(iter: Iterator; VAR (*OUT*) name: TEXT): BOOLEAN =
+  BEGIN
+    IF iter.closed THEN RAISE IterClosed END;
+    LOOP (* to ignore &quot;.&quot; and &quot;..&quot; *)
+      IF iter.d = NIL THEN RETURN FALSE
+      ELSE
+        WITH e = Udir.readdir(iter.d) DO
+          IF e = NIL THEN
+            EVAL Udir.closedir(iter.d);
+            iter.d := NIL;
+            RETURN FALSE
+          ELSE
+            WITH sp = ADR(e.d_name) DO
+              IF NOT DotOrDotDot(LOOPHOLE(sp, NamePrefix)) THEN
+                name := M3toC.CopyStoT(LOOPHOLE (sp, ADDRESS));
+                RETURN TRUE
+              END
+            END
+          END
+        END
+      END
+    END
+  END IterRaw;
+
+PROCEDURE <A NAME="DotOrDotDot"><procedure>DotOrDotDot</procedure></A>(n: NamePrefix): BOOLEAN =
+  CONST Dot = ORD('.'); Nul = ORD('\000');
+  BEGIN
+    RETURN n[0] = Dot AND (n[1] = Nul OR n[1] = Dot AND n[2] = Nul)
+  END DotOrDotDot;
+
+PROCEDURE <A NAME="IterClose"><procedure>IterClose</procedure></A>(iter: Iterator) =
+  BEGIN
+    IF iter.d # NIL THEN EVAL Udir.closedir(iter.d); iter.d := NIL END;
+    iter.closed := TRUE
+  END IterClose;
+
+PROCEDURE <A NAME="Status"><procedure>Status</procedure></A>(pn: Pathname.T): File.Status RAISES {OSError.E} =
+  VAR status: File.Status;
+  BEGIN
+    IF CStatus(M3toC.TtoS(pn), status) &lt; 0 THEN OSErrorPosix.Raise() END;
+    RETURN status
+  END Status;
+
+PROCEDURE <A NAME="CStatus"><procedure>CStatus</procedure></A>(s: Ctypes.char_star; VAR status: File.Status): INTEGER =
+  VAR statBuf: Ustat.struct_stat;
+  BEGIN
+    IF Ustat.stat(s, ADR(statBuf)) &lt; 0 THEN RETURN -1 END;
+    StatBufToStatus(statBuf, status);
+    RETURN 0
+  END CStatus;
+
+&lt;*INLINE*&gt;
+PROCEDURE <A NAME="StatBufToStatus"><procedure>StatBufToStatus</procedure></A>(
+    READONLY statBuf: Ustat.struct_stat; VAR (*OUT*) status: File.Status) =
+  BEGIN
+    status.type := FilePosix.FileTypeFromStatbuf(statBuf);
+    (* Could make following assignments conditional on type: *)
+    status.modificationTime := FLOAT(statBuf.st_mtime, LONGREAL);
+    status.size := statBuf.st_size
+  END StatBufToStatus;
+
+PROCEDURE <A NAME="SetModificationTime"><procedure>SetModificationTime</procedure></A>(pn: Pathname.T; READONLY t: Time.T)
+  RAISES {OSError.E}=
+  CONST Accessed = 0; Updated = 1;
+  VAR u: ARRAY [Accessed .. Updated] OF Utime.struct_timeval;
+  BEGIN
+    u[Updated].tv_sec := ROUND(t); u[Updated].tv_usec := 0;
+    u[Accessed].tv_sec := ROUND(Time.Now()); u[Accessed].tv_usec := 0;
+    IF Unix.utimes(M3toC.TtoS(pn), ADR(u)) &lt; 0 THEN OSErrorPosix.Raise() END
+  END SetModificationTime;
+
+BEGIN
+END FSPosix.
+</PRE>
+</inModule>
+<HR>
+<A NAME="x1">interface Unix is in:
+</A><UL>
+<LI><A HREF="../../../unix/src/aix-3-2/Unix.i3.html#0TOP0">unix/src/aix-3-2/Unix.i3</A>
+<LI><A HREF="../../../unix/src/aix-ps2-1-2/Unix.i3.html#0TOP0">unix/src/aix-ps2-1-2/Unix.i3</A>
+<LI><A HREF="../../../unix/src/freebsd-1/Unix.i3.html#0TOP0">unix/src/freebsd-1/Unix.i3</A>
+<LI><A HREF="../../../unix/src/freebsd-2/Unix.i3.html#0TOP0">unix/src/freebsd-2/Unix.i3</A>
+<LI><A HREF="../../../unix/src/hpux-7-0/Unix.i3.html#0TOP0">unix/src/hpux-7-0/Unix.i3</A>
+<LI><A HREF="../../../unix/src/ibm-4-3/Unix.i3.html#0TOP0">unix/src/ibm-4-3/Unix.i3</A>
+<LI><A HREF="../../../unix/src/irix-5.2/Unix.i3.html#0TOP0">unix/src/irix-5.2/Unix.i3</A>
+<LI><A HREF="../../../unix/src/linux/Unix.i3.html#0TOP0">unix/src/linux/Unix.i3</A>
+<LI><A HREF="../../../unix/src/osf-1.ALPHA_OSF/Unix.i3.html#0TOP0">unix/src/osf-1.ALPHA_OSF/Unix.i3</A>
+<LI><A HREF="../../../unix/src/osf-1.DS3100/Unix.i3.html#0TOP0">unix/src/osf-1.DS3100/Unix.i3</A>
+<LI><A HREF="../../../unix/src/solaris-2-x/Unix.i3.html#0TOP0">unix/src/solaris-2-x/Unix.i3</A>
+<LI><A HREF="../../../unix/src/sunos-4-x/Unix.i3.html#0TOP0">unix/src/sunos-4-x/Unix.i3</A>
+<LI><A HREF="../../../unix/src/sysv-4.0/Unix.i3.html#0TOP0">unix/src/sysv-4.0/Unix.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.AP3000/Unix.i3.html#0TOP0">unix/src/ultrix-3-1.AP3000/Unix.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.ARM/Unix.i3.html#0TOP0">unix/src/ultrix-3-1.ARM/Unix.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.DS3100/Unix.i3.html#0TOP0">unix/src/ultrix-3-1.DS3100/Unix.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.NEXT/Unix.i3.html#0TOP0">unix/src/ultrix-3-1.NEXT/Unix.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.SEQUENT/Unix.i3.html#0TOP0">unix/src/ultrix-3-1.SEQUENT/Unix.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.SUN3/Unix.i3.html#0TOP0">unix/src/ultrix-3-1.SUN3/Unix.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.SUN386/Unix.i3.html#0TOP0">unix/src/ultrix-3-1.SUN386/Unix.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.UMAX/Unix.i3.html#0TOP0">unix/src/ultrix-3-1.UMAX/Unix.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.VAX/Unix.i3.html#0TOP0">unix/src/ultrix-3-1.VAX/Unix.i3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x2">interface Udir is in:
+</A><UL>
+<LI><A HREF="../../../unix/src/aix-3-2/Udir.i3.html#0TOP0">unix/src/aix-3-2/Udir.i3</A>
+<LI><A HREF="../../../unix/src/aix-ps2-1-2/Udir.i3.html#0TOP0">unix/src/aix-ps2-1-2/Udir.i3</A>
+<LI><A HREF="../../../unix/src/freebsd-1/Udir.i3.html#0TOP0">unix/src/freebsd-1/Udir.i3</A>
+<LI><A HREF="../../../unix/src/freebsd-2/Udir.i3.html#0TOP0">unix/src/freebsd-2/Udir.i3</A>
+<LI><A HREF="../../../unix/src/hpux-7-0/Udir.i3.html#0TOP0">unix/src/hpux-7-0/Udir.i3</A>
+<LI><A HREF="../../../unix/src/ibm-4-3/Udir.i3.html#0TOP0">unix/src/ibm-4-3/Udir.i3</A>
+<LI><A HREF="../../../unix/src/irix-5.2/Udir.i3.html#0TOP0">unix/src/irix-5.2/Udir.i3</A>
+<LI><A HREF="../../../unix/src/linux/Udir.i3.html#0TOP0">unix/src/linux/Udir.i3</A>
+<LI><A HREF="../../../unix/src/osf-1.generic/Udir.i3.html#0TOP0">unix/src/osf-1.generic/Udir.i3</A>
+<LI><A HREF="../../../unix/src/solaris-2-x/Udir.i3.html#0TOP0">unix/src/solaris-2-x/Udir.i3</A>
+<LI><A HREF="../../../unix/src/sunos-4-x/Udir.i3.html#0TOP0">unix/src/sunos-4-x/Udir.i3</A>
+<LI><A HREF="../../../unix/src/sysv-4.0/Udir.i3.html#0TOP0">unix/src/sysv-4.0/Udir.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.AP3000/Udir.i3.html#0TOP0">unix/src/ultrix-3-1.AP3000/Udir.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.ARM/Udir.i3.html#0TOP0">unix/src/ultrix-3-1.ARM/Udir.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.DS3100/Udir.i3.html#0TOP0">unix/src/ultrix-3-1.DS3100/Udir.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.NEXT/Udir.i3.html#0TOP0">unix/src/ultrix-3-1.NEXT/Udir.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.SEQUENT/Udir.i3.html#0TOP0">unix/src/ultrix-3-1.SEQUENT/Udir.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.SUN3/Udir.i3.html#0TOP0">unix/src/ultrix-3-1.SUN3/Udir.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.SUN386/Udir.i3.html#0TOP0">unix/src/ultrix-3-1.SUN386/Udir.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.UMAX/Udir.i3.html#0TOP0">unix/src/ultrix-3-1.UMAX/Udir.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.VAX/Udir.i3.html#0TOP0">unix/src/ultrix-3-1.VAX/Udir.i3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x3">interface Uerror is in:
+</A><UL>
+<LI><A HREF="../../../unix/src/aix-3-2/Uerror.i3.html#0TOP0">unix/src/aix-3-2/Uerror.i3</A>
+<LI><A HREF="../../../unix/src/aix-ps2-1-2/Uerror.i3.html#0TOP0">unix/src/aix-ps2-1-2/Uerror.i3</A>
+<LI><A HREF="../../../unix/src/freebsd-1/Uerror.i3.html#0TOP0">unix/src/freebsd-1/Uerror.i3</A>
+<LI><A HREF="../../../unix/src/freebsd-2/Uerror.i3.html#0TOP0">unix/src/freebsd-2/Uerror.i3</A>
+<LI><A HREF="../../../unix/src/hpux-7-0/Uerror.i3.html#0TOP0">unix/src/hpux-7-0/Uerror.i3</A>
+<LI><A HREF="../../../unix/src/ibm-4-3/Uerror.i3.html#0TOP0">unix/src/ibm-4-3/Uerror.i3</A>
+<LI><A HREF="../../../unix/src/irix-5.2/Uerror.i3.html#0TOP0">unix/src/irix-5.2/Uerror.i3</A>
+<LI><A HREF="../../../unix/src/linux/Uerror.i3.html#0TOP0">unix/src/linux/Uerror.i3</A>
+<LI><A HREF="../../../unix/src/osf-1.generic/Uerror.i3.html#0TOP0">unix/src/osf-1.generic/Uerror.i3</A>
+<LI><A HREF="../../../unix/src/solaris-2-x/Uerror.i3.html#0TOP0">unix/src/solaris-2-x/Uerror.i3</A>
+<LI><A HREF="../../../unix/src/sunos-4-x/Uerror.i3.html#0TOP0">unix/src/sunos-4-x/Uerror.i3</A>
+<LI><A HREF="../../../unix/src/sysv-4.0/Uerror.i3.html#0TOP0">unix/src/sysv-4.0/Uerror.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.generic/Uerror.i3.html#0TOP0">unix/src/ultrix-3-1.generic/Uerror.i3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x4">interface Ustat is in:
+</A><UL>
+<LI><A HREF="../../../unix/src/aix-3-2/Ustat.i3.html#0TOP0">unix/src/aix-3-2/Ustat.i3</A>
+<LI><A HREF="../../../unix/src/aix-ps2-1-2/Ustat.i3.html#0TOP0">unix/src/aix-ps2-1-2/Ustat.i3</A>
+<LI><A HREF="../../../unix/src/freebsd-1/Ustat.i3.html#0TOP0">unix/src/freebsd-1/Ustat.i3</A>
+<LI><A HREF="../../../unix/src/freebsd-2/Ustat.i3.html#0TOP0">unix/src/freebsd-2/Ustat.i3</A>
+<LI><A HREF="../../../unix/src/hpux-7-0/Ustat.i3.html#0TOP0">unix/src/hpux-7-0/Ustat.i3</A>
+<LI><A HREF="../../../unix/src/ibm-4-3/Ustat.i3.html#0TOP0">unix/src/ibm-4-3/Ustat.i3</A>
+<LI><A HREF="../../../unix/src/irix-5.2/Ustat.i3.html#0TOP0">unix/src/irix-5.2/Ustat.i3</A>
+<LI><A HREF="../../../unix/src/linux/Ustat.i3.html#0TOP0">unix/src/linux/Ustat.i3</A>
+<LI><A HREF="../../../unix/src/osf-1.generic/Ustat.i3.html#0TOP0">unix/src/osf-1.generic/Ustat.i3</A>
+<LI><A HREF="../../../unix/src/solaris-2-x/Ustat.i3.html#0TOP0">unix/src/solaris-2-x/Ustat.i3</A>
+<LI><A HREF="../../../unix/src/sunos-4-x/Ustat.i3.html#0TOP0">unix/src/sunos-4-x/Ustat.i3</A>
+<LI><A HREF="../../../unix/src/sysv-4.0/Ustat.i3.html#0TOP0">unix/src/sysv-4.0/Ustat.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.AP3000/Ustat.i3.html#0TOP0">unix/src/ultrix-3-1.AP3000/Ustat.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.ARM/Ustat.i3.html#0TOP0">unix/src/ultrix-3-1.ARM/Ustat.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.DS3100/Ustat.i3.html#0TOP0">unix/src/ultrix-3-1.DS3100/Ustat.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.NEXT/Ustat.i3.html#0TOP0">unix/src/ultrix-3-1.NEXT/Ustat.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.SEQUENT/Ustat.i3.html#0TOP0">unix/src/ultrix-3-1.SEQUENT/Ustat.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.SUN3/Ustat.i3.html#0TOP0">unix/src/ultrix-3-1.SUN3/Ustat.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.SUN386/Ustat.i3.html#0TOP0">unix/src/ultrix-3-1.SUN386/Ustat.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.UMAX/Ustat.i3.html#0TOP0">unix/src/ultrix-3-1.UMAX/Ustat.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.VAX/Ustat.i3.html#0TOP0">unix/src/ultrix-3-1.VAX/Ustat.i3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x5">interface Utime is in:
+</A><UL>
+<LI><A HREF="../../../unix/src/aix-3-2/Utime.i3.html#0TOP0">unix/src/aix-3-2/Utime.i3</A>
+<LI><A HREF="../../../unix/src/aix-ps2-1-2/Utime.i3.html#0TOP0">unix/src/aix-ps2-1-2/Utime.i3</A>
+<LI><A HREF="../../../unix/src/freebsd-1/Utime.i3.html#0TOP0">unix/src/freebsd-1/Utime.i3</A>
+<LI><A HREF="../../../unix/src/freebsd-2/Utime.i3.html#0TOP0">unix/src/freebsd-2/Utime.i3</A>
+<LI><A HREF="../../../unix/src/hpux-7-0/Utime.i3.html#0TOP0">unix/src/hpux-7-0/Utime.i3</A>
+<LI><A HREF="../../../unix/src/ibm-4-3/Utime.i3.html#0TOP0">unix/src/ibm-4-3/Utime.i3</A>
+<LI><A HREF="../../../unix/src/irix-5.2/Utime.i3.html#0TOP0">unix/src/irix-5.2/Utime.i3</A>
+<LI><A HREF="../../../unix/src/linux/Utime.i3.html#0TOP0">unix/src/linux/Utime.i3</A>
+<LI><A HREF="../../../unix/src/osf-1.ALPHA_OSF/Utime.i3.html#0TOP0">unix/src/osf-1.ALPHA_OSF/Utime.i3</A>
+<LI><A HREF="../../../unix/src/osf-1.DS3100/Utime.i3.html#0TOP0">unix/src/osf-1.DS3100/Utime.i3</A>
+<LI><A HREF="../../../unix/src/solaris-2-x/Utime.i3.html#0TOP0">unix/src/solaris-2-x/Utime.i3</A>
+<LI><A HREF="../../../unix/src/sunos-4-x/Utime.i3.html#0TOP0">unix/src/sunos-4-x/Utime.i3</A>
+<LI><A HREF="../../../unix/src/sysv-4.0/Utime.i3.html#0TOP0">unix/src/sysv-4.0/Utime.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.generic/Utime.i3.html#0TOP0">unix/src/ultrix-3-1.generic/Utime.i3</A>
+</UL>
+<P>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

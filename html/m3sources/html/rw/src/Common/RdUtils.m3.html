@@ -1,0 +1,139 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: rw/src/Common/RdUtils.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>rw/src/Common/RdUtils.m3</H2></A><HR>
+<inModule>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM>                                                                           </EM></BLOCKQUOTE><PRE>
+
+UNSAFE MODULE <module><implements><A HREF="RdUtils.i3.html">RdUtils</A></implements></module>;
+
+IMPORT <A HREF="../../../types/src/ASCII.i3.html">ASCII</A>, <A HREF="Rd.i3.html">Rd</A>, <A HREF="../../../text/src/TextF.i3.html">TextF</A>, <A HREF="../../../atom/src/Atom.i3.html">Atom</A>, <A HREF="Wr.i3.html">Wr</A>;
+IMPORT <A HREF="../../../thread/src/Common/Thread.i3.html">Thread</A>, <A HREF="TextWr.i3.html">TextWr</A>, <A HREF="../../../libm3/DS/AtomList.i3.html">AtomList</A>;
+
+PROCEDURE <A NAME="Find"><procedure>Find</procedure></A> (rd           : Rd.T;
+                pattern      : TEXT;
+                canonicalize: Canonicalize := NIL):
+  [-1 .. LAST(CARDINAL)] RAISES {Rd.Failure, Thread.Alerted} =
+  BEGIN
+    RETURN
+      FindString (rd, SUBARRAY (pattern^, 0, NUMBER (pattern^) - 1),
+                  canonicalize);
+
+  END Find;
+
+PROCEDURE <A NAME="FindString"><procedure>FindString</procedure></A> (         rd          : Rd.T;
+                      READONLY pattern     : ARRAY OF CHAR;
+                               canonicalize: Canonicalize    := NIL):
+  [-1 .. LAST(CARDINAL)] RAISES {Rd.Failure, Thread.Alerted} =
+  VAR i: CARDINAL;
+  &lt;*FATAL Rd.EndOfFile*&gt;
+  BEGIN
+    WITH end = NUMBER(pattern) DO
+      IF end = 0 THEN
+        RETURN Rd.Index(rd);
+      ELSE
+        LOOP
+          IF FindChar(rd, pattern[0], canonicalize) = -1 THEN
+            RETURN -1
+          ELSE
+            WITH restart = Rd.Index(rd) DO
+              i := 1;
+              LOOP
+                IF i = end THEN
+                  RETURN restart - 1
+                ELSE
+                  IF Rd.EOF(rd) THEN RETURN -1; END;
+                  WITH x = Rd.GetChar(rd),
+                       y = pattern[i]      DO
+                    IF x = y OR (canonicalize # NIL
+                                   AND canonicalize(x) = canonicalize(y)) THEN
+                      INC(i)
+                    ELSE
+                      Rd.Seek(rd, restart);
+                      EXIT       (* to outer loop *)
+                    END          (* IF x = y ... *)
+                  END            (* WITH x ... *)
+                END              (* IF i = end ... *)
+              END                (* inner LOOP *)
+            END                  (* WITH restart ... *)
+          END                    (* IF FindChar ... *)
+        END                      (* outer LOOP *)
+      END
+    END
+  END FindString;
+
+PROCEDURE <A NAME="FindChar"><procedure>FindChar</procedure></A> (rd           : Rd.T;
+                    pattern      : CHAR;
+                    canonicalize: Canonicalize := NIL):
+  [-1 .. LAST(CARDINAL)] RAISES {Rd.Failure, Thread.Alerted} =
+  VAR uc: CHAR;
+   &lt;*FATAL Rd.EndOfFile*&gt;
+  BEGIN
+    IF canonicalize # NIL THEN uc := canonicalize(pattern); END;
+    LOOP
+      IF Rd.EOF(rd) THEN RETURN -1; END;
+      WITH c = Rd.GetChar(rd) DO
+        IF c = pattern OR (canonicalize # NIL AND canonicalize(c) = uc) THEN
+          RETURN Rd.Index(rd) - 1
+        END
+      END
+    END
+  END FindChar;
+
+PROCEDURE <A NAME="ToUpperCaseASCII"><procedure>ToUpperCaseASCII</procedure></A> (ch: CHAR): CHAR =
+  BEGIN
+    IF ch IN ASCII.All THEN RETURN ASCII.Upper[ch] ELSE RETURN ch END
+  END ToUpperCaseASCII;
+
+PROCEDURE <A NAME="FailureText"><procedure>FailureText</procedure></A> (f: AtomList.T): TEXT =
+  &lt;*FATAL Wr.Failure*&gt;
+  &lt;*FATAL Thread.Alerted*&gt;
+  BEGIN
+    IF f = NIL THEN RETURN &quot;NIL&quot; END;
+    IF f.tail = NIL THEN RETURN Atom.ToText(f.head); END;
+    WITH wr = NEW(TextWr.T).init() DO
+      LOOP
+        Wr.PutText(wr, Atom.ToText(f.head));
+        f := f.tail;
+        IF f = NIL THEN EXIT; END;
+        Wr.PutChar(wr, ':');
+      END;
+      RETURN TextWr.ToText(wr);
+    END
+  END FailureText;
+
+BEGIN
+END RdUtils.
+</PRE>
+</inModule>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

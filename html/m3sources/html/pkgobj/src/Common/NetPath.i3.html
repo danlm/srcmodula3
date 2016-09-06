@@ -1,0 +1,105 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: pkgobj/src/Common/NetPath.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>pkgobj/src/Common/NetPath.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM> NetPath.i3                                                </EM></BLOCKQUOTE><PRE>
+
+INTERFACE <interface><A HREF="NetPath.m3.html">NetPath</A></interface>;
+
+  (* network representation of pathnames *)
+
+IMPORT <A HREF="../../../libm3/DS/TextList.i3.html">TextList</A>, <A HREF="../../../word/src/Word.i3.html">Word</A>;
+
+CONST
+  Brand = &quot;NetPath.T&quot;;
+
+TYPE
+  T = TextList.T;
+     (* A &quot;NetPath.T&quot; represents a relative pathname.  All such pathnames
+        have component arc paths which are non-empty.  Path arcs have no
+        machine-specific separator characters, and require a character
+        set and maximum length allowing for architecture independence.
+        The value &quot;NIL&quot; is a legal &quot;NetPath.T&quot;. *)
+
+  Dir = T;
+  PN = RECORD dir: Dir; arc: TEXT; END;
+     (* A &quot;PN&quot; names a package.  It consists of a &quot;dir&quot; which
+        is interpreted relative to the target package server's
+        directory structure, and an &quot;arc&quot; which names an immediate
+        child of &quot;dir&quot;.  The &quot;arc&quot; field of a &quot;PN&quot; must be non-NIL. *)
+
+  Referent = TEXT;
+     (* There are only symbolic links in Unix, therefore we use the
+        Unix representation for link referents. *)
+
+EXCEPTION Invalid;
+</PRE> for generics 
+
+<P><PRE>PROCEDURE <A HREF="NetPath.m3.html#Equal">Equal</A>(t1, t2: T) : BOOLEAN;
+PROCEDURE <A HREF="NetPath.m3.html#Hash">Hash</A>(t: T) : Word.T;
+PROCEDURE <A HREF="NetPath.m3.html#Compare">Compare</A>(t1, t2: T) : [-1..1];
+</PRE> utilities ... validate type safety 
+
+<P><PRE>PROCEDURE <A HREF="NetPath.m3.html#Check">Check</A>(t: T) : BOOLEAN;
+PROCEDURE <A HREF="NetPath.m3.html#CheckArc">CheckArc</A>(arc: TEXT) : BOOLEAN;
+</PRE> conversions 
+
+<P><PRE>PROCEDURE <A HREF="NetPath.m3.html#ToText">ToText</A>(t: T) : TEXT;
+            (* result is a non-NIL relative pathname *)
+
+PROCEDURE <A HREF="NetPath.m3.html#FromText">FromText</A>(text: TEXT) : T RAISES {Invalid};
+            (* expects a relative path name *)
+            (* for backward compatibility .. single
+               character absolute root names (e.g. &quot;/&quot;) will be stripped *)
+
+PROCEDURE <A HREF="NetPath.m3.html#ToRelFN">ToRelFN</A>(t: T) : TEXT;
+            (* result is a non-NIL relative pathname *)
+
+PROCEDURE <A HREF="NetPath.m3.html#FromRelFN">FromRelFN</A>(text: TEXT) : T RAISES {Invalid};
+            (* expects a relative path name *)
+            (* for backward compatibility .. single
+               character absolute root names (e.g. &quot;/&quot;) will be stripped *)
+
+PROCEDURE <A HREF="NetPath.m3.html#Parent">Parent</A>(t: T) : T;
+            (* returns a copy of &quot;t&quot; minus the tail element, or NIL *)
+</PRE> package names 
+
+<P><PRE>PROCEDURE <A HREF="NetPath.m3.html#EqualPN">EqualPN</A>(pn1, pn2: PN) : BOOLEAN;
+PROCEDURE <A HREF="NetPath.m3.html#PNToText">PNToText</A>(pn: PN) : TEXT;
+PROCEDURE <A HREF="NetPath.m3.html#PNFromText">PNFromText</A>(text: TEXT) : PN RAISES {Invalid};
+
+END NetPath.
+</PRE>
+</inInterface>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

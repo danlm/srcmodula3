@@ -1,0 +1,536 @@
+	.file	"WrClass.ic"
+	.version	"01.01"
+gcc2_compiled.:
+
+.section	.text
+.L_text_b:
+	.previous
+
+.section	.data
+.L_data_b:
+	.previous
+
+.section	.rodata
+.L_rodata_b:
+	.previous
+
+.section	.bss
+.L_bss_b:
+	.previous
+
+.section	.debug_sfnames
+.L_sfnames_b:
+	.string	"/tmp_mnt/swindle/r/misc1/m3-export/new/boot-LINUXELF/libm3/LINUXELF/"
+	.previous
+
+.section	.line
+.L_line_b:
+	.4byte	.L_line_e-.L_line_b
+	.4byte	.L_text_b
+	.previous
+
+.section	.debug_srcinfo
+.L_srcinfo_b:
+	.4byte	.L_line_b
+	.4byte	.L_sfnames_b
+	.4byte	.L_text_b
+	.4byte	.L_text_e
+	.4byte	0xffffffff
+	.previous
+
+.section	.debug_pubnames
+	.4byte	.L_debug_b
+	.previous
+
+.section	.debug_aranges
+	.4byte	.L_debug_b
+	.previous
+
+.section	.debug
+.L_debug_b:
+.L_D1:
+	.4byte	.L_D1_e-.L_D1
+	.2byte	0x11
+	.2byte	0x12
+	.4byte	.L_D2
+	.2byte	0x38
+	.string	"WrClass.ic"
+	.2byte	0x258
+	.string	"SRC Modula-3 2.6.3"
+	.2byte	0x136
+	.4byte	0x1
+	.2byte	0x111
+	.4byte	.L_text_b
+	.2byte	0x121
+	.4byte	.L_text_e
+	.2byte	0x106
+	.4byte	.L_line_b
+	.2byte	0x1b8
+	.string	"/tmp_mnt/swindle/r/misc1/m3-export/new/boot-LINUXELF/libm3/LINUXELF"
+	.2byte	0x8006
+	.4byte	.L_sfnames_b
+	.2byte	0x8016
+	.4byte	.L_srcinfo_b
+.L_D1_e:
+	.previous
+
+.text
+	.align 16
+	.type	 I_WrClass_t910916d5_INIT,@function
+I_WrClass_t910916d5_INIT:
+
+.section	.debug_sfnames
+.L_F0:
+	.string	"WrClass.i3"
+	.previous
+.L_LC1:
+
+.section	.line
+.L_LE1:
+	.4byte	82	/ WrClass.i3:82
+	.2byte	0xffff
+	.4byte	.L_LC1-.L_text_b
+	.previous
+
+.section	.debug_srcinfo
+	.4byte	.L_LE1-.L_line_b
+	.4byte	.L_F0-.L_sfnames_b
+	.previous
+	pushl %ebp
+	movl %esp,%ebp
+.L_b1:
+	movl MI_WrClass+248,%edx
+	addl $24,%edx
+	movl %edx,%ecx
+	movl 8(%ebp),%eax
+	addl (%ecx),%eax
+	movb $1,20(%eax)
+	jmp .L1
+	.align 16
+.L_LC2:
+
+.section	.line
+	.4byte	82	/ WrClass.i3:82
+	.2byte	0xffff
+	.4byte	.L_LC2-.L_text_b
+	.previous
+.L1:
+.L_b1_e:
+	movl %ebp,%esp
+	popl %ebp
+	ret
+.L_f1_e:
+.Lfe1:
+	.size	 I_WrClass_t910916d5_INIT,.Lfe1-I_WrClass_t910916d5_INIT
+
+.section	.debug
+.L_D3:
+	.4byte	.L_D3_e-.L_D3
+	.2byte	0x14
+	.2byte	0x12
+	.4byte	.L_D4
+	.2byte	0x38
+	.string	"I_WrClass_t910916d5_INIT"
+	.2byte	0x111
+	.4byte	I_WrClass_t910916d5_INIT
+	.2byte	0x121
+	.4byte	.L_f1_e
+	.2byte	0x8041
+	.4byte	.L_b1
+	.2byte	0x8051
+	.4byte	.L_b1_e
+.L_D3_e:
+.L_D5:
+	.4byte	.L_D5_e-.L_D5
+	.2byte	0x5
+	.2byte	0x12
+	.4byte	.L_D6
+	.2byte	0x38
+	.string	"L_1"
+	.2byte	0x63
+	.2byte	.L_t5_e-.L_t5
+.L_t5:
+	.byte	0x1
+	.2byte	0x14
+.L_t5_e:
+	.2byte	0x23
+	.2byte	.L_l5_e-.L_l5
+.L_l5:
+	.byte	0x2
+	.4byte	0x5
+	.byte	0x4
+	.4byte	0x8
+	.byte	0x7
+.L_l5_e:
+.L_D5_e:
+.L_D6:
+	.4byte	.L_D6_e-.L_D6
+	.2byte	0xc
+	.2byte	0x12
+	.4byte	.L_D7
+	.2byte	0x63
+	.2byte	.L_t6_e-.L_t6
+.L_t6:
+	.byte	0x1
+	.2byte	0x14
+.L_t6_e:
+	.2byte	0x23
+	.2byte	.L_l6_e-.L_l6
+.L_l6:
+	.byte	0x1
+	.4byte	0x0
+.L_l6_e:
+.L_D6_e:
+.L_D7:
+	.4byte	0x4
+	.previous
+	.align 16
+	.type	 I_WrClass_t910916d5_LINK,@function
+I_WrClass_t910916d5_LINK:
+.L_LC3:
+
+.section	.line
+	.4byte	82	/ WrClass.i3:82
+	.2byte	0xffff
+	.4byte	.L_LC3-.L_text_b
+	.previous
+	pushl %ebp
+	movl %esp,%ebp
+.L_b2:
+	movl MI_WrClass+248,%edx
+	addl $52,%edx
+	movl %edx,%ecx
+	movl (%ecx),%eax
+	movl MI_WrClass+248,%edx
+	addl $36,%edx
+	movl %edx,%ecx
+	movl %eax,%edx
+	addl (%ecx),%edx
+	leal 4(%edx),%ecx
+	movl %ecx,%edx
+	movl MI_WrClass+156,%ecx
+	movl %ecx,(%edx)
+	movl MI_WrClass+248,%edx
+	addl $36,%edx
+	movl %edx,%ecx
+	movl %eax,%edx
+	addl (%ecx),%edx
+	leal 8(%edx),%ecx
+	movl %ecx,%edx
+	movl MI_WrClass+160,%ecx
+	movl %ecx,(%edx)
+	movl MI_WrClass+248,%edx
+	addl $36,%edx
+	movl %edx,%ecx
+	movl %eax,%edx
+	addl (%ecx),%edx
+	leal 12(%edx),%ecx
+	movl %ecx,%edx
+	movl MI_WrClass+168,%ecx
+	movl %ecx,(%edx)
+	movl MI_WrClass+248,%edx
+	addl $36,%edx
+	movl %edx,%ecx
+	movl %eax,%edx
+	addl (%ecx),%edx
+	leal 16(%edx),%ecx
+	movl %ecx,%edx
+	movl MI_WrClass+164,%ecx
+	movl %ecx,(%edx)
+	jmp .L2
+	.align 16
+.L_LC4:
+
+.section	.line
+	.4byte	82	/ WrClass.i3:82
+	.2byte	0xffff
+	.4byte	.L_LC4-.L_text_b
+	.previous
+.L2:
+.L_b2_e:
+	movl %ebp,%esp
+	popl %ebp
+	ret
+.L_f2_e:
+.Lfe2:
+	.size	 I_WrClass_t910916d5_LINK,.Lfe2-I_WrClass_t910916d5_LINK
+
+.section	.debug
+.L_D4:
+	.4byte	.L_D4_e-.L_D4
+	.2byte	0x14
+	.2byte	0x12
+	.4byte	.L_D8
+	.2byte	0x38
+	.string	"I_WrClass_t910916d5_LINK"
+	.2byte	0x111
+	.4byte	I_WrClass_t910916d5_LINK
+	.2byte	0x121
+	.4byte	.L_f2_e
+	.2byte	0x8041
+	.4byte	.L_b2
+	.2byte	0x8051
+	.4byte	.L_b2_e
+.L_D4_e:
+.L_D9:
+	.4byte	.L_D9_e-.L_D9
+	.2byte	0xc
+	.2byte	0x12
+	.4byte	.L_D10
+	.2byte	0x63
+	.2byte	.L_t9_e-.L_t9
+.L_t9:
+	.byte	0x1
+	.2byte	0x14
+.L_t9_e:
+	.2byte	0x23
+	.2byte	.L_l9_e-.L_l9
+.L_l9:
+	.byte	0x1
+	.4byte	0x0
+.L_l9_e:
+.L_D9_e:
+.L_D10:
+	.4byte	0x4
+	.previous
+.globl MI_WrClass
+.data
+	.align 4
+	.type	 MI_WrClass,@object
+	.size	 MI_WrClass,284
+MI_WrClass:
+	.long MI_WrClass+184
+	.long MI_WrClass+44
+	.long MI_WrClass+248
+	.long MI_WrClass+172
+	.zero	36
+	.long -1861675307
+.byte 190
+.byte 229
+.byte 147
+.byte 145
+.byte 107
+.byte 243
+.byte 154
+.byte 0
+	.long 1
+	.zero	4
+	.long 24
+	.long 4
+	.zero	4
+	.long 20
+	.zero	12
+	.long MI_WrClass+222
+	.long MI_WrClass+231
+	.long MI_WrClass+233
+	.long I_WrClass_t910916d5_INIT
+	.long I_WrClass_t910916d5_LINK
+	.long 800110099
+	.zero	12
+	.long MI_WrClass+256
+	.long MI_WrClass+277
+	.zero	28
+	.long 1651905671
+	.long -1861675307
+	.zero	4
+	.ascii	"/proj/m3/pkg/rw/src/Common/WrClass.i3"
+	.zero	1
+.byte 4
+.byte 18
+.byte 18
+.byte 18
+.byte 18
+.byte 16
+.byte 16
+.byte 16
+.byte 0
+.byte 4
+.byte 0
+.byte 9
+.byte 10
+.byte 8
+.byte 16
+.byte 136
+.byte 233
+.byte 139
+.byte 135
+.byte 3
+.byte 24
+.byte 24
+.byte 24
+.byte 2
+.byte 28
+.byte 28
+	.zero	4
+	.long -1861675307
+	.ascii	"WrClass_^%#%^__0001I"
+	.zero	1
+	.ascii	"Wr.T"
+	.zero	3
+
+.section	.debug_pubnames
+	.4byte	.L_P0
+	.string	"MI_WrClass"
+	.previous
+
+.section	.debug
+.L_D8:
+	.4byte	.L_D8_e-.L_D8
+	.2byte	0x13
+	.2byte	0x12
+	.4byte	.L_D11
+	.set	.L_T40,.L_D8
+	.2byte	0xb6
+	.4byte	0x11c
+.L_D8_e:
+.L_D12:
+	.4byte	0x4
+.L_P0:
+.L_D11:
+	.4byte	.L_D11_e-.L_D11
+	.2byte	0x7
+	.2byte	0x12
+	.4byte	.L_D13
+	.2byte	0x38
+	.string	"MI_WrClass"
+	.2byte	0x72
+	.4byte	.L_T40
+	.2byte	0x23
+	.2byte	.L_l11_e-.L_l11
+.L_l11:
+	.byte	0x3
+	.4byte	MI_WrClass
+.L_l11_e:
+.L_D11_e:
+	.previous
+
+.section	.debug
+.L_D13:
+	.4byte	.L_D13_e-.L_D13
+	.2byte	0x13
+	.2byte	0x12
+	.4byte	.L_D14
+	.set	.L_T19,.L_D13
+	.2byte	0xb6
+	.4byte	0x154
+.L_D13_e:
+.L_D15:
+	.4byte	0x4
+.L_P1:
+.L_D14:
+	.4byte	.L_D14_e-.L_D14
+	.2byte	0x7
+	.2byte	0x12
+	.4byte	.L_D16
+	.2byte	0x38
+	.string	"MI_Thread"
+	.2byte	0x72
+	.4byte	.L_T19
+.L_D14_e:
+	.previous
+
+.section	.debug
+.L_D16:
+	.4byte	.L_D16_e-.L_D16
+	.2byte	0x13
+	.2byte	0x12
+	.4byte	.L_D17
+	.set	.L_T20,.L_D16
+	.2byte	0xb6
+	.4byte	0x94
+.L_D16_e:
+.L_D18:
+	.4byte	0x4
+.L_P2:
+.L_D17:
+	.4byte	.L_D17_e-.L_D17
+	.2byte	0x7
+	.2byte	0x12
+	.4byte	.L_D19
+	.2byte	0x38
+	.string	"MI_Wr"
+	.2byte	0x72
+	.4byte	.L_T20
+.L_D17_e:
+	.previous
+
+.section	.debug
+.L_D19:
+	.4byte	.L_D19_e-.L_D19
+	.2byte	0x13
+	.2byte	0x12
+	.4byte	.L_D20
+	.set	.L_T28,.L_D19
+	.2byte	0xb6
+	.4byte	0x2e0
+.L_D19_e:
+.L_D21:
+	.4byte	0x4
+.L_P3:
+.L_D20:
+	.4byte	.L_D20_e-.L_D20
+	.2byte	0x7
+	.2byte	0x12
+	.4byte	.L_D22
+	.2byte	0x38
+	.string	"MI_RTHooks"
+	.2byte	0x72
+	.4byte	.L_T28
+.L_D20_e:
+	.previous
+
+.section	.debug
+.L_D22:
+	.4byte	.L_D22_e-.L_D22
+	.align 4
+.L_D22_e:
+.L_D2:
+	.previous
+
+.section	.text
+.L_text_e:
+	.previous
+
+.section	.data
+.L_data_e:
+	.previous
+
+.section	.rodata
+.L_rodata_e:
+	.previous
+
+.section	.bss
+.L_bss_e:
+	.previous
+
+.section	.line
+.L_line_last:
+	.4byte	0x0
+	.2byte	0xffff
+	.4byte	.L_text_e-.L_text_b
+.L_line_e:
+	.previous
+
+.section	.debug_srcinfo
+	.4byte	.L_line_last-.L_line_b
+	.4byte	0xffffffff
+	.previous
+
+.section	.debug_pubnames
+	.4byte	0x0
+	.string	""
+	.previous
+
+.section	.debug_aranges
+	.4byte	.L_text_b
+	.4byte	.L_text_e-.L_text_b
+	.4byte	.L_data_b
+	.4byte	.L_data_e-.L_data_b
+	.4byte	.L_rodata_b
+	.4byte	.L_rodata_e-.L_rodata_b
+	.4byte	.L_bss_b
+	.4byte	.L_bss_e-.L_bss_b
+	.4byte	0x0
+	.4byte	0x0
+	.previous
+	.ident	"GCC: (GNU) 2.6.3"

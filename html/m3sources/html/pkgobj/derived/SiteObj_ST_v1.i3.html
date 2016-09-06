@@ -1,0 +1,52 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: pkgobj/derived/SiteObj_ST_v1.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>pkgobj/derived/SiteObj_ST_v1.i3</H2></A><HR>
+<inInterface>
+<PRE>INTERFACE <interface><A HREF="SiteObj_ST_v1.m3.html">SiteObj_ST_v1</A></interface>;
+
+IMPORT <A HREF="../../thread/src/Common/Thread.i3.html">Thread</A>, <A HREF="../src/Common/SiteObj.i3.html">SiteObj</A>, <A HREF="../../netobjrt/src/NetObj.i3.html">NetObj</A>, <A HREF="../../netobjrt/src/StubLib.i3.html">StubLib</A>, <A HREF="../../rw/src/Common/Rd.i3.html">Rd</A>, <A HREF="../src/Common/Site.i3.html">Site</A>, <A HREF="../../rw/src/Common/Wr.i3.html">Wr</A>;
+TYPE Surrogate_SiteObj_ST = SiteObj.ST OBJECT
+      OVERRIDES
+        get := Surrogate_get;
+      END;
+
+PROCEDURE <A HREF="SiteObj_ST_v1.m3.html#Surrogate_get">Surrogate_get</A>(self: SiteObj.ST): Site.T RAISES {NetObj.Error,
+    Thread.Alerted};
+
+PROCEDURE <A HREF="SiteObj_ST_v1.m3.html#Stub_get">Stub_get</A>(self: SiteObj.ST; c: StubLib.Conn; rep: StubLib.DataRep)
+     RAISES {NetObj.Error, Rd.Failure, Wr.Failure, Thread.Alerted};
+
+END SiteObj_ST_v1.
+</PRE>
+</inInterface>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

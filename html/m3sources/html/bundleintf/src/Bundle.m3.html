@@ -1,0 +1,54 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: bundleintf/src/Bundle.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>bundleintf/src/Bundle.m3</H2></A><HR>
+<inModule>
+<PRE><A HREF="../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM> </EM></BLOCKQUOTE><PRE>
+
+MODULE <module>Bundle</module> EXPORTS <A HREF="Bundle.i3.html"><implements>Bundle</A></implements>, <A HREF="BundleRep.i3.html"><implements>BundleRep</A></implements>;
+
+PROCEDURE <A NAME="Get"><procedure>Get</procedure></A> (bundle: T; element: TEXT): TEXT =
+  BEGIN
+    RETURN bundle.get(element)
+  END Get;
+
+PROCEDURE <A NAME="Elts"><procedure>Elts</procedure></A> (&lt;* UNUSED *&gt; bundle: T): REF ARRAY OF TEXT =
+  BEGIN
+    &lt;* ASSERT FALSE *&gt;
+  END Elts;
+
+BEGIN
+END Bundle.
+</PRE>
+</inModule>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

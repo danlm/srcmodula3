@@ -1,0 +1,96 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: stabletable/src/StableTbl.ig</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>stabletable/src/StableTbl.ig</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM>                                                          	</EM></BLOCKQUOTE><PRE>
+
+GENERIC INTERFACE <genericInterface><A HREF="StableTbl.mg.html">StableTbl</A></genericInterface>(Tbl, Key, Value);
+</PRE> A <CODE>StableTbl.T</CODE> is like a <CODE>Table.T</CODE>, except that operations on
+   the table are logged to stable storage for reliability. The
+   <CODE>Tbl</CODE> interface should be an instantiation of the generic
+   <CODE>Table</CODE> interface, where <CODE>Key</CODE> and <CODE>Value</CODE> are the interfaces
+   used to produce that instantiation. 
+
+<P><PRE>IMPORT <A HREF="../../os/src/Common/OSError.i3.html">OSError</A>, <A HREF="../../smalldb/src/SmallDB.i3.html">SmallDB</A>;
+
+TYPE
+  <A HREF="StableTbl.mg.html#T">T</A> &lt;: Public;
+  Public = Tbl.T BRANDED OBJECT METHODS
+    (* &quot;Tbl.Default&quot;  methods that require disk operations *)
+    init(sizeHint: CARDINAL := 0): T RAISES { OSError.E };
+    put(READONLY k: Key.T; READONLY v: Value.T): BOOLEAN RAISES { OSError.E };
+    delete(READONLY k: Key.T; VAR v: Value.T): BOOLEAN RAISES { OSError.E };
+
+    (* new methods *)
+    checkpoint() RAISES { OSError.E };
+    close() RAISES { OSError.E };
+    checkpointSize(): CARDINAL;
+    logSize(): CARDINAL;
+    status(): TEXT;
+  END;
+
+PROCEDURE <A HREF="StableTbl.mg.html#New">New</A>(dir: TEXT; sizeHint: CARDINAL := 0): T
+  RAISES { OSError.E, SmallDB.Failed };
+</PRE> The call <CODE>NEW(dir, sizeHint)</CODE> recovers a stable table from the
+   directory named <CODE>dir</CODE>. If the table does not yet exist, a new
+   one is created using <CODE>sizeHint</CODE> as described in the <CODE>Table</CODE>
+   interface. It is an unchecked error for more than one client to
+   create or use a stable table on the same directory at one time.
+<P>
+   The usual operations described in the <CODE>Table</CODE> interface are
+   available. Each operation that changes the table is recorded
+   to a stable log. In the event of a crash, this log is read to
+   recover the last good state of the table. The methods <CODE>init</CODE>,
+   <CODE>put</CODE>, and <CODE>delete</CODE> are redeclared for a <CODE>StableTbl.T</CODE> because
+   they can raise <CODE>OSError.E</CODE>.
+<P>
+   The time required to recover in the event of a crash is
+   proportional to the size of the log. To reduce recovery time,
+   the client can call <CODE>checkpoint</CODE>. This writes a snapshot of
+   the table to stable storage and erases the log.
+<P>
+   When the client is finished using a stable table, its <CODE>close</CODE>
+   method should be called to close the stable storage associated
+   with the table in an orderly manner.
+<P>
+   The <CODE>checkpointSize</CODE> and <CODE>logSize</CODE> methods return the sizes of
+   the latest checkpoint and log files (in bytes).
+<P>
+   The <CODE>status</CODE> method returns the status of the stable table in
+   human-readable form. 
+
+<P><PRE>END StableTbl.
+</PRE>
+</inInterface>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

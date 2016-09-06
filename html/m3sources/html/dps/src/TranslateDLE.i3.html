@@ -1,0 +1,89 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: dps/src/TranslateDLE.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>dps/src/TranslateDLE.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+
+INTERFACE <interface><A HREF="TranslateDLE.m3.html">TranslateDLE</A></interface>;
+
+IMPORT <A HREF="DisplayList.i3.html">DisplayList</A>, <A HREF="DPS.i3.html">DPS</A>, <A HREF="DPSWindow.i3.html">DPSWindow</A>;
+</PRE> A TranslateDLE.T is a subclass of a DisplayList.T. (And
+   similarly with TranslateDLE.E.)  
+<P>
+   It effectively translates its children by overriding the
+   Mouse and Repaint methods, offsetting the x and y coordinates
+   as they are passed through.
+<P>
+   The current translation amount (in the Display PostScript
+   coordinate system, of course), is stored in the fields
+   translationX and translationY.
+<P>
+   Additionally, the implementation allows the user to change the
+   transformation by dragging with the right mouse button:
+<P>
+     If useMouseRight is TRUE, then the mouse can drag the coordinates.
+     If onlyIfShifted is TRUE, then the mouse only performs this function
+       if a shift key is down.  The fields fixeX and fixedY determine
+       which coordinates may be altered by the user.
+<P>
+   The default values are
+      fixedX, fixedY: BOOLEAN := FALSE;
+      useMouseRight: BOOLEAN := TRUE; 
+      onlyIfShifted: BOOLEAN := FALSE; 
+   so normal use of the mouse will drag in both x and y. 
+
+<P>
+<P><PRE>TYPE T = DisplayList.T OBJECT
+  translationX, translationY: REAL := 0.0;
+  fixedX, fixedY: BOOLEAN := FALSE;
+  useMouseRight: BOOLEAN := TRUE; (* Utilize drag. *)
+  onlyIfShifted: BOOLEAN := FALSE; (* Utilize drag. *)
+  mouseDownPlace: DPS.Place; (* Remembering for drag. *)
+ OVERRIDES
+  Mouse := Mouse;
+  Repaint := Repaint;
+  ImmediatePostScript := PostScriptToParentTranslated;
+  Dirty := DirtyToParentTranslated;
+  END;
+TYPE E = T;
+
+PROCEDURE <A HREF="TranslateDLE.m3.html#Mouse">Mouse</A> (e: E; t: DPSWindow.T; event: DPS.MouseEvent): BOOLEAN;
+
+PROCEDURE <A HREF="TranslateDLE.m3.html#Repaint">Repaint</A> (t: T; box: DPS.Box; only: REFANY): TEXT;
+PROCEDURE <A HREF="TranslateDLE.m3.html#PostScriptToParentTranslated">PostScriptToParentTranslated</A> (e: E; script: TEXT);
+PROCEDURE <A HREF="TranslateDLE.m3.html#DirtyToParentTranslated">DirtyToParentTranslated</A> (e: E; box: DPS.Box; only: DisplayList.T := NIL);
+
+  END TranslateDLE.
+</PRE>
+</inInterface>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

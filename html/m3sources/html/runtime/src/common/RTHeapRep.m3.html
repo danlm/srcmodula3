@@ -1,0 +1,166 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: runtime/src/common/RTHeapRep.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>runtime/src/common/RTHeapRep.m3</H2></A><HR>
+<inModule>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+
+UNSAFE MODULE <module><implements><A HREF="RTHeapRep.i3.html">RTHeapRep</A></implements></module>;
+
+IMPORT <A HREF="#x1">RT0u</A>, <A HREF="RTType.i3.html">RTType</A>, <A HREF="RTMisc.i3.html">RTMisc</A>;
+</PRE>----------------------------------------------------------- open arrays ---
+
+<P><PRE>PROCEDURE <A NAME="UnsafeGetShape"><procedure>UnsafeGetShape</procedure></A> (r: REFANY;  VAR nDims: INTEGER;  VAR s: ArrayShape) =
+  VAR def := RTType.Get (TYPECODE (r));
+  BEGIN
+    nDims := def.nDimensions;
+    IF nDims # 0 THEN
+      s := LOOPHOLE(LOOPHOLE(r, ADDRESS) + ADRSIZE(ADDRESS), ArrayShape);
+    END;
+  END UnsafeGetShape;
+</PRE>-------------------------------------------------------------- monitors ---
+
+<P><PRE>TYPE
+  PublicMonitorClosure = OBJECT
+                         METHODS
+                           before ();
+                           after  ();
+                         END;
+
+REVEAL
+  <A NAME="MonitorClosure">MonitorClosure</A> =
+    PublicMonitorClosure BRANDED &quot;RTHeap.MonitorClosure&quot; OBJECT
+      next, prev: MonitorClosure;
+    OVERRIDES
+      before := Noop;
+      after  := Noop;
+    END;
+
+VAR monitorsHead, monitorsTail: MonitorClosure;
+
+PROCEDURE <A NAME="InvokeMonitors"><procedure>InvokeMonitors</procedure></A> (before: BOOLEAN) =
+  VAR m: MonitorClosure;
+  BEGIN
+    IF before THEN
+      m := monitorsHead;
+      WHILE m # NIL DO m.before(); m := m.next; END;
+    ELSE
+      m := monitorsTail;
+      WHILE m # NIL DO m.after(); m := m.prev; END;
+    END;
+  END InvokeMonitors;
+
+PROCEDURE <A NAME="RegisterMonitor"><procedure>RegisterMonitor</procedure></A> (cl: MonitorClosure) =
+  BEGIN
+    cl.next := monitorsHead;
+    IF monitorsHead = NIL THEN
+      monitorsTail := cl;
+    ELSE
+      monitorsHead.prev := cl;
+    END;
+    monitorsHead := cl;
+  END RegisterMonitor;
+
+PROCEDURE <A NAME="UnregisterMonitor"><procedure>UnregisterMonitor</procedure></A> (cl: MonitorClosure) =
+  BEGIN
+    IF cl = monitorsHead THEN
+      IF cl = monitorsTail THEN
+        monitorsHead := NIL;
+        monitorsTail := NIL;
+      ELSE
+        monitorsHead := monitorsHead.next;
+        monitorsHead.prev := NIL;
+      END;
+    ELSE
+      IF cl = monitorsTail THEN
+        monitorsTail := monitorsTail.prev;
+        monitorsTail.next := NIL;
+      ELSE
+        cl.prev.next := cl.next;
+        cl.next.prev := cl.prev;
+      END;
+    END;
+  END UnregisterMonitor;
+
+PROCEDURE <A NAME="Noop"><procedure>Noop</procedure></A> (&lt;*UNUSED*&gt; cl: MonitorClosure) =
+  BEGIN
+  END Noop;
+</PRE>-------------------------------------------------------- initialization ---
+
+<P><PRE>PROCEDURE <A NAME="CheckTypes"><procedure>CheckTypes</procedure></A> () =
+  (* called by RTType.Init after type registration, but before any
+     allocation *)
+  VAR
+    is_power: ARRAY [0 .. 8] OF BOOLEAN;
+    size    : INTEGER;
+  BEGIN
+    (* check that it's safe to eliminate the #A call to upper ... *)
+    FOR i := 0 TO RT0u.nTypes - 1 DO
+      WITH def = RTType.Get (i)^ DO
+        IF (def.traced # 0) AND (def.nDimensions = 0) THEN
+          size := def.dataSize;
+          &lt;*ASSERT size = RTMisc.Upper (size, BYTESIZE (Header)) *&gt;
+        END;
+      END;
+    END;
+
+    (* compute the small powers of two *)
+    FOR i := FIRST(is_power) TO LAST(is_power) DO is_power[i] := FALSE END;
+    is_power[1] := TRUE;
+    is_power[2] := TRUE;
+    is_power[4] := TRUE;
+    is_power[8] := TRUE;
+
+    (* check that all data alignments are small powers of two so that
+       &quot;RTMisc.Align (addr, alignment)&quot; can be safely replaced by &quot;addr +
+       align [Word.And (addr, 7), alignment]&quot; in Gcalloc.*)
+    FOR i := 0 TO RT0u.nTypes - 1 DO
+      WITH def = RTType.Get (i)^ DO
+        IF (def.traced # 0) THEN
+          &lt;*ASSERT is_power [def.dataAlignment] *&gt;
+        END;
+      END;
+    END;
+  END CheckTypes;
+
+BEGIN
+END RTHeapRep.
+</PRE>
+</inModule>
+<HR>
+<A NAME="x1">interface RT0u is in:
+</A><UL>
+<LI><A HREF="../POSIX/RT0u.i3.html#0TOP0">runtime/src/POSIX/RT0u.i3</A>
+<LI><A HREF="../WIN32/RT0u.i3.html#0TOP0">runtime/src/WIN32/RT0u.i3</A>
+</UL>
+<P>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

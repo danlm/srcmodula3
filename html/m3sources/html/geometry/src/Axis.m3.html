@@ -1,0 +1,60 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: geometry/src/Axis.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>geometry/src/Axis.m3</H2></A><HR>
+<inModule>
+<PRE><A HREF="../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+
+MODULE <module><implements><A HREF="Axis.i3.html">Axis</A></implements></module>;
+
+IMPORT <A HREF="../../word/src/Word.i3.html">Word</A>;
+
+PROCEDURE <A NAME="Compare"><procedure>Compare</procedure></A> (a, b: T): [-1..1] =
+  BEGIN
+    RETURN ORD (a) - ORD (b);
+  END Compare;
+
+PROCEDURE <A NAME="Equal"><procedure>Equal</procedure></A> (a, b: T): BOOLEAN =
+  BEGIN
+    RETURN (a = b);
+  END Equal;
+
+PROCEDURE <A NAME="Hash"><procedure>Hash</procedure></A> (a: T): Word.T =
+  BEGIN
+    RETURN ORD (a);
+  END Hash;
+
+BEGIN
+END Axis.
+</PRE>
+</inModule>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

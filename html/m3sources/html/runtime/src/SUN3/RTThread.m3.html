@@ -1,0 +1,215 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: runtime/src/SUN3/RTThread.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>runtime/src/SUN3/RTThread.m3</H2></A><HR>
+<inModule>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM>                                                            </EM></BLOCKQUOTE><PRE>
+
+UNSAFE MODULE <module><implements><A HREF="../POSIX/RTThread.i3.html">RTThread</A></implements></module>;
+
+IMPORT <A HREF="../../../word/src/Word.i3.html">Word</A>, <A HREF="#x1">Usignal</A>, <A HREF="#x2">Unix</A>, <A HREF="#x3">Umman</A>, <A HREF="../common/RTMisc.i3.html">RTMisc</A>;
+
+CONST
+  SP_pos = 2;
+
+PROCEDURE <A NAME="SP"><procedure>SP</procedure></A> (READONLY s: State): ADDRESS =
+  BEGIN
+    RETURN LOOPHOLE (s [SP_pos], ADDRESS);
+  END SP;
+</PRE>--------------------------------------------------------- thread stacks ---
+
+<P><PRE>VAR page_bytes : CARDINAL := 0;
+VAR stack_slop : CARDINAL;
+
+PROCEDURE <A NAME="NewStack"><procedure>NewStack</procedure></A> (size: INTEGER;  VAR(*OUT*)s: Stack) =
+  VAR i: INTEGER;  start: ADDRESS;
+  BEGIN
+    IF (page_bytes = 0) THEN
+      page_bytes := Unix.getpagesize ();
+      stack_slop := 2 * (page_bytes DIV BYTESIZE (INTEGER));
+    END;
+
+    (* allocate enough so that we're guaranteed to get a full, aligned page *)
+    INC (size, stack_slop);
+    s.words := NEW (StackSpace, size);
+
+    (* find the aligned page and unmap it *)
+    start := RTMisc.Align (ADR (s.words[0]), page_bytes);
+    i := Umman.mprotect (start, page_bytes, Umman.PROT_READ);
+    &lt;* ASSERT i = 0 *&gt;
+    (* The protection should be 0, but a bug in MIPS/Ultrix 4.2 (vmdup)
+       causes kernel panics when it is.  Making the page read-only
+       is good enough to prevent unchecked runtime errors *)
+
+    (* finally, set the bounds of the usable region *)
+    s.first := start + page_bytes;
+    s.last  := ADR (s.words[0]) + size * ADRSIZE (s.words[0]);
+  END NewStack;
+
+PROCEDURE <A NAME="DisposeStack"><procedure>DisposeStack</procedure></A> (VAR s: Stack) =
+  VAR i: INTEGER;  start := RTMisc.Align (ADR (s.words[0]), page_bytes);
+  BEGIN
+    (* find the aligned page and re-map it *)
+    i := Umman.mprotect (start, page_bytes, Umman.PROT_READ+Umman.PROT_WRITE);
+    &lt;* ASSERT i = 0 *&gt;
+
+    (* and finally, free the storage *)
+    DISPOSE (s.words);
+    s.words := NIL;
+    s.first := NIL;
+    s.last  := NIL;
+  END DisposeStack;
+
+PROCEDURE <A NAME="FlushStackCache"><procedure>FlushStackCache</procedure></A> () =
+  VAR d: State;
+  BEGIN
+    Transfer (d, d);
+  END FlushStackCache;
+</PRE>-------------------------------------------------- modifying the models ---
+
+<P><PRE>PROCEDURE <A NAME="UpdateStateForNewSP"><procedure>UpdateStateForNewSP</procedure></A> (VAR s: State; offset: INTEGER) =
+  BEGIN
+    INC (s [SP_pos], offset);
+  END UpdateStateForNewSP;
+
+PROCEDURE <A NAME="UpdateFrameForNewSP"><procedure>UpdateFrameForNewSP</procedure></A> (&lt;*UNUSED*&gt; a: ADDRESS;
+                               &lt;*UNUSED*&gt; offset: INTEGER) =
+  BEGIN
+  END UpdateFrameForNewSP;
+</PRE>------------------------------------ manipulating the SIGVTALRM handler ---
+
+<P><PRE>PROCEDURE <A NAME="setup_sigvtalrm"><procedure>setup_sigvtalrm</procedure></A> (handler: Usignal.SignalHandler) =
+  VAR sv, osv: Usignal.struct_sigvec;  i: INTEGER;
+  BEGIN
+    sv.sv_handler := handler;
+    sv.sv_mask    := Usignal.empty_sv_mask;
+    sv.sv_flags   := 0;
+    i := Usignal.sigvec (Usignal.SIGVTALRM, sv, osv);
+    &lt;* ASSERT i = 0 *&gt;
+  END setup_sigvtalrm;
+
+PROCEDURE <A NAME="allow_sigvtalrm"><procedure>allow_sigvtalrm</procedure></A> () =
+  VAR i : Word.T;
+  BEGIN
+    i := Usignal.sigsetmask (0);
+    i := Word.And (i, Word.Not (Usignal.sigmask (Usignal.SIGVTALRM)));
+    EVAL Usignal.sigsetmask (i);
+  END allow_sigvtalrm;
+
+PROCEDURE <A NAME="disallow_sigvtalrm"><procedure>disallow_sigvtalrm</procedure></A> () =
+  VAR i : Word.T;
+  BEGIN
+    i := Usignal.sigsetmask (0);
+    i := Word.Or (i, Usignal.sigmask (Usignal.SIGVTALRM));
+    EVAL Usignal.sigsetmask (i);
+  END disallow_sigvtalrm;
+
+BEGIN
+END RTThread.
+</PRE>
+</inModule>
+<HR>
+<A NAME="x1">interface Usignal is in:
+</A><UL>
+<LI><A HREF="../../../unix/src/aix-3-2/Usignal.i3.html#0TOP0">unix/src/aix-3-2/Usignal.i3</A>
+<LI><A HREF="../../../unix/src/aix-ps2-1-2/Usignal.i3.html#0TOP0">unix/src/aix-ps2-1-2/Usignal.i3</A>
+<LI><A HREF="../../../unix/src/freebsd-1/Usignal.i3.html#0TOP0">unix/src/freebsd-1/Usignal.i3</A>
+<LI><A HREF="../../../unix/src/freebsd-2/Usignal.i3.html#0TOP0">unix/src/freebsd-2/Usignal.i3</A>
+<LI><A HREF="../../../unix/src/hpux-7-0/Usignal.i3.html#0TOP0">unix/src/hpux-7-0/Usignal.i3</A>
+<LI><A HREF="../../../unix/src/ibm-4-3/Usignal.i3.html#0TOP0">unix/src/ibm-4-3/Usignal.i3</A>
+<LI><A HREF="../../../unix/src/irix-5.2/Usignal.i3.html#0TOP0">unix/src/irix-5.2/Usignal.i3</A>
+<LI><A HREF="../../../unix/src/linux/Usignal.i3.html#0TOP0">unix/src/linux/Usignal.i3</A>
+<LI><A HREF="../../../unix/src/osf-1.ALPHA_OSF/Usignal.i3.html#0TOP0">unix/src/osf-1.ALPHA_OSF/Usignal.i3</A>
+<LI><A HREF="../../../unix/src/osf-1.DS3100/Usignal.i3.html#0TOP0">unix/src/osf-1.DS3100/Usignal.i3</A>
+<LI><A HREF="../../../unix/src/solaris-2-x/Usignal.i3.html#0TOP0">unix/src/solaris-2-x/Usignal.i3</A>
+<LI><A HREF="../../../unix/src/sunos-4-x/Usignal.i3.html#0TOP0">unix/src/sunos-4-x/Usignal.i3</A>
+<LI><A HREF="../../../unix/src/sysv-4.0/Usignal.i3.html#0TOP0">unix/src/sysv-4.0/Usignal.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.AP3000/Usignal.i3.html#0TOP0">unix/src/ultrix-3-1.AP3000/Usignal.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.ARM/Usignal.i3.html#0TOP0">unix/src/ultrix-3-1.ARM/Usignal.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.DS3100/Usignal.i3.html#0TOP0">unix/src/ultrix-3-1.DS3100/Usignal.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.NEXT/Usignal.i3.html#0TOP0">unix/src/ultrix-3-1.NEXT/Usignal.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.SEQUENT/Usignal.i3.html#0TOP0">unix/src/ultrix-3-1.SEQUENT/Usignal.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.SUN3/Usignal.i3.html#0TOP0">unix/src/ultrix-3-1.SUN3/Usignal.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.SUN386/Usignal.i3.html#0TOP0">unix/src/ultrix-3-1.SUN386/Usignal.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.UMAX/Usignal.i3.html#0TOP0">unix/src/ultrix-3-1.UMAX/Usignal.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.VAX/Usignal.i3.html#0TOP0">unix/src/ultrix-3-1.VAX/Usignal.i3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x2">interface Unix is in:
+</A><UL>
+<LI><A HREF="../../../unix/src/aix-3-2/Unix.i3.html#0TOP0">unix/src/aix-3-2/Unix.i3</A>
+<LI><A HREF="../../../unix/src/aix-ps2-1-2/Unix.i3.html#0TOP0">unix/src/aix-ps2-1-2/Unix.i3</A>
+<LI><A HREF="../../../unix/src/freebsd-1/Unix.i3.html#0TOP0">unix/src/freebsd-1/Unix.i3</A>
+<LI><A HREF="../../../unix/src/freebsd-2/Unix.i3.html#0TOP0">unix/src/freebsd-2/Unix.i3</A>
+<LI><A HREF="../../../unix/src/hpux-7-0/Unix.i3.html#0TOP0">unix/src/hpux-7-0/Unix.i3</A>
+<LI><A HREF="../../../unix/src/ibm-4-3/Unix.i3.html#0TOP0">unix/src/ibm-4-3/Unix.i3</A>
+<LI><A HREF="../../../unix/src/irix-5.2/Unix.i3.html#0TOP0">unix/src/irix-5.2/Unix.i3</A>
+<LI><A HREF="../../../unix/src/linux/Unix.i3.html#0TOP0">unix/src/linux/Unix.i3</A>
+<LI><A HREF="../../../unix/src/osf-1.ALPHA_OSF/Unix.i3.html#0TOP0">unix/src/osf-1.ALPHA_OSF/Unix.i3</A>
+<LI><A HREF="../../../unix/src/osf-1.DS3100/Unix.i3.html#0TOP0">unix/src/osf-1.DS3100/Unix.i3</A>
+<LI><A HREF="../../../unix/src/solaris-2-x/Unix.i3.html#0TOP0">unix/src/solaris-2-x/Unix.i3</A>
+<LI><A HREF="../../../unix/src/sunos-4-x/Unix.i3.html#0TOP0">unix/src/sunos-4-x/Unix.i3</A>
+<LI><A HREF="../../../unix/src/sysv-4.0/Unix.i3.html#0TOP0">unix/src/sysv-4.0/Unix.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.AP3000/Unix.i3.html#0TOP0">unix/src/ultrix-3-1.AP3000/Unix.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.ARM/Unix.i3.html#0TOP0">unix/src/ultrix-3-1.ARM/Unix.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.DS3100/Unix.i3.html#0TOP0">unix/src/ultrix-3-1.DS3100/Unix.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.NEXT/Unix.i3.html#0TOP0">unix/src/ultrix-3-1.NEXT/Unix.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.SEQUENT/Unix.i3.html#0TOP0">unix/src/ultrix-3-1.SEQUENT/Unix.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.SUN3/Unix.i3.html#0TOP0">unix/src/ultrix-3-1.SUN3/Unix.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.SUN386/Unix.i3.html#0TOP0">unix/src/ultrix-3-1.SUN386/Unix.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.UMAX/Unix.i3.html#0TOP0">unix/src/ultrix-3-1.UMAX/Unix.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.VAX/Unix.i3.html#0TOP0">unix/src/ultrix-3-1.VAX/Unix.i3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x3">interface Umman is in:
+</A><UL>
+<LI><A HREF="../../../unix/src/aix-3-2/Umman.i3.html#0TOP0">unix/src/aix-3-2/Umman.i3</A>
+<LI><A HREF="../../../unix/src/freebsd-1/Umman.i3.html#0TOP0">unix/src/freebsd-1/Umman.i3</A>
+<LI><A HREF="../../../unix/src/freebsd-2/Umman.i3.html#0TOP0">unix/src/freebsd-2/Umman.i3</A>
+<LI><A HREF="../../../unix/src/irix-5.2/Umman.i3.html#0TOP0">unix/src/irix-5.2/Umman.i3</A>
+<LI><A HREF="../../../unix/src/linux/Umman.i3.html#0TOP0">unix/src/linux/Umman.i3</A>
+<LI><A HREF="../../../unix/src/osf-1.ALPHA_OSF/Umman.i3.html#0TOP0">unix/src/osf-1.ALPHA_OSF/Umman.i3</A>
+<LI><A HREF="../../../unix/src/osf-1.DS3100/Umman.i3.html#0TOP0">unix/src/osf-1.DS3100/Umman.i3</A>
+<LI><A HREF="../../../unix/src/solaris-2-x/Umman.i3.html#0TOP0">unix/src/solaris-2-x/Umman.i3</A>
+<LI><A HREF="../../../unix/src/sunos-4-x/Umman.i3.html#0TOP0">unix/src/sunos-4-x/Umman.i3</A>
+<LI><A HREF="../../../unix/src/sysv-4.0/Umman.i3.html#0TOP0">unix/src/sysv-4.0/Umman.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.DS3100/Umman.i3.html#0TOP0">unix/src/ultrix-3-1.DS3100/Umman.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.SEQUENT/Umman.i3.html#0TOP0">unix/src/ultrix-3-1.SEQUENT/Umman.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.SUN3/Umman.i3.html#0TOP0">unix/src/ultrix-3-1.SUN3/Umman.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.SUN386/Umman.i3.html#0TOP0">unix/src/ultrix-3-1.SUN386/Umman.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.VAX/Umman.i3.html#0TOP0">unix/src/ultrix-3-1.VAX/Umman.i3</A>
+</UL>
+<P>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

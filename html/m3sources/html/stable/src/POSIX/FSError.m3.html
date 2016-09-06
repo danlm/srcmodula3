@@ -1,0 +1,71 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: stable/src/POSIX/FSError.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>stable/src/POSIX/FSError.m3</H2></A><HR>
+<inModule>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM> Digital Internal Use Only                                                 </EM></BLOCKQUOTE><PRE>
+</PRE>                                                                           
+       Created on Wed Oct 11 15:02:48 PDT 1995 by najork                   
+
+<P><PRE>MODULE <module><implements><A HREF="../FSError.i3.html">FSError</A></implements></module>;
+
+IMPORT <A HREF="../../../os/src/Common/OSError.i3.html">OSError</A>, <A HREF="../../../os/src/POSIX/OSErrorPosix.i3.html">OSErrorPosix</A>, <A HREF="#x1">Uerror</A>;
+
+PROCEDURE <A NAME="FileNotFound"><procedure>FileNotFound</procedure></A> (err: OSError.Code): BOOLEAN =
+  BEGIN
+    RETURN err.head = OSErrorPosix.ErrnoAtom (Uerror.ENOENT)
+  END FileNotFound;
+
+BEGIN
+END FSError.
+</PRE>
+</inModule>
+<HR>
+<A NAME="x1">interface Uerror is in:
+</A><UL>
+<LI><A HREF="../../../unix/src/aix-3-2/Uerror.i3.html#0TOP0">unix/src/aix-3-2/Uerror.i3</A>
+<LI><A HREF="../../../unix/src/aix-ps2-1-2/Uerror.i3.html#0TOP0">unix/src/aix-ps2-1-2/Uerror.i3</A>
+<LI><A HREF="../../../unix/src/freebsd-1/Uerror.i3.html#0TOP0">unix/src/freebsd-1/Uerror.i3</A>
+<LI><A HREF="../../../unix/src/freebsd-2/Uerror.i3.html#0TOP0">unix/src/freebsd-2/Uerror.i3</A>
+<LI><A HREF="../../../unix/src/hpux-7-0/Uerror.i3.html#0TOP0">unix/src/hpux-7-0/Uerror.i3</A>
+<LI><A HREF="../../../unix/src/ibm-4-3/Uerror.i3.html#0TOP0">unix/src/ibm-4-3/Uerror.i3</A>
+<LI><A HREF="../../../unix/src/irix-5.2/Uerror.i3.html#0TOP0">unix/src/irix-5.2/Uerror.i3</A>
+<LI><A HREF="../../../unix/src/linux/Uerror.i3.html#0TOP0">unix/src/linux/Uerror.i3</A>
+<LI><A HREF="../../../unix/src/osf-1.generic/Uerror.i3.html#0TOP0">unix/src/osf-1.generic/Uerror.i3</A>
+<LI><A HREF="../../../unix/src/solaris-2-x/Uerror.i3.html#0TOP0">unix/src/solaris-2-x/Uerror.i3</A>
+<LI><A HREF="../../../unix/src/sunos-4-x/Uerror.i3.html#0TOP0">unix/src/sunos-4-x/Uerror.i3</A>
+<LI><A HREF="../../../unix/src/sysv-4.0/Uerror.i3.html#0TOP0">unix/src/sysv-4.0/Uerror.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.generic/Uerror.i3.html#0TOP0">unix/src/ultrix-3-1.generic/Uerror.i3</A>
+</UL>
+<P>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

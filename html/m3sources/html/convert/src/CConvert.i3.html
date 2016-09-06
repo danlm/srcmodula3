@@ -1,0 +1,90 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: convert/src/CConvert.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>convert/src/CConvert.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+
+INTERFACE <interface><A HREF="CConvert.m3.html">CConvert</A></interface>;
+
+FROM <A HREF="../../C/src/Common/Ctypes.i3.html">Ctypes</A> IMPORT double, int, int_star, char_star, char_star_star;
+</PRE> low-level C routines for numeric conversions
+<P>
+   Index: conversion;  numbers;  ASCII 
+
+<P><PRE>&lt;* EXTERNAL*&gt; PROCEDURE dtoa (d: double;
+                              mode: int;
+                              ndigits: int;
+                              decpt: int_star;
+		              sign: int_star;
+                              rve: char_star_star): char_star;
+
+  (* Arguments ndigits, decpt, sign are similar to those
+     of ecvt and fcvt; trailing zeros are suppressed from
+     the returned string.  If not null, *rve is set to point
+     to the end of the return value.  If d is +-Infinity or NaN,
+     then *decpt is set to 9999.
+
+        mode:
+                0 ==&gt; shortest string that yields d when read in
+                        and rounded to nearest.
+                1 ==&gt; like 0, but with Steele &amp; White stopping rule;
+                        e.g. with IEEE P754 arithmetic , mode 0 gives
+                        1e23 whereas mode 1 gives 9.999999999999999e22.
+                2 ==&gt; ndigits significant digits.  This gives a return
+                        value similar to that of ecvt, except that
+                        trailing zeros are suppressed.
+                3 ==&gt; through ndigits past the decimal point.  This
+                        gives a return value similar to that from fcvt,
+                        except that trailing zeros are suppressed.
+                4-9 should give the same return values as 2-3, i.e.,
+                        4 &lt;= mode &lt;= 9 ==&gt; same return as mode
+                        2 + (mode &amp; 1).  These modes are mainly for
+                        debugging; often they run slower but sometimes
+                        faster than modes 2-3.
+                4,5,8,9 ==&gt; left-to-right digit generation.
+                6-9 ==&gt; don't try fast floating-point estimate
+                        (if applicable).
+
+                Values of mode other than 0-9 are treated as mode 0.
+
+                Sufficient space is allocated to the return value
+                to hold the suppressed trailing zeros.
+        *)
+
+&lt;* EXTERNAL strtod *&gt;
+PROCEDURE strtod (nptr: ADDRESS; VAR eptr: ADDRESS): LONGREAL;
+
+END CConvert.
+</PRE>
+</inInterface>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

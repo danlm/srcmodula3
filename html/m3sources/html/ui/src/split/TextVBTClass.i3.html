@@ -1,0 +1,55 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: ui/src/split/TextVBTClass.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>ui/src/split/TextVBTClass.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM>                                                                           </EM></BLOCKQUOTE><PRE>
+</PRE> File: TextVBTClass.i3, coded by cgn Sun Jun 28 16:13:38 1987 
+<PRE>&lt;*PRAGMA LL*&gt;
+
+INTERFACE <interface>TextVBTClass</interface>;
+
+IMPORT <A HREF="TextVBT.i3.html">TextVBT</A>;
+
+REVEAL TextVBT.T &lt;: T;
+
+TYPE T = TextVBT.Public OBJECT
+  &lt;* LL &gt;= {SELF} *&gt;
+  text: TEXT
+  END;
+</PRE> If you modify the <CODE>text</CODE> field, you must call <CODE>VBT.Mark</CODE>. 
+
+<P><PRE>END TextVBTClass.
+</PRE>
+</inInterface>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

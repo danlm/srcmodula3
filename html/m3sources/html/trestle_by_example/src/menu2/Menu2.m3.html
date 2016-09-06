@@ -1,0 +1,77 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: trestle_by_example/src/menu2/Menu2.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>trestle_by_example/src/menu2/Menu2.m3</H2></A><HR>
+<inModule>
+<PRE>MODULE <module>Menu2</module> EXPORTS <A HREF="../../../main/src/Main.i3.html"><implements>Main</A></implements>;
+
+IMPORT <A HREF="../../../ui/src/vbt/Trestle.i3.html">Trestle</A>, <A HREF="../../../ui/src/vbt/VBT.i3.html">VBT</A>, <A HREF="../../../ui/src/split/TextVBT.i3.html">TextVBT</A>, <A HREF="../../../lego/src/MenuSwitchVBT.i3.html">MenuSwitchVBT</A>, <A HREF="../../../lego/src/ShadowedFeedbackVBT.i3.html">ShadowedFeedbackVBT</A>, <A HREF="../../../lego/src/Shadow.i3.html">Shadow</A>;
+IMPORT <A HREF="../../../ui/src/split/HVSplit.i3.html">HVSplit</A>, <A HREF="../../../geometry/src/Axis.i3.html">Axis</A>, <A HREF="../../../ui/src/split/AnchorBtnVBT.i3.html">AnchorBtnVBT</A>, <A HREF="../../../geometry/src/Rect.i3.html">Rect</A>, <A HREF="../../../ui/src/split/RigidVBT.i3.html">RigidVBT</A>;
+IMPORT <A HREF="../../../rw/src/Common/Wr.i3.html">Wr</A>, <A HREF="../../../rw/src/Common/Stdio.i3.html">Stdio</A>;
+FROM <A HREF="../common/Colors.i3.html">Colors</A> IMPORT lblue, dblue;
+
+CONST
+  shsize = 5.0;                  (* shadow size in points *)
+  hmin   = 15.0;
+  vmin   = 10.0;                 (* button size in millimeters *)
+
+PROCEDURE <A NAME="Cut"><procedure>Cut</procedure></A> (v: MenuSwitchVBT.T; READONLY cd: VBT.MouseRec) =
+  BEGIN
+    Wr.PutText(Stdio.stdout, &quot;Cut\n&quot;);
+    Wr.Flush(Stdio.stdout);
+  END Cut;
+
+PROCEDURE <A NAME="Paste"><procedure>Paste</procedure></A> (v: MenuSwitchVBT.T; READONLY cd: VBT.MouseRec) =
+  BEGIN
+    Wr.PutText(Stdio.stdout, &quot;Paste\n&quot;);
+    Wr.Flush(Stdio.stdout);
+  END Paste;
+
+VAR
+  sh      := Shadow.New(size := shsize, light := lblue, dark := dblue);
+  fcut    := ShadowedFeedbackVBT.NewMenu(TextVBT.New(&quot;Cut&quot;), sh);
+  fpaste  := ShadowedFeedbackVBT.NewMenu(TextVBT.New(&quot;Paste&quot;), sh);
+  cut     := NEW(MenuSwitchVBT.T, callback := Cut).init(fcut);
+  paste   := NEW(MenuSwitchVBT.T, callback := Paste).init(fpaste);
+  menu    := HVSplit.Cons(Axis.T.Ver, cut, paste);
+  edit    := TextVBT.New(&quot;Edit&quot;);
+  fanchor := NEW(ShadowedFeedbackVBT.T).init(ch := edit, shadow := sh);
+  anchor  := AnchorBtnVBT.New(ch := fanchor, menu := menu);
+  main    := RigidVBT.FromHV(anchor, hmin, vmin);
+BEGIN
+  AnchorBtnVBT.Set(anchor, n := 0, hfudge := hmin, vfudge := -vmin / 2.0);
+  Trestle.Install(main);
+  Trestle.AwaitDelete(main);
+END Menu2.
+</PRE>
+</inModule>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

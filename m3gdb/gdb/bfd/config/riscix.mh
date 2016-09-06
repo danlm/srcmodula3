@@ -1,0 +1,2 @@
+RANLIB=true
+HDEPFILES=trad-core.o

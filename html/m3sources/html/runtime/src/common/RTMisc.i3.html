@@ -1,0 +1,74 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: runtime/src/common/RTMisc.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>runtime/src/common/RTMisc.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE> <CODE>RTMisc</CODE> is a private interface. 
+
+<P><PRE>INTERFACE <interface><A HREF="RTMisc.m3.html">RTMisc</A></interface>;
+</PRE> This interface provides access to miscellaneous runtime routines. 
+
+<P>------------------------------- byte copying ------------------------------
+
+<P><PRE>PROCEDURE <A HREF="RTMisc.m3.html#Copy">Copy</A> (src, dest: ADDRESS; len: INTEGER);
+</PRE><BLOCKQUOTE><EM> copy len bytes from src to dest </EM></BLOCKQUOTE><PRE>
+
+PROCEDURE <A HREF="RTMisc.m3.html#Zero">Zero</A> (dest: ADDRESS; len: INTEGER);
+</PRE><BLOCKQUOTE><EM> zero len bytes begining at dest </EM></BLOCKQUOTE><PRE>
+</PRE>------------------------------- rounded arithmetic ------------------------
+
+<P><PRE>PROCEDURE <A HREF="RTMisc.m3.html#Align">Align</A> (a: ADDRESS; y: INTEGER): ADDRESS;
+</PRE><BLOCKQUOTE><EM> return the smallest integer greater or equal to x that is a multiple of
+   y </EM></BLOCKQUOTE><PRE>
+
+PROCEDURE <A HREF="RTMisc.m3.html#Upper">Upper</A> (x, y: INTEGER): INTEGER;
+</PRE><BLOCKQUOTE><EM> return the smallest integer greater or equal to x that is a multiple of
+   y </EM></BLOCKQUOTE><PRE>
+</PRE>------------------------------- runtime error reporting -------------------
+
+<P><PRE>PROCEDURE <A HREF="RTMisc.m3.html#FatalError">FatalError</A> (file: TEXT; line: INTEGER; a, b, c: TEXT := NIL);
+</PRE><BLOCKQUOTE><EM> report an error </EM></BLOCKQUOTE><PRE>
+
+PROCEDURE <A HREF="RTMisc.m3.html#FatalErrorS">FatalErrorS</A> (file: ADDRESS; line: INTEGER; a, b, c: TEXT := NIL);
+</PRE><BLOCKQUOTE><EM> report an error (file = C-style null-terminated string)  </EM></BLOCKQUOTE><PRE>
+
+PROCEDURE <A HREF="RTMisc.m3.html#FatalErrorI">FatalErrorI</A> (msg: TEXT := NIL; i: INTEGER);
+</PRE><BLOCKQUOTE><EM> report an error with an integer argument </EM></BLOCKQUOTE><PRE>
+
+PROCEDURE <A HREF="RTMisc.m3.html#FatalErrorPC">FatalErrorPC</A> (pc: INTEGER; a, b, c: TEXT := NIL);
+</PRE><BLOCKQUOTE><EM> report an error at the given PC </EM></BLOCKQUOTE><PRE>
+
+END RTMisc.
+</PRE>
+</inInterface>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

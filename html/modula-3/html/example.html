@@ -1,0 +1,94 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: An example</TITLE>
+</HEAD>
+<BODY BGCOLOR="#ffffff" VLINK="#006633">
+
+<H2>A simple example</H2>
+<P>
+
+Here's a simple program composed of a main module,
+an imported interface and its implementation.
+<P>
+
+To begin, create a fresh directory for the package and within that
+directory, a directory for the source files:
+<PRE>
+    > mkdir hello
+    > cd hello
+    > mkdir src
+</PRE>
+<P>
+
+Create the following source files in the <TT>src</TT> directory:
+<P>
+
+In the file <TT>src/Main.m3</TT>:
+<PRE>
+    MODULE Main;
+    IMPORT A;
+    BEGIN
+      A.DoIt ();
+    END Main.
+</PRE>
+<P>
+
+In the file <TT>src/A.i3</TT>:
+<PRE>
+    INTERFACE A;
+    PROCEDURE DoIt ();
+    END A.
+</PRE>
+<P>
+
+In the file <TT>src/A.m3</TT>:
+<PRE>
+    MODULE A;
+    IMPORT Wr, Stdio;
+
+    PROCEDURE DoIt () =
+      &lt;*FATAL ANY*&gt;
+      BEGIN
+        Wr.PutText (Stdio.stdout, "Hello world.\n");
+        Wr.Close (Stdio.stdout);
+      END DoIt;
+
+    BEGIN
+    END A.
+</PRE>
+<P>
+
+In the file <TT>src/m3makefile</TT>:
+<PRE>
+    import ("libm3")
+    implementation ("Main")
+    module ("A")
+    program ("foo")
+</PRE>
+<P>
+
+Finally, from the package directory, <TT>hello</TT>, run
+<A HREF="m3build/m3build.html"><TT>m3build</TT></A>.
+If SRC Modula-3 is installed correctly,
+it will compile the three source files and link them with the
+standard libraries.  The derived files will be placed in a directory
+that names the architecture.  On an Alpha/AXP machine running OSF,
+the directory is called <TT>ALPHA_OSF</TT>.  The executable program
+will be named <TT>foo</TT> in the derived directory.
+<P>
+
+<HR>
+<A HREF="home.html">[Modula-3 home page]</A>
+<P>
+<A HREF="mailto:m3-request@src.dec.com">
+<ADDRESS>m3-request@src.dec.com</ADDRESS></A>
+<PRE>
+Last modified on Thu Jan  4 11:08:07 PST 1996 by heydon 
+     modified on Tue Jan  3 07:38:22 PST 1995 by kalsow 
+     modified on Thu Jan  7 18:40:57 PST 1993 by muller 
+</PRE>
+
+Copyright (C) 1992, 1996, Digital Equipment Corporation. All rights reserved.<BR>
+See the <A HREF="http://www.research.digital.com/SRC/m3sources/html/COPYRIGHT.html">COPYRIGHT</A> for a full description.
+</BODY>
+</HTML>

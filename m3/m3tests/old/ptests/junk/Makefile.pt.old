@@ -1,0 +1,30 @@
+# Copyright 1989 Digital Equipment Corporation.
+# Distributed only by permission.
+# Last modified on Fri Jun 14 22:52:53 1991 by kalsow
+#      modified on Wed Jun  5 03:20:17 1991 by muller
+#      modified on Thu Feb  7 12:23:03 PST 1991 by stolfi
+#****************************************************************
+# Caller must define the environment vars 
+#   ${CPU_TYPE} ${M3COMPILER}
+
+#*************************************************************************
+
+# ***************************************************************
+# Entry to bring the package up to date ("all" must be first)
+
+all: test
+
+test: ; -$(M3COMPILER) -c -g -w1 -X0/-C/ -D. -D../.. -k *.[im]3 2> errors
+
+# ***************************************************************
+# Standard entries to remove files from the directories
+#
+#    tidy    -- eliminate garbage files
+#    scratch -- delete derived files in preparation for rebuild
+
+tidy:         ; /bin/rm -f ,* .,* *~ .emacs_[0-9]* core a.out m3_* m3*.c
+scratch: tidy ; /bin/rm -f *.io *.mo *.ic *.mc
+  
+# *****************************************************************
+
+

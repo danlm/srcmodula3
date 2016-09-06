@@ -1,0 +1,23 @@
+(* A directory server that can execute cd, ls, and pwd at the server's 
+   site. *)
+
+module DirServer;
+
+let dirServer =
+  net_export("ObliqDirServer","",
+    {protected, serialized,
+      cd =>
+        meth(self, dir)
+          self.dot := self.dot & "/" & dir;
+          ok
+        end,
+      ls =>
+        meth(self)
+          process_filter(["sh"],"ls " & self.dot)
+        end,
+      pwd =>
+        meth(self)
+          process_filter(["sh"],"cd " & self.dot & ";pwd ")
+        end,
+      dot => ".",
+    });

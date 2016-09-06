@@ -1,0 +1,247 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: gef/derived/gefeventTranscriptView.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>gef/derived/gefeventTranscriptView.m3</H2></A><HR>
+<inModule>
+<PRE><A HREF="../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE>********************************************************************
+<PRE>
+      *  NOTE: This file is generated automatically from the event 
+      *        definition file gefevent.evt.
+ </PRE>
+********************************************************************
+
+<P><PRE>MODULE <module><implements><A HREF="gefeventTranscriptView.i3.html">gefeventTranscriptView</A></implements></module>;
+
+&lt;* NOWARN *&gt; IMPORT <A HREF="../../libm3/derived/RefList.i3.html">RefList</A>;
+&lt;* NOWARN *&gt; IMPORT <A HREF="../../slisp/src/SLispClass.i3.html">SLispClass</A>;
+IMPORT <A HREF="gefeventViewClass.i3.html">gefeventViewClass</A>;
+IMPORT <A HREF="../../zeus/src/ZFmt.i3.html">ZFmt</A>, <A HREF="../../fmtlex/src/Fmt.i3.html">Fmt</A>; &lt;* NOWARN *&gt;
+IMPORT <A HREF="../../formsvbt/src/FormsVBT.i3.html">FormsVBT</A>, <A HREF="../../rw/src/Common/Rd.i3.html">Rd</A>;
+IMPORT <A HREF="../../ui/src/split/Filter.i3.html">Filter</A>, <A HREF="../../etext/src/TextEditVBT.i3.html">TextEditVBT</A>, <A HREF="../../etext/src/TextPort.i3.html">TextPort</A>, <A HREF="../../ui/src/vbt/VBT.i3.html">VBT</A>, <A HREF="../../zeus/src/View.i3.html">View</A>, <A HREF="../../rw/src/Common/Wr.i3.html">Wr</A>, <A HREF="../../zeus/src/ZeusClass.i3.html">ZeusClass</A>, <A HREF="../../zeus/src/ZeusPanel.i3.html">ZeusPanel</A>;
+
+&lt;* PRAGMA LL *&gt;
+
+&lt;* FATAL FormsVBT.Error, FormsVBT.Unimplemented *&gt;
+
+REVEAL
+  <A NAME="T">T</A> = Public BRANDED OBJECT
+    fv: FormsVBT.T := NIL;
+    te: TextEditVBT.T := NIL;
+  OVERRIDES
+    init       := TViewInit;
+    install    := TViewInstall;
+    delete     := TViewDelete;
+    snapshot   := TViewSnapshot;
+    restore    := TViewRestore;
+    config     := TViewConfig;
+    reactivity := TViewReactivity;
+    startrun   := TViewStartrun;
+    endrun     := TViewEndrun;
+    oeInit := Init;
+    oeEvent := Event;
+    oePause := Pause;
+    ueUpdate := Update;
+  END;
+
+PROCEDURE <A NAME="TViewInit"><procedure>TViewInit</procedure></A> (view: T): T =
+  &lt;* LL = VBT.mu *&gt;
+  BEGIN
+    TViewZTrace (view, &quot;init&quot;);
+    RETURN gefeventViewClass.T.init (view, NIL);
+  END TViewInit;
+
+PROCEDURE <A NAME="Clear"><procedure>Clear</procedure></A> (&lt;* UNUSED *&gt; fv  : FormsVBT.T;
+                 &lt;* UNUSED *&gt; name: TEXT;
+                              cl  : REFANY;
+                 &lt;* UNUSED *&gt; time: VBT.TimeStamp) =
+  BEGIN
+    TextPort.SetText(NARROW(cl, T).te.tp, &quot;&quot;)
+  END Clear;
+
+PROCEDURE <A NAME="TViewInstall"><procedure>TViewInstall</procedure></A> (view: T) =
+  &lt;* LL = VBT.mu *&gt;
+  BEGIN
+    view.fv := ZeusPanel.NewForm(&quot;gefeventTranscriptView.fv&quot;);
+    view.te := FormsVBT.GetVBT(view.fv, &quot;transcript&quot;);
+    TViewZTrace (view, &quot;install&quot;);
+    FormsVBT.AttachProc(view.fv, &quot;clear&quot;, Clear, view);
+    EVAL Filter.Replace (view, view.fv);
+    gefeventViewClass.T.install (view);
+  END TViewInstall;
+
+PROCEDURE <A NAME="TViewDelete"><procedure>TViewDelete</procedure></A> (view: T) =
+  &lt;* LL = VBT.mu *&gt;
+  BEGIN
+    TViewZTrace (view, &quot;delete&quot;);
+    gefeventViewClass.T.delete (view);
+   END TViewDelete;
+
+PROCEDURE <A NAME="TViewSnapshot"><procedure>TViewSnapshot</procedure></A> (view: T; wr: Wr.T) RAISES {ZeusClass.Error} =
+  &lt;* LL = VBT.mu *&gt;
+  BEGIN
+    TViewZTrace (view, &quot;snapshot&quot;);
+    gefeventViewClass.T.snapshot (view, wr);
+   END TViewSnapshot;
+
+PROCEDURE <A NAME="TViewRestore"><procedure>TViewRestore</procedure></A> (view: T; rd: Rd.T) RAISES {ZeusClass.Error} =
+  &lt;* LL = VBT.mu *&gt;
+  BEGIN
+    TViewZTrace (view, &quot;restore&quot;);
+    gefeventViewClass.T.restore (view, rd);
+   END TViewRestore;
+
+PROCEDURE <A NAME="TViewConfig"><procedure>TViewConfig</procedure></A> (
+    view: T;
+    state: ZeusClass.StateChange;
+    o: ZeusClass.T) =
+  &lt;* LL = VBT.mu *&gt;
+  BEGIN
+    TViewZTrace (view, &quot;config&quot;);
+    gefeventViewClass.T.config (view, state, o);
+   END TViewConfig;
+
+PROCEDURE <A NAME="TViewReactivity"><procedure>TViewReactivity</procedure></A> (view: T; &lt;*UNUSED*&gt; on: BOOLEAN) =
+  &lt;* LL = VBT.mu *&gt;
+  BEGIN
+    TViewZTrace(view, &quot;reactivity&quot;);
+    gefeventViewClass.T.reactivity (view, TRUE);
+  END TViewReactivity;
+
+PROCEDURE <A NAME="TViewStartrun"><procedure>TViewStartrun</procedure></A> (view: T) =
+  &lt;* LL = {} *&gt;
+  BEGIN
+    TViewZTrace (view, &quot;startrun&quot;);
+    gefeventViewClass.T.startrun (view);
+   END TViewStartrun;
+
+PROCEDURE <A NAME="TViewEndrun"><procedure>TViewEndrun</procedure></A> (view: T) =
+  &lt;* LL = {} *&gt;
+  BEGIN
+    TViewZTrace (view, &quot;endrun&quot;);
+    gefeventViewClass.T.endrun (view);
+  END TViewEndrun;
+</PRE> event handling methods: 
+
+<P><PRE>PROCEDURE <A NAME="Init"><procedure>Init</procedure></A> (view: T;  files: RefList.T) =
+  &lt;* LL = {} *&gt;
+  BEGIN
+    LOCK VBT.mu DO
+    IF FormsVBT.GetBoolean(view.fv, &quot;alg&quot;) THEN
+       IF NOT FormsVBT.GetBoolean(view.fv, &quot;args&quot;) THEN
+          TViewTrace (view, &quot;Init ...&quot;)
+       ELSE
+          TViewTrace (view, &quot;Init &quot;
+          &amp; SLispClass.SxToText(files)
+          )
+       END
+    END
+    END
+  END Init;
+
+PROCEDURE <A NAME="Event"><procedure>Event</procedure></A> (view: T;  name: TEXT; args: RefList.T) =
+  &lt;* LL = {} *&gt;
+  BEGIN
+    LOCK VBT.mu DO
+    IF FormsVBT.GetBoolean(view.fv, &quot;alg&quot;) THEN
+       IF NOT FormsVBT.GetBoolean(view.fv, &quot;args&quot;) THEN
+          TViewTrace (view, &quot;Event ...&quot;)
+       ELSE
+          TViewTrace (view, &quot;Event &quot;
+          &amp; (name)
+          &amp; &quot; &quot;
+          &amp; SLispClass.SxToText(args)
+          )
+       END
+    END
+    END
+  END Event;
+
+PROCEDURE <A NAME="Pause"><procedure>Pause</procedure></A> (view: T;  ) =
+  &lt;* LL = {} *&gt;
+  BEGIN
+    LOCK VBT.mu DO
+    IF FormsVBT.GetBoolean(view.fv, &quot;alg&quot;) THEN
+       IF NOT FormsVBT.GetBoolean(view.fv, &quot;args&quot;) THEN
+          TViewTrace (view, &quot;Pause ...&quot;)
+       ELSE
+          TViewTrace (view, &quot;Pause &quot;
+          )
+       END
+    END
+    END
+  END Pause;
+
+PROCEDURE <A NAME="Update"><procedure>Update</procedure></A> (view: T;  name: TEXT; args: RefList.T) =
+  &lt;* LL = VBT.mu *&gt;
+  BEGIN
+    IF FormsVBT.GetBoolean(view.fv, &quot;alg&quot;) THEN
+       IF NOT FormsVBT.GetBoolean(view.fv, &quot;args&quot;) THEN
+          TViewTrace (view, &quot;Update ...&quot;)
+       ELSE
+          TViewTrace (view, &quot;Update &quot;
+            &amp; (name)
+            &amp; &quot; &quot;
+            &amp; SLispClass.SxToText(args)
+            )
+       END
+   END
+  END Update;
+
+PROCEDURE <A NAME="TViewZTrace"><procedure>TViewZTrace</procedure></A> (view: T; t: TEXT) =
+  BEGIN
+    IF view.fv # NIL THEN
+      IF FormsVBT.GetBoolean(view.fv, &quot;zeus&quot;) THEN
+        TextPort.PutText(view.te.tp, &quot;**zeus:  &quot; &amp; t &amp; &quot;\n&quot;);
+        TextPort.Normalize(view.te.tp, LAST(INTEGER))
+      END
+    END
+  END TViewZTrace;
+
+PROCEDURE <A NAME="TViewTrace"><procedure>TViewTrace</procedure></A> (view: T; t: TEXT) =
+  BEGIN
+    TextPort.PutText(view.te.tp, &quot;--event: &quot; &amp; t &amp; &quot;\n&quot;);
+    TextPort.Normalize(view.te.tp, LAST(INTEGER))
+  END TViewTrace;
+
+PROCEDURE <A NAME="TViewNew"><procedure>TViewNew</procedure></A> (): View.T =
+  BEGIN
+    RETURN NEW(T).init()
+  END TViewNew;
+
+BEGIN
+  ZeusPanel.RegisterView
+      (TViewNew, &quot;gefevent Transcript View&quot;, &quot;gefevent&quot;);
+END gefeventTranscriptView.
+</PRE>
+</inModule>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

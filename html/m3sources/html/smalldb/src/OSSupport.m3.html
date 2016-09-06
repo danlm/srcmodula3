@@ -1,0 +1,104 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: smalldb/src/OSSupport.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>smalldb/src/OSSupport.m3</H2></A><HR>
+<inModule>
+<PRE><A HREF="../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+
+UNSAFE MODULE <module><implements><A HREF="OSSupport.i3.html">OSSupport</A></implements></module>;
+
+IMPORT <A HREF="../../os/src/Common/OSError.i3.html">OSError</A>, <A HREF="../../os/src/Common/File.i3.html">File</A>, <A HREF="../../rw/src/Common/FileWr.i3.html">FileWr</A>, <A HREF="../../rw/src/Common/WrClass.i3.html">WrClass</A>;
+IMPORT <A HREF="#x1">Unix</A>, <A HREF="../../os/src/POSIX/OSErrorPosix.i3.html">OSErrorPosix</A>, <A HREF="../../os/src/POSIX/FilePosix.i3.html">FilePosix</A>;
+
+REVEAL
+  <A NAME="T">T</A> = FileWr.T BRANDED OBJECT
+    fd: INTEGER;
+  OVERRIDES
+    init := MyInit;
+  END;
+
+PROCEDURE <A NAME="MyInit"><procedure>MyInit</procedure></A>(t: T; f: File.T; buffered: BOOLEAN := TRUE) : FileWr.T
+    RAISES {OSError.E} =
+  BEGIN
+    t.fd := f.fd;
+    RETURN FileWr.T.init(t, f, buffered);
+  END MyInit;
+
+PROCEDURE <A NAME="Sync"><procedure>Sync</procedure></A>(wr: T) RAISES {OSError.E} =
+  BEGIN
+    IF Unix.fsync (wr.fd) &lt; 0 THEN OSErrorPosix.Raise(); END;
+  END Sync;
+
+PROCEDURE <A NAME="Truncate"><procedure>Truncate</procedure></A>(wr: T) RAISES {OSError.E} =
+  BEGIN
+    WrClass.Lock(wr);
+    TRY
+      IF Unix.ftruncate(wr.fd, wr.cur) &lt; 0 THEN
+        OSErrorPosix.Raise();
+      END;
+    FINALLY
+      WrClass.Unlock(wr);
+    END;
+  END Truncate;
+
+BEGIN
+END OSSupport.
+</PRE>
+</inModule>
+<HR>
+<A NAME="x1">interface Unix is in:
+</A><UL>
+<LI><A HREF="../../unix/src/aix-3-2/Unix.i3.html#0TOP0">unix/src/aix-3-2/Unix.i3</A>
+<LI><A HREF="../../unix/src/aix-ps2-1-2/Unix.i3.html#0TOP0">unix/src/aix-ps2-1-2/Unix.i3</A>
+<LI><A HREF="../../unix/src/freebsd-1/Unix.i3.html#0TOP0">unix/src/freebsd-1/Unix.i3</A>
+<LI><A HREF="../../unix/src/freebsd-2/Unix.i3.html#0TOP0">unix/src/freebsd-2/Unix.i3</A>
+<LI><A HREF="../../unix/src/hpux-7-0/Unix.i3.html#0TOP0">unix/src/hpux-7-0/Unix.i3</A>
+<LI><A HREF="../../unix/src/ibm-4-3/Unix.i3.html#0TOP0">unix/src/ibm-4-3/Unix.i3</A>
+<LI><A HREF="../../unix/src/irix-5.2/Unix.i3.html#0TOP0">unix/src/irix-5.2/Unix.i3</A>
+<LI><A HREF="../../unix/src/linux/Unix.i3.html#0TOP0">unix/src/linux/Unix.i3</A>
+<LI><A HREF="../../unix/src/osf-1.ALPHA_OSF/Unix.i3.html#0TOP0">unix/src/osf-1.ALPHA_OSF/Unix.i3</A>
+<LI><A HREF="../../unix/src/osf-1.DS3100/Unix.i3.html#0TOP0">unix/src/osf-1.DS3100/Unix.i3</A>
+<LI><A HREF="../../unix/src/solaris-2-x/Unix.i3.html#0TOP0">unix/src/solaris-2-x/Unix.i3</A>
+<LI><A HREF="../../unix/src/sunos-4-x/Unix.i3.html#0TOP0">unix/src/sunos-4-x/Unix.i3</A>
+<LI><A HREF="../../unix/src/sysv-4.0/Unix.i3.html#0TOP0">unix/src/sysv-4.0/Unix.i3</A>
+<LI><A HREF="../../unix/src/ultrix-3-1.AP3000/Unix.i3.html#0TOP0">unix/src/ultrix-3-1.AP3000/Unix.i3</A>
+<LI><A HREF="../../unix/src/ultrix-3-1.ARM/Unix.i3.html#0TOP0">unix/src/ultrix-3-1.ARM/Unix.i3</A>
+<LI><A HREF="../../unix/src/ultrix-3-1.DS3100/Unix.i3.html#0TOP0">unix/src/ultrix-3-1.DS3100/Unix.i3</A>
+<LI><A HREF="../../unix/src/ultrix-3-1.NEXT/Unix.i3.html#0TOP0">unix/src/ultrix-3-1.NEXT/Unix.i3</A>
+<LI><A HREF="../../unix/src/ultrix-3-1.SEQUENT/Unix.i3.html#0TOP0">unix/src/ultrix-3-1.SEQUENT/Unix.i3</A>
+<LI><A HREF="../../unix/src/ultrix-3-1.SUN3/Unix.i3.html#0TOP0">unix/src/ultrix-3-1.SUN3/Unix.i3</A>
+<LI><A HREF="../../unix/src/ultrix-3-1.SUN386/Unix.i3.html#0TOP0">unix/src/ultrix-3-1.SUN386/Unix.i3</A>
+<LI><A HREF="../../unix/src/ultrix-3-1.UMAX/Unix.i3.html#0TOP0">unix/src/ultrix-3-1.UMAX/Unix.i3</A>
+<LI><A HREF="../../unix/src/ultrix-3-1.VAX/Unix.i3.html#0TOP0">unix/src/ultrix-3-1.VAX/Unix.i3</A>
+</UL>
+<P>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

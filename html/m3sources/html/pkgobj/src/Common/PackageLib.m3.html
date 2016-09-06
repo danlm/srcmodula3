@@ -1,0 +1,248 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: pkgobj/src/Common/PackageLib.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>pkgobj/src/Common/PackageLib.m3</H2></A><HR>
+<inModule>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM> PackageLib.m3 </EM></BLOCKQUOTE><PRE>
+
+MODULE <module><implements><A HREF="PackageLib.i3.html">PackageLib</A></implements></module>;
+
+IMPORT <A HREF="FileSys.i3.html">FileSys</A>, <A HREF="../../../os/src/Common/OSError.i3.html">OSError</A>, <A HREF="PackageObj.i3.html">PackageObj</A>, <A HREF="../../../os/src/Common/Pathname.i3.html">Pathname</A>, <A HREF="NetPath.i3.html">NetPath</A>, <A HREF="PkgErr.i3.html">PkgErr</A>,
+       <A HREF="../../../libm3/DS/RefList.i3.html">RefList</A>, <A HREF="../../../libm3/DS/TextList.i3.html">TextList</A>, <A HREF="../../../libm3/DS/TextListSort.i3.html">TextListSort</A>, <A HREF="../../../rw/src/Common/Rd.i3.html">Rd</A>, <A HREF="../../../text/src/Text.i3.html">Text</A>, <A HREF="../../../time/src/Common/Time.i3.html">Time</A>, <A HREF="../../../thread/src/Common/Thread.i3.html">Thread</A>;
+
+EXCEPTION FatalError; &lt;* FATAL FatalError *&gt;
+
+PROCEDURE <A NAME="Enumerate"><procedure>Enumerate</procedure></A> (e: EnumClosure): PackageObj.DirEnum
+    RAISES {OSError.E} =
+  CONST StatsPerWait = 40;
+  VAR waitCtr: CARDINAL := StatsPerWait;
+  PROCEDURE Build (path: FileSys.FN): PackageObj.DirEnum
+      RAISES {OSError.E} =
+    VAR t: TEXT;
+        edir, cpath, spath: FileSys.FN;
+        eList: FileSys.Enumeration;
+        res: PackageObj.DirEnum := NIL;
+        elem: PackageObj.DirElem;
+    BEGIN
+      TRY
+        edir := e.acquire();
+        IF path # NIL THEN
+          edir := Pathname.Join(edir, path, NIL);
+        END;
+        eList := FileSys.Enumerate (edir);
+      FINALLY
+        e.release();
+      END;
+      (* hack for broken List generic *)
+      (* IF eList = NIL THEN RETURN NIL; END; *)
+      eList := TextList.ReverseD(TextListSort.SortD(eList));
+      WHILE eList # NIL DO
+        t := eList.head;
+        IF NOT SpecialFile(t) THEN
+          (* gross hackery for lack of multithreaded OS *)
+          DEC(waitCtr);
+          IF waitCtr = 0 THEN
+            Thread.Pause(5.0D-2);
+            waitCtr := StatsPerWait;
+          END;
+          (* end of hackery *)
+          elem := NEW (PackageObj.DirElem);
+          elem.children := NIL;
+          elem.arc := t;
+          cpath := Pathname.Join(path, t, NIL);
+          TRY
+            spath := Pathname.Join(e.acquire(), cpath, NIL);
+            elem.info := FileSys.GetInfo(spath, FALSE);
+            IF elem.info.type = FileSys.FileType.SLink THEN
+              elem.referent := FileSys.ReadLink(spath);
+            ELSE
+              elem.referent := NIL;
+            END;
+          FINALLY
+            e.release();
+          END;
+          CASE elem.info.type OF
+          | FileSys.FileType.Other =&gt;
+          | FileSys.FileType.Dir =&gt;
+              elem.children := Build(cpath);
+              res := RefList.Cons(elem, res);
+          ELSE
+              res := RefList.Cons(elem, res);
+          END;
+        END;
+        eList := eList.tail;
+      END;
+      RETURN res;
+    END Build;
+  BEGIN
+    RETURN Build(NIL);
+  END Enumerate;
+
+PROCEDURE <A NAME="Compare"><procedure>Compare</procedure></A>(src, dest: PackageObj.DirEnum; cl: DiffClosure)
+    RAISES {Thread.Alerted} =
+  VAR
+     dirName: FileSys.FN := NIL;
+  PROCEDURE CompareInner(
+      arc: TEXT; src, dest: PackageObj.DirEnum; cl: DiffClosure)
+      RAISES {Stop, Thread.Alerted} =
+    VAR e1,e2: PackageObj.DirElem;
+        comp: [-1..1];
+        saveDir := dirName;
+    BEGIN
+      IF src = NIL AND dest = NIL THEN RETURN; END;
+      IF arc # NIL THEN dirName := Pathname.Join(dirName, arc, NIL); END;
+      WHILE src # NIL OR dest # NIL DO
+        IF dest = NIL THEN
+          e1 := src.head;
+          comp := -1;
+        ELSIF src = NIL THEN
+          e2 := dest.head;
+          comp := 1;
+        ELSE
+          e1 := src.head;
+          e2 := dest.head;
+          comp := TextCompare(e1.arc, e2.arc);
+        END;
+        CASE comp OF
+        | 1 =&gt;
+            dest := dest.tail;
+            cl.report(dirName, DiffType.NoSrc, e2);
+            CompareInner(e2.arc, NIL, e2.children, cl);
+        | 0 =&gt;
+            src := src.tail;
+            dest := dest.tail;
+            cl.report(dirName, CompareInfo(e1,e2), e1);
+            CompareInner(e1.arc, e1.children, e2.children, cl);
+        | -1 =&gt;
+            src := src.tail;
+            cl.report(dirName, DiffType.NoDest, e1);
+            CompareInner(e1.arc, e1.children, NIL, cl);
+        END;
+      END;
+      dirName := saveDir;
+    END CompareInner;
+  BEGIN
+    TRY
+      CompareInner(NIL, src, dest, cl);
+    EXCEPT Stop =&gt;
+    END;
+  END Compare;
+
+PROCEDURE <A NAME="TextCompare"><procedure>TextCompare</procedure></A>(t1, t2: TEXT) : [-1..1] =
+  BEGIN
+    IF t1 = NIL THEN
+      IF t2 = NIL THEN RETURN 0; END;
+      RETURN 1;
+    ELSIF t2 = NIL THEN
+      RETURN -1;
+    ELSE
+      RETURN Text.Compare(t1, t2);
+    END;
+  END TextCompare;
+
+PROCEDURE <A NAME="CompareInfo"><procedure>CompareInfo</procedure></A>(e1, e2: PackageObj.DirElem): DiffType =
+  BEGIN
+    IF e1.info.type # e2.info.type THEN RETURN DiffType.TypesDiffer; END;
+    CASE e1.info.type OF
+    | FileSys.FileType.Dir =&gt; RETURN DiffType.Same;
+    | FileSys.FileType.Normal =&gt;
+       IF e1.info.date = e2.info.date THEN
+         IF e1.info.length # e2.info.length THEN
+           RETURN DiffType.LengthsDiffer;
+         END;
+         IF e1.info.perm # e2.info.perm THEN
+           RETURN DiffType.ModesDiffer;
+         END;
+       ELSIF e1.info.date &gt; e2.info.date THEN
+         RETURN DiffType.SrcNewer;
+       ELSE
+         RETURN DiffType.SrcOlder;
+       END;
+    | FileSys.FileType.SLink =&gt;
+       IF NOT Text.Equal(e1.referent, e2.referent) THEN
+         RETURN DiffType.LinksDiffer;
+       END;
+    | FileSys.FileType.Other =&gt; RAISE FatalError;
+    END;
+    RETURN DiffType.Same;
+  END CompareInfo;
+
+PROCEDURE <A NAME="SpecialFile"><procedure>SpecialFile</procedure></A> (t: Text.T): BOOLEAN =
+  BEGIN
+    IF Text.GetChar (t, 0) # '.' THEN RETURN FALSE;  END;
+    RETURN Text.Equal (t, VersionFile) OR Text.Equal (t, ExportLinkFile);
+  END SpecialFile;
+
+PROCEDURE <A NAME="SetDirDates"><procedure>SetDirDates</procedure></A>(
+    &lt;*UNUSED*&gt;path: FileSys.FN; &lt;*UNUSED*&gt;enum: PackageObj.DirEnum) =
+  BEGIN
+  END SetDirDates;
+
+TYPE
+  SpecialSource = PackageObj.Source OBJECT
+  OVERRIDES
+    enum := SpecialEnumerate;
+    pullFile := NullPullFile;
+    links := NullExportLinks;
+  END;
+
+PROCEDURE <A NAME="SpecialEnumerate"><procedure>SpecialEnumerate</procedure></A>(&lt;*UNUSED*&gt; s: SpecialSource) : PackageObj.Enum
+    RAISES {} =
+  BEGIN
+    RETURN PackageObj.Enum{Time.Now(), NIL};
+  END SpecialEnumerate;
+
+PROCEDURE <A NAME="NullPullFile"><procedure>NullPullFile</procedure></A>(&lt;*UNUSED*&gt;s: SpecialSource;
+                       &lt;*UNUSED*&gt;path: NetPath.T) : Rd.T
+    RAISES {PkgErr.E} =
+  BEGIN
+    PkgErr.Raise(PkgErr.NoSuchFile);
+    RETURN NIL;
+  END NullPullFile;
+
+PROCEDURE <A NAME="NullExportLinks"><procedure>NullExportLinks</procedure></A>(&lt;*UNUSED*&gt; s: SpecialSource) : PackageObj.ExportLinks
+    RAISES {} =
+  BEGIN
+    RETURN NIL;
+  END NullExportLinks;
+
+PROCEDURE <A NAME="EmptySource"><procedure>EmptySource</procedure></A>() : PackageObj.Source =
+  BEGIN
+    RETURN NEW(SpecialSource);
+  END EmptySource;
+
+BEGIN
+END PackageLib.
+</PRE>
+</inModule>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

@@ -1,0 +1,108 @@
+<HTML>
+<HEAD>
+<TITLE>Modula-3: OS/2 3.5.3 home page</TITLE>
+</HEAD>
+<BODY BGCOLOR="#ffffff" VLINK="#006633">
+
+<H2>OS/2 3.5.3: an implementation of SRC Modula-3 for OS/2</H2>
+
+<P> <A HREF="mailto:klausp@ping.at">Klaus Preschern</A> has ported SRC
+Modula-3 version 3.5.3 to the OS/2 operating system. He has used
+his port to compile the Modula-3 compiler itself on OS/2 version 2.11
+and he has tested in on OS/2 Warp (version 3.0).
+
+<P> Carsten Whimster has written an article, <A
+HREF="http://www.iqpac.com/edm2/articles/039604x.shtml">"Using
+Modula-3 Under OS/2"</A>, that describes how to retrieve and install
+the Modula-3 port for OS/2. The article is published in
+<A HREF="http://www.iqpac.com/edm2/index.shtml">EDM/2</A>, the
+Electronic Development Magazine, OS/2 edition.
+
+<P> Carsten's article provides the most comprehensive information on
+installing the OS/2 port, but here are two posts that were made to the
+<TT>comp.lang.modula3</TT> newsgroup in mid-November, 1995, related to
+the port and how to obtain the binaries. These posts have been edited
+slightly for clarity.
+<P>
+
+<HR>
+<PRE>
+From: klausp@ping.at (Klaus Preschern)
+Date: Fri, 10 Nov 1995 20:22:25 +0100
+To: m3@pa.dec.com
+Subject: M3 for OS/2 available!
+
+Hi folks,
+
+I do not know whether the Modula-3 compiler is already available for OS/2.
+Several times I have seen messages from people working on such a port -
+but I have never seen an announcement of Modula-3 for OS/2 (possibly I
+missed it?). Anyway, I have started my own port; here is some
+information about it:
+
+- The M3 compiler (V3.5.3) does work under OS/2. I have successfully
+  compiled it with itself under OS/2 2.11 and tested it with 3.0 (Warp).
+  HPFS (long file names) required with approx. 30 MB free disk space.
+
+- The following packages are available: m3core, libm3, m3middle,
+  m3linker, m3objfile, m3front, m3back, m3staloneback, m3.
+  Furthermore I have m3build, m3ship, m3where, quake and m3mkdir.
+
+- The port does use the GNU backend (m3cgc1) - I have translated
+  the WinNT backend, but do not use it currently.
+
+- The port is based on emx V0.9a and gcc V2.6.3. The M3 OS/2 target
+  is therefore very close to the LINUX target.
+
+- Not available (in other words, the to-do-list):
+  - no support for threads
+  - no support for DLLs (I build Unix libs --> biiiiiig executables)
+  - no Trestle
+  - no network objects (not tried)
+
+If somebody is interested in my current state, I can put it on a ftp
+server (please let me know where).
+
+        Klaus
+----------------------------------------
+Klaus Preschern
+e-mail: klausp@ping.at
+----------------------------------------
+</PRE>
+
+<HR>
+<PRE>
+From: dagenais@gutrune.vlsi.polymtl.ca (Michel Dagenais)
+Date: 15 Nov 95 09:24:21
+Subject: Modula3 for OS2
+
+As he announced yesterday, Klaus Preschern suceeded in porting SRC
+Modula-3 to OS/2. This way, people having access to OS/2 machines will
+be able to fine tune the run time (threads) and port the graphical
+interface (Trestle) to presentation manager.
+
+Klaus Preschern downloaded his port to my site yesterday and it is now
+available:
+
+  <A HREF="http://www.vlsi.polymtl.ca/m3/binaries/OS2">http://www.vlsi.polymtl.ca/m3/binaries/OS2</A>
+
+--
+
+Prof. Michel Dagenais        <A HREF="http://www.vlsi.polymtl.ca/dagenais/home/home.html">http://www.vlsi.polymtl.ca/dagenais/home/home.html</A>
+Dept of EE and Computer Eng.        dagenais@vlsi.polymtl.ca
+Ecole Polytechnique de Montreal     tel: (514) 340-4029
+</PRE>
+
+<HR>
+<A HREF="home.html">[Modula-3 home page]</A>
+<P>
+<A HREF="mailto:m3-request@src.dec.com">
+<ADDRESS>m3-request@src.dec.com</ADDRESS></A>
+<PRE>
+Last modified on Mon Mar 18 14:56:04 PST 1996 by heydon
+</PRE>
+
+Copyright (C) 1992, 1996, Digital Equipment Corporation. All rights reserved.<BR>
+See the <A HREF="http://www.research.digital.com/SRC/m3sources/html/COPYRIGHT.html">COPYRIGHT</A> for a full description.
+</BODY>
+</HTML>

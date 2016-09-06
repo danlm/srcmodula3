@@ -1,0 +1,80 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: m3tk/src/pl/M3LOpaque.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>m3tk/src/pl/M3LOpaque.m3</H2></A><HR>
+<inModule>
+<PRE>MODULE <module><implements><A HREF="M3LOpaque.i3.html">M3LOpaque</A></implements></module>;
+
+Copyright
+
+IMPORT AST, ASTWalk;
+IMPORT M3Context, M3CUnit;
+IMPORT M3AST_AS;
+IMPORT M3AST_SM_F, M3AST_TM_F;
+
+PROCEDURE <A NAME="SetReveal"><procedure>SetReveal</procedure></A>(c: M3Context.T) RAISES {}=
+  &lt;*FATAL ANY*&gt;
+  BEGIN
+    M3Context.Apply(c, NEW(M3Context.Closure, callback := SetRevealUnit));
+  END SetReveal;
+
+PROCEDURE <A NAME="SetRevealUnit"><procedure>SetRevealUnit</procedure></A>(&lt;*UNUSED*&gt; cl: M3Context.Closure;
+                                   ut: M3CUnit.Type;
+                        &lt;*UNUSED*&gt; name: TEXT;
+    cu: M3AST_AS.Compilation_Unit) RAISES {}=
+  &lt;*FATAL ANY*&gt;
+  BEGIN
+    cu := M3CUnit.ToGenIns(cu, ut);
+    IF ut = M3CUnit.Type.Interface THEN
+      ASTWalk.VisitNodes(cu, NEW(ASTWalk.Closure,
+          callback := SetRevealNode));
+    END; (* if *)
+  END SetRevealUnit;
+
+PROCEDURE <A NAME="SetRevealNode"><procedure>SetRevealNode</procedure></A>(&lt;*UNUSED*&gt; cl: ASTWalk.Closure;
+                        n: AST.NODE;
+                        &lt;*UNUSED*&gt; vm: ASTWalk.VisitMode) RAISES {}=
+  BEGIN
+    TYPECASE n OF
+    | M3AST_AS.Opaque_type(opaque_type) =&gt;
+        opaque_type.tmp_rev_type_spec := opaque_type.sm_concrete_type_spec
+
+    ELSE (* ignore *)
+    END; (* typecase *)
+  END SetRevealNode;
+
+BEGIN
+
+END M3LOpaque.
+</PRE>
+</inModule>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

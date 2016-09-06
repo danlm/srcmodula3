@@ -1,0 +1,91 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: trestle_by_example/src/numeric/Numeric.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>trestle_by_example/src/numeric/Numeric.m3</H2></A><HR>
+<inModule>
+<PRE>MODULE <module>Numeric</module> EXPORTS <A HREF="../../../main/src/Main.i3.html"><implements>Main</A></implements>;
+IMPORT <A HREF="../../../ui/src/vbt/Trestle.i3.html">Trestle</A>, <A HREF="../../../ui/src/vbt/VBT.i3.html">VBT</A>, <A HREF="../../../ui/src/split/TextVBT.i3.html">TextVBT</A>, <A HREF="../../../lego/src/NumericVBT.i3.html">NumericVBT</A>, <A HREF="../../../ui/src/vbt/Font.i3.html">Font</A>, <A HREF="../../../lego/src/Shadow.i3.html">Shadow</A>, <A HREF="../../../vbtkitutils/src/AnyEvent.i3.html">AnyEvent</A>;
+IMPORT <A HREF="../../../ui/src/split/HVSplit.i3.html">HVSplit</A>, <A HREF="../../../ui/src/split/HVBar.i3.html">HVBar</A>, <A HREF="../../../geometry/src/Axis.i3.html">Axis</A>, <A HREF="../../../ui/src/split/ButtonVBT.i3.html">ButtonVBT</A>, <A HREF="../../../etext/src/TextPort.i3.html">TextPort</A>;
+FROM <A HREF="../common/Colors.i3.html">Colors</A> IMPORT royal, white, lgrey, dgrey;
+
+PROCEDURE <A NAME="Callback"><procedure>Callback</procedure></A> (v: NumericVBT.T; event: AnyEvent.T) =
+  BEGIN
+    TYPECASE event OF
+    | AnyEvent.Mouse =&gt; TextVBT.Put(display, &quot;Mouse clicked&quot;);
+    | AnyEvent.Key =&gt; TextVBT.Put(display, &quot;Return pressed&quot;);
+    END;
+  END Callback;
+
+PROCEDURE <A NAME="SetEmpty"><procedure>SetEmpty</procedure></A> (v: ButtonVBT.T; READONLY cd: VBT.MouseRec) =
+  BEGIN
+    IF NOT NumericVBT.IsEmpty(numeric) THEN
+      NumericVBT.SetEmpty(numeric);
+    END;
+  END SetEmpty;
+
+PROCEDURE <A NAME="SetMax"><procedure>SetMax</procedure></A> (v: ButtonVBT.T; READONLY cd: VBT.MouseRec) =
+  BEGIN
+    IF NOT NumericVBT.IsEmpty(numeric) THEN
+      NumericVBT.PutMax(numeric, NumericVBT.Get(numeric));
+    END;
+  END SetMax;
+
+PROCEDURE <A NAME="SetMin"><procedure>SetMin</procedure></A> (v: ButtonVBT.T; READONLY cd: VBT.MouseRec) =
+  BEGIN
+    IF NOT NumericVBT.IsEmpty(numeric) THEN
+      NumericVBT.PutMin(numeric, NumericVBT.Get(numeric));
+    END;
+  END SetMin;
+
+CONST times14 = &quot;-*-times-*-r-*-*-14-*-*-*-*-*-*-*&quot;;
+VAR
+  font := Font.FromName(ARRAY OF TEXT{times14});
+  sh   := Shadow.New(3.0, royal, white, lgrey, dgrey);
+  numeric := NEW(NumericVBT.T, callback := Callback).init(
+               min := FIRST(INTEGER), max := LAST(INTEGER),
+               allowEmpty := TRUE, naked := FALSE, font := font,
+               shadow := sh);
+  display  := TextVBT.New(&quot;&quot;);
+  vsplit   := HVSplit.Cons(Axis.T.Ver, numeric, HVBar.New(), display);
+  setempty := ButtonVBT.New(TextVBT.New(&quot;Set Empty&quot;), SetEmpty);
+  setmax   := ButtonVBT.New(TextVBT.New(&quot;Set Max&quot;), SetMax);
+  setmin   := ButtonVBT.New(TextVBT.New(&quot;Set Min&quot;), SetMin);
+  buttons := HVSplit.Cons(Axis.T.Ver, setmax, HVBar.New(), setmin,
+                          HVBar.New(), setempty);
+  main := HVSplit.Cons(Axis.T.Hor, vsplit, HVBar.New(), buttons);
+BEGIN
+  Trestle.Install(main);
+  Trestle.AwaitDelete(main)
+END Numeric.
+</PRE>
+</inModule>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

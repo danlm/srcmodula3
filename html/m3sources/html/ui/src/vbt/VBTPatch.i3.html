@@ -1,0 +1,87 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: ui/src/vbt/VBTPatch.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>ui/src/vbt/VBTPatch.i3</H2></A><HR>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM>                                                                           </EM></BLOCKQUOTE><PRE>
+</PRE> \subsection{Texturing irregular patches} 
+
+<P><PRE>TYPE
+  DeltaPair = RECORD dl, dr: BITS 8 FOR [-128 .. 127] END;
+
+PROCEDURE PaintPatch(
+    v: Leaf;
+    READONLY clip: Rect.T;
+    hl, hr, vlo, vhi, start: INTEGER;
+    READONLY deltaArray: ARRAY OF DeltaPair;
+    op: PaintOp.T := PaintOp.BgFg;
+    src: Pixmap.T := Pixmap.Solid;
+    READONLY delta: Point.T := Point.Origin); &lt;* LL.sup &lt; v *&gt;
+</PRE><BLOCKQUOTE><EM> This is like <CODE>PaintTexture</CODE>, except that the region to be textured is a
+   ``patch'' instead of a rectangle. A patch is region that intersects
+   each horizontal line in a single interval. <CODE>vlo</CODE> is the index of the
+   first (i.e., northernmost) scan line that intersects the patch, and
+   <CODE>[hl .. hr)</CODE> is the intersection of the patch with this scan line. The
+   intersections of the patch with the following scan lines are
+   represented in <CODE>deltaArray</CODE>. Since the interval for any scan line is
+   likely to be close to the interval for the previous scan line, the
+   entries in the array are not the interval endpoints themselves, but
+   the deltas from the previous endpoints. The information can begin
+   anywhere in <CODE>deltaArray</CODE>; the parameter <CODE>start</CODE> is the index of the first
+   relevant delta pair. Finally, <CODE>vhi</CODE> is the index of the first scan line
+   that passes below the patch. </EM></BLOCKQUOTE><PRE>
+</PRE>  More precisely,
+<P>
+<PRE>
+        <KBD>for each pair of points </KBD>p<KBD>, </KBD>q<KBD> such that</KBD>
+            p <KBD>is in the patch (see below),</KBD> p <KBD>is in</KBD> clip<KBD>, and</KBD>
+            p = q + delta,
+        <KBD>assign</KBD>
+            v[p] := op(v[p], src[Rect.Mod(q, domain(src))]).
+</PRE>
+   The patch contains <CODE>p</CODE> if:
+   <P>
+<PRE>
+            p.v IN [vlo .. vhi) AND p.h IN [hl + DL .. hr + DR)
+        <KBD>where</KBD>
+            DL = <KBD>sum of</KBD> deltaArray[start + i - vlo].dl <KBD>and</KBD>
+            DR = <KBD>sum of</KBD> deltaArray[start + i - vlo].dr
+        <KBD>for</KBD> i <KBD>in</KBD> [vlo .. p.v).
+</PRE>
+   The value of <CODE>start</CODE> must be non-negative.
+<P>
+   The patch is clipped vertically to exclude any rows for which <CODE>DL</CODE> and
+   <CODE>DR</CODE> are undefined due to exhaustion of <CODE>deltaArray</CODE>. 
+
+<P>
+</inInterface>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

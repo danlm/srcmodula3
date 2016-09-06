@@ -1,0 +1,314 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: gef/src/GEF.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>gef/src/GEF.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+
+INTERFACE <interface><A HREF="#x1">GEF</A></interface>;
+</PRE> GEF - GraphVBT Edit Format - is a FormsVBT semi-equivalent for GraphVBT.
+<P>
+   Allows the reading and writing of GraphVBT windows as a string of
+   s-expressions.
+<P>
+   For a full description of the top-level objects and the meanings of their
+   fields, read the GraphVBT interface.
+<P>
+The .gef file consists of an Ascii Sx expression (see Sx.i3).  A typical
+element looks like:
+<P>
+(&lt;ElementType&gt; (Name &lt;name&gt;) (&lt;PropName1&gt; &lt;value&gt;) (&lt;PropName2&gt; &lt;value&gt;) ...)
+<P>
+The syntax of GEF values (GEF desired type - Sx type):
+<P>
+BOOLEAN: boolean
+INTEGER: integer
+REAL: integer or real
+TEXT: integer, text or symbol
+Enumerated: text or symbol of a valid element of the enumeration
+ColorSpec: 
+  <CODE>Bg</CODE> or <CODE>Fg</CODE>: builtin PaintOp.Bg, PaintOp.Fg
+  text or symbol: Color name (See ColorName.i3)
+  &lt;real real real&gt;:  RGB specification (0 0 0 is Black, 1 1 1 is white)
+FontSpec:
+  font sizes are given in world coordinates
+  <CODE>BuiltIn</CODE>: builtin Font.BuiltIn
+  text or symbol: Font name (in X11 format)
+     <CODE>-&lt;foundry&gt;-&lt;family&gt;-&lt;weight&gt;-&lt;slant&gt;-*-*-*-&lt;size&gt;-*-*-*-*-*-*</CODE>
+  property format:
+         (Foundry &lt;text&gt;) - default <CODE>*</CODE>
+         (Family &lt;text&gt;) - default <CODE>Helvetica</CODE>
+         (Weight &lt;text&gt;) - default <CODE>Medium</CODE>
+         (Slant  &lt;one of <CODE>R</CODE>, <CODE>I</CODE>, <CODE>O</CODE>, <CODE>RI</CODE>, <CODE>RO</CODE>, <CODE>OT</CODE>&gt;) - default <CODE>R</CODE>
+         (Size &lt;real&gt;) - default 0.0353 (10pt in default world and size)
+Element: either a name of an element, or an sx expression describing a new element
+<P>
+Element types:
+<P>
+Graph: GEF.T = GraphVBT.T OBJECT ...
+<P>
+(Graph 
+     (World &lt;west, east, north, south: REAL&gt;)
+     (Margin &lt;margin: REAL&gt;) 
+     (PixelSizeDivisor &lt;w, h: INTEGER&gt;) 
+     (PrefSize &lt;width, height: REAL&gt;)
+     (Aspect &lt;aspect: REAL&gt;)
+     (ClientData &lt;data: Sx&gt;)
+     (Contents &lt;sequence of elements: Element&gt; )
+)
+<P>
+      Notes: 
+        World, Margin, PixelSizeDivisor, PreferredSize correspond directly 
+          to the GraphVBT properties of the same name
+        ClientDate is an uninterpreted Sx expression (Sx.T) that can
+          be used by the client of GEF.
+        Contents MUST be the last attribute of a graph
+<P>
+Vertex: GEF.Vertex = GraphVBT.Vertex OBJECT ...
+<P>
+(Vertex 
+     (Shape &lt;Rectangle | Ellipse&gt;)
+     (Pos &lt;x, y: REAL&gt;) 
+     (Size &lt;w, h: REAL&gt;) 
+     (Color &lt;color: ColorSpec&gt;)
+     (Label &lt;label: TEXT&gt;) 
+     (Font &lt;font: FontSpec&gt;) 
+     (FontColor &lt;color: ColorSpec&gt;) 
+     (BorderColor &lt;color: ColorSpec&gt;) 
+     (BorderWidth &lt;width: REAL&gt;)
+)
+<P>
+VertexHighlight: GEF.VertexHighlight = GraphVBT.VertexHighlight OBJECT ...
+<P>
+(VertexHighlight
+      (Vertex &lt;vertex: Element&gt;)
+      (Color &lt;color: ColorSpec&gt;)
+      (Width &lt;width: REAL&gt;)
+)
+<P>
+Edge: GEF.Edge = GraphVBT.Edge OBJECT ...
+<P>
+(Edge
+     (Vertices &lt;vertex0, vertex1: Element (must be vertex)&gt;)
+     (Controls &lt;control0, control1: Element (must be vertex)&gt;)
+     (Width &lt;width: REAL&gt;)
+     (Color &lt;color: ColorSpec&gt;)
+     (Arrows &lt;atVertex0, atVertex1: BOOLEAN&gt;)
+)
+<P>
+      Notes: 
+        Both vertices must be given
+        Controls may both be NIL or both must be given
+<P>
+Polygon: GEF.Polygon = GraphVBT.Polygon OBJECT ...
+<P>
+(Polygon
+      (Vertices &lt;sequence of vertices: Element (must be vertex)&gt;)
+      (Color &lt;color: ColorSpec&gt;)
+)
+<P>
+Arc: GEF.Arc - an elliptical arc
+<P>
+(Arc
+      (Center &lt;vertex: Element (must be vertex)&gt;)
+      (Radius &lt;r: REAL&gt;)
+      (Angle  &lt;start, stop: REAL&gt;)
+      (Transformation &lt;a11, a12, a21, a22: REAL&gt;)
+      (Width &lt;width: REAL&gt;)
+      (Color &lt;color: ColorSpec&gt;)
+      (Arrow &lt;atStart, atStop: BOOLEAN&gt;)
+)
+<P>
+      Notes:
+        The center must be a vertex element
+        Angle is measured in degrees clockwise with 0 degrees the positive
+          X-axis.  The default is 0 and 360 for start and stop respectively.
+        Transformation defines a 2x2 transformation matrix which is applied
+          circle of radius <CODE>Radius</CODE> at the origin which is then translated
+          by <CODE>Center</CODE>.  The default is 1.0, 0.0, 0.0, 1.0.
+        Arrow tells which endpoint of the arc gets an arrowhead
+        An arc gets translated into 1 - 4 bezier edges approximating
+          the desired arc
+<P>
+Frame: GEF.Frame - a synchronized set of actions in an animation
+<P>
+(Frame
+      (Time &lt;start, stop: REAL&gt;)
+      (Actions &lt;sequence of actions: Element&gt;)
+)
+<P>
+Move: GEF.Move - move some vertices along a path
+<P>
+(Move
+      (Elements &lt;sequence of elements: Element&gt;)
+      (Animate &lt;animate: BOOLEAN&gt;) 
+      (Path &lt;sequence of edges: Element (must be edges)&gt;)
+      (Pos &lt;x, y: REAL&gt;)
+)
+<P>
+       Notes:
+         The default for <CODE>Animate</CODE> is TRUE
+         IF a path is provided, then <CODE>Pos</CODE> is set to the last vertex of the last edge
+           in <CODE>Path</CODE>. (If you really want to have pos different - not recommended - then
+           have the <CODE>Pos</CODE> field after the <CODE>Path</CODE> field.)
+         Pos does not make much sense for more than one vertex
+<P>
+Rotate: GEF.Rotate - rotate some vertices around a common center
+<P>
+(Rotate
+      (Center &lt;center: Vertex&gt;)
+      (Elements &lt;sequence of elements: Element&gt;)
+      (Angle &lt;angle: REAL&gt;)
+      (Ends &lt;start, stop Vertex&gt;)
+      (Clockwise &lt;clockwise: BOOLEAN&gt;)
+)
+<P>
+      Notes: 
+        The direction of rotation (determined by the sign of <CODE>Angle</CODE> or
+          by the value of <CODE>Clockwise</CODE>) also depends on the world coordinates
+          of the graph.  If north &gt; south or west &gt; east then the direction
+          is reversed.  However if both north &gt; south and west &gt; east the
+          direction is preserved.
+        It is an error for both <CODE>Angle</CODE> and <CODE>Ends/Clockwise</CODE> to be given.
+        <CODE>Angle</CODE> is given in degrees.  CounterClockwise direction is positive.
+        <CODE>Ends</CODE> and <CODE>Clockwise</CODE> are used to derive the angle and direction
+          of rotation.  The default for <CODE>Clockwise</CODE> is FALSE.
+<P>
+
+
+<P><PRE>IMPORT <A HREF="GEFError.i3.html">GEFError</A>, <A HREF="../../mgkit/src/GraphVBT.i3.html">GraphVBT</A>, <A HREF="../../libm3/DS/IntRefTbl.i3.html">IntRefTbl</A>, <A HREF="../../libm3/DS/RefList.i3.html">RefList</A>, <A HREF="../../geometry/src/Point.i3.html">Point</A>, <A HREF="../../rw/src/Common/Rd.i3.html">Rd</A>, <A HREF="../../vbtkitutils/src/Rsrc.i3.html">Rsrc</A>, <A HREF="../../slisp/src/SLisp.i3.html">SLisp</A>, <A HREF="../../thread/src/Common/Thread.i3.html">Thread</A>;
+
+&lt;* PRAGMA LL *&gt;
+
+TYPE
+  S_exp = REFANY;
+  T &lt;: TPublic;
+  TPublic = GraphVBT.T OBJECT
+              id        : INTEGER;
+              clientData: S_exp;                (* client readable data *)
+              elems     : REF ARRAY OF REFANY;  (* vertices, edges, etc. *)
+              showAllElements: BOOLEAN := FALSE;
+            METHODS
+              init(interp: SLisp.T): T;
+            END;
+
+  <A HREF="GEF.m3.html#Vertex">Vertex</A> &lt;: VPublic;
+  VPublic = GraphVBT.Vertex OBJECT END;
+
+  <A HREF="GEF.m3.html#Edge">Edge</A> &lt;: EPublic;
+  EPublic = GraphVBT.Edge OBJECT END;
+
+  <A HREF="GEF.m3.html#VertexHighlight">VertexHighlight</A> &lt;: VHPublic;
+  VHPublic = GraphVBT.VertexHighlight OBJECT END;
+
+  <A HREF="GEF.m3.html#Polygon">Polygon</A> &lt;: PPublic;
+  PPublic = GraphVBT.Polygon OBJECT END;
+
+  <A HREF="GEF.m3.html#Arc">Arc</A> &lt;: ArcPublic;
+  ArcPublic = OBJECT END;
+</PRE> <CODE>t</CODE> should be created with NEW(GEF.T).init() and should be installed if
+   there are any animations involved (that you want to see...) 
+<P>
+   <CODE>intervals</CODE> is the mapping from s-expressions to character offsets in
+   the source for the GEF expression.
+<P>
+
+<PRE>&lt;* LL &lt; t.mu *&gt;
+PROCEDURE <A HREF="GEF.m3.html#InitFromText">InitFromText</A> (t              : T;
+                        description    : TEXT;
+                        intervals      : IntRefTbl.T := NIL;
+                        showAllElements: BOOLEAN    := FALSE)
+  RAISES {GEFError.T, Thread.Alerted};
+
+PROCEDURE <A HREF="GEF.m3.html#InitFromFile">InitFromFile</A> (t              : T;
+                        filename       : TEXT;
+                        intervals      : IntRefTbl.T := NIL;
+                        showAllElements: BOOLEAN    := FALSE)
+  RAISES {GEFError.T, Rd.Failure, Thread.Alerted};
+
+PROCEDURE <A HREF="GEF.m3.html#InitFromRd">InitFromRd</A> (t              : T;
+                      rd             : Rd.T;
+                      intervals      : IntRefTbl.T := NIL;
+                      showAllElements: BOOLEAN    := FALSE)
+  RAISES {GEFError.T, Rd.Failure, Thread.Alerted};
+
+PROCEDURE <A HREF="GEF.m3.html#InitFromSx">InitFromSx</A> (t              : T;
+                      sx             : S_exp;
+                      showAllElements: BOOLEAN    := FALSE)
+  RAISES {GEFError.T, Thread.Alerted};
+
+PROCEDURE <A HREF="GEF.m3.html#InitFromRsrc">InitFromRsrc</A> (t              : T;
+                        name           : TEXT;
+                        path           : Rsrc.Path;
+                        intervals      : IntRefTbl.T  := NIL;
+                        showAllElements: BOOLEAN     := FALSE)
+  RAISES {GEFError.T, Rd.Failure, Rsrc.NotFound, Thread.Alerted};
+
+PROCEDURE <A HREF="GEF.m3.html#MoveElem">MoveElem</A>(t: T; elem: REFANY; pt: Point.T); &lt;* LL = VBT.mu *&gt;
+</PRE><BLOCKQUOTE><EM> move <CODE>elem</CODE> to point <CODE>pt</CODE>.  <CODE>pt</CODE> is in screen coordinates. </EM></BLOCKQUOTE><PRE>
+
+PROCEDURE <A HREF="GEF.m3.html#AddElem">AddElem</A>(t: T; elem: REFANY); &lt;* LL = VBT.mu *&gt;
+</PRE><BLOCKQUOTE><EM> Add <CODE>elem</CODE> to <CODE>t</CODE>. </EM></BLOCKQUOTE><PRE>
+
+PROCEDURE <A HREF="GEF.m3.html#RedisplayImage">RedisplayImage</A>(t: T); &lt;* LL = VBT.mu *&gt;
+</PRE><BLOCKQUOTE><EM> redraw the GEF image </EM></BLOCKQUOTE><PRE>
+
+PROCEDURE <A HREF="#x2">InvokeEvent</A> (t: T; event: TEXT; args: RefList.T; nonEventsOK := TRUE)
+  RAISES {GEFError.T, Thread.Alerted}; &lt;* LL &lt; t.mu *&gt;
+</PRE><BLOCKQUOTE><EM> invoke the <CODE>event</CODE> with <CODE>args.  If </CODE>nonEventsOK<CODE> then there is no
+   error is </CODE>event<CODE> is not defined in the view.  Otherwise, it is
+   reported as an error. </EM></BLOCKQUOTE><PRE>
+
+PROCEDURE <A HREF="GEFLisp.m3.html#EventData">EventData</A> (t1, t2, t3, t4, t5, t6, t7, t8, t9, t10: TEXT := &quot;&quot;): RefList.T;
+</PRE><BLOCKQUOTE><EM> converts t1..t10 into a parsed s-expression.  It is a runtime error if
+   any tx cannot be parsed into a legal s-expression </EM></BLOCKQUOTE><PRE>
+
+END GEF.
+</PRE>
+</inInterface>
+<HR>
+<A NAME="x1">GEF's implementation  is in:
+</A><UL>
+<LI><A HREF="GEF.m3.html#0TOP0">gef/src/GEF.m3</A>
+<LI><A HREF="GEFA.m3.html#0TOP0">gef/src/GEFA.m3</A>
+<LI><A HREF="GEFE.m3.html#0TOP0">gef/src/GEFE.m3</A>
+<LI><A HREF="GEFLisp.m3.html#0TOP0">gef/src/GEFLisp.m3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x2">procedure GEF.InvokeEvent is in:
+</A><UL>
+<LI><A HREF="GEFE.m3.html#InvokeEvent">gef/src/GEFE.m3</A>
+<LI><A HREF="GEFLisp.m3.html#InvokeEvent">gef/src/GEFLisp.m3</A>
+</UL>
+<P>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

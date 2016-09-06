@@ -1,0 +1,4221 @@
+<HTML>
+<HEAD>
+    <!-- This document was created from RTF source by rtftohtml version
+2.5 -->
+    <TITLE></TITLE>
+</HEAD>
+<BODY>
+<B><IMG SRC="ObliqPaper1.gif" WIDTH="175" HEIGHT="66" NATURALSIZEFLAG="3"
+ALIGN="BOTTOM"><BR>
+<BR>
+A language with distributed scope<BR>
+<BR>
+</B><I>Luca Cardelli</I><BR>
+<BR>
+Digital Equipment Corporation, Systems Research Center<BR>
+<BR>
+<B>Abstract</B><BR>
+<BR>
+Obliq is a lexically-scoped untyped interpreted language that supports distributed
+object-oriented computation. An Obliq computation may involve multiple threads
+of control within an address space, multiple address spaces on a machine,
+heterogeneous machines over a local network, and multiple networks over
+the Internet. Obliq objects have state and are local to a site. Obliq computations
+can roam over the network, while maintaining network connections.<BR>
+<BR>
+<B>Contents<BR>
+</B>
+<H1>1. Introduction</H1>
+Obliq is a lexically-scoped untyped interpreted language that supports distributed
+object-oriented computation. An Obliq computation may involve multiple threads
+of control within an address space, multiple address spaces on a machine,
+heterogeneous machines over a local network, and multiple networks over
+the Internet. Obliq objects have state and are local to a site. Obliq computations
+can roam over the network, while maintaining network connections. 
+<H2>1.1 Language Overview</H2>
+The guiding principle that separates Obliq from other distributed procedural
+languages is the adherence to lexical scoping in a distributed higher-order
+context. This principle is conceptually simple and has a number of interesting
+consequences: it supports a natural and consistent semantics of distributed
+computation, and it enables elegant techniques for distributed programming.<BR>
+<BR>
+In lexically scoped languages, the binding location of every identifier
+is determined by simple analysis of the program text surrounding the identifier.
+Therefore, one can be sure of the meaning of program identifiers, and can
+much more easily reason about the behavior of programs. In a distributed
+language like Obliq, lexical scoping assumes a further role. It ensures
+that computations have a precise meaning even when they migrate over the
+network: a meaning that is determined by the binding location <I>and</I>
+network site of identifiers, and not by execution sites.<BR>
+<BR>
+Network-wide scoping becomes an issue in the presence of higher-order distributed
+computation, for example when remote sites acting as compute servers accept
+procedures for execution. The question here is: what happens to the free
+identifiers of network-transmitted procedures? Obliq takes the view that
+such identifiers are bound to their original locations, as prescribed by
+lexical scoping, even when these locations belong to different network sites.<BR>
+<BR>
+The principal way of structuring distributed computations in Obliq is through
+the notion of <I>objects</I>. Network services normally accept a variety
+of messages; it is then natural to see each service as a <I>network object</I>
+(or, more neutrally, as a network interface). Obliq supports objects in
+this spirit, relying for its implementation on Modula-3's network objects
+[Birrell, <I>et al.</I> 1993b]<BR>
+<BR>
+The Obliq object primitives are designed to be simple and powerful, with
+a coherent relationship between their local and distributed semantics. Obliq
+objects are collections of named fields, with four basic operations: selection/invocation,
+updating/overriding, cloning, and redirection. There are no class hierarchies,
+nor complex method-lookup procedures. Every object is potentially and transparently
+a network object. An object may become accessible over the network either
+by the mediation of a name server, or simply by being used as the argument
+or result of a remote method. <BR>
+<BR>
+In any framework where objects are distributed across sites, it is critical
+to decide what to do about mobility and duplication of <I>state</I>. Normally,
+whenever a piece of data is transmitted from one site to another, it is
+implicitly copied. However, duplication of objects with state easily results
+in havoc, unless the state is handled consistently across sites.<BR>
+<BR>
+To avoid problems with state duplication, objects in Obliq are local to
+a site and are never automatically copied over the network. In contrast,
+<I>network references</I> to objects can be transmitted from site to site
+without restrictions. An alternative approach would allow objects and their
+state to <I>migrate</I> from site to site, making sure that the integrity
+of their internal state is maintained during the act of migration. We have
+chosen not to support migration directly, since it requires coordination
+across sites, and policy decisions about the optimal time of migration.
+However, atomic object migration can be coded from our primitives, specifically
+from cloning and redirection.<BR>
+<BR>
+In addition to the distribution of data, the distribution of computations
+must also be designed carefully. It is clearly desirable to be able to transmit
+<I>agents</I> for remote execution. However, one should not be satisfied
+with transmitting just the program text of such agents. Program text cannot
+carry with it live connections to its originating site, nor to any data
+or service at any other site. Hence the process of transmitting program
+text over the network implies a complete network disconnect from the current
+distributed computation. In addition, unpredictable dynamic scoping results
+from transmitting and then running program text containing free identifiers.<BR>
+<BR>
+Obliq computations, in the form of procedures or methods, can be freely
+transmitted over the network. Actual computations (<I>closures</I>, not
+source text) are transmitted; lexically scoped free identifiers retain their
+bindings to the originating sites. Through these free identifiers, migrating
+computations can maintain connections to objects and locations residing
+at various sites. Disconnected agents can be represented as procedures with
+no free identifiers; these agents do not need to rely on prolonged network
+connectivity.<BR>
+<BR>
+In order to concentrate on distributed computation issues and to reduce
+complexity, Obliq is designed as an <I>untyped</I> language. This decision
+leads to simpler and smaller language processors that can be easily embedded
+in applications. Moreover, untyped programs are somewhat easier to distribute,
+because we avoid problems of compatibility of types at multiple sites. <BR>
+<BR>
+The Obliq run-time is <I>strongly typed</I>: erroneous computations produce
+clean errors that are correctly propagated across sites. The run-time data
+space is <I>heterogeneous</I>, meaning that there are different kinds of
+run-time values and no provisions to discriminate between them; heterogeneity
+discourages writing programs that would be difficult to typecheck in typed
+languages. Because of heterogeneity and lexical scoping, Obliq is in principle
+suitable for static typing. More importantly, Obliq is compatible with the
+disciplined approach to programming that is inspired by statically typed
+languages.<BR>
+<BR>
+Lexical scoping has many interesting implications in a distributed context.
+One is that, together with strong run-time typing and interpreted execution,
+it can provide network security guarantees. Consider the situation of a
+server executing incoming foreign agents. Because of lexical scoping, these
+agents have access only to the data and resources that they can reference
+via free variables or that they explicitly receive in the form of procedure
+parameters. In particular, foreign agents cannot access data or resources
+at the server site that are not explicitly given to them. For example, operations
+on files in Obliq require file system handles that are available as global
+lexically bound identifiers at each site. A foreign agent can operate on
+the file system handle of its originating site, simply by referring to it
+as a free identifier. But the file system handle at the server site is outside
+its lexical scope, and hence unobtainable except with the cooperation of
+the server. Degrees of file protection can be represented by file system
+handles with special access rights. 
+<H2>1.2 Distributed Semantics </H2>
+The Obliq distributed semantics is based on the notions of <I>sites</I>,
+<I>locations</I>, <I>values</I>, and <I>threads</I>. <I><BR>
+<BR>
+Sites</I> (that is, address spaces) contain locations, and locations contain
+values. Each location belongs to a unique site. We often talk about a <I>local
+site</I>, in relative terms, and about <I>remote sites</I>, meaning any
+site other than the local site. Sites are not explicit in the syntax but
+are implicit in operations that produce new locations. <I><BR>
+<BR>
+Threads</I> are virtual sequential instruction processors. Multiple threads
+may be executed concurrently, both at the same site or at different sites.
+A given thread may stop executing at a site, and continue executing at another
+site. That is, threads may jump from site to site while retaining their
+conceptual identity. The <I>current site</I> is where execution of a given
+thread of control takes place at a given moment.<BR>
+<BR>
+In the Obliq syntax, <I>constant identifiers</I> denote values, while <I>variable
+identifiers </I>denote locations. A location containing a value may be updated
+by assignment to the variable denoting the location. <BR>
+<BR>
+Obliq values include <I>basic values</I> (such as strings or integers),
+<I>objects</I>, <I>arrays</I>, <I>closures</I> (the results of evaluating
+methods or procedures), and other values that we need not discuss at this
+point. <BR>
+<BR>
+A value may contain <I>embedded locations</I>. An array value has embedded
+locations for its elements, which can be updated. An object value has embedded
+locations for its fields and methods, which can be updated and overridden.
+A closure value may have embedded locations because of free variables in
+its program text that refer to locations in the surrounding lexical scope.
+Basic values do not contain embedded locations. When a location is created
+during a computation, it is allocated at the current site.<BR>
+<BR>
+Values may be <I>transmitted</I> over the network. A value containing no
+embedded locations is copied on transmission. Embedded locations are automatically
+replaced by network references, so that the actual locations do not move
+from the site where they are originally allocated. An Obliq value may contain
+network references to locations at different sites. In particular, a closure
+value may contain program text that, when executed, accesses data (bound
+to its free identifiers) over the network. <BR>
+<BR>
+Every Obliq object consists of a collection of locations spanning a single
+site; hence the object itself is bound to a unique site<A HREF="#fn0">[1]</A>.
+This immobility of objects is not a strong limitation, because objects can
+be <I>cloned</I> to different sites, and because procedures can be transmitted
+that allocate objects at different sites. Hence, a collection of interacting
+objects can be dynamically allocated throughout the network, but not moved
+afterwards. If migration is necessary, cloning can be used to provide the
+needed state duplication, and redirection can be used to redirect operations
+to the clones.<BR>
+<BR>
+We have stressed so far how Obliq computations can evolve into webs of network
+references. However, this is not necessarily the case. For example, a procedure
+with no free identifiers forms a completely self-contained computing <I>agent</I>.
+The execution of these agents may be carried out autonomously by remote
+compute servers (the agents may dynamically reconnect to report results).
+Intermediate situations are also possible, as with semi-autonomous agents
+that maintain low-traffic tethers to their originating site.<BR>
+<BR>
+In conclusion, the distributed semantics of Obliq is defined so that data
+and computations are network-transparent: their meaning does not depend
+on allocation sites or execution sites (of course, computations may receive
+different arguments at different sites). At the same time, Obliq programs
+are network-aware: distribution is achieved by explicit acts that give full
+control on communication patterns.<BR>
+<BR>
+Lexical scoping makes it easy to distribute computations over multiple sites,
+since computations behave correctly even when they are carried out at the
+wrong place (by some measure). Flexibility in distribution can, however,
+result in undesirable network traffic. Obliq relieves some of the burden
+of distributing data and computations, but care and planning are still required
+to achieve satisfactory distributed performance. 
+<H1>2. Local Objects</H1>
+In this section we discuss the Obliq object primitives in the context of
+a single execution site. These primitives are then reinterpreted in the
+next section and given distributed meaning. 
+<H2>2.1 Objects and their Fields</H2>
+An Obliq object is a collection of fields containing methods, aliases, or
+other values. A field containing a method is called a <I>method field</I>.
+A field containing an alias is called an <I>alias field</I>. A field containing
+any other kind of values, including procedure values, is called a <I>(proper)
+value field</I>. Each field is identified by a <I>field name</I>. Syntactically,
+an object has the form:<BR>
+<BR>
+<TT>{x1 =&gt; a1, ... ,xn =&gt; an}</TT><BR>
+<BR>
+where n&gt;=0, and &quot;<TT>xi</TT>&quot; are distinct field names. (There
+is no lexical distinction between field names and program identifiers.)
+The terms &quot;<TT>ai</TT>&quot; are <I>siblings</I> of each other, and
+the object is their <I>host object</I>. Each &quot;<TT>ai</TT>&quot; can
+be any term, including a method, or an alias.<BR>
+<BR>
+A value field is, for example:<BR>
+<BR>
+<TT>x =&gt; 3</TT><BR>
+<BR>
+A method field has the form:<BR>
+<BR>
+<TT>x =&gt; meth(y,y1, ... ,yn) b end</TT><BR>
+<BR>
+Here, the first parameter, &quot;<TT>y</TT>&quot;, denotes <I>self</I>:
+the method's host object. The other parameters, for n&gt;0, are supplied
+during method invocation. The body of the method is the term &quot;<TT>b</TT>&quot;,
+which computes the result of an invocation of &quot;<TT>x</TT>&quot;.<BR>
+<BR>
+An alias field contains an alias:<BR>
+<BR>
+<TT>x =&gt; alias y of b end</TT><BR>
+<BR>
+Operations on the &quot;<TT>x</TT>&quot; field of this object are redirected
+to the &quot;<TT>y</TT>&quot; field of the object &quot;<TT>b</TT>&quot;.
+The precise effect is explained case by case in the next section.<BR>
+<BR>
+Methods and procedures are supported as distinct concepts. Procedures start
+with the keyword &quot;<TT>proc</TT>&quot; instead of &quot;<TT>meth</TT>&quot;
+and have otherwise the same syntax. The main differences between the two
+are as follows. Methods can be manipulated as values but can be activated
+only when contained in objects, since self needs to be bound to the host
+object. In contrast, procedures can be activated by normal procedure call.
+Further, a procedure can be inserted in an object field and later recovered,
+while any attempt to extract a method from an object results in its activation.<BR>
+<BR>
+Obliq methods are stored directly in objects, not indirectly in object classes
+or prototypes. Method lookup is a one-step process that searches a method
+by name within a single object. There is no class or delegation hierarchy
+to be searched iteratively, and there is no notion of <I>super</I>. Inheritance
+is obtained by cloning methods from other objects. Method lookup is implemented
+by a nearly constant-time caching technique, with independent caches for
+each operation instance, that does not penalize large objects, .<BR>
+<BR>
+There are no provisions in Obliq for <I>private</I> fields or methods, but
+these can be easily simulated by lexical scoping. For example, &quot;<TT>(var
+x=3; { ... })</TT>&quot; is an expression setting up a local variable &quot;<TT>x</TT>&quot;
+and returning an object that has &quot;<TT>x</TT>&quot; in its scope. Since
+the scope of &quot;<TT>x</TT>&quot; is limited by the parentheses, no other
+part of the program can access &quot;<TT>x</TT>&quot;. In addition, aliases
+can be used to create <I>views</I> of objects that omit certain fields or
+methods. 
+<H2>2.2 Object Operations</H2>
+Apart from object creation, there are four basic operations on objects:
+selection/invocation, updating/overriding, cloning, and redirection. Field
+aliasing affects the semantics of all of them, as described below case by
+case. 
+<H4>Selection (and Invocation)</H4>
+This operation has two variants for value selection and method invocation:<BR>
+<BR>
+<TT>a.x<BR>
+<BR>
+a.x(b1, ... ,bn)</TT><BR>
+<BR>
+The first form selects a value from the field &quot;<TT>x</TT>&quot; of
+&quot;<TT>a</TT>&quot; and returns it. The second form invokes a method
+from the field &quot;<TT>x</TT>&quot; of &quot;<TT>a</TT>&quot;, supplying
+parameters, and returning the result produced by the method; the object
+&quot;<TT>a</TT>&quot; is bound to the self parameter of the method. For
+convenience, the first form can be used for invocation of methods with no
+parameters. <BR>
+<BR>
+If the field &quot;<TT>x</TT>&quot; of &quot;<TT>a</TT>&quot;, above, is
+an alias for &quot;<TT>x1</TT>&quot; of &quot;<TT>a1</TT>&quot;, then &quot;<TT>a.x</TT>&quot;
+behaves like &quot;<TT>a1.x1</TT>&quot;, and &quot;<TT>a.x(b1, ... ,bn)</TT>&quot;
+behaves like &quot;<TT>a1.x1(b1, ... ,bn)</TT>&quot;. If the field &quot;<TT>x1</TT>&quot;
+of &quot;<TT>a1</TT>&quot; is itself an alias, the process continues recursively.
+<H4>Updating (and Overriding)</H4>
+This operation deals with both field update and method override:<BR>
+<BR>
+<TT>a.x:=b</TT> <BR>
+<BR>
+Here the field &quot;<TT>x</TT>&quot; of &quot;<TT>a</TT>&quot; is updated
+with a new value &quot;<TT>b</TT>&quot;. If &quot;<TT>x</TT>&quot; contains
+a method and &quot;<TT>b</TT>&quot; is a method, we have method override.
+If &quot;<TT>x</TT>&quot; and &quot;<TT>b</TT>&quot; are ordinary values,
+we have field update. The other two possibilities are also allowed: a field
+can be turned into a method (of zero arguments), and vice versa. <BR>
+<BR>
+However, if the field &quot;<TT>x</TT>&quot; of &quot;<TT>a</TT>&quot; is
+an alias for &quot;<TT>x1</TT>&quot; of &quot;<TT>a1</TT>&quot;, then &quot;<TT>a.x:=b</TT>&quot;
+behaves like &quot;<TT>a1.x1:=b</TT>&quot;, and so on recursively. 
+<H4>Cloning</H4>
+The third operation is object cloning, generalized to multiple objects:<BR>
+<BR>
+<TT>clone(a)<BR>
+<BR>
+clone(a1, ... ,an)</TT> <BR>
+<BR>
+In the case of a single argument, a new object is created with the same
+field names as the argument object; the respective locations are initialized
+to the values, methods, or aliases of the argument object. Note that this
+operation cannot be simulated by hand, because any attempt to extract the
+methods or aliases of an object activates them. <BR>
+<BR>
+In the case of multiple arguments, a single object is produced that contains
+the values, methods, and aliases of all the argument objects (an error is
+given if there are field name conflicts). Useful situations are &quot;<TT>clone(a,{...})</TT>&quot;,
+where we <I>inherit</I> the fields of &quot;<TT>a</TT>&quot;, and add new
+fields, and &quot;<TT>clone(a1,a2)</TT>&quot;, where we <I>multiply inherit</I>
+from &quot;<TT>a1</TT>&quot; and &quot;<TT>a2</TT>&quot;. <BR>
+<BR>
+It is common for the parameters of &quot;<TT>clone</TT>&quot; to be <I>prototypes</I>
+(or <I>classes</I>): by convention, prototypes are objects that are meant
+only as repositories for methods and initial values. Via cloning, prototypes
+act as object generators; cloning a prototype corresponds to <I>newing</I>
+an object.<BR>
+<BR>
+A <I>partial prototype</I> (or <I>mixin</I>, or <I>abstract class</I>) is
+a prototype whose methods refer through self to fields not in the prototype.
+Obviously, a partial prototype should never be used as an object or an object
+generator. However, one can clone partial prototypes together to obtain
+complete working objects. <BR>
+<BR>
+Cloning can also be applied to objects used in computations. In particular,
+self can be cloned. 
+<H4>Redirection</H4>
+Our final operation is redirection, which is the replacement of fields with
+aliases. In section 2.1 we have seen how to initialize alias fields:<BR>
+<BR>
+<TT>{ x =&gt; alias y of b end, ... }</TT><BR>
+<BR>
+Moreover, it is possible to assign aliases to fields of existing objects
+with the following redirection operation (the syntax is similar to update,
+but this is really a separate operation): <BR>
+<BR>
+<TT>a.x := alias y of b end</TT> <BR>
+<BR>
+Any further operation on &quot;<TT>x</TT>&quot; of &quot;<TT>a</TT>&quot;
+is redirected to &quot;<TT>y</TT>&quot; of &quot;<TT>b</TT>&quot;. However,
+redirection replaces fields with aliases regardless of whether those fields
+are already aliased; updating &quot;<TT>x</TT>&quot; of &quot;<TT>a</TT>&quot;
+again with another alias causes &quot;<TT>x</TT>&quot; of &quot;<TT>a</TT>&quot;
+(not &quot;<TT>y</TT>&quot; of &quot;<TT>b</TT>&quot;) to be updated. <BR>
+<BR>
+A special redirection construct can be used to redirect whole objects at
+once:<BR>
+<BR>
+<TT>redirect a1 to a2 end</TT><BR>
+<BR>
+The effect is to replace every field &quot;<TT>xi</TT>&quot; of &quot;<TT>a1</TT>&quot;
+(including alias fields) with &quot;<TT>alias</TT> <TT>xi</TT> <TT>of</TT>
+<TT>a2</TT> <TT>end</TT>&quot;. Cloning can be used to assemble compound
+redirected objects.<BR>
+<BR>
+Aliases and redirection must be used very carefully and, in most circumstances,
+are best avoided. However, redirection is already implicit in the notion
+of <I>local surrogate</I> of a remote object: we have simply lifted this
+mechanism to the language level. By doing this, we are able to put network
+redirection under flexible program control, as shown later in the case of
+object migration. 
+<H2>2.3 Simple Examples</H2>
+Let us examine some simple examples, just to became familiar with the Obliq
+syntax and semantics. More advanced examples are presented in sections 4
+and 5.<BR>
+<BR>
+The following object has a single method that invokes itself through self
+(the &quot;<TT>s</TT>&quot; parameter). A &quot;<TT>let</TT>&quot; declaration
+binds the object to the identifier &quot;<TT>o</TT>&quot;:<BR>
+<BR>
+<TT>let o =<BR>
+<BR>
+{ x =&gt; meth(s) s.x() end };</TT><BR>
+<BR>
+An invocation of &quot;<TT>o.x()</TT>&quot; results in a divergent computation.
+Divergence is obtained here without any explicit use of recursion: the self-application
+implicit in method invocation is sufficient.<BR>
+<BR>
+The object below has three components. (1) A value field &quot;<TT>x</TT>&quot;.
+(2) A method &quot;<TT>inc</TT>&quot; that increments &quot;<TT>x</TT>&quot;
+through self, and returns self. (3) A method &quot;<TT>next</TT>&quot; that
+invokes &quot;<TT>inc</TT>&quot; through self, and returns the &quot;<TT>x</TT>&quot;
+component of the result. <BR>
+<BR>
+<TT>let o =<BR>
+<BR>
+{ x =&gt; 3,<BR>
+<BR>
+inc =&gt; meth(s,y) s.x := s.x+y; s end,<BR>
+<BR>
+next =&gt; meth(s) s.inc(1).x end };</TT><BR>
+<BR>
+Here are some of the operations that can be performed on &quot;<TT>o</TT>&quot;:<BR>
+<BR>
+<TT>o.x</TT> Selecting the &quot;<TT>x</TT>&quot; component, producing 3.<TT><BR>
+<BR>
+o.x := 0 </TT>Setting the &quot;<TT>x</TT>&quot; component to zero.<TT><BR>
+<BR>
+o.inc(1) </TT>Invoking a method, with parameters.<TT><BR>
+<BR>
+o.next() </TT>Invoking a method with no parameters (<TT>o.next</TT> is also
+valid).<TT> <BR>
+<BR>
+o.next := meth(s) clone(s).inc(1).x end</TT><BR>
+<BR>
+Overriding &quot;<TT>next</TT>&quot; so that it no longer modifies its host
+object.<BR>
+<H1>3. Remote Objects</H1>
+In this section we revisit the Obliq primitives in the context of objects
+that are distributed over multiple sites. We discuss distributed state in
+general, including arrays and variables. 
+<H2>3.1 State</H2>
+State is local in the sense that every location is forever bound to a site.
+At the same time, state is distributed, in the sense that there are many
+communicating sites. Every location at every site can potentially be accessed
+and modified over the network. Moreover, values may contain embedded locations
+belonging to current site or, via network aliases, to remote sites. Access
+and update of a remote location involves network communication, but is otherwise
+handled transparently in the same manner as access and update of a local
+location. <BR>
+<BR>
+There are three kinds of entities in Obliq that directly contain locations,
+and hence have state:<BR>
+<BR>
+objects: <TT>{x1 =&gt; a1, ... ,xn =&gt; an}<BR>
+<BR>
+</TT>every field of an object has state<BR>
+<BR>
+access: <TT>a.x</TT>, <TT>a.x(a1, ... ,an)</TT><BR>
+<BR>
+update: <TT>a.x := b</TT>, <TT>redirect a to b end</TT><BR>
+<BR>
+arrays: <TT>[a1, ... , an]</TT><BR>
+<BR>
+every element of an array has state<BR>
+<BR>
+access: <TT>a[n]</TT><BR>
+<BR>
+update: <TT>a[n] := b</TT> <BR>
+<BR>
+variables: <TT>var x = a</TT><BR>
+<BR>
+variables have state (identifiers declared by &quot;<TT>let</TT>&quot; do
+not)<BR>
+<BR>
+access: <TT>x</TT><BR>
+<BR>
+update: <TT>x := b</TT><BR>
+<BR>
+When objects, arrays, and variables are created during a computation, their
+locations are allocated at the current site. 
+<H2>3.2 Transmission</H2>
+As discussed in the introduction, the state (i.e. set of locations) associated
+with objects, arrays, and variables is never duplicated or transmitted over
+the network. Network references to locations, however, are free to travel.
+Every attempted transmission of a location over the network is, in effect,
+intercepted and replaced by the transmission of a network reference to that
+location. Remote operations on these network references are reflected back
+to the original locations, as described in section 3.3.<BR>
+<BR>
+Stateless values, unlike locations, are copied when transmitted over the
+network. Structures that are copied include basic data types and the internal
+representations of program text.<BR>
+<BR>
+In the general case of transmission we may have a mixed situation, with
+a few layers of stateless data structures that end up referring to location.
+These data structures with embedded locations are copied up to the point
+where they refer to locations; then network references are generated.<BR>
+<BR>
+A critical issue is the transmission of <I>closures</I>, which are the values
+resulting from the evaluation of procedures and methods. A closure consists
+of two parts: (1) the internal representation of the source text of a method
+or procedure, and (2) a table associating free identifiers in the source
+text to their values in the lexical scope of evaluation. <BR>
+<BR>
+The free-identifiers table within a closure may refer to variables and to
+values with embedded locations. The general rule for transmitting structures
+with embedded locations applies to closures; hence closures are copied up
+to the locations embedded in their free-identifier tables.<BR>
+<BR>
+For example, consider the following Obliq code, declaring a variable &quot;<TT>x</TT>&quot;
+initialized to &quot;<TT>0</TT>&quot;, and a procedure &quot;<TT>p</TT>&quot;
+whose body refers to &quot;<TT>x</TT>&quot; (that is, has &quot;<TT>x</TT>&quot;
+as a free identifier):<BR>
+<BR>
+<TT>var x = 0;<BR>
+<BR>
+let p = proc() x := x+1 end;</TT><BR>
+<BR>
+Suppose that, after the execution of the first line, the variable &quot;<TT>x</TT>&quot;
+is bound to the location loc0, relative to the current site s0. Then, after
+the execution of the second line, the identifier &quot;<TT>p</TT>&quot;
+is bound to the closure:<BR>
+<BR>
+&quot;<TT>proc() x := x+1 end</TT>&quot;<TT> </TT><I>where</I><TT> x</TT>
+7 loc0<BR>
+<BR>
+where &quot;<TT>proc</TT>...<TT>end</TT>&quot; represents the internal representation
+of program code, and the free identifier table is shown following <I>where</I>.<BR>
+<BR>
+Upon transmission to a site s1, the location loc0 is replaced by a network
+reference &lt;s0,loc0&gt; to that location; therefore site s1 receives the
+data structure<A HREF="#fn1">[2]</A>:<BR>
+<BR>
+&quot;<TT>proc() x := x+1 end</TT>&quot;<TT> </TT><I>where</I> <TT>x</TT>
+7 &lt;s0,loc0&gt;<BR>
+<BR>
+In general terms, a closure is a pair consisting of a piece of source text
+and a pointer to an evaluation stack. Transmission of a closure, in this
+view, implies transmission of an entire evaluation stack. The implementation
+of closures described above (which is well-known for higher-order languages)
+has the effect of reducing network traffic, by transmitting only the values
+from the evaluation stack that may be needed by the closure. This optimization
+is enabled by lexical scoping 
+<H2>3.3 Distributed Computation</H2>
+We now reinterpret the semantics of operations on objects in the case of
+remote objects. In passing, we comment on the semantics of remote arrays
+and variables. 
+<H4>Selection (and Invocation)</H4>
+When a value field of a remote object is selected, its value is transmitted
+over the network (as discussed in section 3.2) to the site of the selection.
+<BR>
+<BR>
+The extraction of a remote array element and the access of a remote variable
+work similarly.<BR>
+<BR>
+When a method of a remote object is invoked, the arguments are transmitted
+over the network to the remote site, the result is computed remotely, and
+the final value (or error, or exception) is returned to the site of the
+invocation. <BR>
+<BR>
+It is interesting to compare the invocation of a remote method with the
+invocation of a procedure stored in the value field of a remote object.
+In the first case, the computation is remote, as described above. In the
+second case, the procedure is first transmitted from the remote object to
+the local site, by the semantics of field selection, and then executed locally.
+<H4>Updating (and Overriding)</H4>
+When a field of a remote object is updated, or when a method is overridden,
+a value is transmitted over the network and installed into the remote object.
+Field update may involve the transmission of a procedure closure, and method
+override involves the transmission of a method closure. <BR>
+<BR>
+The update of a remote array element and the assignment of a remote variable
+work similarly. 
+<H4>Cloning</H4>
+When a collection of remote or local objects is cloned, the clone is created
+at the local site. Its contents (including method closures) may have to
+be fetched over the network. <BR>
+<BR>
+The extraction of remote subarrays and the concatenation of remote arrays
+work similarly. 
+<H4>Redirection</H4>
+In the case where the object being redirected is remote, the remote fields
+are replaced by the appropriate aliases. In the case where the other object
+is remote, aliases are generated to it. 
+<H4>Aliases </H4>
+A local object field aliased to a remote object behaves as the field of
+the remote object, as described in this section case by case. 
+<H2>3.4 Self-inflicted Operations</H2>
+The four basic object operations can be performed either as external operations
+on an object, or as internal operations through self. This distinction is
+useful in the contexts of object protection and serialization, discussed
+in the next two sections.<BR>
+<BR>
+When a method operates on an object other than the method's host object,
+we say that the operation is <I>external</I> to the object. By contrast,
+when a method operates directly on its own self we say that the operation
+is <I>self-inflicted</I>:<BR>
+<BR>
+If &quot;<I>op</I>&quot; is either a select, update, clone, or redirect
+operation, <BR>
+<BR>
+then &quot;<I>op</I>(<TT>o</TT>)&quot; is <I>self-inflicted</I><BR>
+<BR>
+iff &quot;<TT>o</TT>&quot; is the same object as the self of the <I>current
+method</I> (if any).<BR>
+<BR>
+Moreover, &quot;<I>op</I>(<TT>o</TT>)&quot; is <I>external</I> iff it is
+not self-inflicted.<BR>
+<BR>
+Here, by the <I>current method</I> we mean the last method that was invoked
+in the current thread of control and that has not yet returned. Procedure
+calls do not change or mask the current method, even when they have not
+yet returned.<BR>
+<BR>
+Whether an operation is self-inflicted can be determined by a simple run-time
+test. Consider, for example the object:<BR>
+<BR>
+<TT>{ p =&gt; meth(s) s.q.x end, q =&gt; ... }</TT><BR>
+<BR>
+Here the operation &quot;<TT>s.q</TT>&quot; is self-inflicted, since &quot;<TT>s</TT>&quot;
+is self. But the &quot;<TT>.x</TT>&quot; operation in &quot;<TT>s.q.x</TT>&quot;
+is self-inflicted depending on whether &quot;<TT>s.q</TT>&quot; returns
+self; in general this can be determined only at run-time.<BR>
+<BR>
+If we replace &quot;<TT>s.q</TT>&quot; with a procedure call &quot;<TT>p(s)</TT>&quot;
+which simply performs &quot;<TT>s.q</TT>&quot;, then &quot;<TT>s.q</TT>&quot;
+is still self-inflicted, and &quot;<TT>p(s).x</TT>&quot; may still be. The
+notion of &quot;self&quot; for self-inflicted operations is preserved through
+procedure calls, but not through external method invocations or thread creation.
+<H2>3.5 Protected Objects</H2>
+It is useful to protect objects against certain external operations, to
+safeguard their internal invariants. Protection is particularly important,
+for example, to prevent clients from overriding methods of network services,
+or from cloning servers. Still, protected objects should be allowed to modify
+their own state and to clone themselves.<BR>
+<BR>
+This is where the notion of self-inflicted operations first becomes useful.
+A <I>protected</I> object is an object that rejects external update, cloning,
+and redirection operations, but that admits such operations when they are
+self-inflicted. Objects can be declared protected, as shown below:<BR>
+<BR>
+<TT>{ protected, x1 =&gt; a1, ... , xn =&gt; an }</TT><BR>
+<BR>
+Therefore, for example, methods of a protected object can update sibling
+fields through self, but external operations cannot modify such fields.<BR>
+<BR>
+Note that a protection mechanism based on individual &quot;private&quot;
+fields would not address protection against cloning and redirection. 
+<H2>3.6 Serialized Objects</H2>
+An Obliq server object can be accessed concurrently by multiple remote client
+threads. Moreover, local concurrent threads may be created explicitly. To
+prevent race conditions, it must be possible to serialize access to objects
+and other entities with state.<BR>
+<BR>
+We say that an object is <I>serialized</I> when (1) in presence of multiple
+threads, at most one method of the object can be executing at any given
+time, but still (2) a method may call a sibling through self without deadlock.
+Note that requirement (2) does not contradict invariant (1), because an
+invocation through self suspends a method before activating a sibling.<BR>
+<BR>
+The obvious approach to implementing serialized objects, adopted by many
+concurrent languages is to associate <I>mutexes</I> with objects (for example,
+see [Bal, Kaashoek, Tanenbaum 1992]). Such mutexes are locked when a method
+of an object is invoked, and unlocked when the method returns, guaranteeing
+condition (1). This way, however, we have a deadlock whenever a method calls
+a sibling, violating condition (2). We find this behavior unacceptable because
+it causes innocent programs to deadlock without good reason. In particular,
+an object that works well sequentially may suddenly deadlock when a mutex
+is added. ([Brewer, Waldspurger 1992] gives an overview of previous solutions
+to this problem.)<BR>
+<BR>
+A way to satisfy condition (2) is to use reentrant mutexes, that is, mutexes
+that do not deadlock when re-locked by the &quot;same&quot; thread (for
+example, see [Fort&eacute; 1994]). On one hand, this solution is too liberal,
+because it allows a method to call an arbitrary method of a different object,
+which then can call back a method of the present object without deadlocking.
+This goes well beyond our simple desire that a method should be allowed
+to call its siblings: it may make objects vulnerable to unexpected activations
+of their own methods, when other methods have not yet finished reestablishing
+the object's invariants. On the other hand, this solution may also be too
+restrictive because the notion of &quot;same&quot; thread is normally restricted
+to an address space. If we want to consider control threads as extending
+across sites, then an implementation of reentrant locks might not behave
+appropriately.<BR>
+<BR>
+We solve this dilemma by adopting an intermediate locking strategy, which
+we call <I>self serialization</I>, based on the notion of self-inflicted
+operations described in section 3.4.<BR>
+<BR>
+Serialized objects have an implicit associated mutex, called the object
+mutex. An object mutex serializes the execution of selection, update, cloning,
+and redirection operations on its host object. Here are the simple rules
+of acquisition of these object mutexes:<BR>
+<BR>
+cents External operations always acquire the mutex of an object, and release
+it on completion.<BR>
+<BR>
+cents Self-inflicted operations never acquire the mutex of their object.
+<BR>
+<BR>
+Note that a self-inflicted operation can happen only after the activation
+of an external operation on the object that is executed by the same thread.
+The external operation has therefore already acquired the mutex.<BR>
+<BR>
+The serialization attribute of an object is specified as follows:<BR>
+<BR>
+<TT>{ serialized, x1 =&gt; a1, ... ,xn =&gt; an }</TT><BR>
+<BR>
+With self-serialization, a method can modify the state of its host object
+and can invoke siblings without deadlocking. A deadlock still occurs if,
+for example, a method invokes a method of a different object that then attempts
+an operation on the original serialized object. A deadlock occurs also if
+a method forks an invocation of a sibling and waits on the result.<BR>
+<BR>
+Our form of object serialization solves common mutual exclusion problems,
+for example for network servers maintaining some simple internal state.
+More complex situations require both sophisticated uses of explicit mutexes,
+and conditional synchronization (where threads wait on <I>conditions</I>
+in addition to mutexes). Because of these more complex situations, Obliq
+supports the full spectrum of Modula-3 threads primitives [Birrell 1991;
+Horning, <I>et al.</I> 1993] some through an external interface, and some
+directly in the syntax. <BR>
+<BR>
+Conditional synchronization can be used also with the implicit object mutexes.
+A new condition &quot;<I><TT>c</TT></I>&quot; can be created by &quot;<TT>condition()</TT>&quot;
+and signaled by &quot;<TT>signal(<I>c</I>)</TT>&quot;. A special &quot;<TT>watch</TT>&quot;
+statement allows waiting on a condition in conjunction with the implicit
+mutex of an object. This statement must be used inside the methods of a
+serialized object; hence, it is always evaluated with the object mutex locked:<BR>
+<BR>
+<TT>watch <I>c</I> until <I>guard</I> end</TT><BR>
+<BR>
+The &quot;<TT>watch</TT>&quot; statement evaluates the condition, and, if
+&quot;<I><TT>guard</TT></I>&quot; evaluates to true, terminates leaving
+the mutex locked. If the guard is false, the object mutex is unlocked (so
+that other methods of the object can execute) and the thread waits for the
+condition to be signaled. When the condition is signaled, the object mutex
+is locked and the boolean guard is evaluated again, repeating the process.
+See section 5.1 for an example.<BR>
+<BR>
+Objects with implicit mutexes can be cloned: a fresh implicit mutex is created
+for the clone. Remote objects with implicit mutexes can also be cloned:
+a fresh implicit mutex is generated at the cloning site. Note, however,
+that an error is reported on any attempt to transmit an explicit mutex (or
+thread, or condition) between different sites, since these values are strongly
+site-dependent. <BR>
+<BR>
+Consider the case of threads blocked on a condition within an object that
+is cloned. For local cloning, a fresh implicit mutex is created for the
+clone, with no threads blocked on it. The condition, however, is shared
+between the two objects. For remote cloning, since the watch statement refers
+to a condition and conditions cannot be transmitted, then the method closure
+that contains the watch statement cannot be transmitted, and hence the remote
+cloning fails.<BR>
+<BR>
+Consider now the case of threads blocked on a condition within a method
+that is overridden or redirected. When the thread resumes, the original
+method runs to completion with a modified self. Thus, a blocked thread must
+deal with the fact that the self may change in non-trivial ways: this is
+specially insidious if the object is serialized but not protected.<BR>
+<BR>
+Unlike objects, there is no automatic serialization for variables or arrays.
+If necessary, their access can be controlled through serialized objects
+or explicit mutexes. Even for objects, serialization is neither compulsory
+nor a default, since its use is not always desirable. In some cases it may
+be sufficient to serialize server objects (the concurrent entry points to
+a site) and leave all other objects unserialized. 
+<H2>3.7 Name Servers</H2>
+Obliq values can flow freely from site to site along communication channels.
+But such channels must first be established by interaction with a name server.
+A name server for Obliq programs is an external process that is uniquely
+identified by its IP address; it simply maintains a table associating text
+strings with network references [Birrell, <I>et al.</I> 1994]. <BR>
+<BR>
+The connection protocol between two Obliq sites is as follows. The first
+site registers a local, or remote, object under a certain name with a known
+name server. The second site asks the name server for (the network reference
+to) the object registered under that name. At this point the second site
+acquires a direct network reference to the object living in the first site.
+The name server is no longer involved in any way, except that it still holds
+the network reference. Obliq values and network references can now flow
+along the direct connection between the two sites, without having to be
+registered with a name server.<BR>
+<BR>
+This protocol is coded as follows, using the built-in &quot;<TT>net</TT>&quot;
+module. An Obliq object can be exported to a name server by the command:
+<BR>
+<BR>
+<I>Site1: </I><TT>net_export(&quot;obj&quot;, <I>NameServer</I>, site1Obj)</TT><BR>
+<BR>
+<IMG SRC="ObliqPaper2.gif" WIDTH="152" HEIGHT="128" NATURALSIZEFLAG="3"
+ALIGN="BOTTOM"><BR>
+<BR>
+where &quot;<TT>&quot;obj&quot;</TT>&quot; is the registration name for
+the object, &quot;<TT>site1Obj</TT>&quot; is the object, and &quot;<I><TT>NameServer</TT></I>&quot;
+is a string containing the net IP address or IP name of the machine running
+the desired name server. (The empty string can be used as an abbreviation
+for the local IP address.) The object is now available through the name
+server, as long as the site that exports it is alive. Objects and engines
+(section 3.8) are the only Obliq values that can be exported to name servers.<BR>
+<BR>
+Any other site can then import a network reference to the object:<BR>
+<BR>
+<I>Site2: </I><TT>let site1Obj = net_import(&quot;obj&quot;, <I>NameServer</I>)</TT><BR>
+<BR>
+<IMG SRC="ObliqPaper3.gif" WIDTH="226" HEIGHT="129" NATURALSIZEFLAG="3"
+ALIGN="BOTTOM"><BR>
+<BR>
+Object operations can be applied to &quot;<TT>site1Obj</TT>&quot; as if
+it were a local object, as discussed in section 3.3. <BR>
+<BR>
+The two sites can now communicate directly; the name server is out of the
+loop. (It may be told to forget the object by redefining its registration
+name.)<BR>
+<BR>
+<I>Site2: </I><TT>site1Obj.<I>op</I>(<I>args</I>)</TT><BR>
+<BR>
+<IMG SRC="ObliqPaper4.gif" WIDTH="226" HEIGHT="147" NATURALSIZEFLAG="3"
+ALIGN="BOTTOM"><BR>
+<BR>
+Finally, the object may be made available to a third site by transmitting
+it through an established communication channel:<BR>
+<BR>
+<I>Site2: </I><TT>site3Obj.<I>op</I>(site1Obj)</TT><BR>
+<BR>
+<IMG SRC="ObliqPaper5.gif" WIDTH="319" HEIGHT="130" NATURALSIZEFLAG="3"
+ALIGN="BOTTOM"><BR>
+<BR>
+Objects are garbage collected at a site when they are no longer referred
+to, either locally or via network references [Birrell, <I>et al.</I> 1993a].<BR>
+<BR>
+Another name service operation returns status information about a network
+reference, as a text string. It can be used to &quot;ping&quot; a remote
+object without affecting it:<BR>
+<BR>
+<TT>net_who(site1Obj);</TT><BR>
+<BR>
+Communication failures raise an exception (&quot;<TT>net_failure</TT>&quot;),
+which can be trapped. These failures may mean that one of the machines involved
+has crashed, or that an Obliq address space was terminated. There is no
+automatic recovery from network failures. 
+<H2>3.8 Execution Engines</H2>
+We shall see soon that compute servers are definable via simple network
+objects. However, compute servers are so common and useful that we provide
+them as primitives, calling them execution engines. An execution engine
+accepts Obliq procedures (that is, procedure closures) from the network
+and executes them at the engine site. An engine can be exported from a site
+via the primitive:<BR>
+<BR>
+<TT>net_exportEngine(&quot;Engine1@Site1&quot;, <I>NameServer</I>, arg);
+</TT><BR>
+<BR>
+The &quot;<TT>arg</TT>&quot; parameter is supplied to all the client procedures
+received by the engine. Multiple engines can be exported from the same site
+under different names. <BR>
+<BR>
+A client may import an engine and then specify a procedure to be execute
+remotely. An engine value behaves like a procedure of one argument:<BR>
+<BR>
+<TT>let atSite1 =<BR>
+<BR>
+net_importEngine(&quot;Engine1@Site1&quot;, <I>NameServer</I>);<BR>
+<BR>
+atSite1(proc(arg) 3+2 end);</TT><BR>
+<BR>
+Implementing engines as remote procedures, instead of a remote objects,
+allows self-inflicted operations to extend across sites; this turns out
+to be important for object migration. 
+<H1>4. Local Techniques</H1>
+In this section we discuss a collection of single-threaded examples to illustrate
+Obliq's sequential features. A collection of concurrent and distributed
+examples is given in section 5; the impatient reader may want to skip forward.
+In both these sections the emphasis is on advanced, rather than tutorial,
+examples. 
+<H2>4.1 Recursion and Iteration</H2>
+We start with a simple example, to illustrate the use of definitions, local
+variables, and control constructs. The factorial function is defined in
+recursive and iterative style.<BR>
+<BR>
+<TT>let rec recFact =<BR>
+<BR>
+proc(n)<BR>
+<BR>
+if n is 0 then 1 else n * recFact(n-1) end;<BR>
+<BR>
+end;<BR>
+<BR>
+let itFact =<BR>
+<BR>
+proc(n)<BR>
+<BR>
+var cnt = n; var acc = 1;<BR>
+<BR>
+loop<BR>
+<BR>
+if cnt is 0 then exit end;<BR>
+<BR>
+acc := cnt * acc; cnt := cnt - 1;<BR>
+<BR>
+end;<BR>
+<BR>
+acc;<BR>
+<BR>
+end;</TT><BR>
+<BR>
+Identifiers are declared by &quot;<TT>let</TT>&quot;, and updatable variables
+by &quot;<TT>var</TT>&quot;. Recursive definitions are obtained by &quot;<TT>let
+rec</TT>&quot;. The identity predicate is called &quot;<TT>is</TT>&quot;.
+A sequence of statements separated by semicolons returns the value of the
+last statement; hence the iterative factorial program returns &quot;<TT>acc</TT>&quot;.
+<H2>4.2 The Object-Oriented Numerals</H2>
+This next example illustrates the expressive power of the object primitives
+by encoding the natural numbers purely in terms of objects.<BR>
+<BR>
+<TT>let zero =<BR>
+<BR>
+{case =&gt;<BR>
+<BR>
+proc(pz,ps) pz() end,<BR>
+<BR>
+succ =&gt;<BR>
+<BR>
+meth(self) <BR>
+<BR>
+let o = clone(self); <BR>
+<BR>
+o.case := proc(pz,ps) ps(self) end; <BR>
+<BR>
+o<BR>
+<BR>
+end};</TT><BR>
+<BR>
+The numeral &quot;<TT>zero</TT>&quot; has two fields. The &quot;<TT>succ</TT>&quot;
+field produces successive numerals by appropriately modifying the current
+numeral. The &quot;<TT>case</TT>&quot; field is used to discriminate on
+zero: the idiom &quot;<TT>(n.case)(proc() b end, proc(p) c end)</TT>&quot;
+is read, informally, as &quot;if <TT>n</TT> is zero then return <TT>b</TT>,
+else bind the predecessor of <TT>n</TT> to <TT>p</TT> and return <TT>c</TT>&quot;.<BR>
+<BR>
+The code of the &quot;<TT>succ</TT>&quot; method depends heavily on Obliq
+peculiarities: it clones self, and embeds the current self into a procedure
+closure, so that it can be used later. For example, the numeral &quot;<TT>one</TT>&quot;,
+computed as, &quot;<TT>zero.succ()</TT>&quot;, is:<BR>
+<BR>
+<TT>{case =&gt; proc(pz,ps) ps(zero) end,<BR>
+<BR>
+succ =&gt; </TT><I>(as for zero)</I><TT> }</TT><BR>
+<BR>
+Hence, &quot;<TT>one.case(pz,ps)</TT>&quot; correctly applies &quot;<TT>ps</TT>&quot;
+to the predecessor of &quot;<TT>one</TT>&quot;.<BR>
+<BR>
+To show that the encoding is fully general, we define the successor, predecessor,
+and test for zero procedures:<BR>
+<BR>
+<TT>let succ = <BR>
+<BR>
+proc(n) n.succ end;<BR>
+<BR>
+let pred = <BR>
+<BR>
+proc(n) <BR>
+<BR>
+(n.case)(proc() zero end, proc(p) p end) <BR>
+<BR>
+end;<BR>
+<BR>
+let iszero = <BR>
+<BR>
+proc(n) <BR>
+<BR>
+(n.case)(proc() true end, proc(p) false end) <BR>
+<BR>
+end;<BR>
+</TT>
+<H2>4.3 The Prime Numbers Sieve</H2>
+This example shows an interesting case of methods overriding themselves,
+and of objects replicating themselves by cloning. The program below prints
+the prime numbers when the method &quot;<TT>m</TT>&quot; of the &quot;<TT>sieve</TT>&quot;
+object is invoked with successive integers starting from 2. Each time a
+new prime p is found, the sieve object clones itself into two objects. One
+of the clones then transforms itself into a filter for multiples of p; non-multiples
+are passed to the other clone. <BR>
+<BR>
+<TT>let sieve =<BR>
+<BR>
+{ m =&gt;<BR>
+<BR>
+meth(s, n)<BR>
+<BR>
+print(n); (* defined elsewhere *)<BR>
+<BR>
+let s0 = clone(s);<BR>
+<BR>
+s.m :=<BR>
+<BR>
+meth(s1,n1)<BR>
+<BR>
+if (n1 % n) is 0 then ok else s0.m(n1) end<BR>
+<BR>
+end;<BR>
+<BR>
+end<BR>
+<BR>
+};<BR>
+<BR>
+(* print the primes &lt; 100 *)<BR>
+<BR>
+for i = 2 to 100 do sieve.m(i) end;</TT><BR>
+<BR>
+At any point in time, if n primes have been printed, then there exists n
+filter objects plus a clone of the original sieve object. 
+<H2>4.4 A Calculator</H2>
+This example illustrates method overriding, used here to store the &quot;pending
+operations&quot; of a pocket calculator.<BR>
+<BR>
+<TT>let calc =<BR>
+<BR>
+{ arg =&gt; 0.0, (* the </TT>&quot;<TT>visible</TT>&quot;<TT> argument display
+*)<BR>
+<BR>
+acc =&gt; 0.0, (* the </TT>&quot;<TT>hidden</TT>&quot;<TT> accumulator *)<BR>
+<BR>
+enter =&gt; (* entering a new argument *)<BR>
+<BR>
+meth(s, n) <BR>
+<BR>
+s.arg := n; <BR>
+<BR>
+s <BR>
+<BR>
+end,<BR>
+<BR>
+add =&gt; (* the addition button *)<BR>
+<BR>
+meth(s) <BR>
+<BR>
+s.acc := s.equals; <BR>
+<BR>
+s.equals := meth(s) s.acc+s.arg end; <BR>
+<BR>
+s <BR>
+<BR>
+end,<BR>
+<BR>
+sub =&gt; (* the subtraction button *)<BR>
+<BR>
+meth(s) <BR>
+<BR>
+s.acc := s.equals; <BR>
+<BR>
+s.equals := meth(s) s.acc-s.arg end; <BR>
+<BR>
+s <BR>
+<BR>
+end,<BR>
+<BR>
+equals =&gt; (* the result button (and operator stack) *)<BR>
+<BR>
+meth(s) s.arg end,<BR>
+<BR>
+reset =&gt; (* the reset button *)<BR>
+<BR>
+meth(s) <BR>
+<BR>
+s.arg:=0.0; <BR>
+<BR>
+s.acc:=0.0; <BR>
+<BR>
+s.equals:=meth(s) s.arg end; <BR>
+<BR>
+s <BR>
+<BR>
+end<BR>
+<BR>
+};</TT><BR>
+<BR>
+For example:<BR>
+<BR>
+<TT>calc .reset .enter(3.5) .equals; (* 3.5 *)<BR>
+<BR>
+calc .reset .enter(3.5) .sub .enter(2.0) .equals; (* 1.5 *)<BR>
+<BR>
+calc .reset .enter(3.5) .add .equals; (* 7.0 *)<BR>
+<BR>
+calc .reset .enter(3.5) .add .add .equals; (*10.5 *)<BR>
+</TT>
+<H2>4.5 Surrogates</H2>
+Here we create a non-trivial surrogate for the calculator object of section
+4.4. Unlike the original calculator, this object is protected against outside
+interference. Some of the calculator fields are shared by aliasing, some
+are hidden, some are renamed, and one is added.<BR>
+<BR>
+<TT>let publicCalc =<BR>
+<BR>
+{ protected,<BR>
+<BR>
+enter =&gt; alias enter of calc end,<BR>
+<BR>
+pi =&gt; meth(s) s.enter(3.1415926535897932384626433833) end,<BR>
+<BR>
+plus =&gt; alias add of calc end,<BR>
+<BR>
+minus =&gt; alias sub of calc end,<BR>
+<BR>
+equals =&gt; alias equals of calc end,<BR>
+<BR>
+reset =&gt; alias reset of calc end }<BR>
+</TT>
+<H1>5. Distributed Techniques</H1>
+In this section we code some distributed programming techniques in Obliq.
+Each example is typical of a separate class of distributed programs, and
+illustrates the unique features of Obliq. 
+<H2>5.1 A Serialized Queue</H2>
+We begin with an example of ordinary concurrent programming to illustrate
+the threads primitives that are used in the sequel. We implement a queue
+that can be accessed consistently by concurrent reader and writer threads.
+<BR>
+<BR>
+The queue is implemented as a serialized object with &quot;<TT>read</TT>&quot;
+and &quot;<TT>write</TT>&quot; methods. These methods refer to free identifiers
+that are hidden from users of the queue. The object mutex is used, implicitly,
+to protect a private variable that contains an array of queue elements.
+Another private variable contains a <I>condition</I> &quot;<TT>nonEmpty</TT>&quot;
+used for signaling the state of the queue.<BR>
+<BR>
+The write method adds an element to the queue, and <I>signals</I> the non-empty
+condition, so that at least one reader thread waiting on that condition
+wakes up (a similar <I>broadcast</I> operation wakes up all waiting threads).
+The object mutex is locked throughout the execution of the write method,
+therefore excluding other writer or reader threads.<BR>
+<BR>
+When a read method starts executing, the object mutex is locked. Its first
+instruction is to watch for the non-empty condition, and for the existence
+of elements in the queue. If the queue is non-empty, the reader simply goes
+ahead and removes one element from the queue. If the queue is empty, the
+reader thread is suspended and the object mutex is released (allowing other
+reader and writer threads to execute). The reader is suspended until it
+receives a signal for the non-empty condition; then the object mutex is
+locked, and the reader thread proceeds as above (possibly being suspended
+again if some other reader thread has already emptied the queue).<BR>
+<BR>
+What is important here is that a reader thread may be blocked inside a method,
+and yet a writer thread can get access and eventually allow the first thread
+to proceed. Hence, even though only one thread at a time can run, multiple
+threads may be simultaneously present &quot;in&quot; the object.<BR>
+<BR>
+Here, &quot;<TT>[</TT>...<TT>]</TT>&quot; is an array, &quot;<TT>#</TT>&quot;
+is array-size, and &quot;<TT>@</TT>&quot; is array-concatenation.<BR>
+<BR>
+<TT>let queue =<BR>
+<BR>
+(let nonEmpty = condition(); <BR>
+<BR>
+var q = []; (* the (hidden) queue data *)<BR>
+<BR>
+{protected, serialized,<BR>
+<BR>
+write =&gt;<BR>
+<BR>
+meth(s, elem)<BR>
+<BR>
+q := q @ [elem]; (* append elem to tail *)<BR>
+<BR>
+signal(nonEmpty); (* wake up readers *)<BR>
+<BR>
+end,<BR>
+<BR>
+read =&gt;<BR>
+<BR>
+meth(s)<BR>
+<BR>
+watch nonEmpty (* wait for writers *)<BR>
+<BR>
+until #(q)&gt;0 (* check size of queue *)<BR>
+<BR>
+end; <BR>
+<BR>
+let q0 = q[0]; (* get first elem *)<BR>
+<BR>
+q := q[1 for #(q)-1]; (* remove from queue *)<BR>
+<BR>
+q0; (* return first elem *)<BR>
+<BR>
+end;<BR>
+<BR>
+});</TT><BR>
+<BR>
+Let us see how this queue can be used. Suppose a reader is activated first
+when the queue is still empty. To avoid an immediate deadlock, we fork a
+thread running a procedure that reads from the queue; this thread blocks
+on the &quot;<TT>watch</TT>&quot; statement. The reader thread is returned
+by the &quot;<TT>fork</TT>&quot; primitive, and bound to the identifier
+&quot;<TT>t</TT>&quot;:<BR>
+<BR>
+<TT>let t = (* fork a reader t, which blocks *)<BR>
+<BR>
+fork(proc() queue.read() end, 0); </TT><BR>
+<BR>
+Next we add an element to the queue, using the current thread as the writer
+thread. A non-empty condition is immediately signaled and, shortly thereafter,
+the reader thread returns the queue element. <BR>
+<BR>
+<TT>queue.write(3); (* cause t to read 3 *)</TT><BR>
+<BR>
+The reader thread has now finished running, but is not completely dead because
+it has not delivered its result. To obtain the result, the current thread
+is joined with the reader thread:<BR>
+<BR>
+<TT>let result = join(t); (* get 3 from t *)</TT><BR>
+<BR>
+In general, &quot;<TT>join</TT>&quot; waits until the completion of a thread
+and returns its result. 
+<H2>5.2 Compute Servers</H2>
+The compute server defined below receives a client procedure &quot;<TT>p</TT>&quot;
+with zero arguments via the &quot;<TT>rexec</TT>&quot; method, and executes
+the procedure at the server site. This particular server cheats on clients
+by storing the latest client procedure into a global variable &quot;<TT>replay</TT>&quot;.
+Another field, &quot;<TT>lexec</TT>&quot;, is defined similarly to &quot;<TT>rexec</TT>&quot;,
+but &quot;<TT>rexec</TT>&quot;, is a method field, while &quot;<TT>lexec</TT>&quot;,
+is a value field containing a procedure value: the operational difference
+is discussed below.<BR>
+<BR>
+<TT>(* Server Site *)<BR>
+<BR>
+var replay = proc() end;<BR>
+<BR>
+net_export(&quot;ComputeServer&quot;, <I>NameServer</I>,<BR>
+<BR>
+{rexec =&gt; meth(s, p) replay:=p; p() end,<BR>
+<BR>
+lexec =&gt; proc(p) replay:=p; p() end}) </TT><BR>
+<BR>
+A client may import the compute server and send it a procedure to execute.
+The procedure may have free variables at the client site; in this example
+it increments a global variable &quot;<TT>x</TT>&quot;:<BR>
+<BR>
+<TT>(* Client Site *)<BR>
+<BR>
+let computeServer =<BR>
+<BR>
+net_import(&quot;ComputeServer&quot;, <I>NameServer</I>);<BR>
+<BR>
+var x = 0;<BR>
+<BR>
+computeServer.rexec(proc() x:=x+1 end);<BR>
+<BR>
+x; (* now x = 1 *)</TT><BR>
+<BR>
+When the server executes its &quot;<TT>rexec</TT>&quot; method, &quot;<TT>replay</TT>&quot;
+is set to (a closure for) &quot;<TT>proc() x:=x+1 end</TT>&quot; at the
+server site, and then &quot;<TT>x</TT>&quot; is set to &quot;<TT>1</TT>&quot;
+at the client site, since the free &quot;<TT>x</TT>&quot; is lexically bound
+to the client site. Any variable called &quot;<TT>x</TT>&quot; at the server
+site, if it exists, is a different variable and is not affected. At the
+server we may now invoke &quot;<TT>replay()</TT>&quot; , setting &quot;<TT>x</TT>&quot;
+to &quot;<TT>2</TT>&quot; at the client site.<BR>
+<BR>
+For contrast, consider the execution of the following line at the client
+site:<BR>
+<BR>
+<TT>(* Client Site *)<BR>
+<BR>
+(computeServer.lexec)(proc() x:=x+1 end);</TT><BR>
+<BR>
+This results in the server returning the procedure &quot;<TT>proc(p) replay:=p;
+p() end</TT>&quot; to the client, by the semantics of remote field selection,
+with &quot;<TT>replay</TT>&quot; bound at the server site. Then the client
+procedure &quot;<TT>proc() x:=x+1 end</TT>&quot; is given as an argument.
+Hence, this time, the client procedure is executed at the client site. Still,
+the execution at the client site causes the client procedure to be transmitted
+to the server and bound to the &quot;<TT>replay</TT>&quot; variable there.
+The final effect is the same. 
+<H2>5.3 A Database Server</H2>
+This example describes a simple server that maintains a persistent database
+of &quot;fortunes&quot;. Each client may add a new fortune via a &quot;<TT>learn</TT>&quot;
+method, and may retrieve a fortune entered by some client via a &quot;<TT>tell</TT>&quot;
+method. The server handles concurrent client access, and saves the database
+to file to preserve data through outages. An initial empty database is assumed.<BR>
+<BR>
+The built-in libraries for readers (&quot;<TT>rd_</TT>&quot;), writers (&quot;<TT>wr_</TT>&quot;),
+and data storage (&quot;<TT>pickle_</TT>&quot;) are described in section
+B.6. <BR>
+<BR>
+<TT>let writeDB =<BR>
+<BR>
+proc(dB)<BR>
+<BR>
+let w = wr_open(fileSys, &quot;fortune.obq&quot;);<BR>
+<BR>
+pickle_write(w, dB); wr_close(w)<BR>
+<BR>
+end;<BR>
+<BR>
+let readDB =<BR>
+<BR>
+proc()<BR>
+<BR>
+let r = rd_open(fileSys, &quot;fortune.obq&quot;);<BR>
+<BR>
+let a = pickle_read(r); rd_close(r); a<BR>
+<BR>
+end;<BR>
+<BR>
+var i = -1;<BR>
+<BR>
+let fortune =<BR>
+<BR>
+{protected, serialized,<BR>
+<BR>
+dB =&gt; readDB(),<BR>
+<BR>
+tell =&gt; <BR>
+<BR>
+meth(self)<BR>
+<BR>
+if #(self.dB) is 0 then &quot;&lt;bad luck&gt;&quot;<BR>
+<BR>
+else <BR>
+<BR>
+i := i+1;<BR>
+<BR>
+if i &gt;= #(self.dB) then i:=0 end;<BR>
+<BR>
+self.dB[i]<BR>
+<BR>
+end<BR>
+<BR>
+end,<BR>
+<BR>
+learn =&gt;<BR>
+<BR>
+meth(self, t)<BR>
+<BR>
+self.dB := self.dB @ [t];<BR>
+<BR>
+writeDB(self.dB);<BR>
+<BR>
+end,<BR>
+<BR>
+};<BR>
+<BR>
+net_export(&quot;FortuneServer&quot;, <I>NameServer</I>, fortune);<BR>
+</TT>
+<H2>5.4 Remote Agents</H2>
+Compute servers (section 5.2) and execution engines (section 3.8) can be
+used as general object servers; that is, as ways of allocating objects at
+remote sites. These objects can then act as <I>agents</I> of the initiating
+site. <BR>
+<BR>
+Suppose, for example, that we have an engine exported by a database server
+site. The engine provides the database as an argument to client procedures:<BR>
+<BR>
+<TT>(* DataBase Server Site *)<BR>
+<BR>
+net_exportEngine(&quot;DBServer&quot;, <I>NameServer</I>, dataBase);</TT><BR>
+<BR>
+A database client could simply send over procedures performing queries on
+the database (which, for complex queries, would be more efficient than repeatedly
+querying the server remotely). However, for added flexibility, the client
+can instead create an object at the server site that acts as its remote
+agent:<BR>
+<BR>
+<TT>(* DataBase Client Site *)<BR>
+<BR>
+let atDBServer =<BR>
+<BR>
+net_importEngine(&quot;DBServer&quot;, <I>NameServer</I>);<BR>
+<BR>
+let searchAgent =<BR>
+<BR>
+atDBServer(<BR>
+<BR>
+proc(dataBase)<BR>
+<BR>
+{state =&gt; ...,<BR>
+<BR>
+start =&gt; meth ... end,<BR>
+<BR>
+report =&gt; meth ... end,<BR>
+<BR>
+stop =&gt; meth ... end} <BR>
+<BR>
+end);</TT><BR>
+<BR>
+The execution of the client procedure causes the allocation of an object
+at the server site with methods &quot;<TT>start</TT>&quot;, &quot;<TT>report</TT>&quot;,
+and &quot;<TT>stop</TT>&quot;, and with a &quot;<TT>state</TT>&quot; field.
+The server simply returns a network reference to this object, and is no
+longer engaged. <BR>
+<BR>
+We show below an example of what the client can now do. The client starts
+a remote search in a background thread, and periodically request a progress
+report. If the search is successful within a given time period, everything
+is fine. If the search takes too long, the remote agent is aborted via &quot;<TT>stop</TT>&quot;.
+If an intermediate report proves promising, the client may decide to wait
+for however long it takes for the agent to complete, by joining the background
+thread.<BR>
+<BR>
+<TT>(* DataBase Client Site *)<BR>
+<BR>
+let searchThread = <BR>
+<BR>
+fork(proc() searchAgent.start() end, 0);<BR>
+<BR>
+var report = &quot;&quot;;<BR>
+<BR>
+for i = 1 to 10 do<BR>
+<BR>
+pause(6.0);<BR>
+<BR>
+report := searchAgent.report();<BR>
+<BR>
+if successful(report) then exit end;<BR>
+<BR>
+if promising(report) then <BR>
+<BR>
+report := join(searchThread); exit;<BR>
+<BR>
+end;<BR>
+<BR>
+end;<BR>
+<BR>
+searchAgent.stop();</TT><BR>
+<BR>
+Client resources at the server site are released when the client garbage
+collects the search agents, or when the client site dies [Birrell, <I>et
+al.</I> 1993a].<BR>
+<BR>
+This technique for remotely allocating objects can be extended to multiple
+agents searching multiple databases simultaneously, and to agents initiating
+their own sub-agents. 
+<H2>5.5 Application Partitioning</H2>
+The technique for remotely allocating objects described in section 5.4 can
+be used for <I>application partitioning</I>. An application can be organized
+as a collection of procedures that return objects. When the application
+starts, it can pick a site for each object and send the respective procedure
+to a remote engine for that site. This way, the application components can
+be (initially) distributed according to dynamic criteria. 
+<H2>5.6 Agent Migration</H2>
+In this example we consider the case of an untethered agent that moves from
+site to site carrying along some state [White 1994]. We write the state
+as an object, and the agent as a procedure parameterized on the state and
+on a site-specific argument:<BR>
+<BR>
+<TT>let state = { ... };<BR>
+<BR>
+let agent = proc(state, arg) ... end;</TT><BR>
+<BR>
+To be completely self-contained, this agent should have no free identifiers,
+and should use the state parameter for all its long-term memory needs. <BR>
+<BR>
+The agent can be sent to a new site as follows, assuming &quot;<TT>atSite1</TT>&quot;
+is an available remote engine:<BR>
+<BR>
+<TT>atSite1(proc(arg) agent(copy(state),arg) end)</TT><BR>
+<BR>
+The &quot;<TT>copy</TT>&quot; operation is explained below, but the intent
+should be clear: the agent is executed at the new site, with a local copy
+of the state it had at the previous site. The agent's state is then accessed
+locally at the new site. Implicitly, we assume that the agent ceases any
+activity at the old site. The agent can repeat this procedure to move to
+yet another site.<BR>
+<BR>
+The &quot;<TT>copy</TT>&quot; operation is a primitive that produces local
+copies of (almost) arbitrary Obliq values, including values that span several
+sites. Sharing and circularities are preserved, even those that span the
+network. Not all values can be copied, however, because not all values can
+be transmitted. Protected objects cause exceptions on copying, as do site-specific
+values such as threads, mutexes, and conditions.<BR>
+<BR>
+This techniques allows autonomous agents to travel between sites, perhaps
+eventually returning to their original site with results. The original site
+may go off-line without directly affecting the agent. <BR>
+<BR>
+The main unpleasantness is that, because of copying, the state consistency
+between the old site and the new site must be preserved by programming convention
+(by not using the old state). In the next section we see how to migrate
+state consistently, for individual objects. 
+<H2>5.7 Object Migration</H2>
+This example uses a remote execution engine to migrate an object between
+two sites. First we define a procedure that, given an object, the name of
+an engine, and a name server, migrates the object to the engine's site.
+Migration is achieved in two phases: (1) by causing the engine to remotely
+clone the object, and (2) by redirecting the original object to its clone.<BR>
+<BR>
+<TT>let migrateProc =<BR>
+<BR>
+proc(obj, engineName)<BR>
+<BR>
+let engine = net_importEngine(engineName, <I>NameServer</I>);<BR>
+<BR>
+let remoteObj = engine(proc(arg) clone(obj) end); </TT>(1)<TT><BR>
+<BR>
+redirect obj to remoteObj end; </TT>(2)<TT><BR>
+<BR>
+remoteObj;<BR>
+<BR>
+end;</TT><BR>
+<BR>
+After migration, operations on the original object are redirected to the
+remote site, and executed there.<BR>
+<BR>
+It is critical, though, that the two phases of migration be executed atomically,
+to preserve the integrity of the object state<A HREF="#fn2">[3]</A>. This
+can be achieved by serializing the migrating object, and by invoking the
+&quot;<TT>migrateProc</TT>&quot; procedure from a method of that object,
+where it is applied to self:<BR>
+<BR>
+<TT>let obj1 =<BR>
+<BR>
+{ serialized, protected,<BR>
+<BR>
+... <I>(other fields)</I><BR>
+<BR>
+migrate =&gt;<BR>
+<BR>
+meth(self, engineName)<BR>
+<BR>
+migrateProc(self, engineName);<BR>
+<BR>
+end};<BR>
+<BR>
+let remoteObj1 = obj1.migrate(&quot;Engine1@Site1&quot;)</TT><BR>
+<BR>
+Because of serialization, the object state cannot change during a call to
+&quot;<TT>migrate</TT>&quot;. The call returns a network reference to the
+remote clone that can be used in place of &quot;<TT>obj1</TT>&quot; (which,
+anyway has been redirected to the clone).<BR>
+<BR>
+We still need to explain how migration can work for protected objects, since
+such objects are protected against external cloning and redirection. Note
+the &quot;<TT>migrateProc(self, ...)</TT>&quot; call above, where &quot;<TT>self</TT>&quot;
+is bound to &quot;<TT>obj1</TT>&quot;. It causes the execution of: <BR>
+<BR>
+<TT>engine(proc(arg) clone(obj1) end)</TT><BR>
+<BR>
+Rather subtly, the cloning of &quot;<TT>obj1</TT>&quot; here is self-inflicted
+(section 3.4), even though it happens at a site different from the site
+of the object. According to the general definition, &quot;<TT>clone(obj1)</TT>&quot;
+is self-inflicted because &quot;<TT>obj1</TT>&quot; is the same as the self
+of the last active method of the current thread, which is &quot;<TT>migrate</TT>&quot;.
+The redirection operation is similarly self-inflicted. Therefore, the protected
+status of &quot;<TT>obj1</TT>&quot; does not inhibit self-initiated migration.
+<BR>
+<BR>
+Migration permanently modifies the original object, redirecting all operations
+to the remote clone. In particular, if &quot;<TT>obj1</TT>&quot; is asked
+to migrate again, the remote clone will properly migrate.<BR>
+<BR>
+We now make the example a bit more interesting by assuming that the migrating
+object &quot;<TT>obj1</TT>&quot; is publicly available through a name server.
+The &quot;<TT>migrate</TT>&quot; method can register the migrated object
+with the name server under the old name:<BR>
+<BR>
+<TT>let obj1 =<BR>
+<BR>
+net_export(&quot;obj1&quot;, <I>NameServer</I>,<BR>
+<BR>
+{ serialized, protected,<BR>
+<BR>
+...<BR>
+<BR>
+migrate =&gt;<BR>
+<BR>
+meth(self, engineName)<BR>
+<BR>
+net_export(&quot;obj1&quot;, <I>NameServer</I>, <BR>
+<BR>
+migrateProc(self, engineName));<BR>
+<BR>
+end};</TT><BR>
+<BR>
+This way, old clients of &quot;<TT>obj1</TT>&quot; go through aliasing indirections,
+but new clients acquiring &quot;<TT>obj1</TT>&quot; from the name server
+operate directly on the migrated object. 
+<H2>5.8 Application Servers</H2>
+Visual Obliq [Bharat, Brown 1994] is an interactive distributed-application
+and user-interface generator, based on Obliq. All distributed applications
+built in Visual Obliq follow the same model, which we may call the application
+server model. In this model, a centralized server supplies interested clients,
+dynamically, with both the client code and the client user interface of
+a distributed application. The code transmitted to each client retains lexical
+bindings to the server site, allowing it to communicate with the server
+and with other clients. Each client may have separate local state, and may
+present a separate view of the application to the user. A typical example
+is a distributed tic-tac-toe game. 
+<H1>6. Syntax Overview</H1>
+<TT>TOP-LEVEL PHRASES </TT>any term or definition ended by &quot;<TT>;</TT>&quot;<TT><BR>
+<BR>
+a; <BR>
+<BR>
+DEFINITIONS </TT>(denoted by &quot;<TT>d</TT>&quot;; identifiers are denoted
+by &quot;<TT>x</TT>&quot;, terms are denoted by &quot;<TT>a</TT>&quot;)<BR>
+<BR>
+<B><TT>let</TT></B><TT> x1<B>=</B>a1,...,xn<B>=</B>an </TT>definition of
+constant identifiers<BR>
+<BR>
+<B><TT>let</TT></B><TT> <B>rec</B> x1<B>=</B>a1,...,xn<B>=</B>an </TT>definition
+of recursive procedures<BR>
+<BR>
+<B><TT>var</TT></B><TT> x1<B>=</B>a1,...,xn<B>=</B>an </TT>definition of
+updatable identifiers<BR>
+<BR>
+<TT>SEQUENCES </TT>(denoted by &quot;<TT>s</TT>&quot;)<TT> </TT>each &quot;<TT>ai</TT>&quot;
+(a term or a definition) is<TT><BR>
+<BR>
+a1;...;an </TT>executed; yields &quot;<TT>an</TT>&quot; (or &quot;<TT>ok</TT>&quot;
+if n=0)<BR>
+<BR>
+<TT>TERMS </TT>(denoted by &quot;<TT>a</TT>&quot;, &quot;<TT>b</TT>&quot;,
+&quot;<TT>c</TT>&quot;; identifiers are denoted by &quot;<TT>x</TT>&quot;,
+&quot;<TT>l</TT>&quot;; libraries are denoted by &quot;<TT>m</TT>&quot;)<TT><BR>
+<BR>
+x m_x </TT>identifiers<TT><BR>
+<BR>
+x<B>:=</B>a </TT>assignment<BR>
+<BR>
+<B><TT>ok</TT></B><TT> <B>true</B> <B>false</B> 'a' &quot;abc&quot; 3 1.5
+</TT>constants<BR>
+<BR>
+<TT>[a1,...,an] </TT>arrays<TT><BR>
+<BR>
+a[b] a[b]<B>:=</B>c </TT>array selection, array update<TT><BR>
+<BR>
+a[b1 for b2] a[b1 for b2]<B>:=</B>c </TT>subarray selection, subarray update<BR>
+<BR>
+<B><TT>option</TT></B><TT> l =&gt; s <B>end</B> </TT>term &quot;<TT>s</TT>&quot;
+tagged by &quot;<TT>l</TT>&quot;<BR>
+<BR>
+<B><TT>proc</TT></B><TT>(x1,...,xn) s <B>end</B> </TT>procedures<TT><BR>
+<BR>
+a(b1,...,bn) </TT>procedure invocation<TT><BR>
+<BR>
+m_x(a1,...,an) </TT>invocation of &quot;<TT>x</TT>&quot; from library &quot;<TT>m</TT>&quot;<TT><BR>
+<BR>
+a b c </TT>infix (right-ass.) version of &quot;<TT>b(a,c)</TT>&quot;<BR>
+<BR>
+<B><TT>meth</TT></B><TT>(x,x1,...,xn) s <B>end</B> </TT>method with self
+&quot;<TT>x</TT>&quot;<TT><BR>
+<BR>
+{l1<B>=&gt;</B>a1,...,ln<B>=&gt;</B>an} </TT>object with fields named &quot;<TT>l1</TT>&quot;...&quot;<TT>ln</TT>&quot;<TT><BR>
+<BR>
+{<B>protected</B>, <B>serialized</B>, ...} </TT>protected and serialized
+object<TT><BR>
+<BR>
+{l1<B>=&gt;alias</B> l2 <B>of</B> a2 <B>end</B>,...} </TT>object with redirected
+fields<TT><BR>
+<BR>
+a.l a.l(a1, ..., an) </TT>field selection / method invocation<TT><BR>
+<BR>
+a.l<B>:=</B>b </TT>field update / method override<BR>
+<BR>
+<B><TT>clone</TT></B><TT>(a1,...,an) </TT>object cloning<TT><BR>
+<BR>
+a1.l1<B>:=alias</B> l2 <B>of</B> a2 <B>end</B> </TT>field redirection<B><TT><BR>
+<BR>
+redirect </TT></B><TT>a1 <B>to</B> a2 <B>end</B> </TT>object redirection<BR>
+<BR>
+<TT>d </TT>definition<BR>
+<BR>
+<B><TT>if</TT></B><TT> s1 <B>then</B> s2 </TT>conditional<BR>
+<BR>
+<B><TT>elsif</TT></B><TT> s3 <B>then</B> s4... <B>else</B> sn <B>end</B>
+</TT>(&quot;<TT>elsif</TT>&quot;, &quot;<TT>else</TT>&quot; optional)<TT><BR>
+<BR>
+a <B>andif</B> b a <B>orif</B> b </TT>conditional conjunction/disjunction<TT><BR>
+<BR>
+a <B>is</B> b a <B>isnot</B> b </TT>identical/not identical predicates<BR>
+<BR>
+<B><TT>case</TT></B><TT> s <B>of </B>l1(x1)<B>=&gt;</B>s1,..., </TT>case
+over the tag &quot;<TT>li</TT>&quot; of an option value<TT><BR>
+<BR>
+ln(xn)<B>=&gt;</B>sn <B>else</B> s0 <B>end</B> </TT>binding &quot;<TT>xi</TT>&quot;
+in &quot;<TT>si</TT>&quot; (&quot;<TT>else</TT>&quot; optional)<BR>
+<BR>
+<B><TT>loop</TT></B><TT> s <B>end</B> </TT>loop<BR>
+<BR>
+<B><TT>for</TT></B><TT> i=a <B>to</B> b <B>do</B> s <B>end</B> </TT>iteration
+through successive integers<BR>
+<BR>
+<B><TT>foreach</TT></B><TT> i <B>in</B> a <B>do</B> s <B>end</B> </TT>iteration
+through an array<BR>
+<BR>
+<B><TT>foreach</TT></B><TT> i <B>in</B> a <B>map</B> s <B>end</B> </TT>yielding
+an array of the results<BR>
+<BR>
+<B><TT>exit</TT></B><TT> </TT>exit the innermost loop, for, foreach<BR>
+<BR>
+<B><TT>exception</TT></B><TT>(&quot;exc&quot;) </TT>new exception value
+named &quot;<TT>exc</TT>&quot;<BR>
+<BR>
+<B><TT>raise</TT></B><TT>(a) </TT>raise an exception<BR>
+<BR>
+<B><TT>try</TT></B><TT> s <B>except</B> </TT>exception capture<TT><BR>
+<BR>
+a1<B>=&gt;</B>s1,...,an<B>=&gt;</B>sn <B>else</B> s0 <B>end</B> </TT>(&quot;<TT>else</TT>&quot;
+optional)<BR>
+<BR>
+<B><TT>try</TT></B><TT> s1 <B>finally</B> s2 <B>end</B> </TT>finalization<BR>
+<BR>
+<B><TT>condition</TT></B><TT>() <B>signal</B>(a)<B> broadcast</B>(a) </TT>creating
+and signaling a condition<BR>
+<BR>
+<B><TT>watch</TT></B><TT> s1 <B>until</B> s2 <B>end</B> </TT>waiting for
+a signal and a boolean guard<BR>
+<BR>
+<B><TT>fork</TT></B><TT>(a1,a2)<B> join</B>(a) </TT>forking and joining
+a thread<BR>
+<BR>
+<B><TT>pause</TT></B><TT>(a) </TT>pausing the current thread <BR>
+<BR>
+<B><TT>mutex</TT></B><TT>() </TT>creating a mutex<BR>
+<BR>
+<B><TT>lock</TT></B><TT> s1 <B>do</B> s2 <B>end</B> </TT>locking a mutex
+in a scope<BR>
+<BR>
+<B><TT>wait</TT></B><TT>(a1,a2) </TT>waiting on a mutex for a condition<BR>
+<BR>
+<TT>(s) </TT>block structure / precedence group<BR>
+<H1>7. Conclusions</H1>
+Obliq addresses a very dynamic form of distributed programming, where objects
+can redirect their behavior over the network, and where computations can
+roam between network sites. We feel that this kind of programming is still
+in its infancy, and that not all the fundamental issues can yet be addressed
+at once. Where in doubt, we have given precedence to flexible mechanism
+over robust methodology, hoping that methodology will develop with experience.
+In this spirit, for example, Obliq could be used to experiment in the design
+and implementation of agent/place paradigms [White 1994], using the basic
+techniques of section 5. 
+<H4>Related Work</H4>
+Obliq's features and application domains overlap with programming languages
+such as ML [Milner, Tofte, Harper 1989; Reppy 1991], Modula-3 [Nelson 1991],
+and Self [Ungar, Smith 1987], with scripting languages such as Tcl [Ousterhout
+1994], AppleScript [Apple 1993], VBA [Brockschmidt 1994; Mansfield 1994],
+and Telescript [White 1994], and with distributed languages such as Orca
+[Bal, Kaashoek, Tanenbaum 1992], Fort&eacute; [Fort&eacute; 1994], and Facile
+[Thomsen, <I>et al.</I> 1993]. <BR>
+<BR>
+None of these languages, however, has the same mix of features as Obliq,
+particularly concerning the distribution aspects. Our choice of features
+was largely determined by the idea of a distributed lexically scoped language,
+by the desire for a simple object model that would scale up to distributed
+computation, and by the availability of a sophisticated network-objects
+implementation technology. <BR>
+<BR>
+The Obliq object primitives were designed in parallel with work on the type
+theory of objects [Abadi, Cardelli 1994]; distributed scoping and distributed
+semantics, however, are not treated there. 
+<H4>Status</H4>
+Obliq has been available at Digital SRC for about a year. In addition to
+incidental programming, it has been used extensively as a scripting language
+for algorithm animation [Brown 1994] and 3D graphics [Najork, Brown 1994],
+and as the basis of a distributed-application builder (Visual Obliq [Bharat,
+Brown 1994]). <BR>
+<BR>
+The Obliq implementation provides access to many popular Modula-3 libraries
+[Horning, <I>et al.</I> 1993] and to an extensive user interface tool kit
+[Brown, Meehan 1994]. Obliq can be used as a stand-alone interactive interpeter.
+It can also be embedded as a library in Modula-3 applications, allowing
+them to interact remotely through Obliq scripts. <BR>
+<BR>
+The implementation and complete documentation is available on the World
+Wide Web at &quot;http://www.-research.-digital.-com/-SRC/-home.-html&quot;.
+<H4>Future Work</H4>
+Issues of authentication, security, authority delegation, and accounting
+remain to be explored. 
+<H1>Acknowledgments</H1>
+The Network Objects project at SRC provided the infrastructure without which
+Obliq would never have been thought of. Alan Knaff implemented the metaparser
+layer used in the Obliq parser. 
+<H1>A. Language Reference</H1>
+This section describes the syntax and semantics of the Obliq language. Interactions
+with the surrounding system environment are described in section B. Interactions
+with the surrounding programming environment are described in section C.
+<H2>A.1 Syntactic Structures</H2>
+We begin with an overview of some principles that pervade the syntax of
+Obliq. While the formal grammar has the final word (section A.6), these
+principles should help in predicting the correct syntax to be used in programs.<BR>
+<BR>
+Obliq's syntactic structures can be classified into <I>identifiers</I>,
+<I>definitions</I>, <I>terms</I>, and <I>term sequences</I>. Definitions
+establish bindings, terms denote values, and term sequences represent sequential
+evaluation. <I>Final commas</I> in term and definition lists, as well as
+<I>final semicolons</I> in term sequences, are always optional. 
+<H3>A.1.1 Identifiers</H3>
+Obliq's <I>unqualified identifiers</I> are either case sensitive sequences
+of alphanumerics beginning with a letter, or sequences of special characters
+(section A.5). By convention, identifiers used for constants, variables,
+procedures, fields, and methods begin with a lower case letter, and are
+internally capitalized on word boundaries. Type identifiers (section A.4.1)
+begin with an upper case letter.<I><BR>
+<BR>
+Qualified identifiers</I> have the form &quot;<TT>m_x</TT>&quot; where &quot;<TT>m</TT>&quot;
+is a <I>library</I> name (alphanumeric), and &quot;<TT>x</TT>&quot; is an
+unqualified identifier. By convention, the names of built-in libraries begin
+with lower case letters, while the names of user libraries begin with an
+upper case letter.<BR>
+<BR>
+All identifiers are <I>lexically scoped</I>. Unqualified identifiers are
+subject to block scoping, while library names are scoped in a global environment.<I><BR>
+<BR>
+Field names</I> (for object and option values) have the same lexical structure
+as unqualified identifiers. Field names are not subject to scoping. 
+<H3>A.1.2 Definitions</H3>
+Definitions begin with either &quot;<TT>let</TT>&quot;, &quot;<TT>let rec</TT>&quot;,
+or &quot;<TT>var</TT>&quot;, followed by a comma-separated list of binders,
+which bind unqualified identifiers to terms. A &quot;<TT>let</TT>&quot;
+definition introduces constant identifiers, while a &quot;<TT>var</TT>&quot;
+definition introduces assignable identifiers (variables). A &quot;<TT>let&nbsp;rec</TT>&quot;
+definition introduces a collection of identifiers bound to mutually recursive
+procedures. 
+<H3>A.1.3 Terms</H3>
+The Obliq language is value-oriented: almost every syntactic structure is
+a <I>term</I>, and every term produces a value. Terms whose main purpose
+is to cause side-effects produce the value &quot;<TT>ok</TT>&quot;. Terms
+can be classified into <I>identifier terms</I>, <I>data terms</I>, <I>constructs</I>,
+and <I>operations</I>. <I><BR>
+<BR>
+Identifier terms</I> are qualified or unqualified identifiers. <I><BR>
+<BR>
+Data terms</I> have specialized syntax for various built-in data structures.
+<I><BR>
+<BR>
+Constructs</I> have individual specialized syntax, but whenever they begin
+with a keyword they end with the keyword &quot;<TT>end</TT>&quot;. <I><BR>
+<BR>
+Operations</I> can be either prefix or infix. A prefix operation consists
+of an term (indicating an operation, or evaluating to a procedure) followed
+by a parenthesized, comma-separated, list of argument terms. An infix operation
+consists of a term, an unqualified identifier, and another term. Every unqualified
+identifier that denotes a built-in binary operator or a binary procedure
+can be used with both prefix and infix syntax. The operator &quot;<TT>-</TT>&quot;
+(minus) can be simply placed in front of a term, without requiring parentheses.
+<H3>A.1.4 Term Sequences</H3>
+Term sequences are lists of terms separated by semicolons: they indicate
+the sequential execution of terms from left to right. Semicolons are used
+in Obliq exclusively to indicate sequential execution; all other kinds of
+lists are separated by commas. <BR>
+<BR>
+Definitions happen to be terms as well (their value is always the constant
+&quot;<TT>ok</TT>&quot;), and hence may appear in sequences. Definitions
+establish bindings whose scope extends to the whole sequence to their right.
+<H3>A.1.5 Built-In Operators</H3>
+All built-in operators are available as qualified names through a set of
+built-in libraries. For example, real addition is &quot;<TT>real_+(r1,r2)</TT>&quot;
+from the &quot;<TT>real</TT>&quot; built-in library. Common built-in operations
+are made available also without library qualification, mostly in the form
+of infix operators. So, &quot;<TT>r1+r2</TT>&quot; is also admitted. 
+<H3>A.1.6 Operator Precedence</H3>
+Operator precedence is the same for all infix operators, both built-in and
+user-defined. All operators are right-associative, and evaluate their arguments
+from left to right. Infix operators bind less tightly than procedure call,
+object selection, and array indexing. Parentheses can be used for precedence
+grouping. <BR>
+<BR>
+The minus sign for negative number literals is &quot;~&quot;; this is not
+an operator: it is part of the literal. The form &quot;<TT>-n</TT>&quot;
+is equivalent to &quot;<TT>0-n</TT>&quot;, particularly with respect to
+operator precedence. As a consequence of these rules, &quot;<TT>-5-3</TT>&quot;
+7 &quot;<TT>0-5-3</TT>&quot; 7 &quot;<TT>0-(5-3)</TT>&quot; = &quot;<TT>~2</TT>&quot;,
+while &quot;<TT>~5-3</TT>&quot; = &quot;<TT>~8</TT>&quot;. 
+<H2>A.2 Data Structures</H2>
+A network address is a pair consisting of a <I>site address</I> and a <I>memory
+address</I> at that site. The semantics of Obliq data can be described consistently
+by considering all addresses as network addresses in the sense above. Obliq
+data structures are assembled out of network addresses, just like ordinary
+data structures are assembled out of local addresses (more precisely, the
+implementation is designed to create this illusion). With this proviso,
+Obliq data structures can be discussed with almost no reference to the existence
+of multiple sites. 
+<H3>A.2.1 Value Identity</H3>
+A value is a data structure that is the result of an Obliq computation.
+Values may <I>share</I> substructures. Updates to shared substructures may
+be visible from separate value roots. To understand when and how sharing
+occurs, it is critical to know under what circumstances two Obliq values
+are <I>identical</I>. The entire network semantics of Obliq can be glimped
+by the details of this definition.<BR>
+<BR>
+The infix operator &quot;<TT>is</TT>&quot; determines value identity. It
+returns a boolean on every pair of arguments, including pairs of different
+types. Its negation is the operator &quot;<TT>isnot</TT>&quot;:<BR>
+<BR>
+<TT>a is b</TT> is <TT>a</TT> identical to <TT>b</TT>?<TT><BR>
+<BR>
+a isnot b</TT> is <TT>a</TT> not identical to <TT>b</TT>?<BR>
+<BR>
+A value maintains its identity as long as it is not copied: copying a value
+produces a <I>similar</I> value which is not identical to it. For the basic
+types (ok, booleans, integers, reals, chars, texts, and exceptions), we
+imagine that there is a single instance of each value, which is never copied.
+For other types, values are copied by specific operations, such as object
+cloning and array concatenation, and by network transmission.<BR>
+<BR>
+Most importantly, values are <I>not</I> copied on identifier definition
+and access, on local assignment and update, or on local parameter passing
+and result. In these situations, a value may become a shared substructure
+of two or more other structures. Values with state (objects and arrays)
+are not copied even on remote versions of the situation above. <BR>
+<BR>
+Let us spell out the consequences for &quot;<TT>is</TT>&quot;. For basic
+types the &quot;<TT>is</TT>&quot; predicate corresponds to semantic value
+equality. For example, an integer is another integer if they are the same
+number, and a text is another text if they contain the same sequence of
+characters. <BR>
+<BR>
+For objects and arrays, the &quot;<TT>is</TT>&quot; predicate corresponds
+to equality of the network addresses where the actual objects and arrays
+(not their network references) are stored.<BR>
+<BR>
+For most other types (options, closures, readers, and writers), the &quot;<TT>is</TT>&quot;
+predicate corresponds to equality of the local addresses where the values
+are stored.<BR>
+<BR>
+Finally, certain data types make sense only within a site (local threads,
+mutexes, conditions, processes, forms); network transmission of these values
+is inhibited. These values are identical when they are stored at the same
+local address. 
+<H3>A.2.2 Constants</H3>
+The constants literals are listed below, see section A.5 for the lexical
+details.<BR>
+<BR>
+<TT>ok</TT> a trivial constant, returned by side-effecting operations<TT><BR>
+<BR>
+true, false</TT> booleans, see section B.6.2.<TT><BR>
+<BR>
+0</TT>, <TT>1</TT>, <TT>~1</TT>, ... integers, see section B.6.3.<TT><BR>
+<BR>
+0.</TT>, <TT>0.1</TT>, <TT>~0.1</TT>, ... reals, see sections B.6.4 and
+B.6.5.<BR>
+<BR>
+'<TT>a</TT>' chars, see section B.6.6.<TT><BR>
+<BR>
+&quot;abc&quot;</TT> text strings, see section B.6.7.<BR>
+<BR>
+The constant &quot;<TT>ok</TT>&quot; can be used to mean &quot;uninitialized&quot;
+in variable declarations. For characters and strings, escape sequences (<TT>\\</TT>,
+<TT>\'</TT>, <TT>\&quot;</TT>, <TT>\n</TT>, <TT>\r</TT>, <TT>\t</TT>, <TT>\f</TT>,
+<TT>\<I>xxx</I></TT> for <I><TT>xxx</TT></I> octal) are supported with the
+usual meaning (section A.5). 
+<H3>A.2.3 Operators</H3>
+Here is the list of all the predefined unqualified operators. On the left,
+we list the built-in libraries they belong to. For the list of all built-in
+libraries (and hence of all qualified and unqualified operators), see section
+B.6. Operators evaluate all their arguments from left to right.<BR>
+<BR>
+<TT>bool</TT>: <TT>not and or<BR>
+<BR>
+int</TT>: <TT>%<BR>
+<BR>
+real</TT>: <TT>+ - * / &gt; &lt; &gt;= &lt;= float round<BR>
+<BR>
+text</TT>: <TT>&amp;<BR>
+<BR>
+array</TT>: <TT># @</TT><BR>
+<BR>
+The &quot;<TT>not</TT>&quot; operator is prefix (that is, its argument must
+be parenthesized). The &quot;<TT>and</TT>&quot; and &quot;<TT>or</TT>&quot;
+infix operators evaluate both arguments (but see also section A.3.5). These
+operators accept only boolean arguments.<BR>
+<BR>
+The infix &quot;<TT>%</TT>&quot; operator is integer modulo. <BR>
+<BR>
+The operators on real numbers are overloaded with corresponding operators
+on integers. The infix arithmetic operators on reals accept also pairs of
+integers and return an integer, but do not accept mixed integer-real arguments.
+The infix comparison operators on reals similarly accept a pair of integer
+arguments, but not mixed arguments. The prefix operators &quot;<TT>float</TT>&quot;
+and &quot;<TT>round</TT>&quot; accept both integers and reals. The form
+&quot;<TT>-n</TT>&quot; is equivalent to &quot;<TT>0-n</TT>&quot;.<BR>
+<BR>
+The infix &quot;<TT>&amp;</TT>&quot; operator is text concatenation. <BR>
+<BR>
+The prefix &quot;<TT>#</TT>&quot; operator is array size; the infix &quot;<TT>@</TT>&quot;
+operator is array concatenation. 
+<H3>A.2.4 Arrays</H3>
+Arrays have fixed size (once allocated), with zero-based indexing. <BR>
+<BR>
+<TT>[1,2,3,4]</TT> array<TT><BR>
+<BR>
+#(a) </TT>array size<TT><BR>
+<BR>
+a[0] </TT>array indexing<TT><BR>
+<BR>
+a[0]:=2 </TT>array update<TT><BR>
+<BR>
+a[1 for 2] </TT>subarray extraction, from index 1 for length 2<TT><BR>
+<BR>
+a[1 for 3]:=b</TT> subarray update<TT><BR>
+<BR>
+a @ b</TT> array concatenation<BR>
+<BR>
+All array operations are bound-checked. When the array is remote, each indexing
+and update operation causes a network communication.<BR>
+<BR>
+Subarray extraction and array concatenation produce local copies of possibly
+remote arrays. Note that array values are always shared, unless explicitly
+copied by these two operations (or copied element by element).<BR>
+<BR>
+Subarray extraction, subarray update, and array concatenation cause at most
+one network communication for each argument.<BR>
+<BR>
+Subarray update operates correctly even when updating overlapping segments
+of the same array. The source array must be at least as long as the destination
+array; if it is longer, only its initial segment is used.<BR>
+<BR>
+See also section B.6.8, which includes operations to initialize arrays from
+values and iterators. 
+<H3>A.2.5 Options</H3>
+An option value is a pair of a tag (syntactically, an identifier) and a
+value. Such a tag can be tested by a case statement, which discriminates
+between a set of expected tags. No operation other than case is defined
+on option values.<BR>
+<BR>
+<TT>option x =&gt; 3 end</TT> an option of tag <TT>x</TT> and value <TT>3<BR>
+</TT>
+<H3>A.2.6 Objects</H3>
+Objects are collections of <I>fields</I> &quot;<TT>xi</TT> <TT>=&gt;</TT>
+<TT>ai</TT>&quot;, where &quot;<TT>xi</TT>&quot; is a <I>field name</I>,
+and &quot;<TT>ai</TT>&quot; is a term. A <I>method field</I> is a field
+that contains a method closure. An <I>alias field</I> is a field that contains
+an alias. Otherwise, a field is called a <I>value field</I>. <BR>
+<BR>
+<TT>{x1 =&gt; a1, ... ,xn =&gt; an} </TT>for n&gt;=0<BR>
+<BR>
+Objects may have two <I>attributes</I>: <I>protected</I> and <I>serialized</I>
+(section A.2.7) The keywords &quot;<TT>protected</TT>&quot; and/or &quot;<TT>serialized</TT>&quot;
+may be placed after the left brace, each optionally followed by a comma.<BR>
+<BR>
+An aliased field denotes a field within another object. Most operations
+on aliases are redirected to the fields they denote, as described in section
+A.2.6.<BR>
+<BR>
+<TT>{x1 =&gt; alias x of a end, ... }</TT> an alias for field <TT>x</TT>
+of object <TT>a</TT><BR>
+<BR>
+An error is produced if the object &quot;<TT>a</TT>&quot; does not have
+the field &quot;<TT>x</TT>&quot;.<BR>
+<BR>
+We now describe the primitive operations on objects. 
+<H4>Selection</H4>
+<TT>a.x</TT><BR>
+<BR>
+If &quot;<TT>x</TT>&quot; is a value field, then the value is returned.
+If &quot;<TT>x</TT>&quot; is a method field containing a method of no arguments,
+then the method is invoked by supplying <TT>a</TT> as its first parameter,
+and its result (or error, or exception) is returned. If &quot;<TT>x</TT>&quot;
+is an alias field for &quot;<TT>x0</TT>&quot; of &quot;<TT>a0</TT>&quot;,
+then &quot;<TT>a0.x0</TT>&quot; is executed. Selection fails if &quot;<TT>x</TT>&quot;
+is not a field of &quot;<TT>a</TT>&quot;. 
+<H4>Invocation</H4>
+<TT>a.x(b1, ... ,bn) </TT>for n&gt;=0<BR>
+<BR>
+If &quot;<TT>x</TT>&quot; is a method field containing a method of n+1 arguments,
+then the method is invoked by supplying &quot;<TT>(a, b1, ... ,bn)</TT>&quot;
+as its arguments, evaluated from left to right. The computed result (or
+error, or exception) is returned. If &quot;<TT>x</TT>&quot; is an alias
+field for &quot;<TT>x0</TT>&quot; of &quot;<TT>a0</TT>&quot;, then &quot;<TT>a0.x0(b1,
+... ,bn)</TT>&quot; is executed. Invocation fails if &quot;<TT>x</TT>&quot;
+is not a field of &quot;<TT>a</TT>&quot;. If the object &quot;<TT>a</TT>&quot;
+is serialized, the method executes atomically with respect to other methods
+of the object. 
+<H4>Updating and Overriding</H4>
+<TT>a.x:=b</TT><BR>
+<BR>
+If &quot;<TT>x</TT>&quot; is a value or method field of &quot;<TT>a</TT>&quot;,
+its contents are replaced by &quot;<TT>b</TT>&quot;, If &quot;<TT>x</TT>&quot;
+is an alias field for &quot;<TT>x0</TT>&quot; of &quot;<TT>a0</TT>&quot;,
+then &quot;<TT>a0.x0:=b</TT>&quot; is executed. The result value is &quot;<TT>ok</TT>&quot;.
+The operation fails if &quot;<TT>x</TT>&quot; is not a field of &quot;<TT>a</TT>&quot;.
+The operation fails if it is not self-inflicted and &quot;<TT>a</TT>&quot;
+is protected. 
+<H4>Cloning</H4>
+<TT>clone(a1, ... ,an)</TT> for n&gt;=1<BR>
+<BR>
+Provided that all the fields in the &quot;<TT>ai</TT>&quot; have distinct
+names, cloning produces an object whose field names are the union of the
+field names of the &quot;<TT>ai</TT>&quot;, and whose contents are <I>identical</I>
+(section A.2.1) to the contents of the corresponding fields of the &quot;<TT>ai</TT>&quot;.
+The attributes of the resulting object (protection and serialization) are
+the same as the attributes of &quot;<TT>a1</TT>&quot;. Cloning fails if
+one of the &quot;<TT>ai</TT>&quot; is protected. Cloning is not in general
+an atomic operation, but it acts atomically on each &quot;<TT>ai</TT>&quot;
+that is serialized. The operation fails if it is not self-inflicted on all
+the &quot;<TT>ai</TT>&quot;'s that are protected.<BR>
+<H4>Redirection</H4>
+<TT>a1.x1:=alias x2 of a2 end</TT><BR>
+<BR>
+The field &quot;<TT>x1</TT>&quot; of &quot;<TT>a1</TT>&quot; is replaced
+by an alias to the field &quot;<TT>x2</TT>&quot; of &quot;<TT>a2</TT>&quot;,
+whether or not &quot;<TT>x1</TT>&quot; already is aliased. The operation
+fails if &quot;<TT>x2</TT>&quot; is not a field of &quot;<TT>a2</TT>&quot;,
+or if it is not self-inflicted and &quot;<TT>a1</TT>&quot; is protected.
+<BR>
+<BR>
+<TT>redirect a1 to a2 end</TT><BR>
+<BR>
+The fields of &quot;<TT>a1</TT>&quot; are replaced by aliases to the similarly
+named fields of &quot;<TT>a2</TT>&quot;. This is an atomic operation (even
+if &quot;<TT>a1</TT>&quot; is not serialized): either all or none of the
+fields of &quot;<TT>a1</TT>&quot; are replaced by aliases. The operation
+fails if &quot;<TT>a2</TT>&quot; lacks some of the fields of &quot;<TT>a1</TT>&quot;,
+or if it is not self-inflicted and &quot;<TT>a1</TT>&quot; is protected.
+<H3>A.2.7 Protection and Serialization</H3>
+Every object has two attributes that may or may not be enabled: <I>protection</I>
+and <I>serialization</I>. First we need the following definitions; let &quot;<I>op</I>(<TT>o</TT>)&quot;
+be either a select/invoke, update/override, clone, or redirect operation
+on an object &quot;<TT>o</TT>&quot;:<BR>
+<BR>
+The <I>current method</I> of a thread (if it exists) is the last method
+that was invoked during the thread's execution but has not yet returned.
+<BR>
+<BR>
+An object operation &quot;<I>op</I>(<TT>o</TT>)&quot; is <I>self-inflicted</I>
+iff &quot;<TT>o</TT>&quot; is identical to the self of the current method
+(if any).<BR>
+<BR>
+This definition remains valid under circumstances where threads span multiple
+sites, and where object identity tests are to be applied to remote objects.<BR>
+<BR>
+On a <I>protected</I> object, all non self-inflicted update/override, cloning,
+and redirection operations produce errors. Self-inflicted update/override,
+cloning, and redirection, and all selection/invocation operations are allowed.
+Protected objects are declared as follows:<BR>
+<BR>
+<TT>{protected, ... }</TT><BR>
+<BR>
+A <I>serialized</I> object has an associated (implicit) mutex. All non self-inflicted
+operations acquire the mutex on entry, and release it on completion. Self-inflicted
+operations do not affect the mutex. Serialized objects are declared as follows:<BR>
+<BR>
+<TT>{serialized, ... }<BR>
+</TT>
+<H3>A.2.8 Object and Engine Servers</H3>
+The built-in &quot;<TT>net</TT>&quot; library enables the initial network
+transmission of objects and engines, by the mediation of a name server.
+An object can be exported to a name server by saying: <BR>
+<BR>
+<TT>net_export(&quot;obj&quot;, <I>NameServer</I>, o)</TT><BR>
+<BR>
+where &quot;<TT>o</TT>&quot; is the object, &quot;<I><TT>NameServer</TT></I>&quot;
+is a text containing the IP address of the machine running the desired name
+server (&quot;<TT>&quot;&quot;</TT>&quot; is an abbreviation for the local
+machine), and the text &quot;<TT>&quot;obj&quot;</TT>&quot; is the registration
+name for the object. The object is then available through the name server,
+as long as the site that registered it is alive. Registering under an existing
+name overrides the previous registration. . The result of this operation
+is the object &quot;<TT>o</TT>&quot;.<BR>
+<BR>
+Similarly, an engine can be registered with a name server:<BR>
+<BR>
+<TT>net_exportEngine(&quot;eng&quot;, <I>NameServer</I>, arg)</TT><BR>
+<BR>
+where &quot;<TT>arg</TT>&quot; is a value passed to every procedure executed
+by the engine. The result is &quot;<TT>ok</TT>&quot;.<BR>
+<BR>
+At a separate site (or the same site), an object can be imported:<BR>
+<BR>
+<TT>net_import(&quot;obj&quot;, &quot;tsktsk.pa.dec.com&quot;)</TT><BR>
+<BR>
+Now, all object operations can be applied to the resulting remote object.
+<BR>
+<BR>
+Similarly, a registered engine can be imported:<BR>
+<BR>
+<TT>net_importEngine(&quot;eng&quot;, <I>NameServer</I>);</TT><BR>
+<BR>
+The resulting value can be used as a procedure of one argument that, when
+given a procedure of one argument, returns the result of applying that procedure
+to the &quot;<TT>arg</TT>&quot; specified in <TT>&quot;exportEngine&quot;</TT>.<BR>
+<BR>
+Each engine execution takes place in the thread of the client. Hence, sequential
+calls to an engine from a site execute sequentially. But calls from multiple
+sites, or from multiple threads within a site, execute concurrently.<BR>
+<BR>
+The final operation available in the &quot;<TT>net</TT>&quot; library is
+a net inquiry. It can be applied to objects and engines, and returns a string:<BR>
+<BR>
+<TT>net_who(o)</TT><BR>
+<BR>
+Communication failures raise the exception &quot;<TT>net_failure</TT>&quot;.<BR>
+<BR>
+Certain Obliq built-in values make sense only at the local site, and produce
+errors on any attempt to transmit them. These include threads, mutexes,
+conditions, processes, and forms (see appendix C). It is however easy to
+bundle the built-in operations for these values into objects, and then export
+those objects to the network. In the case of forms [Avrahami, Brooks, Brown
+1989], it is possible to transmit a textual form description, and generate
+the form remotely.<BR>
+<BR>
+Readers and writers (appendix B.6.11 and B.6.12) can be transmitted over
+the network; then they operate as efficient network streams. However, their
+usage is significantly restricted [Birrell, <I>et al.</I> 1994]; it is safe
+to transmit each reader/writer only once away from a site, and from then
+on to use it only at the receiving site, where it can be retransmitted with
+the same restrictions. <BR>
+<BR>
+The alternative of packaging readers/writers within network objects is less
+efficient, because buffering is then done at the wrong end. However, such
+packaged readers/writers do not suffer from the usage restrictions above,
+since they are not transmitted. The restrictions are still in effect on
+remote cloning of objects containing readers/writers. But this does not
+interfere with object migration (cloning plus redirection to remote clones),
+as long as the readers/writers are accessed only through methods, so that
+no additional transmissions occur. 
+<H3>A.2.9 Processor and File System Enablers</H3>
+At each site, an <I>enabler</I> for the local processor is bound to the
+predefined, lexically scoped identifier &quot;<TT>processor</TT>&quot;.
+The primitives that start external processes (e.g. Unix processes) require
+a processor enabler as a parameter. Processor enablers cannot be transmitted.<BR>
+<BR>
+At each site, an enabler for the local file system is bound to the predefined,
+lexically scoped identifier &quot;<TT>fileSys</TT>&quot;. Moreover, an enabler
+for a read-only version of the local file system is bound to &quot;<TT>fileSysReader</TT>&quot;.
+The primitives that open files require a file system enabler as a parameter.
+<BR>
+<BR>
+File system enablers can be transmitted; multiple file systems can therefore
+be used at once. Because of lexical scoping, a roaming agent can access
+the file system of its originating site by referring to &quot;<TT>fileSys</TT>&quot;
+or &quot;<TT>fileSysReader</TT>&quot; as a free identifier. <BR>
+<BR>
+Enablers cannot be obtained dynamically, since they are lexically bound.
+Therefore, roaming agents cannot start local processes, nor access local
+file systems, unless local enablers are given to them explicitly as parameters.
+<H2>A.3 Control Structures</H2>
+In this section we describe the Obliq control structures, including procedures
+and methods. 
+<H3>A.3.1 Definitions</H3>
+There are three kinds of definitions binding identifiers to values or locations.
+They can be used either in a local scope or at the top-level.<BR>
+<BR>
+<TT>var x1 = a1, ..., xn = an<BR>
+<BR>
+let x1 = a1, ..., xn = an<BR>
+<BR>
+let rec x1 = p1, ..., xn = pn</TT><BR>
+<BR>
+A &quot;<TT>var</TT>&quot; definition introduces a collection of updatable
+variables and their initial values. A &quot;<TT>let</TT>&quot; definition
+introduces a collection of non-updatable identifiers and their values. A
+&quot;<TT>let&nbsp;rec</TT>&quot; definition introduces a collection of
+mutually recursive procedures. <BR>
+<BR>
+In the first two cases, the terms &quot;<TT>ai</TT>&quot; are all scoped
+in the context outside the definition. In the third case, the procedures
+&quot;<TT>pi</TT>&quot; are scoped in the outside context extended with
+the variables being defined. If variables are multiply defined, the rightmost
+one has precedence.<BR>
+<BR>
+Any of the three forms above can be used at the top-level, followed by a
+semicolon, to establish a top-level binding. See section A.3.3 (sequencing)
+about local scopes. 
+<H3>A.3.2 Assignment</H3>
+Variables introduced by &quot;<TT>var</TT>&quot; denote a storage location
+that can be assigned to:<BR>
+<BR>
+<TT>x := a</TT><BR>
+<BR>
+The result of an assignment is the value &quot;<TT>ok</TT>&quot;. <BR>
+<BR>
+The value contained in the storage location denoted by a variable is accessed
+simply by mentioning the variable.<BR>
+<BR>
+<TT>x := x + 1</TT><BR>
+<BR>
+As discussed in section 4, a variable can be a network reference. 
+<H3>A.3.3 Sequencing</H3>
+A collection of definitions and terms (possibly causing side-effects), can
+be sequentially evaluated by separating the individual components by semicolons:<BR>
+<BR>
+<TT>a1; ...; an</TT><BR>
+<BR>
+A final semicolon may be added.<BR>
+<BR>
+Many syntactic contexts, such as bodies of procedures, accept sequences.
+But other contexts, such as argument lists, require terms. A sequence is
+not a term; it can be turned into a term by enclosing it in parentheses.<BR>
+<BR>
+A sequence can be used to create a local scope, by means of definitions.
+The result of a sequence is the value of its last component. If the last
+component is a definition, then &quot;<TT>ok</TT>&quot; results.<BR>
+<BR>
+<TT>(var x=3; x:=x+1; x)</TT> yields <TT>4<BR>
+</TT>
+<H3>A.3.4 Procedures and Methods</H3>
+Procedures and methods can be manipulated without restrictions: they can
+be passed as arguments, returned as results, and transmitted over the network.
+<BR>
+<BR>
+<TT>proc(x1,...,xn) b end</TT> a procedure term, n&gt;=0<TT><BR>
+<BR>
+meth(s,x1,...,xn) b end</TT> a method term, n&gt;=0<BR>
+<BR>
+A procedure term evaluates to a procedure closure, which is a record of
+the procedure term with the value of its free identifiers in the scope where
+it is evaluated. Similarly, a method term evaluates to a method closure.<BR>
+<BR>
+If the free identifiers of a procedure or method denote entities with state,
+(updatable variables, objects, arrays), and the corresponding closure is
+sent over the network, then the entities with state &quot;stay behind&quot;
+and are accessed over the network when the closure is activated.<BR>
+<BR>
+A procedure closure can be activated by an application that provides the
+correct number of arguments; the value of the body is then returned. A method
+closures must first be installed into an object, and then can be invoked
+via object selection. It must be given the correct number of arguments minus
+the self parameter; the value computed by its body is then returned. In
+all cases, arguments are evaluated from left to right. 
+<H3>A.3.5 Conditionals</H3>
+The syntax of conditional is as shown below. There can be any number of
+&quot;<TT>elsif</TT>&quot; branches, and the &quot;<TT>else</TT>&quot; branch
+may be omitted. The boolean conditions are executed in sequence, and the
+&quot;<TT>then</TT>&quot; branch corresponding to the first &quot;<TT>true</TT>&quot;
+condition is executed; otherwise the &quot;<TT>else</TT>&quot; branch is
+executed (if absent, &quot;<TT>ok</TT>&quot; is returned).<BR>
+<BR>
+<TT>if a1 then a2 elsif a3 then a4 ... else an end</TT><BR>
+<BR>
+The following boolean connectives are particularly useful in the &quot;<TT>if</TT>&quot;
+test of a conditional:<BR>
+<BR>
+<TT>a1 andif a2 (* if a1 then a2 else false end *)<BR>
+<BR>
+a1 orif a2 (* if a1 then true else a2 end *)<BR>
+</TT>
+<H3>A.3.6 Case</H3>
+The syntax of case is as shown below. The &quot;<TT>else</TT>&quot; branch
+may be omitted, and any &quot;<TT>(xi)</TT>&quot; can also be omitted.<BR>
+<BR>
+<TT>case a of y1(x1) =&gt; a1, ..., yn-1(xn-1) =&gt; an-1 else an end </TT><BR>
+<BR>
+The term &quot;<TT>a</TT>&quot; must evaluate to an option value of, say,
+tag t and value v. If t matches one of the &quot;<TT>yi</TT>&quot;, then
+&quot;<TT>ai</TT>&quot; is executed in a scope where &quot;<TT>xi</TT>&quot;
+(if present) is bound to v; the resulting value is the result of the case
+statement. If t does not match any &quot;<TT>yi</TT>&quot;, and the else
+branch is present, then &quot;<TT>an</TT>&quot; is executed and its value
+returned. If t does not match any &quot;<TT>yi</TT>&quot;, and the else
+branch is not present, then an error is reported. 
+<H3>A.3.7 Iteration</H3>
+The &quot;<TT>loop</TT>&quot; statement repeatedly executes its body. The
+&quot;<TT>exit</TT>&quot; statement terminates the execution of the innermost
+loop, and causes it to return the value &quot;<TT>ok</TT>&quot; .<BR>
+<BR>
+<TT>loop a end<BR>
+<BR>
+exit</TT><BR>
+<BR>
+The &quot;<TT>for</TT>&quot; statement introduces a local identifier in
+the scope of its body, and iterates with the identifier ranging from the
+integer lower bound to the integer upper bound in increments of 1. The value
+&quot;<TT>ok</TT>&quot; is returned.<BR>
+<BR>
+<TT>for x = a1 to a2 do a3 end</TT><BR>
+<BR>
+The &quot;<TT>foreach</TT>&quot; statement introduces a local identifier
+in the scope of its body, and iterates with the identifier ranging over
+the elements of an array. In the &quot;<TT>do</TT>&quot; version, the values
+of the individual iterations are discarded, and &quot;<TT>ok</TT>&quot;
+returned. In the &quot;<TT>map</TT>&quot; version, those values are collected
+in an array that is then returned.<BR>
+<BR>
+<TT>foreach x in a1 do a2 end<BR>
+<BR>
+foreach x in a1 map a2 end</TT><BR>
+<BR>
+The &quot;<TT>exit</TT>&quot; statement can be used to terminate the innermost
+&quot;<TT>for</TT>&quot; or &quot;<TT>foreach</TT>&quot; statement. In the
+case of &quot;<TT>map</TT>&quot;, a shortened array is returned containing
+the values of the iterations computed so far. 
+<H3>A.3.8 Concurrency</H3>
+The primitives described in this section are built on top of, and have the
+same semantics as, the Modula-3 threads primitives having similar names
+[Horning, <I>et al.</I> 1993]. The full thread interface is described in
+appendix B.6.10. <BR>
+<BR>
+The &quot;<TT>mutex</TT>&quot; primitive returns a new mutex. The &quot;<TT>lock</TT>&quot;
+statement locks a mutex in a scope, returning the value of its second expression.
+The &quot;<TT>fork</TT>&quot; primitive starts the concurrent execution
+of a procedure of no arguments in a new thread, returning the thread; the
+second parameter is the stack size for the thread, in words (0 defaults
+to a small but non-zero stack size). The &quot;<TT>join</TT>&quot; primitive
+waits for the termination of a thread and returns the value of the procedure
+it executed. The &quot;<TT>pause</TT>&quot; primitive pauses the current
+thread for a number of seconds, expressed as a real number.<BR>
+<BR>
+<TT>mutex()<BR>
+<BR>
+lock a1 do a2 end<BR>
+<BR>
+fork(a1,a2)<BR>
+<BR>
+join(a)<BR>
+<BR>
+pause(a)</TT><BR>
+<BR>
+The &quot;<TT>condition</TT>&quot; primitive returns a new condition. The
+&quot;<TT>signal</TT>&quot; and &quot;<TT>broadcast</TT>&quot; primitives
+wake up one or all threads, respectively, waiting on a condition. The &quot;<TT>wait</TT>&quot;
+primitive unlocks a mutex (first argument) until a condition is signaled
+(second argument), then locks the mutex again.<BR>
+<BR>
+<TT>condition()<BR>
+<BR>
+signal(a)<BR>
+<BR>
+broadcast(a)<BR>
+<BR>
+wait(a1,a2)</TT><BR>
+<BR>
+The &quot;<TT>watch</TT>&quot; statement is specific to serialized objects,
+and operates on their implicit mutex. Thus, it must occur within a method
+of a serialized object. <BR>
+<BR>
+<TT>watch a1 until a2 end</TT><BR>
+<BR>
+Here, &quot;<TT>a1</TT>&quot; is a condition and &quot;<TT>a2</TT>&quot;
+is a boolean expression. This statement waits for &quot;<TT>a2</TT>&quot;
+to become true, and then terminates. Whenever &quot;<TT>a2</TT>&quot; is
+found to be false, the statement waits for &quot;<TT>a1</TT>&quot; to be
+signaled before trying again. The statement is equivalent to &quot;<TT>let
+<I>x</I>=a1; loop if a2 then exit else wait(<I>mu</I>,<I>x</I>) end end</TT>&quot;,
+where &quot;<I><TT>x</TT></I>&quot; does not occur in &quot;<TT>a2</TT>&quot;,
+and &quot;<I><TT>mu</TT></I>&quot; is the implicit mutex of the self of
+the lexically enclosing method. 
+<H3>A.3.9 Exceptions</H3>
+An exception is a special value that, when raised, causes unwinding of the
+execution stack. If the unwinding reaches the top-level, an error message
+is printed.<BR>
+<BR>
+An exception is created from a text string argument, which is the exception
+name. Two exceptions are equal if their names are equal text strings. (Hence,
+an exception can be easily trapped at a site different from the one in which
+it originated.)<BR>
+<BR>
+<TT>exception(a)<BR>
+<BR>
+raise(a)</TT><BR>
+<BR>
+The unwinding of the execution stack caused by an exception can be stopped
+by a try-except statement, and can be temporarily suspended by a try-finally
+statement. The guards of a try-except statement, on the left of &quot;<TT>=&gt;</TT>&quot;,
+must be exception values; if an exception is matched, the corresponding
+branch is executed, otherwise the &quot;<TT>else</TT>&quot; branch is executed.
+A try-finally statement executes &quot;<TT>a1</TT>&quot;, and then executes
+&quot;<TT>a2</TT>&quot; no matter whether &quot;<TT>a1</TT>&quot; raised
+an exception; if it did, the exception is raised again.<BR>
+<BR>
+<TT>try a except a1 =&gt; a2, ..., an-2 =&gt; an-1 else an end <BR>
+<BR>
+try a1 finally a2 end </TT><BR>
+<BR>
+The semantics of try statements with respect to exceptions is the same as
+in Modula-3. In particular, an exception may propagate across sites, while
+unwinding the stack of a given thread. See section A.3.10 for their behavior
+with respect to errors. 
+<H3>A.3.10 Errors</H3>
+Errors, as distinct from exceptions, are produced by built-in operations
+in situations where a logical flaw is judged to exist in a program. These
+situations include divide-by-zero, array overrunning, bad operator arguments,
+and all cases that would produce typechecking errors in typed languages.
+There are no user-defined errors.<BR>
+<BR>
+The occurrence of an error indicates a problem that should be fixed by recoding.
+However, errors are not complete show-stoppers in Obliq. Errors are intercepted
+(1) by the recovery clause of try-finally, after whose execution the error
+is reissued, and (2) by the else clause of a try-except, which can even
+discard the error. This way, for example, a server can log the occurrence
+of an infrequent internal error and restart, or can detect (to some extent)
+errors occurring in client-supplied procedures. Error trapping should not
+be used liberally.<BR>
+<BR>
+Just like exceptions, errors are propagated across sites. Unless something
+is done, an error in a server caused by a client thread will propagate back
+to the client, leaving the server unaffected. 
+<H2>A.4 Methodology</H2>
+<H3>A.4.1 Type Comments</H3>
+Although Obliq is an untyped language, every Obliq program, like any program,
+implicitly respects the type discipline in the programmer's mind. It is
+essential to make this discipline explicit in some way, otherwise programs
+quickly become unreadable and, therefore, unusable.<BR>
+<BR>
+To this end, Obliq supports a stylized form of comments that are intended
+to communicate type information, but without enforcement. These comments
+are parsed according to a fixed grammar, and may appear where types usually
+appear in a typed language: as type definitions and as type specifications
+for identifiers, procedures, and modules. One need write only as much type
+information as is useful and convenient; type comments have no effect after
+parsing. <BR>
+<BR>
+Type comments are used in section B to specify the built-in libraries. Here
+are examples of the syntax of &quot;types&quot; and their intended meaning:<BR>
+<BR>
+<TT>Top</TT>, <TT>Ok</TT>, <TT>Bool</TT>, <TT>Char</TT>, <TT>Text</TT>,
+<TT>Int</TT>, <TT>Real</TT>, <TT>Exception</TT>, <TT>Rd</TT>, <TT>Wr</TT>,
+<TT>Thread(T)</TT>, <TT>Mutex</TT>, <TT>Condition</TT>, <TT>Process</TT>,
+<TT>Color</TT>, <TT>Form</TT><BR>
+<BR>
+~ Conventional type and operator names for the built-in types. &quot;<TT>Top</TT>&quot;
+is the type of all values.<BR>
+<BR>
+<TT>X</TT> ~ A user-defined type (any identifier, capitalized by convention).<BR>
+<BR>
+<TT>X(A1, </TT>...<TT>, An)</TT> ~ A parameterized type, e.g. &quot;<TT>List(Int)</TT>&quot;.<BR>
+<BR>
+<TT>A1 op A2</TT> ~ An infix parameterized type, e.g. &quot;<TT>Int + Bool</TT>&quot;.<BR>
+<BR>
+<TT>[A]</TT> ~ The type of arrays of &quot;<TT>A</TT>&quot;'s.<BR>
+<BR>
+<TT>[n*A]</TT> ~ The type of arrays of &quot;<TT>A</TT>&quot;'s of length
+&quot;<TT>n</TT>&quot; (an int).<BR>
+<BR>
+<TT>(A1, </TT>...<TT>, An)-&gt;A ! exc1 </TT>...<TT> excm</TT> ~ The type
+of procedures of argument types &quot;<TT>Ai</TT>&quot; (n&gt;=0), result
+type &quot;<TT>A</TT>&quot;, and exceptions &quot;<TT>exci</TT>&quot; (where
+&quot;<TT>!</TT> <TT>exc1</TT> ... <TT>excn</TT>&quot; may be omitted).<BR>
+<BR>
+<TT>(A1, </TT>...<TT>, An)=&gt;A ! exc1 </TT>...<TT> excm</TT> ~ The type
+of methods of self type &quot;<TT>A1</TT>&quot;, arg types &quot;<TT>A2</TT>&quot;
+...&quot;<TT>An</TT>&quot; (n&gt;0), result type &quot;<TT>A</TT>&quot;,
+and exceptions &quot;<TT>exci</TT>&quot; (where &quot;<TT>!</TT> <TT>exc1</TT>
+... <TT>excn</TT>&quot; may be omitted). Methods in an object type: &quot;<TT>m:(A2,
+</TT>...<TT>, An)=&gt;A</TT>&quot;. Stand-alone methods: &quot;<TT>All(X&lt;:A)(X,
+A2, </TT>...<TT>, An)=&gt;A</TT>&quot;.<BR>
+<BR>
+<TT>{x1:A1, </TT>...<TT>, xn:An}</TT> ~ The type of objects with components
+named &quot;<TT>xi</TT>&quot; of field type or method type &quot;<TT>Ai</TT>&quot;.
+<BR>
+<BR>
+<TT>Option x1:A1, </TT>...<TT>, xn:An end</TT> ~ The type of options with
+choices named &quot;<TT>xi</TT>&quot; of type &quot;<TT>Ai</TT>&quot;.<BR>
+<BR>
+<TT>Self(X) B{X}</TT> ~ Where &quot;<TT>B{X}</TT>&quot; is an object type
+with possible covariant occurrences of &quot;<TT>X</TT>&quot;. This construction
+is used to give a name (&quot;<TT>X</TT>&quot;) to the type of the methods'
+self (e.g. for objects with methods that return self).<BR>
+<BR>
+<TT>All(X&lt;:A) B{X}</TT> ~ Where &quot;<TT>B{X}</TT>&quot; is any type
+with possible occurrences of &quot;<TT>X</TT>&quot;. This is the type of
+values that, for all subtypes &quot;<TT>A0</TT>&quot; of &quot;<TT>A</TT>&quot;,
+have type &quot;<TT>B{A0}</TT>&quot;. If &quot;<TT>&lt;:A</TT>&quot; is
+omitted, it stands for &quot;<TT>&lt;:Top</TT>&quot;.<BR>
+<BR>
+<TT>Some(X&lt;:A) B{X}</TT> ~ Where &quot;<TT>B{X}</TT>&quot; is any type
+with possible occurrences of &quot;<TT>X</TT>&quot;. This is the type of
+values that, for some (unspecified) subtype &quot;<TT>A0</TT>&quot; of &quot;<TT>A</TT>&quot;,
+have type &quot;<TT>B{A0}</TT>&quot;. If &quot;<TT>&lt;:A</TT>&quot; is
+omitted, it stands for &quot;<TT>&lt;:Top</TT>&quot;.<BR>
+<BR>
+For the last two cases, we say that &quot;<TT>A</TT>&quot; is a subtype
+of &quot;<TT>B</TT>&quot; (&quot;<TT>A&lt;:B</TT>&quot;) if every value
+of type &quot;<TT>A</TT>&quot; is also a value of type &quot;<TT>B</TT>&quot;.<BR>
+<BR>
+Types can be used in the following contexts:<BR>
+<BR>
+<TT>type X = A; </TT><BR>
+<BR>
+A top-level type declaration. &quot;<TT>X</TT>&quot; is bound in the following
+scope, and may occur in &quot;<TT>A</TT>&quot; for a recursive type definition.<BR>
+<BR>
+<TT>type X(X1, </TT>...<TT>, Xn) = A;</TT> <BR>
+<BR>
+A top-level parametric type declaration. The &quot;<TT>Xi</TT>&quot; are
+bound and may occur in &quot;<TT>A</TT>&quot;. &quot;<TT>X</TT>&quot; may
+occur in &quot;<TT>A</TT>&quot;, but only as &quot;<TT>X(X1, .., Xn)</TT>&quot;,
+and in the following scope, but only as &quot;<TT>X(A1, .., An)</TT>&quot;.<BR>
+<BR>
+<TT>let x: A = a;</TT><BR>
+<BR>
+(As opposed to &quot;<TT>let&nbsp;x&nbsp;=&nbsp;a</TT>&quot;.) A type comment
+for a variable &quot;<TT>x</TT>&quot; bound by &quot;<TT>let</TT>&quot;
+(similarly for &quot;<TT>var</TT>&quot;).<BR>
+<BR>
+<TT>proc(x1:A1, </TT>...<TT>, xn:An):A ! exc1 </TT>...<TT> excn , b end
+</TT><BR>
+<BR>
+(As opposed to &quot;<TT>proc(x1, .., xn) b end</TT>&quot;.) A commented
+procedure heading; any of the &quot;<TT>:Ai</TT>&quot;, &quot;<TT>:A</TT>&quot;,
+and &quot;<TT>!</TT> <TT>exc1</TT> ... <TT>excn</TT>&quot; (the exceptions)
+may be omitted. The last &quot;<TT>,</TT>&quot; is required only if the
+result type and/or the exception list is present. Similarly for methods.<BR>
+<BR>
+<TT>{x1:A1=&gt;a1 </TT>...<TT>, xn:An=&gt;an} </TT><BR>
+<BR>
+(As opposed to &quot;<TT>{x1=&gt;a1, .., xn=&gt;an}</TT>&quot;.) A commented
+object; any of the &quot;<TT>:Ai</TT>&quot; may be omitted.<BR>
+<BR>
+<TT>All(X) proc(x:X):X, x end </TT><BR>
+<BR>
+The identity function which, for any argument of any type &quot;<TT>T</TT>&quot;,
+returns its argument.<BR>
+<BR>
+<TT>Some(X) Self(S) {x:X=&gt;0, f:Int=&gt;meth(s:S) s.x+1 end} </TT><BR>
+<BR>
+An element of the &quot;abstract type&quot; &quot;<TT>Some(X)&nbsp;{x:X,&nbsp;f:Int}</TT>&quot;
+with hidden implementation &quot;<TT>X</TT>&quot; = &quot;<TT>Int</TT>&quot;.
+Moreover, &quot;<TT>S</TT>&quot; is used as the type of self. <BR>
+<BR>
+<TT>module M export type A=Int, x:A, f(x:A,y:A):Bool; ... </TT><BR>
+<BR>
+Emphasizing the intended exports of a module, and their types. <BR>
+<BR>
+<TT>rd_open(fs: FileSystem, t: Text): Rd ! rd_failure</TT> <BR>
+<BR>
+Describing the interface of a library routine. <BR>
+<BR>
+The value &quot;<TT>ok</TT>&quot; should be considered as having every type,
+so it can be used to initialize variables. However, its normal type is &quot;<TT>Ok</TT>&quot;.
+<H2>A.5 Lexicon</H2>
+The ASCII characters are divided into the following classes:<BR>
+<BR>
+Blank <I>HT</I> <I>LF</I> <I>FF</I> <I>CR</I> <I>SP</I><BR>
+<BR>
+Reserved &quot; ' ~<BR>
+<BR>
+Delimiter ( ) , . ; [ ] _ { } ? !<BR>
+<BR>
+Special # $ % &amp; * + - / : &lt; = &gt; @ \ ^ |<BR>
+<BR>
+Digit 0 ... 9<BR>
+<BR>
+Letter A ... Z ` a ... z<BR>
+<BR>
+Illegal all the others<BR>
+<BR>
+Moreover, we have the following pseudo-characters:<BR>
+<BR>
+a StringChar is either:<BR>
+<BR>
+- any single character that is not an Illegal character or one of &quot;<TT>'</TT>&quot;,
+&quot;<TT>&quot;</TT>&quot;, &quot;<TT>\</TT>&quot;.<BR>
+<BR>
+- two characters <TT>\<I>c</I></TT>, where <I><TT>c</TT></I> is any character
+that is not Illegal.<BR>
+<BR>
+- four characters <TT>\<I>xxx</I></TT>, where <I><TT>xxx</TT></I> is an
+octal number less than 256.<BR>
+<BR>
+a Comment is, recursively, a sequence of non-Illegal characters and comments,<BR>
+<BR>
+enclosed between &quot;(<TT>*</TT>&quot; and &quot;<TT>*)</TT>&quot;.<BR>
+<BR>
+an EndOfFile is a fictitious character following the last character in a
+file or stream.<BR>
+<BR>
+The following <I>lexemes</I> are formed from characters and pseudo-characters:<BR>
+<BR>
+Space a sequence of Blanks and Comments.<BR>
+<BR>
+AlphaNum a sequence of Letters and Digits starting with a Letter.<BR>
+<BR>
+Symbol a sequence of Specials.<BR>
+<BR>
+Char a single StringChar enclosed between two &quot;<TT>'</TT>&quot;.<BR>
+<BR>
+String a sequence of StringChars enclosed between two &quot;<TT>&quot;</TT>&quot;.<BR>
+<BR>
+Nat a sequence of Digits<BR>
+<BR>
+Int a Nat, possibly preceded by a single minus sign &quot;<TT>~</TT>&quot;.<BR>
+<BR>
+Real an Int, and either: an &quot;e&quot; and an Int; or a &quot;.&quot;,
+an optional Nat, <BR>
+<BR>
+and optionally an &quot;e&quot; and an Int.<BR>
+<BR>
+Delimiter a single Delimiter character.<BR>
+<BR>
+EndOfFile a single EndOfFile pseudo-character.<BR>
+<BR>
+A stream of characters is divided into lexemes by always extracting the
+longest prefix that is a lexeme. Note that Delimiters do not stick to each
+other or to other tokens even when they are not separated by Space, but
+some care must be taken so that Symbols are not inadvertently merged.<BR>
+<BR>
+A lexical <I>token</I> is one of: Char, String, Int, Real, Delimiter, Identifier,
+Keyword, or EndOfFile. Once a stream of characters has been split into lexemes,
+tokens are extracted as follows. <BR>
+<BR>
+Space lexemes do not produce tokens.<BR>
+<BR>
+Char, String, Int, Real, Delimiter, and EndOfFile lexemes are also tokens.<BR>
+<BR>
+AlphaNum and Symbol lexemes are Identifier tokens, <BR>
+<BR>
+except when they have been declared to be <I>keywords</I> (see A.6),<BR>
+<BR>
+in which case they are Keyword tokens. 
+<H2>A.6 Syntax</H2>
+The grammar shown below is LL(1) and non-left-recursive. It is adapted,
+with minor editing, from the Obliq metaparser input. See A.5 for the definition
+of lexical tokens.<BR>
+<BR>
+Terminals are in double quotes &quot;&quot;&quot;. Non-terminals are declared
+by &quot;::=&quot;, followed by a grammar. Grammars have the following structure:<BR>
+<BR>
+{ g1 .. gn } is a (left-to-right) choice of grammars gi.<BR>
+<BR>
+[ g1 .. gn ] is a sequence of grammars gi.<BR>
+<BR>
+(g1 * g2) is g1 followed by zero or more g2's, associating to the left.<BR>
+<BR>
+(g) is grouping.<BR>
+<BR>
+ide recognizes an Identifier token<BR>
+<BR>
+name recognizes an Identifier or Keyword token<BR>
+<BR>
+char recognizes a Char token<BR>
+<BR>
+string recognizes a String token<BR>
+<BR>
+int recognizes an Int token<BR>
+<BR>
+real recognizes a Real token<BR>
+<BR>
+EOF recognizes an EndOfFile token<BR>
+<BR>
+&quot;...&quot; where &quot;...&quot; is a Delimiter token: recognizes that
+Delimiter token<BR>
+<BR>
+&quot;~...&quot; where &quot;...&quot; is an Identifier token: recognizes
+that Identifier token<BR>
+<BR>
+&quot;...&quot; where &quot;...&quot; is an Identifier token: declares that
+identifier to be a keyword <BR>
+<BR>
+and recognizes that Keyword token<BR>
+<BR>
+The Obliq top-level syntax is an open-ended sequence of the non-terminal
+&quot;phrase&quot;:<BR>
+<BR>
+<TT>phrase ::=<BR>
+<BR>
+{ &quot;;&quot; <BR>
+<BR>
+[ &quot;~quit&quot; &quot;;&quot; ]<BR>
+<BR>
+[ &quot;~help&quot; { name string [] } { name string [] } &quot;;&quot;
+]<BR>
+<BR>
+[ &quot;~flag&quot; { name string [] } { name string [] } &quot;;&quot;
+]<BR>
+<BR>
+[ typDecl &quot;;&quot; ]<BR>
+<BR>
+[ term { [ &quot;!&quot; { int [] } ] [] } &quot;;&quot; ]<BR>
+<BR>
+[ &quot;load&quot; { name string } &quot;;&quot; ]<BR>
+<BR>
+[ &quot;import&quot; name &quot;;&quot; ]<BR>
+<BR>
+[ &quot;module&quot; name { [ &quot;for&quot; name ] [] } <BR>
+<BR>
+{ [ &quot;import&quot; importList ] [] } { [ &quot;export&quot; exportList
+] [] } &quot;;&quot; ]<BR>
+<BR>
+[ &quot;end&quot; &quot;module&quot; &quot;;&quot; ]<BR>
+<BR>
+[ &quot;~establish&quot; name { [ &quot;for&quot; name ] [] } &quot;;&quot;
+] (* reserved *)<BR>
+<BR>
+[ &quot;~delete&quot; name &quot;;&quot; ] (* reserved *)<BR>
+<BR>
+[ &quot;~save&quot; name &quot;;&quot; ] (* reserved *)<BR>
+<BR>
+[ &quot;~qualify&quot; &quot;;&quot; ] (* reserved *)<BR>
+<BR>
+EOF }<BR>
+<BR>
+importList ::=<BR>
+<BR>
+{ [ name { [ &quot;,&quot; importList ] [] } ] [] }<BR>
+<BR>
+exportList ::=<BR>
+<BR>
+{ [ typDecl { [ &quot;,&quot; exportList ] [] } ] [ procDecl { [ &quot;,&quot;
+exportList ] [] } ] [] }<BR>
+<BR>
+typDecl ::=<BR>
+<BR>
+[ &quot;type&quot; name { typParams [] } &quot;=&quot; typ ]<BR>
+<BR>
+typ ::=<BR>
+<BR>
+{ [ &quot;(&quot; typList &quot;)&quot; { [ &quot;-&gt;&quot; typ excSpec
+] [ &quot;=&gt;&quot; typ excSpec ] [] } ]<BR>
+<BR>
+[ &quot;Option&quot; typFields &quot;end&quot; ]<BR>
+<BR>
+[ &quot;{&quot; typFields &quot;}&quot; ]<BR>
+<BR>
+[ &quot;[&quot; { [ int &quot;~*&quot; ] [] } typ &quot;]&quot; ]<BR>
+<BR>
+[ &quot;All&quot; &quot;(&quot; name { [ &quot;&lt;:&quot; typ ] [] } &quot;)&quot;
+typ ]<BR>
+<BR>
+[ &quot;Some&quot; &quot;(&quot; name { [ &quot;&lt;:&quot; typ ] [] } &quot;)&quot;
+typ ]<BR>
+<BR>
+[ &quot;Self&quot; &quot;(&quot; name &quot;)&quot; typ ]<BR>
+<BR>
+[ name { [ &quot;_&quot; name { typParams [] } ] typParams [] } ] }<BR>
+<BR>
+typParams ::=<BR>
+<BR>
+[ &quot;(&quot; typNameList &quot;)&quot; ]<BR>
+<BR>
+typNameList ::=<BR>
+<BR>
+{ [ name { [ &quot;,&quot; typList ] [] } ] [] }<BR>
+<BR>
+typList ::=<BR>
+<BR>
+{ [ typ { [ &quot;,&quot; typList ] [] } ] [] }<BR>
+<BR>
+typFields ::=<BR>
+<BR>
+{ [ name &quot;:&quot; typ { [ &quot;,&quot; typFields ] [] } ] [] }<BR>
+<BR>
+typSpec ::=<BR>
+<BR>
+{ [ &quot;:&quot; typ ] [] }<BR>
+<BR>
+excSpec ::=<BR>
+<BR>
+{ [ &quot;!&quot; excList ] [] }<BR>
+<BR>
+typResSpec ::=<BR>
+<BR>
+{ [ &quot;:&quot; typ { [ &quot;!&quot; excList ] [] } ] [ &quot;!&quot;
+excList ] }<BR>
+<BR>
+excList ::=<BR>
+<BR>
+{ [ name { [ &quot;_&quot; name ] } excList ] [] }<BR>
+<BR>
+procDecl ::=<BR>
+<BR>
+{ [ { &quot;All&quot; &quot;Some&quot; } &quot;(&quot; name { typBound []
+} &quot;)&quot; procDecl ]<BR>
+<BR>
+[ name { [ &quot;:&quot; typ ] [ &quot;(&quot; ideList &quot;)&quot; typResSpec
+] [] } ] }<BR>
+<BR>
+termBinding ::=<BR>
+<BR>
+{ [ ide typSpec &quot;=&quot; term { [ &quot;,&quot; termBinding ] [] }
+] [] }<BR>
+<BR>
+termSeq ::=<BR>
+<BR>
+[ term { [ &quot;;&quot; { termSeq [] } ] [] } ] <BR>
+<BR>
+termSeqOpt ::=<BR>
+<BR>
+{ termSeq [] }<BR>
+<BR>
+term ::=<BR>
+<BR>
+( termBase *<BR>
+<BR>
+{ [ &quot;(&quot; termList &quot;)&quot; ] <BR>
+<BR>
+[ &quot;_&quot; name { [ &quot;(&quot; termList &quot;)&quot; ] [] } ] <BR>
+<BR>
+[ &quot;.&quot; name { [ &quot;:=&quot; termOrAlias ] [ &quot;(&quot; termList
+&quot;)&quot; ] [] } ] <BR>
+<BR>
+[ &quot;:=&quot; term ] <BR>
+<BR>
+[ &quot;[&quot; term <BR>
+<BR>
+{ [ &quot;]&quot; { [ &quot;:=&quot; term ] [] } ] <BR>
+<BR>
+[ &quot;for&quot; term &quot;]&quot; { [ &quot;:=&quot; term ] [] } ] }
+] <BR>
+<BR>
+[ ide term ] <BR>
+<BR>
+[ &quot;andif&quot; term ] <BR>
+<BR>
+[ &quot;orif&quot; term ] } )<BR>
+<BR>
+termBase ::=<BR>
+<BR>
+{ <BR>
+<BR>
+[ &quot;~-&quot; term ]<BR>
+<BR>
+ide<BR>
+<BR>
+{ &quot;ok&quot; &quot;true&quot; &quot;false&quot; char string int real
+}<BR>
+<BR>
+[ &quot;[&quot; termList &quot;]&quot; ]<BR>
+<BR>
+[ &quot;{&quot; { [ &quot;protected&quot; { &quot;,&quot; [] } ] [] } {
+[ &quot;serialized&quot; { &quot;,&quot; [] } ] [] }<BR>
+<BR>
+termObjFields &quot;}&quot; ]<BR>
+<BR>
+[ &quot;option&quot; name typSpec &quot;=&gt;&quot; termSeqOpt &quot;end&quot;
+]<BR>
+<BR>
+[ &quot;clone&quot; &quot;(&quot; termList &quot;)&quot; ]<BR>
+<BR>
+[ &quot;redirect&quot; termSeq &quot;to&quot; termSeq &quot;end&quot; ]<BR>
+<BR>
+[ &quot;proc&quot; &quot;(&quot; ideList &quot;)&quot; { [ typResSpec &quot;,&quot;
+] [] } termSeqOpt &quot;end&quot; ]<BR>
+<BR>
+[ &quot;meth&quot; &quot;(&quot; ideList &quot;)&quot; { [ typResSpec &quot;,&quot;
+] [] } termSeqOpt &quot;end&quot; ]<BR>
+<BR>
+[ &quot;(&quot; termSeqOpt &quot;)&quot; ]<BR>
+<BR>
+[ &quot;let&quot; { [ &quot;rec&quot; termBinding ] termBinding } ]<BR>
+<BR>
+[ &quot;var&quot; { [ &quot;rec&quot; termBinding ] termBinding } ]<BR>
+<BR>
+[ &quot;if&quot; termSeq &quot;then&quot; termSeqOpt termElsif ]<BR>
+<BR>
+[ &quot;case&quot; termSeq &quot;of&quot; termCaseList ]<BR>
+<BR>
+[ &quot;loop&quot; termSeqOpt &quot;end&quot; ]<BR>
+<BR>
+&quot;exit&quot;<BR>
+<BR>
+[ &quot;for&quot; ide typSpec &quot;=&quot; term &quot;to&quot; term &quot;do&quot;
+termSeqOpt &quot;end&quot; ]<BR>
+<BR>
+[ &quot;foreach&quot; ide typSpec &quot;in&quot; term { [ &quot;do&quot;
+termSeqOpt ] [ &quot;map&quot; termSeqOpt ] } &quot;end&quot; ]<BR>
+<BR>
+[ &quot;exception&quot; &quot;(&quot; term &quot;)&quot; ]<BR>
+<BR>
+[ &quot;raise&quot; &quot;(&quot; term &quot;)&quot; ]<BR>
+<BR>
+[ &quot;try&quot; termSeqOpt <BR>
+<BR>
+{ [ &quot;except&quot; termTryList &quot;end&quot; ] <BR>
+<BR>
+[ &quot;else&quot; termSeqOpt &quot;end&quot; ] <BR>
+<BR>
+[ &quot;finally&quot; termSeqOpt &quot;end&quot; ] } ]<BR>
+<BR>
+[ &quot;lock&quot; termSeq &quot;do&quot; termSeqOpt &quot;end&quot; ]<BR>
+<BR>
+[ &quot;watch&quot; termSeq &quot;until&quot; termSeq &quot;end&quot; ]<BR>
+<BR>
+[ &quot;All&quot; &quot;(&quot; name { [ &quot;&lt;:&quot; typ ] [] } &quot;)&quot;
+term ]<BR>
+<BR>
+[ &quot;Some&quot; &quot;(&quot; name { [ &quot;&lt;:&quot; typ ] [] } &quot;)&quot;
+term ]<BR>
+<BR>
+[ &quot;Self&quot; &quot;(&quot; name &quot;)&quot; term ]<BR>
+<BR>
+}<BR>
+<BR>
+termOrAlias ::=<BR>
+<BR>
+{ term [ &quot;alias&quot; ide &quot;of&quot; termSeq &quot;end&quot; ]
+}<BR>
+<BR>
+termObjFields ::=<BR>
+<BR>
+{ [ name typSpec &quot;=&gt;&quot; termOrAlias { [ &quot;,&quot; termObjFields
+] [] } ] [] }<BR>
+<BR>
+termElsif ::=<BR>
+<BR>
+{ [ &quot;end&quot; ]<BR>
+<BR>
+[ &quot;else&quot; termSeqOpt &quot;end&quot; ]<BR>
+<BR>
+[ &quot;elsif&quot; termSeq &quot;then&quot; termSeqOpt termElsif ] }<BR>
+<BR>
+termList ::=<BR>
+<BR>
+{ [ term { [ &quot;,&quot; termList ] [] } ] [] }<BR>
+<BR>
+ideList ::=<BR>
+<BR>
+{ [ ide typSpec { [ &quot;,&quot; ideList ] [] } ] [] }<BR>
+<BR>
+termCaseListEnd ::=<BR>
+<BR>
+{ &quot;end&quot; [ &quot;else&quot; termSeqOpt &quot;end&quot; ] }<BR>
+<BR>
+termCaseList ::=<BR>
+<BR>
+{ termCaseListEnd <BR>
+<BR>
+[ name <BR>
+<BR>
+{ [ &quot;(&quot; ide typSpec &quot;)&quot; &quot;=&gt;&quot; termSeqOpt
+{ [ &quot;,&quot; termCaseList ] termCaseListEnd } ]<BR>
+<BR>
+[ &quot;=&gt;&quot; termSeqOpt { [ &quot;,&quot; termCaseList ] termCaseListEnd
+} ] } ] }<BR>
+<BR>
+termTryList ::=<BR>
+<BR>
+{ [ &quot;else&quot; termSeqOpt ] <BR>
+<BR>
+[ term &quot;=&gt;&quot; termSeqOpt { [ &quot;,&quot; termTryList ] [ &quot;else&quot;
+termSeqOpt ] [] } ]<BR>
+<BR>
+[] }</TT> 
+<H1>B. System Reference</H1>
+This section contains information about running Obliq executables, handling
+source files, and using built-in libraries. 
+<H2>B.1 The Executables</H2>
+The &quot;<TT>obliq</TT>&quot; Unix shell command is a script that runs
+one of several versions of Obliq linked with different Modula-3 libraries,
+providing different built-in Obliq libraries. Network capabilities are supported
+in all versions of Obliq. <BR>
+<BR>
+Here are the executables currently provided, along with the supported built-in
+libraries:<BR>
+<BR>
+<TT>obliq -min</TT> (array, ascii, bool, int, math, net, real, sys, text)
+&quot;minimal&quot; obliq<BR>
+<BR>
+<TT>obliq -std</TT> (min + rd, wr, lex, fmt, pickle, process, thread) &quot;standard&quot;
+obliq<BR>
+<BR>
+<TT>obliq -ui</TT> (std + color, form) &quot;windows&quot; obliq<BR>
+<BR>
+<TT>obliq -anim</TT> (ui + graph, zeus) &quot;animation&quot; obliq<BR>
+<BR>
+By default, &quot;<TT>obliq</TT>&quot; means &quot;<TT>obliq -std</TT>&quot;.<BR>
+<BR>
+The reason for these separate versions is that the size of the binaries
+varies greatly depending on how many libraries are linked. The size affects
+linking time, startup-time, and paging behavior. <BR>
+<BR>
+A typical Obliq network server needs to be only an &quot;<TT>obliq -min</TT>&quot;
+or an &quot;<TT>obliq -std</TT>&quot;. An Obliq network client will often
+be an &quot;<TT>obliq -ui</TT>&quot;. 
+<H2>B.2 The Top-Level</H2>
+The &quot;<TT>obliq</TT>&quot; program, when executed, enters an interactive
+evaluation loop, which can be exited by typing Control-D or &quot;<TT>quit;</TT>&quot;.
+At the prompt, &quot;<TT>- </TT>&quot;, the user can input a <I>phrase</I>,
+which is always terminated by a semicolon &quot;<TT>;</TT>&quot;. The first
+phrase to try out is probably:<BR>
+<BR>
+<TT>- help;</TT><BR>
+<BR>
+which provides basic on-line help on various aspects of the system.<BR>
+<BR>
+The most common kind of input phrase is a <I>term phrase</I>, which causes
+the parsing, evaluation, and printing of the result of an expression. Examples
+of term phrases (and comments) are:<BR>
+<BR>
+<TT>- 3+4; (* question *)<BR>
+<BR>
+7 (* answer *)<BR>
+<BR>
+- &quot;this is&quot; &amp; &quot; a single text&quot;; (* text concatenation
+*)<BR>
+<BR>
+&quot;this is a single text&quot;<BR>
+<BR>
+- 3 is 4; (* identity test *)<BR>
+<BR>
+false<BR>
+<BR>
+</TT><I>Definition phrases</I> are used to bind identifiers to values in
+the top-level scope. One can use &quot;<TT>var</TT>&quot; for binding values
+to updatable variables, &quot;<TT>let</TT>&quot; for binding values, including
+procedures, to constant identifiers, and &quot;<TT>let rec</TT>&quot; for
+defining recursive procedures. <BR>
+<BR>
+<TT>- var x = 3;<BR>
+<BR>
+- x := x+1;<BR>
+<BR>
+- let y = x+1;<BR>
+<BR>
+- let rec fact =<BR>
+<BR>
+proc(n)<BR>
+<BR>
+if n is 0 then 1 else n * fact(n-1) end<BR>
+<BR>
+end;</TT><BR>
+<BR>
+The Obliq top-level is statically scoped, just like the rest of the language.
+Hence, redefining an identifier at the top-level simply hides its previous
+incarnation and does not affect terms that already refer to it.<BR>
+<BR>
+When a top-level phrase finishes executing, the interpreter pretty-prints
+the result up to a small default depth, printing ellipses after that depth.
+One can require a larger (but finite) print depth by inserting an exclamation
+mark before the final semicolon of a phrase; for example: &quot;<TT>fact!;</TT>&quot;.
+This larger default depth is sufficient in most situations. Otherwise, a
+given print depth &quot;<TT>n</TT>&quot; can be forced by saying &quot;<TT>fact!n;</TT>&quot;.<BR>
+<BR>
+Closures are printed by printing their program text only. If there are global
+variables, these are indicated by &quot;<TT>global(x1,...,xn)</TT>&quot;
+followed by the program text. To print the values of global variables, see
+&quot;<TT>help flags;</TT>&quot;. 
+<H2>B.3 Program Files</H2>
+Obliq programs should be stored in files with extension &quot;<TT>.obl</TT>&quot;.
+Such files may contain any sequence of top-level phrases. Files can then
+be loaded into the system, with the same effect as if they were typed in
+at the top-level.<BR>
+<BR>
+The top-level phrase:<BR>
+<BR>
+<TT>- load Foo;</TT><BR>
+<BR>
+attempts to load the file &quot;<TT>Foo.obl</TT>&quot; along the current
+search path. Alternatively, one can use an explicit text string containing
+a file name (relative to the current search path), or an explicit file path:<BR>
+<BR>
+<TT>- load &quot;Foo.obl&quot;;<BR>
+<BR>
+- load &quot;/udir/luca/Foo.obl&quot;;</TT><BR>
+<BR>
+The search path for loading is set by the environment variable OBLIQPATH,
+and can be changed via the &quot;<TT>sys</TT>&quot; built-in library (see
+B.6.1, or &quot;<TT>help sys;</TT>&quot;).<BR>
+<BR>
+At startup time, the Obliq system looks for a file called &quot;<TT>.obliq</TT>&quot;
+in the user's HOME directory, and loads it if it finds it. 
+<H2>B.4 Modules</H2>
+Obliq modules are used for: (1) organizing, loading, and reloading collections
+of definitions, and (2) for turning collections of definitions into libraries,
+so that qualified names can be used for the defined identifiers. Modules
+neither hide nor create scopes, except for turning identifiers into qualified
+identifiers when a module is closed.<BR>
+<BR>
+An Obliq source file should normally contain a single module. But, in general,
+multiple modules can be stored in the same file, and modules can also be
+entered directly at the top-level. Both the top-level and the source files
+may contain definitions that are not grouped into modules.<BR>
+<BR>
+Modules can be used to record source file dependencies: when loading a module,
+the dependent modules are automatically loaded while avoiding duplicated
+loading. Modules also help keep the top-level consistent when reloading,
+for example after a bug fix. Reloading a module is like rolling back in
+time to the point when the module was first loaded: all intervening top-level
+definitions are discarded before the module is reloaded. <BR>
+<BR>
+It is recommended that a program file <TT>Foo.obl</TT> start with the line:<BR>
+<BR>
+<TT>module Foo;</TT><BR>
+<BR>
+and end with the line:<BR>
+<BR>
+<TT>end module;</TT><BR>
+<BR>
+A module named &quot;<TT>Foo</TT>&quot; terminating with &quot;<TT>end module;</TT>&quot;
+is said to be <I>closed</I>. Closing &quot;<TT>Foo</TT>&quot; means erasing
+its definitions from the current scope, and adding back a library named
+&quot;<TT>Foo</TT>&quot; containing those definitions. Hence, any top-level
+identifier &quot;<TT>x</TT>&quot; declared within &quot;<TT>Foo</TT>&quot;
+is accessible as &quot;<TT>Foo_x</TT>&quot; after closing. (The syntax &quot;<TT>m</TT>_<TT>x</TT>&quot;
+is the same as for the built-in libraries.)<BR>
+<BR>
+If &quot;<TT>end module;</TT>&quot; is omitted, the module is said to be
+<I>open</I>: its identifiers are accessible simply as &quot;<TT>x</TT>&quot;.
+Closed modules should be the norm, but open modules are useful for importing
+definitions into the top level, and for allowing pervasive unqualified definitions.<BR>
+<BR>
+If a module &quot;<TT>Foo</TT>&quot; relies on definitions stored in other
+program files (which should similarly start with &quot;<TT>module</TT>&quot;
+lines), then &quot;<TT>Foo</TT>&quot; can begin with the line:<BR>
+<BR>
+<TT>module Foo import Foo2,Foo3;</TT><BR>
+<BR>
+The way the imported definitions are used within &quot;<TT>Foo</TT>&quot;
+depends on whether the imported modules are open or closed.<BR>
+<BR>
+When issuing the top-level command &quot;<TT>load Foo;</TT>&quot;, the module
+declaration above guarantees two properties: (1) if the modules <TT>Foo2</TT>
+and <TT>Foo3</TT> have not been loaded already, they are loaded before <TT>Foo</TT>
+is loaded; (2) if the module <TT>Foo</TT> is already loaded, <TT>Foo</TT>
+and all the modules that were loaded after it are erased from the top level
+before reloading <TT>Foo</TT>. This roll-back affects only the top-level
+definition environment: it does not undo state changes.<BR>
+<BR>
+The form &quot;<TT>module Foo for L</TT> ...&quot; indicates a collection
+of definitions named &quot;<TT>Foo</TT>&quot; that generates a library named
+&quot;<TT>L</TT>&quot; (instead of the default &quot;<TT>Foo</TT>&quot;)
+when the module is closed. Module names are unique at the top level (any
+repetition triggers roll-back), but library names can be repeated. When
+multiple modules generate the same library &quot;<TT>L</TT>&quot;, their
+definitions are merged, with the latter ones taking precedence. Using this
+mechanism, it is possible to add definitions to built-in libraries, for
+example by &quot;<TT>module text2 for text;</TT>&quot;. 
+<H2>B.5 The Network Objects Daemon</H2>
+A name server must be running before &quot;<TT>net_export</TT>&quot; and
+similar operations can work. Obliq uses the name server provided with Modula-3
+Network Objects [Birrell, <I>et al.</I> 1994], it can be started by the
+Unix command &quot;<TT>netobjd</TT>&quot;.<BR>
+<BR>
+To start a name server on your machine every time the Obliq interpreter
+starts, put the following line in the &quot;<TT>.obliq</TT>&quot; file in
+your home directory (make sure the &quot;<TT>netobjd</TT>&quot; path is
+appropriate):<BR>
+<BR>
+<TT>process_new(processor, [&quot;/proj/mips/bin/netobjd&quot;], true);</TT><BR>
+<BR>
+The server process exits if it finds another copy of itself already running.<BR>
+<BR>
+Note that objects and engines exported via the &quot;<TT>net</TT>&quot;
+interface are not inherent security risks, even when they blindly execute
+client code. The operating system and file system of a server site are not
+necessarily available (see section A.2.9); lexical scoping prevents any
+unauthorized access. 
+<H2>B.6 Built-in Libraries</H2>
+In this appendix we list the Obliq built-in libraries, many of which are
+entry points into popular Modula-3 libraries [Horning, <I>et al.</I> 1993].
+We use an informal typing notation in the specification of the operations,
+including a specification of the exceptions that may be raised (see section
+A.4.1). Many operations raise errors as well, but these are not made explicit.<BR>
+<BR>
+We use the type comments of section A.4.1; all the exception conditions
+are documented, but the more obvious error conditions are not. We often
+provide informal English descriptions of the operations. For details of
+some operations one should look at the specification of the respective Modula-3
+interfaces [Horning, <I>et al.</I> 1993].<BR>
+<BR>
+The &quot;<TT>sys</TT>&quot; library is special: it contains entry points
+into the implementation of Obliq and its computing environment. 
+<H3>B.6.1 Sys</H3>
+<TT>All(T)<B>sys_copy</B>(x: T): T ! net_failure </TT>~ (also &quot;<TT>copy(x)</TT>&quot;)<TT>
+</TT>Make a local copy of a value, including most distributed values.<TT><BR>
+<BR>
+All(T)<B>sys_print</B>(x: T, depth: Int): Ok</TT> ~ Print an arbitrary value
+to stdout, up to some print depth. (Only available on-line.)<B><TT><BR>
+<BR>
+sys_printText</TT></B><TT>(t: Text): Ok </TT>~ Print a text to stdout. (Only
+available on-line.)<B><TT><BR>
+<BR>
+sys_printFlush</TT></B><TT>(): Ok </TT>~ Flush stdout. (Only available on-line.)<B><TT><BR>
+<BR>
+sys_pushSilence</TT></B><TT>(): Ok </TT>~ Push the silence stack; when non-empty
+nothing is printed. (Only available on-line.)<B><TT><BR>
+<BR>
+sys_popSilence</TT></B><TT>(): Ok </TT>~ Pop the silence stack (no-op on
+empty stack). (Only available on-line.)<B><TT><BR>
+<BR>
+sys_setPrompt</TT></B><TT>(first: Text, next: Text): Ok </TT>~ Set the interactive
+prompts (defaults: first=&quot;&quot;- &quot;&quot;, next=&quot;&quot;&nbsp;&nbsp;&quot;&quot;).
+(Only available on-line.)<B><TT><BR>
+<BR>
+sys_address</TT></B><TT>: Text</TT> ~ The current machine's network address.
+<B><TT><BR>
+<BR>
+sys_getSearchPath</TT></B><TT>(): Text</TT> ~ Get the current search path
+for &quot;<TT>load</TT>&quot; and such. (Only available on-line.)<B><TT><BR>
+<BR>
+sys_setSearchPath</TT></B><TT>(t: Text): Ok </TT>~ Set the current search
+path for &quot;<TT>load</TT>&quot; and such. (Only available on-line.)<B><TT><BR>
+<BR>
+sys_getEnvVar</TT></B><TT>(t: Text): Text </TT>~ Return the value of the
+env variable whose name is <TT>t</TT>, or &quot;<TT>&quot;&quot;</TT>&quot;
+if there is no such variable.<B><TT><BR>
+<BR>
+sys_paramCount</TT></B><TT>: Int </TT>~ The number of program parameters.<B><TT><BR>
+<BR>
+sys_getParam</TT></B><TT>(n: Int): Text </TT>~ Return the n-th program parameter
+(indexed from 0).<B><TT><BR>
+<BR>
+sys_callFailure</TT></B><TT>: Exception </TT>~ Can be raised by Modula-3
+code during a sys_call.<TT><BR>
+<BR>
+Some(T)Some(U)<B>sys_call</B>(name: Text, args: [T]): U ! sys_callFailure
+<BR>
+<BR>
+</TT>~ Call a pre-registered Modula-3 procedure.<BR>
+<H3>B.6.2 Bool</H3>
+<B><TT>true</TT></B><TT>: Bool</TT> ~ The constant true.<B><TT><BR>
+<BR>
+false</TT></B><TT>: Bool</TT> ~ The constant false.<TT><BR>
+<BR>
+All(T)All(U)<B>bool_is</B>(x: T, y: U): Bool</TT> ~ (also infix &quot;<TT>is</TT>&quot;)<TT>
+</TT>Identity predicate: value equality for Ok, Bool, Int, Real, Char, Text,
+Exception; pointer equality otherwise.<TT><BR>
+<BR>
+All(T)All(U)<B>bool_isnot</B>(x: T, y: U): Bool</TT> ~ (also infix &quot;<TT>isnot</TT>&quot;)<TT>
+</TT>Negation of &quot;<TT>is</TT>&quot;.<B><TT><BR>
+<BR>
+bool_not</TT></B><TT>(b: Bool): Bool</TT> ~ (also &quot;<TT>not(b)</TT>&quot;)<B><TT><BR>
+<BR>
+bool_and</TT></B><TT>(b1: Bool, b2: Bool): Bool</TT> ~ (also infix &quot;<TT>and</TT>&quot;)<B><TT><BR>
+<BR>
+bool_or</TT></B><TT>(b1: Bool, b2: Bool): Bool</TT> ~ (also infix &quot;<TT>or</TT>&quot;)<BR>
+<H3>B.6.3 Int</H3>
+<B><TT>n</TT></B><TT>: Int</TT> ~ Positive integer constants.<B><TT><BR>
+<BR>
+~n</TT></B><TT>: Int</TT> ~ Negative integer constants.<B><TT><BR>
+<BR>
+int_minus</TT></B><TT>(n: Int): Int</TT> ~ Integer negation.<B><TT><BR>
+<BR>
+int_+</TT></B><TT>(n1: Int, n2: Int): Int</TT> ~ Integer addition.<B><TT><BR>
+<BR>
+int_-</TT></B><TT>(n1: Int, n2: Int): Int</TT> ~ Integer difference.<B><TT><BR>
+<BR>
+int_*</TT></B><TT>(n1: Int, n2: Int): Int</TT> ~ Integer multiplication.<B><TT><BR>
+<BR>
+int_/</TT></B><TT>(n1: Int, n2: Int): Int </TT>~ Integer division.<B><TT><BR>
+<BR>
+int_%</TT></B><TT>(n1: Int, n2: Int): Int</TT> ~ (also infix &quot;<TT>%</TT>&quot;)<TT>
+</TT>Integer modulo.<B><TT><BR>
+<BR>
+int_&lt;</TT></B><TT>(n1: Int, n2: Int): Bool</TT> ~ Integer less-than predicate.<B><TT><BR>
+<BR>
+int_&gt;</TT></B><TT>(n1: Int, n2: Int): Bool</TT> ~ Integer greater-than
+predicate.<B><TT><BR>
+<BR>
+int_&lt;=</TT></B><TT>(n1: Int, n2: Int): Bool</TT> ~ Integer no-greater-than
+predicate.<B><TT><BR>
+<BR>
+int_&gt;=</TT></B><TT>(n1: Int, n2: Int): Bool</TT> ~ Integer no-less-than
+predicate.<BR>
+<H3>B.6.4 Real</H3>
+<B><TT>n.m</TT></B><TT>: Int</TT> ~ Positive real constants; m is optional.<B><TT><BR>
+<BR>
+~n.m</TT></B><TT>: Int</TT> ~ Negative real constants; m is optional.<B><TT><BR>
+<BR>
+real_minus</TT></B><TT>(n: Real): Real</TT> ~ (also &quot;<TT>-n</TT>&quot;)
+Real negation.<B><TT><BR>
+<BR>
+real_minus</TT></B><TT>(n: Int): Int</TT> ~ (also &quot;<TT>-n</TT>&quot;)
+Overloaded integer negation.<B><TT><BR>
+<BR>
+real_+</TT></B><TT>(n1: Real, n2: Real): Real</TT> ~ (also infix &quot;<TT>+</TT>&quot;)
+Real addition.<B><TT><BR>
+<BR>
+real_+</TT></B><TT>(n1: Int, n2: Int): Int</TT> ~ (also infix &quot;<TT>+</TT>&quot;)
+Overloaded integer addition.<B><TT><BR>
+<BR>
+real_-</TT></B><TT>(n1: Real, n2: Real): Real</TT> ~ (also infix &quot;<TT>-</TT>&quot;)
+Real difference.<B><TT><BR>
+<BR>
+real_-</TT></B><TT>(n1: Int, n2: Int): Int</TT> ~ (also infix &quot;<TT>-</TT>&quot;)
+Overloaded integer difference.<B><TT><BR>
+<BR>
+real_*</TT></B><TT>(n1: Real, n2: Real): Real</TT> ~ (also infix &quot;<TT>*</TT>&quot;)
+Real multiplication.<B><TT><BR>
+<BR>
+real_*</TT></B><TT>(n1: Int, n2: Int): Int</TT> ~ (also infix &quot;<TT>*</TT>&quot;)
+Overloaded integer multiplication.<B><TT><BR>
+<BR>
+real_/</TT></B><TT>(n1: Real, n2: Real): Real</TT> ~ (also infix &quot;<TT>/</TT>&quot;)
+Real division.<B><TT><BR>
+<BR>
+real_/</TT></B><TT>(n1: Int, n2: Int): Int</TT> ~ (also infix &quot;<TT>/</TT>&quot;)
+Overloaded integer division.<B><TT><BR>
+<BR>
+real_&lt;</TT></B><TT>(n1: Real, n2: Real): Bool</TT> ~ (also infix &quot;<TT>&lt;</TT>&quot;)
+Real less-than predicate<B><TT><BR>
+<BR>
+real_&lt;</TT></B><TT>(n1: Int, n2: Int): Bool</TT> ~ (also infix &quot;<TT>&lt;</TT>&quot;)
+Overloaded integer less-than predicate<B><TT><BR>
+<BR>
+real_&gt;</TT></B><TT>(n1: Real, n2: Real): Bool</TT> ~ (also infix &quot;<TT>&gt;</TT>&quot;)
+Real greater-than predicate<B><TT><BR>
+<BR>
+real_&gt;</TT></B><TT>(n1: Int, n2: Int): Bool</TT> ~ (also infix &quot;<TT>&gt;</TT>&quot;)
+Overloaded integer greater-than predicate<B><TT><BR>
+<BR>
+real_&lt;=</TT></B><TT>(n1: Real, n2: Real): Bool</TT> ~ (also infix &quot;<TT>&lt;=</TT>&quot;)
+Real no-greater-than predicate<B><TT><BR>
+<BR>
+real_&lt;=</TT></B><TT>(n1: Int, n2: Int): Bool</TT> ~ (also infix &quot;<TT>&lt;=</TT>&quot;)
+Overloaded integer no-greater-than pred.<B><TT><BR>
+<BR>
+real_&gt;=</TT></B><TT>(n1: Real, n2: Real): Bool</TT> ~ (also infix &quot;<TT>&gt;=</TT>&quot;)
+Real no-less-than predicate.<B><TT><BR>
+<BR>
+real_&gt;=</TT></B><TT>(n1: Int, n2: Int): Bool</TT> ~ (also infix &quot;<TT>&gt;=</TT>&quot;)
+Overloaded integer no-less-than pred.<B><TT><BR>
+<BR>
+real_float</TT></B><TT>(n: Int): Real</TT> ~ (also &quot;<TT>float(n)</TT>&quot;)
+Integer-to-real conversion.<B><TT><BR>
+<BR>
+real_float</TT></B><TT>(n: Real): Real</TT> ~ (also &quot;<TT>float(n)</TT>&quot;)
+Overloaded; identity on reals.<B><TT><BR>
+<BR>
+real_round</TT></B><TT>(n: Real): Int</TT> ~ (also &quot;<TT>round(n)</TT>&quot;)
+Real-to-integer rounding.<B><TT><BR>
+<BR>
+real_round</TT></B><TT>(n: Int): Int</TT> ~ (also &quot;<TT>round(n)</TT>&quot;)
+Overloaded; identity on integers.<B><TT><BR>
+<BR>
+real_floor</TT></B><TT>(n: Real): Int</TT> ~ Greatest integers no greater
+than n.<B><TT><BR>
+<BR>
+real_floor</TT></B><TT>(n: Int): Int</TT> ~ Overloaded; identity on integers.<B><TT><BR>
+<BR>
+real_ceiling</TT></B><TT>(n: Real): Int</TT> ~ Least integers no less than
+n.<B><TT><BR>
+<BR>
+real_ceiling</TT></B><TT>(n: Int): Int</TT> ~ Overloaded; identity on integers.<BR>
+<H3>B.6.5 Math</H3>
+<B><TT>math_pi</TT></B><TT>: Real </TT>~ 3.1415926535897932384626433833.<B><TT><BR>
+<BR>
+math_e</TT></B><TT>: Real </TT>~ 2.7182818284590452353602874714.<B><TT><BR>
+<BR>
+math_degree</TT></B><TT>: Real </TT>~ 0.017453292519943295769236907684;
+<BR>
+<BR>
+1 degree in radiants.<B><TT><BR>
+<BR>
+math_exp</TT></B><TT>(n: Real): Real </TT>~ <I>e</I> to the n-th power.<B><TT><BR>
+<BR>
+math_log</TT></B><TT>(n: Real): Real </TT>~ log base <I>e</I>.<B><TT><BR>
+<BR>
+math_sqrt</TT></B><TT>(n: Real): Real </TT>~ Square root.<B><TT><BR>
+<BR>
+math_hypot</TT></B><TT>(n: Real, m: Real): Real </TT>~ sqrt((n*n)+(m*m)).<B><TT><BR>
+<BR>
+math_pow</TT></B><TT>(n: Real, m: Real): Real </TT>~ n to the m-th power.<B><TT><BR>
+<BR>
+math_cos</TT></B><TT>(n: Real): Real </TT>~ Cosine in radians.<B><TT><BR>
+<BR>
+math_sin</TT></B><TT>(n: Real): Real </TT>~ Sine in radians.<B><TT><BR>
+<BR>
+math_tan</TT></B><TT>(n: Real): Real </TT>~ Tangent in radians.<B><TT><BR>
+<BR>
+math_acos</TT></B><TT>(n: Real): Real </TT>~ Arc cosine in radians.<B><TT><BR>
+<BR>
+math_asin</TT></B><TT>(n: Real): Real </TT>~ Arc sine in radians.<B><TT><BR>
+<BR>
+math_atan</TT></B><TT>(n: Real): Real </TT>~ Arc tangent in radians.<B><TT><BR>
+<BR>
+math_atan2</TT></B><TT>(n: Real, m: Real): Real </TT>~ Arc tangent of n/m
+in radians.<BR>
+<H3>B.6.6 Ascii</H3>
+<B><TT>c</TT></B><TT>: Char</TT> ~ A character in single quotes.<B><TT><BR>
+<BR>
+ascii_char</TT></B><TT>(n: Int): Char </TT>~ The ascii character of integer
+code &quot;<TT>n</TT>&quot;.<B><TT><BR>
+<BR>
+ascii_val</TT></B><TT>(c: Char): Int </TT>~ The integer code of the ascii
+character &quot;<TT>c</TT>&quot;.<BR>
+<H3>B.6.7 Text</H3>
+<B><TT>t</TT></B><TT>: Text</TT> ~ A string in double quotes.<B><TT><BR>
+<BR>
+text_new</TT></B><TT>(size: Int, init: Char): Text </TT>~ A text of size
+&quot;<TT>size</TT>&quot;, all filled with &quot;<TT>init</TT>&quot;.<B><TT><BR>
+<BR>
+text_empty</TT></B><TT>(t: Text): Bool </TT>~ Test for empty text.<B><TT><BR>
+<BR>
+text_length</TT></B><TT>(t: Text): Int </TT>~ Length of a text.<B><TT><BR>
+<BR>
+text_equal</TT></B><TT>(t1: Text, t2: Text): Bool </TT>~ Text equality (case
+sensitive).<B><TT><BR>
+<BR>
+text_char</TT></B><TT>(t: Text, i: Int): Char </TT>~ The i-th character
+of a text (if it exists); zero-indexed.<B><TT><BR>
+<BR>
+text_sub</TT></B><TT>(t: Text, start: Int, size: Int): Text </TT>The subtext
+beginning at &quot;<TT>start</TT>&quot;, and of size &quot;<TT>size</TT>&quot;
+(if it exists).<B><TT><BR>
+<BR>
+text_&amp;</TT></B><TT>(t1: Text, t2: Text): Text</TT> ~ (also infix &quot;<TT>&amp;</TT>&quot;)<TT>
+</TT>The concatenation of two texts.<B><TT><BR>
+<BR>
+text_precedes</TT></B><TT>(t1: Text, t2: Text): Bool </TT>~ Whether &quot;<TT>t1</TT>&quot;
+precedes &quot;<TT>t2</TT>&quot; in lexicographic (ascii) order.<B><TT><BR>
+<BR>
+text_decode</TT></B><TT>(t: Text): Text </TT>~ Every occurrence of an escape
+sequence is replaced by the corresponding non-printing formatting character:
+&quot;<TT>\\</TT>&quot; = &quot;<TT>\</TT>&quot;; &quot;<TT>\'</TT>&quot;&nbsp;=
+&quot;<TT>'</TT>&quot;; &quot;<TT>\&quot;</TT>&quot; = &quot;<TT>&quot;</TT>&quot;;
+&quot;<TT>\n</TT>&quot; = &quot;<I><TT>LF</TT></I>&quot;; &quot;<TT>\r</TT>&quot;
+= &quot;<I><TT>CR</TT></I>&quot;; &quot;<TT>\t</TT>&quot; = &quot;<I><TT>HT</TT></I>&quot;;
+&quot;<TT>\f</TT>&quot; = &quot;<I><TT>FF</TT></I>&quot;; &quot;<TT>\t</TT>&quot;
+= &quot;<I><TT>HT</TT></I>&quot;; &quot;<TT>\<I>xxx</I></TT>&quot; = &quot;<I><TT>xxx</TT></I>&quot;
+(octals &quot;000&quot;..&quot;177&quot;); &quot;<TT>\<I>c</I></TT>&quot;
+= &quot;<I><TT>c</TT></I> &quot; (otherwise).<B><TT><BR>
+<BR>
+text_encode</TT></B><TT>(t: Text): Text </TT>~ Every occurrence of a non-printing
+formatting character is replaced by an escape sequence.<B><TT><BR>
+<BR>
+text_explode</TT></B><TT>(seps: Text, t: Text): [Text] </TT>~ Splits an
+input text into a similarly ordered array of texts, each a maximal subsequence
+of the input text not containing sep chars. The empty text is exploded as
+a singleton array of the empty text. Each sep char in the input produces
+a break, so the size of the result is 1 + the number of sep chars in the
+text.<TT> </TT>&quot;<TT>implode(explode( &quot;c&quot;,text),'c')</TT>&quot;
+is the identity.<B><TT><BR>
+<BR>
+text_implode</TT></B><TT>(sep: Char, a: [Text]): Text ! net_failure<BR>
+<BR>
+</TT>~ Concatenate an array of texts into a single text, separating the
+pieces by a single sep char. A zero-length array is imploded as the empty
+text. &quot;<TT>explode(&quot;c&quot;,implode( 'c',text))</TT>&quot; is
+the identity provided that the array has positive size and sep does not
+occur in the array elements.<B><TT><BR>
+<BR>
+text_hash</TT></B><TT>(t: Text): Int </TT>~ A hash function.<B><TT><BR>
+<BR>
+text_toInt</TT></B><TT>(t: Text): Int </TT>~ Convert a text to an integer
+(see also fmt_).<B><TT><BR>
+<BR>
+text_fromInt</TT></B><TT>(n: Int): Text </TT>~ Convert an integer to a text
+(see also lex_).<B><TT><BR>
+<BR>
+text_findFirstChar</TT></B><TT>(c: Char, t: Text, n: Int): Int <BR>
+<BR>
+</TT>~ The index of the first occurrence of &quot;<TT>c</TT>&quot; in &quot;<TT>t</TT>&quot;,
+past &quot;<TT>n</TT>&quot;. <TT>-1</TT> if not found.<B><TT><BR>
+<BR>
+text_findLastChar</TT></B><TT>(c: Char, t: Text, n: Int): Int <BR>
+<BR>
+</TT>~ The index of the last occurrence of &quot;<TT>c</TT>&quot; in &quot;<TT>t</TT>&quot;,
+before &quot;<TT>n</TT>&quot;. <TT>-1</TT> if not found.<B><TT><BR>
+<BR>
+text_findFirst</TT></B><TT>(p: Text, t: Text, n: Int): Int </TT>~ The index
+of the first char of the first occurrence of &quot;<TT>p</TT>&quot; in &quot;<TT>t</TT>&quot;,
+past &quot;<TT>n</TT>&quot;. <TT>-1</TT> if not found.<B><TT><BR>
+<BR>
+text_findLast</TT></B><TT>(p: Text, t: Text, n: Int): Int </TT>~ The index
+of the first char of the last occurrence of &quot;<TT>p</TT>&quot; in &quot;<TT>t</TT>&quot;,
+before &quot;<TT>n</TT>&quot;. <TT>-1</TT> if not found.<B><TT><BR>
+<BR>
+text_replaceAll</TT></B><TT>(old: Text, new: Text, t: Text): Text <BR>
+<BR>
+</TT>~ Replace all occurrences of &quot;<TT>old</TT>&quot; by &quot;<TT>new</TT>&quot;
+in &quot;<TT>t</TT>&quot;, as found by iterating &quot;<TT>findFirst</TT>&quot;.<BR>
+<H3>B.6.8 Array</H3>
+<B><TT>[e1, ..., en]</TT></B><TT>: [T]</TT> ~ (for <TT>e1...en: T</TT>)<TT><BR>
+<BR>
+All(T)<B>array_new</B>(size: Int, init: T): [T] </TT>~ An array of size
+&quot;<TT>size</TT>&quot;, all filled with &quot;<TT>init</TT>&quot;.<TT><BR>
+<BR>
+All(T)<B>array_gen</B>(size: Int, proc: (Int)-&gt;T): [T] <BR>
+<BR>
+</TT>~ An array of size &quot;<TT>size</TT>&quot;, filled with &quot;<TT>proc(i)</TT>&quot;
+for &quot;<TT>i</TT>&quot; between &quot;<TT>0</TT>&quot; and &quot;<TT>size-1</TT>&quot;.<TT><BR>
+<BR>
+All(T)<B>array_#</B>(a: [T]): Int ! net_failure</TT> ~ (also &quot;<TT>#(a)</TT>&quot;)<TT>
+</TT>Size of an array.<TT><BR>
+<BR>
+All(T)<B>array_get</B>(a: [T], i: Int): T ! net_failure</TT><BR>
+<BR>
+~ (also &quot;<TT>a[i]</TT>&quot;)<TT> </TT>The i-th element (if it exists),
+zero-based.<TT><BR>
+<BR>
+All(T)<B>array_set</B>(a: [T], i: Int, b: T): Ok ! net_failure</TT><BR>
+<BR>
+~ (also &quot;<TT>a[i]:=b</TT>&quot;)<TT> </TT>Update the i-th element (if
+it exists).<TT><BR>
+<BR>
+All(T)<B>array_sub</B>(a: [T], i: Int, n: Int): [T] ! net_failure</TT><BR>
+<BR>
+~ (also &quot;<TT>a[i for n]</TT>&quot;)<TT> </TT>A new array, filled with
+the elements of &quot;<TT>a</TT>&quot; beginning at &quot;<TT>i</TT>&quot;,
+and of size &quot;<TT>n</TT>&quot; (if it exists).<TT><BR>
+<BR>
+All(T)<B>array_upd</B>(a: [T], i: Int, n: Int, b: [T]): Ok ! net_failure</TT>
+<BR>
+<BR>
+~ (also &quot;<TT>a[i for n]:=b</TT>&quot;)<TT> </TT>Same as &quot;<TT>a[n+i]:=b[n];
+... ; a[i]:=b[0]</TT>&quot;. I.e. &quot;<TT>a[i for n]</TT>&quot; gets &quot;<TT>b[0
+for n]</TT>&quot;.<TT><BR>
+<BR>
+All(T)<B>array_@</B>(a1: [T], a2: [T]): [T] ! net_failure</TT><BR>
+<BR>
+~ (also infix &quot;<TT>@</TT>&quot;)<TT> </TT>A new array, filled with
+the concatenation of the elements of &quot;<TT>a1</TT>&quot; and &quot;<TT>a2</TT>&quot;.<BR>
+<H3>B.6.9 Net</H3>
+<B><TT>net_failure</TT></B><TT>: Exception<BR>
+<BR>
+All(T)<B>net_who</B>(o: T): Text ! net_failure thread_alerted<BR>
+<BR>
+</TT>~ Return a text indicating where a network object or engine is registered,
+or the empty text if the argument is an object that has not been registered
+with a name server.<TT><BR>
+<BR>
+All(T&lt;:{})<B>net_export</B>(name: Text, server: Text, o: T): T ! net_failure
+thread_alerted <BR>
+<BR>
+</TT>~ Export an object under name &quot;<TT>name</TT>&quot;, to the name
+server at IP address &quot;<TT>server</TT>&quot;. The empty text denotes
+the local IP address.<TT><BR>
+<BR>
+Some(T&lt;:{})<B>net_import</B>(name: Text, server: Text): T ! net_failure
+thread_alerted<BR>
+<BR>
+</TT>~ Import the object of name &quot;<TT>name</TT>&quot;, from the name
+server at IP address &quot;<TT>server</TT>&quot;. The empty text denotes
+the local IP address.<TT><BR>
+<BR>
+All(T)<B>net_exportEngine</B>(name: Text, server: Text, arg: T): Ok <BR>
+<BR>
+! net_failure thread_alerted<BR>
+<BR>
+</TT>~ Export an engine under name &quot;<TT>name</TT>&quot;, to the name
+server at IP address &quot;<TT>server</TT>&quot;. The empty text denotes
+the local IP address. The &quot;<TT>arg</TT>&quot; is given as an argument
+to all procedures received by the engine to execute.<TT><BR>
+<BR>
+Some(T)All(U)<B>net_importEngine</B>(name: Text, server: Text): ((T)-&gt;U)-&gt;U
+<BR>
+<BR>
+! net_failure thread_alerted </TT><BR>
+<BR>
+~ Import the object of name &quot;<TT>name</TT>&quot;, from the name server
+at IP address &quot;<TT>server</TT>&quot;. The empty text denotes the local
+IP address.<BR>
+<H3>B.6.10 Thread</H3>
+<B><TT>thread_mutex</TT></B><TT>(): Mutex</TT> ~ (also &quot;<TT>mutex()</TT>&quot;)
+A new mutex.<B><TT><BR>
+<BR>
+thread_condition</TT></B><TT>(): Condition </TT>~ (also &quot;<TT>condition()</TT>&quot;)
+A new condition.<TT><BR>
+<BR>
+Some(T)<B>thread_self</B>(): Thread(T) </TT>~ The current thread.<TT><BR>
+<BR>
+All(T)<B>thread_fork</B>(f: ()-&gt;T, stackSize: Int): Thread(T)</TT> <BR>
+<BR>
+~ (also &quot;<TT>fork(f,n)</TT>&quot;)<TT> </TT>Fork a new thread executing
+f. If stackSize is zero, a small default size is used.<TT><BR>
+<BR>
+All(T)<B>thread_join</B>(th: Thread(T)): T</TT> ~ (also &quot;<TT>join(th)</TT>&quot;)
+Wait for a thread to complete, and return the result of its procedure.<B><TT><BR>
+<BR>
+thread_wait</TT></B><TT>(mx: Mutex, cd: Condition): Ok</TT> ~ (also &quot;<TT>wait(mx,cd)</TT>&quot;)
+Wait on a mutex and a condition.<B><TT><BR>
+<BR>
+thread_acquire</TT></B><TT>(mx: Mutex): Ok </TT>~ Acquire a mutex (use lock
+... end instead).<B><TT><BR>
+<BR>
+thread_release</TT></B><TT>(mx: Mutex): Ok </TT>~ Release a mutex (use lock
+... end instead)<B><TT><BR>
+<BR>
+thread_broadcast</TT></B><TT>(cd: Condition): Ok </TT>~ (also &quot;<TT>broadcast(cd)</TT>&quot;)
+Wake-up to all threads waiting on a condition. <B><TT><BR>
+<BR>
+thread_signal</TT></B><TT>(cd: Condition): Ok </TT>~ (also &quot;<TT>signal(cd)</TT>&quot;)
+Wake-up at least one thread waiting on a condition.<B><TT><BR>
+<BR>
+thread_pause</TT></B><TT>(r: Real): Ok </TT>~ (also &quot;<TT>pause(r)</TT>&quot;)
+Pause the current thread for r seconds.<TT><BR>
+<BR>
+All(T)<B>thread_lock</B>(m: Mutex, body: ()-&gt;T): T </TT>~ Execute under
+a locked mutex (use lock ... end instead).<B><TT><BR>
+<BR>
+thread_alerted</TT></B><TT>: Exception </TT>~ (See the threads spec.)<TT><BR>
+<BR>
+All(T)<B>thread_alert</B>(t: Thread(T)): Ok </TT>~ (See the threads spec.)<B><TT><BR>
+<BR>
+thread_testAlert</TT></B><TT>(): Bool </TT>~ (See the threads spec.)<B><TT><BR>
+<BR>
+thread_alertWait</TT></B><TT>(mx: Mutex, cd: Condition): Ok ! thread_alerted
+<BR>
+<BR>
+</TT>~ (See the threads spec.)<TT><BR>
+<BR>
+All(T)<B>thread_alertJoin</B>(th: Thread(T)): Ok ! thread_alerted<BR>
+<BR>
+</TT>~ (See the threads spec.)<B><TT><BR>
+<BR>
+thread_alertPause</TT></B><TT>(r: Real): Ok ! thread_alerted<BR>
+<BR>
+</TT>~ (See the threads spec.)<BR>
+<H3>B.6.11 Rd</H3>
+<B><TT>rd_failure</TT></B><TT>: Exception<B><BR>
+<BR>
+rd_eofFailure</B>: Exception<B><BR>
+<BR>
+rd_new</B>(t: Text): Rd </TT>~ A reader on a text (a Modula-3 TextRd).<B><TT><BR>
+<BR>
+rd_stdin</TT></B><TT>: Rd </TT>~ The standard input (the Modula-3 Stdio.Stdin).<B><TT><BR>
+<BR>
+rd_open</TT></B><TT>(fs: FileSystem, t: Text): Rd ! rd_failure <BR>
+<BR>
+</TT>~ Given a file system and a file name, returns a reader on a file (a
+Modula-3 FileRd, open for read). The local file system is available through
+the predefined lexically scoped identifier &quot;<TT>fileSys</TT>&quot;.
+Moreover, &quot;<TT>fileSysReader</TT>&quot; is a read-only version of the
+local file system.<B><TT><BR>
+<BR>
+rd_getChar</TT></B><TT>(r: Rd): Char ! rd_failure rd_eofFailure thread_alerted<BR>
+<BR>
+</TT>~ Get the next character from a reader.<B><TT><BR>
+<BR>
+rd_eof</TT></B><TT>(r: Rd): Bool ! rd_failure thread_alerted<BR>
+<BR>
+</TT>~ Test for the end-of-stream on a reader.<B><TT><BR>
+<BR>
+rd_unGetChar</TT></B><TT>(r: Rd): Ok</TT> ~ Put the last character obtained
+by getChar back into the reader (unfortunately, it may crash if misused!).<B><TT><BR>
+<BR>
+rd_charsReady</TT></B><TT>(r: Rd): Int ! rd_failure</TT> ~ The number of
+characters that can be read without blocking. <B><TT><BR>
+<BR>
+rd_getText</TT></B><TT>(r: Rd, n: Int): Text ! rd_failure thread_alerted</TT><BR>
+<BR>
+~ Read the next n characters, or at most n on end-of-file.<B><TT><BR>
+<BR>
+rd_getLine</TT></B><TT>(r: Rd): Text ! rd_failure rd_eofFailure thread_alerted</TT><BR>
+<BR>
+~ Read the next line and return it without including the end-of-line character.<B><TT><BR>
+<BR>
+rd_index</TT></B><TT>(r: Rd): Int</TT> ~ The current reader position.<B><TT><BR>
+<BR>
+rd_length</TT></B><TT>(r: Rd): Int ! rd_failure thread_alerted</TT><BR>
+<BR>
+~ Length of a reader (including read part).<B><TT><BR>
+<BR>
+rd_seek</TT></B><TT>(r: Rd, n: Int): Ok ! rd_failure thread_alerted</TT><BR>
+<BR>
+~ Reposition a reader.<B><TT><BR>
+<BR>
+rd_close</TT></B><TT>(r: Rd): Ok ! rd_failure thread_alerted</TT><BR>
+<BR>
+~ Close a reader.<B><TT><BR>
+<BR>
+rd_intermittent</TT></B><TT>(r: Rd): Bool</TT> ~ Whether the reader is stream-like
+(not file-like).<B><TT><BR>
+<BR>
+rd_seekable</TT></B><TT>(r: Rd): Bool</TT> ~ Whether the reader can be repositioned.<B><TT><BR>
+<BR>
+rd_closed</TT></B><TT>(r: Rd): Bool</TT> ~ Whether the reader is closed.<BR>
+<H3>B.6.12 Wr</H3>
+<B><TT>wr_failure</TT></B><TT>: Exception<B><BR>
+<BR>
+wr_new</B>(): Wr </TT>~ A writer to a text (a Modula-3 TextWr).<B><TT><BR>
+<BR>
+wr_toText</TT></B><TT>(w: Wr): Text </TT>~ Emptying a writer to a text..<B><TT><BR>
+<BR>
+wr_stdout</TT></B><TT>: Wr </TT>~ The standard output (the Modula-3 Stdio.Stdout).<B><TT><BR>
+<BR>
+wr_stderr</TT></B><TT>: Wr </TT>~ The standard error (the Modula-3 Stdio.Stderr).<B><TT><BR>
+<BR>
+wr_open</TT></B><TT>(fs: FileSystem, t: Text): Wr ! wr_failure <BR>
+<BR>
+</TT>~ Given a file system and a file name, returns a writer to the beginning
+of a file (a Modula-3 FileWr, open for write). The local file system is
+available through the predefined lexically scoped identifier &quot;<TT>fileSys</TT>&quot;.<B><TT><BR>
+<BR>
+wr_openAppend</TT></B><TT>(fs: FileSystem, t: Text): Wr ! wr_failure <BR>
+<BR>
+</TT>~ Given a file system and a file name, returns a writer to the end
+of file (a Modula-3 FileWr, open for append). The local file system is available
+through the predefined lexically scoped identifier &quot;<TT>fileSys</TT>&quot;.<B><TT><BR>
+<BR>
+wr_putChar</TT></B><TT>(w: Wr, c: Char): Ok ! wr_failure thread_alerted<BR>
+<BR>
+</TT>~ Put a character to a writer .<B><TT><BR>
+<BR>
+wr_putText</TT></B><TT>(w: Wr, t: Text): Ok ! wr_failure thread_alerted<BR>
+<BR>
+</TT>~ Put a text to a writer .<B><TT><BR>
+<BR>
+wr_flush</TT></B><TT>(w: Wr): Ok ! wr_failure thread_alerted<BR>
+<BR>
+</TT>~ Flush a writer: all buffered writes to their final destination.<B><TT><BR>
+<BR>
+wr_index</TT></B><TT>(w: Wr): Int </TT>~ The current writer position<B><TT><BR>
+<BR>
+wr_length</TT></B><TT>(w: Wr): Int ! wr_failure thread_alerted</TT><BR>
+<BR>
+~ Length of a writer.<B><TT><BR>
+<BR>
+wr_seek</TT></B><TT>(w: Wr, n: Int): Ok ! wr_failure thread_alerted</TT><BR>
+<BR>
+~ Reposition a writer.<B><TT><BR>
+<BR>
+wr_close</TT></B><TT>(w: Wr): Ok ! wr_failure thread_alerted</TT><BR>
+<BR>
+~ Close a writer.<B><TT><BR>
+<BR>
+wr_buffered</TT></B><TT>(w: Wr): Bool</TT> ~ Whether the writer is buffered.<B><TT><BR>
+<BR>
+wr_seekable</TT></B><TT>(w: Wr): Bool</TT> ~ Whether the writer can be repositioned.<B><TT><BR>
+<BR>
+wr_closed</TT></B><TT>(w: Wr): Bool</TT> ~ Whether the writer is closed.<BR>
+<H3>B.6.13 Pickle</H3>
+<B><TT>pickle_failure</TT></B><TT>: Exception<BR>
+<BR>
+All(T)<B>pickle_write</B>(w: Wr, v: T): Ok ! pickle_failure wr_failure thread_alerted<BR>
+<BR>
+</TT>~ Copy a value to a writer, similarly to sys_copy.<TT><BR>
+<BR>
+Some(T)<B>pickle_read</B>(r: Rd): T ! pickle_failure rd_failure rd_eofFailure
+thread_alerted<BR>
+<BR>
+</TT>~ Copy a value from a reader, similarly to sys_copy.<BR>
+<H3>B.6.14 Lex</H3>
+<B><TT>lex_failure</TT></B><TT>: Exception<B><BR>
+<BR>
+lex_scan</B>(r: Rd, t: Text): Text ! rd_failure thread_alerted<BR>
+<BR>
+</TT>~ Read from r the longest prefix formed of characters listed in t,
+and return it.<B><TT><BR>
+<BR>
+lex_skip</TT></B><TT>(r: Rd, t: Text): Ok ! rd_failure thread_alerted<BR>
+<BR>
+</TT>~ Read from r the longest prefix formed of characters listed in t,
+and discard it.<B><TT><BR>
+<BR>
+lex_match</TT></B><TT>(r: Rd, t: Text): Ok ! lex_failure rd_failure thread_alerted<BR>
+<BR>
+</TT>~ Read from r the string t and discard it; raise failure if not found.<B><TT><BR>
+<BR>
+lex_bool</TT></B><TT>(r: Rd): Bool ! lex_failure rd_failure thread_alerted<BR>
+<BR>
+</TT>~ Skip blanks, and attempt to read a boolean from r.<B><TT><BR>
+<BR>
+lex_int</TT></B><TT>(r: Rd): Int ! lex_failure rd_failure thread_alerted<BR>
+<BR>
+</TT>~ Skip blanks, and attempt to read an integer from r.<B><TT><BR>
+<BR>
+lex_real</TT></B><TT>(r: Rd): Real ! lex_failure rd_failure thread_alerted<BR>
+<BR>
+</TT>~ Skip blanks, and attempt to read a real from r.<BR>
+<H3>B.6.15 Fmt</H3>
+<B><TT>fmt_padLft</TT></B><TT>(t: Text, length: Int): Text </TT>~ If t is
+shorted then length, pad t with blanks on the left so that it has the given
+length.<B><TT><BR>
+<BR>
+fmt_padRht</TT></B><TT>(t: Text, length: Int): Text </TT>~ If t is shorted
+then length, pad t with blanks on the right so that it has the given length.<B><TT><BR>
+<BR>
+fmt_bool</TT></B><TT>(b: Bool): Text </TT>~ Convert a boolean to its printable
+form.<B><TT><BR>
+<BR>
+fmt_int</TT></B><TT>(n: Int): Text </TT>~ Convert an integer to its printable
+form.<B><TT><BR>
+<BR>
+fmt_real</TT></B><TT>(r: Real): Text </TT>~ Convert a real to its printable
+form.<BR>
+<H3>B.6.16 Process</H3>
+<B><TT>process_new</TT></B><TT>(pr: Processor, nameAndArgs: [Text], mergeOut:
+Bool): Process<BR>
+<BR>
+</TT>~ Create a process from a processor and the given process name and
+arguments. The local processor is available as the lexically scoped identifier
+&quot;<TT>processor</TT>&quot;. If mergeOut is true, use a single pipe for
+stdout and stderr.<B><TT><BR>
+<BR>
+process_in</TT></B><TT>(p: Process): Wr </TT>~ The stdin pipe of a process.<B><TT><BR>
+<BR>
+process_out</TT></B><TT>(p: Process): Rd </TT>~ The stdout pipe of a process.<B><TT><BR>
+<BR>
+process_err</TT></B><TT>(p: Process): Rd </TT>~ The stderr pipe of a process.<B><TT><BR>
+<BR>
+process_complete</TT></B><TT>(p: Process): Int </TT>~ Wait for the process
+to exit, close all its pipes, and return the exit code.<B><TT><BR>
+<BR>
+process_filter</TT></B><TT>(pr: Processor, nameAndArgs: [Text], input: Text):
+Text ! net_failure<BR>
+<BR>
+</TT>~ Create a process from a processor and the given process name and
+arguments. The local processor is available as the lexically scoped identifier
+&quot;<TT>processor</TT>&quot;. The stderr output is merged stdout. Usage:
+feed the input to its stdin pipe and close it; read all the output from
+its stdout pipe and close it; return the output.<BR>
+<H3>B.6.17 Color</H3>
+<B><TT>color_named</TT></B><TT>(name: Text): Color</TT> ~ Get a color from
+its name (see the ColorName Modula-3 interface).<B><TT><BR>
+<BR>
+color_rgb</TT></B><TT>(r: Real, g: Real b: Real): Color</TT> ~ Get a color
+from rgb (each 0.0 .. 1.0).<B><TT><BR>
+<BR>
+color_hsv</TT></B><TT>(h: Real, s: Real v: Real): Color</TT> ~ Get a color
+from hsv (each 0.0 .. 1.0).<B><TT><BR>
+<BR>
+color_r</TT></B><TT>(c: Color): Real</TT> ~ The red color component.<B><TT><BR>
+<BR>
+color_g</TT></B><TT>(c: Color): Real</TT> ~ The green color component.<B><TT><BR>
+<BR>
+color_b</TT></B><TT>(c: Color): Real</TT> ~ The blue color component.<B><TT><BR>
+<BR>
+color_h</TT></B><TT>(c: Color): Real</TT> ~ The hue color component.<B><TT><BR>
+<BR>
+color_s</TT></B><TT>(c: Color): Real</TT> ~ The saturation color component.<B><TT><BR>
+<BR>
+color_v</TT></B><TT>(c: Color): Real</TT> ~ The value color component.<B><TT><BR>
+<BR>
+color_brightness</TT></B><TT>(c: Color): Real</TT> ~ The total brightness
+(0.0 .. 1.0).<BR>
+<H3>B.6.18 Form</H3>
+<B><TT>form_failure</TT></B><TT>: Exception<B><BR>
+<BR>
+form_new</B>(t: Text): Form ! form_failure </TT>~ Read a form description
+from a text.<B><TT><BR>
+<BR>
+form_fromFile</TT></B><TT>(file: Text): Form ! form_failure thread_alerted<BR>
+<BR>
+</TT>~ Read a form description from a file.<B><TT><BR>
+<BR>
+form_attach</TT></B><TT>(fv: Form, name: Text, f: (Form)-&gt;Ok): Ok ! form_failure<BR>
+<BR>
+</TT>~ Attach a procedure to an event, under a form. The procedure is passed
+back the form when the event happens.<B><TT><BR>
+<BR>
+form_getBool</TT></B><TT>(fv: Form, name: Text, property: Text): Bool !
+form_failure<BR>
+<BR>
+</TT>~ Get the boolean value of the named property of the named interactor.
+(Do not confuse with form_getBoolean.)<B><TT><BR>
+<BR>
+form_putBool</TT></B><TT>(fv: Form, name: Text, property: Text, b: Bool):
+Ok ! form_failure<BR>
+<BR>
+</TT>~ Set the boolean value of the named property of the named interactor.
+(Do not confuse with form_putBoolean.)<B><TT><BR>
+<BR>
+form_getInt</TT></B><TT>(fv: Form, name: Text, property: Text): Int ! form_failure<BR>
+<BR>
+</TT>~ Get the integer value of the named property of the named interactor.
+If property is the empty text, get the &quot;&quot;value&quot;&quot; property.<B><TT><BR>
+<BR>
+form_putInt</TT></B><TT>(fv: Form, name: Text, property: Text, n: Int):
+Ok ! form_failure<BR>
+<BR>
+</TT>~ Set the integer value of the named property of the named interactor.
+If property is the empty text, set the &quot;&quot;value&quot;&quot; property.<B><TT><BR>
+<BR>
+form_getText</TT></B><TT>(fv: Form, name: Text, property: Text): Text !
+form_failure<BR>
+<BR>
+</TT>~ Get the text value of the named property of the named interactor.
+If property is the empty text, get the &quot;&quot;value&quot;&quot; property.<B><TT><BR>
+<BR>
+form_putText</TT></B><TT>(fv: Form, name: Text, property: Text, t: Text,
+append: Bool): Ok ! form_failure<BR>
+<BR>
+</TT>~ Set the text value of the named property of the named interactor.
+If property is the empty text, set the &quot;&quot;value&quot;&quot; property.<B><TT><BR>
+<BR>
+form_getBoolean</TT></B><TT>(fv: Form, name: Text): Bool ! form_failure<BR>
+<BR>
+</TT>~ Get the boolean value of the named boolean-choice interactor.<B><TT><BR>
+<BR>
+form_putBoolean</TT></B><TT>(fv: Form, name: Text, b: Bool): Ok ! form_failure<BR>
+<BR>
+</TT>~ Set the boolean value of the named boolean-choice interactor.<B><TT><BR>
+<BR>
+form_getChoice</TT></B><TT>(fv: Form, radioName: Text): Text ! form_failure<BR>
+<BR>
+</TT>~ Get the choice value of the named radio interactor.<B><TT><BR>
+<BR>
+form_putChoice</TT></B><TT>(fv: Form, radioName: Text, choiceName: Text):
+Ok ! form_failure<BR>
+<BR>
+</TT>~ Set the choice value of the named radio interactor.<B><TT><BR>
+<BR>
+form_getReactivity</TT></B><TT>(fv: Form, name: Text): Text ! form_failure<BR>
+<BR>
+</TT>~ Get the reactivity of the named interactor. It can be &quot;&quot;active&quot;&quot;,
+&quot;&quot;passive&quot;&quot;, &quot;&quot;dormant&quot;&quot;, or &quot;&quot;vanished&quot;&quot;.<B><TT><BR>
+<BR>
+form_putReactivity</TT></B><TT>(fv: Form, name: Text, r: Text): Ok ! form_failure<BR>
+<BR>
+</TT>~ Set the reactivity of the named interactor. It can be &quot;&quot;active&quot;&quot;,
+&quot;&quot;passive&quot;&quot;, &quot;&quot;dormant&quot;&quot;, or &quot;&quot;vanished&quot;&quot;.<B><TT><BR>
+<BR>
+form_popUp</TT></B><TT>(fv: Form, name: Text): Ok ! form_failure<BR>
+<BR>
+</TT>~ Pop up the named interactor.<B><TT><BR>
+<BR>
+form_popDown</TT></B><TT>(fv: Form, name: Text): Ok ! form_failure<BR>
+<BR>
+</TT>~ Pop down the named interactor.<B><TT><BR>
+<BR>
+form_insert</TT></B><TT>(fv: Form, parent: Text, t: Text, n: Int): Ok !
+form_failure<BR>
+<BR>
+</TT>~ Insert the form described by t as child n of parent.<B><TT><BR>
+<BR>
+form_move</TT></B><TT>(fv: Form, parent: Text, child: Text, toChild: Text,
+before: Bool): Ok ! form_failure<BR>
+<BR>
+</TT>~ Move child before or after toChild of parent; after &quot;&quot;&quot;&quot;
+means first, before&quot;&quot;&quot;&quot; means last.<B><TT><BR>
+<BR>
+form_delete</TT></B><TT>(fv: Form, parent: Text, child: Text): Ok ! form_failure<BR>
+<BR>
+</TT>~ Delete the named child of parent.<B><TT><BR>
+<BR>
+form_deleteRange</TT></B><TT>(fv: Form, parent: Text, n: Int, count: Int):
+Ok ! form_failure<BR>
+<BR>
+</TT>~ Delete count children of parent, from child n.<B><TT><BR>
+<BR>
+form_takeFocus</TT></B><TT>(fv: Form, name: Text, select: Bool): Ok ! form_failure<BR>
+<BR>
+</TT>~ Make the named interactor acquire the keyboard focus, and optionally
+select its entire text contents.<B><TT><BR>
+<BR>
+form_show</TT></B><TT>(fv: Form): Ok ! form_failure </TT>~ Show a window
+containing the form on the default display.<B><TT><BR>
+<BR>
+form_showAt</TT></B><TT>(fv: Form, at: Text, title: Text): Ok ! form_failure
+<BR>
+<BR>
+</TT>~ Show a window containing the form on a display. For an X display:
+at=&quot;&quot;<I>machineName</I>(`:'|`::')<I>num</I>(`'|`.'<I>num</I>)&quot;&quot;;
+at=&quot;&quot;&quot;&quot; is the default display. The title is shown in
+the window header.<B><TT><BR>
+<BR>
+form_hide</TT></B><TT>(fv: Form): Ok ! form_failure </TT>~ Hide the window
+containing the form. 
+<H1>C. Programming Reference</H1>
+In this section we provide information useful to programmers who want to
+call Obliq from Modula-3, or vice versa. 
+<H2>C.1 The Package Hierarchy</H2>
+One of our goals is that Obliq should be easily embeddable in Modula-3 applications.
+Obliq adds only a small size overhead to typical Modula-3 applications,
+but we still want to minimize this overhead. To this end, the Obliq implementation
+is partitioned into several packages, with a Modula-3 library in each package,
+so that each application can link only the appropriate libraries. Another
+advantage of this organization, is that we can generate minimal Obliq interpreters
+that can act as (relatively) small network servers.<BR>
+<BR>
+Here is the package structure. Each node is a package (a collection of interfaces),
+which uses the connected packages above it. The nodes in italic represent
+packages external to the Obliq implementation. <BR>
+<BR>
+<IMG SRC="ObliqPaper6.gif" WIDTH="534" HEIGHT="335" NATURALSIZEFLAG="3"
+ALIGN="BOTTOM"><BR>
+<BR>
+Each package has a principal interface; that interface contains a &quot;<TT>PackageSetup()</TT>&quot;
+routine that must be called at least once to initialize all the modules
+in the package.<BR>
+<BR>
+The &quot;obliqrt&quot; package implements the Obliq run-time kernel, which
+is the smallest part of Obliq that can be usefully embedded in an application.
+Note that this does not include parsers and printers; these are separately
+provided in &quot;obliqparse&quot; and &quot;obliqprint&quot;.<BR>
+<BR>
+The &quot;obliq&quot; package brings together everything needed to build
+stand-alone Obliq interpreters. This package can be linked with various
+library packages to produce various flavors of Obliq interpreters.<BR>
+<BR>
+Each underlined package contains a short Main program and a binary for an
+interpreter (&quot;-bin-&quot;) or a server (&quot;-srv-&quot;).<BR>
+<BR>
+Modula-3 programmers can extend the hierarchy along the dotted lines. 
+<H2>C.2 The Interfaces</H2>
+The main client interface is &quot;obliqrt/src/Obliq.i3&quot;, which refers
+to &quot;obliqrt/src/ObTree.i3&quot; (the parse trees) and &quot;obliqrt/src/ObValue.i3&quot;
+(the run-time values). &quot;Obliq.i3&quot; contains: routines to create
+and inspect Obliq values (including operations on remote objects), exceptions,
+and errors; &quot;Eval&quot; routines for Obliq parse trees; and &quot;<TT>sys_call</TT>&quot;
+registration to invoke Modula-3 routines from Obliq.<BR>
+<BR>
+The Obliq parser and printer are separate from the run-time, and need not
+be linked into an application, since an application may access evaluated
+objects and closures over the network. The main interface to the parser
+is &quot;obliqparse/src/ObliqParser.i3&quot;, which contains routines to
+parse and evaluate Obliq phrases from a reader. The interface gives an example
+of a simple read-eval loop. The main interface to the printer, which performs
+pretty-printing, is &quot;obliqprint/src/ObliqPrinter.i3&quot;. 
+<H2>C.3 The Libraries</H2>
+Every Obliq client must link with &quot;libobliqrt&quot;. The parser is
+in &quot;libobliqparse&quot;, and the printer is in &quot;libobliqprint&quot;.
+For building interpreters, link with &quot;libobliq&quot;.<BR>
+<BR>
+In every case, one must include whatever libraries are needed to get the
+desired Obliq built-in packages and features, as described below:<BR>
+<BR>
+libobliqrt: array, ascii, bool, int, math, net, real, sys, text<BR>
+<BR>
+libobliq: sys on-line extensions, on-line help<BR>
+<BR>
+libobliqlibm3: rd, wr, lex, fmt, pickle, process, thread<BR>
+<BR>
+libobliqlibui: color, form<BR>
+<BR>
+libobliqlibanim: graph, zeus<BR>
+<H2>C.4 Embedding Obliq in an Application</H2>
+The appropriate client interfaces are &quot;obliqrt/src/Obliq.i3&quot;,
+&quot;obliqparse/src/ObliqParser.i3&quot;, and &quot;obliqprint/src/ObliqPrinter.i3&quot;.
+<BR>
+<BR>
+One may have to refer to other interfaces as well, particularly &quot;ObTree.i3&quot;
+(the parser trees) and &quot;ObValue.i3&quot; (the run-time values). Note
+though that &quot;ObTree.i3&quot; is particularly specific to the current
+Obliq implementation, and should be used as &quot;abstractly&quot; as possible;
+the &quot;ObliqParser.i3&quot; interface should isolate clients from any
+such dependencies. &quot;ObValue.i3&quot; is also likely to evolve over
+time; most of its facilities can be accessed safely from &quot;Obliq.i3&quot;.<BR>
+<BR>
+The Obliq evaluator takes as arguments a syntax tree, and an environment.
+The environment, mapping identifiers to Obliq values, is particularly important.
+By manipulating the environment, one can submit values to Obliq for evaluation,
+and can recover the results of an evaluation. 
+<H2>C.5 Extending Obliq with sys_calls</H2>
+A &quot;<TT>sys_call</TT>&quot; is a cheap way of extending the functionality
+of an Obliq interpeter with a new &quot;built-in&quot; operation that invokes
+Modula-3 code. For more ambitious extensions, see section C.6.<BR>
+<BR>
+The interface &quot;obliqrt/src/Obliq.i3&quot; describes how to register
+a Modula-3 procedure so that it can be invoked from Obliq. For a procedure
+registered under the name &quot;<TT>&quot;foo&quot;</TT>&quot;, the Obliq
+syntax is: <BR>
+<BR>
+<TT>sys_call(&quot;foo&quot;, [arg1, ..., argn])</TT><BR>
+<BR>
+The interface &quot;obliqrt/src/ObLib.i3&quot; contains examples of how
+to analyze the argument array passed by Obliq to Modula-3.<BR>
+<BR>
+One must then link the Modula-3 code implementing &quot;<TT>foo</TT>&quot;
+with Obliq, either in an application (section C.4) or in a custom interpreter
+(section C.7). 
+<H2>C.6 Extending Obliq with new Packages</H2>
+The interface &quot;obliqrt/src/ObLib.i3&quot; can be used to add a new
+built-in package to Obliq. One can extend Obliq with new built-in types,
+exceptions, and operations. All the built-in Obliq packages are implemented
+through this interface. <BR>
+<BR>
+The interface contains a detailed example of how to write and register such
+a package. 
+<H2>C.7 Building a Customized Obliq Interpreter</H2>
+A new package, created as described in section C.6, can be embedded into
+a customized Obliq interpreter. Follow the example given by &quot;obliqbinstd/src/Main.m3&quot;:
+this is the 20-line program that builds the standard Obliq interpreter.
+The other &quot;obliqbin.../src/Main.m3&quot; files contain other versions
+of the interpreter. 
+<H1>References</H1>
+[Abadi, Cardelli 1994] M. Abadi and L. Cardelli. <B>A theory of primitive
+objects: untyped and first-order systems</B>. <I>Proc. Theoretical Aspects
+of Computer Software</I>. Springer-Verlag.<BR>
+<BR>
+[Apple 1993] Apple, <B>AppleScript Language Guide</B>. Addison Wesley.<BR>
+<BR>
+[Avrahami, Brooks, Brown 1989] G. Avrahami, K.P. Brooks, and M.H. Brown,
+<B>A two-view approach to constructing user interfaces</B><I>.</I> <I>Computer
+Graphics</I> <B>23</B>(3), 137-146.<BR>
+<BR>
+[Bal, Kaashoek, Tanenbaum 1992] H.E. Bal, M.F. Kaashoek, and A.S. Tanenbaum,
+<B>Orca: a language for parallel programming of distributed systems</B><I>.</I>
+<I>IEEE Transactions on Software Engineering</I> <B>18</B>(3), 190-205.<BR>
+<BR>
+[Bharat, Brown 1994] K. Bharat and M.H. Brown. <B>Building distributed applications
+by direct manipulation</B>. <I>Proc. UIST'94</I>.<BR>
+<BR>
+[Birrell 1991] A.D. Birrell, <B>An introduction to programming with threads</B>.
+In <I>Systems Programming with Modula-3, Chapter 4,</I> G. Nelson, ed. Prentice
+Hall.<BR>
+<BR>
+[Birrell, <I>et al.</I> 1993a] A.D. Birrell, D. Evers, G. Nelson, S. Owicki,
+and E. Wobber. <B>Distributed garbage collection for network objects</B>.
+Report 116. Digital Equipment Corporation, Systems Research Center.<BR>
+<BR>
+[Birrell, <I>et al.</I> 1993b] A.D. Birrell, G. Nelson, S. Owicki, and E.
+Wobber. <B>Network objects</B>. <I>Proc. 14th Symposium on Operating Systems
+Principles</I>.<BR>
+<BR>
+[Birrell, <I>et al.</I> 1994] A.D. Birrell, G. Nelson, S. Owicki, and E.
+Wobber. <B>Network objects</B>. Report 115. Digital Equipment Corporation,
+Systems Research Center.<BR>
+<BR>
+[Brewer, Waldspurger 1992] E.A. Brewer and C.A. Waldspurger. <B>Preventing
+recursion deadlock in concurrent object-oriented systems</B>. <I>Proc. 1992
+International Parallel Processing Symposium, Beverly Hills, California.
+(Also, Report MIT/LCS/TR-526.)</I>.<BR>
+<BR>
+[Brockschmidt 1994] K. Brockschmidt, <B>Inside OLE2</B>. Microsoft Press.<BR>
+<BR>
+[Brown 1994] M.H. Brown. <B>Report on the 1993 SRC algorithm animation festival</B>.
+Report n.126. Digital Equipment Corporation, Systems Research Center. To
+appear.<BR>
+<BR>
+[Brown, Meehan 1994] M.H. Brown and J.R. Meehan. <B>The FormsVBT Reference
+Manual</B>. Unpublished. Digital Equipment Corporation, Systems Research
+Center.<BR>
+<BR>
+[Fort&eacute; 1994] Fort&eacute;. <B>TOOL reference manual</B>. Fort&eacute;,
+Inc.<BR>
+<BR>
+[Horning, <I>et al.</I> 1993] J. Horning, B. Kalsow, P. McJones, and G.
+Nelson. <B>Some useful Modula-3 interfaces</B>. Report 113. Digital Equipment
+Corporation, Systems Research Center.<BR>
+<BR>
+[Mansfield 1994] R. Mansfield, <B>Visual Basic for Applications</B>. Ventana
+Press.<BR>
+<BR>
+[Milner, Tofte, Harper 1989] R. Milner, M. Tofte, and R. Harper, <B>The
+definition of Standard ML</B>. MIT Press.<BR>
+<BR>
+[Najork, Brown 1994] M. Najork and M.H. Brown. <B>A library for visualizing
+combinatorial structures</B>. <I>Proc. IEEE Visualization'94</I>.<BR>
+<BR>
+[Nelson 1991] G. Nelson, ed. <B>Systems programming with Modula-3</B>. Prentice
+Hall.<BR>
+<BR>
+[Ousterhout 1994] J.K. Ousterhout, <B>Tcl and the Tk toolkit</B>. Addison-Wesley.<BR>
+<BR>
+[Reppy 1991] Reppy. <B>A higher-order concurrent language</B>. <I>Proc.
+SIGPLAN'91 Conference on Programming Language Design and Implementation</I>.
+ACM Press.<BR>
+<BR>
+[Thomsen, <I>et al.</I> 1993] B. Thomsen, L. Leth, S. Prasad, T.-M. Kuo,
+A. Kramer, F. Knabe, and A. Giacalone. <B>Facile Antigua Release Programming
+Guide</B>. ECRC-93-20. European Computer-Industry Research Centre.<BR>
+<BR>
+[Ungar, Smith 1987] D. Ungar and R.B. Smith. <B>Self: the power of simplicity</B>.
+<I>Proc. OOPSLA'87</I>. ACM SIGPLAN Notices 2(12).<BR>
+<BR>
+[White 1994] J.E. White. <B>Telescript technology: the foundation for the
+electronic marketplace</B>. White Paper. General Magic, Inc. 
+<H1>Index</H1>
+<HR><A NAME="fn0"></A>[1] In the implementation, network references are
+generated to objects and arrays, not to each of their embedded locations.
+However, it is consistent and significantly simpler to carry out our discussions
+in terms of network references to locations.<BR>
+<BR>
+<A NAME="fn1"></A>[2] In the implementation, loc0 is a Modula-3 network
+object with access and update methods.<BR>
+<BR>
+<A NAME="fn2"></A>[3] &quot;Captain, we have a problem. We teleported an
+instance of yourself successfully to the planet. But you here failed to
+disintegrate. This is most unfortunate; if you could just step into this
+waste recycler ...&quot; 
+</BODY>
+</HTML>

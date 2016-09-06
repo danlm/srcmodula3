@@ -1,0 +1,304 @@
+	.file	"RT0u.ic"
+	.version	"01.01"
+gcc2_compiled.:
+
+.section	.text
+.L_text_b:
+	.previous
+
+.section	.data
+.L_data_b:
+	.previous
+
+.section	.rodata
+.L_rodata_b:
+	.previous
+
+.section	.bss
+.L_bss_b:
+	.previous
+
+.section	.debug_sfnames
+.L_sfnames_b:
+	.string	"/tmp_mnt/swindle/r/misc1/m3-export/new/boot-LINUXELF/m3core/LINUXELF/"
+	.previous
+
+.section	.line
+.L_line_b:
+	.4byte	.L_line_e-.L_line_b
+	.4byte	.L_text_b
+	.previous
+
+.section	.debug_srcinfo
+.L_srcinfo_b:
+	.4byte	.L_line_b
+	.4byte	.L_sfnames_b
+	.4byte	.L_text_b
+	.4byte	.L_text_e
+	.4byte	0xffffffff
+	.previous
+
+.section	.debug_pubnames
+	.4byte	.L_debug_b
+	.previous
+
+.section	.debug_aranges
+	.4byte	.L_debug_b
+	.previous
+
+.section	.debug
+.L_debug_b:
+.L_D1:
+	.4byte	.L_D1_e-.L_D1
+	.2byte	0x11
+	.2byte	0x12
+	.4byte	.L_D2
+	.2byte	0x38
+	.string	"RT0u.ic"
+	.2byte	0x258
+	.string	"SRC Modula-3 2.6.3"
+	.2byte	0x136
+	.4byte	0x1
+	.2byte	0x111
+	.4byte	.L_text_b
+	.2byte	0x121
+	.4byte	.L_text_e
+	.2byte	0x106
+	.4byte	.L_line_b
+	.2byte	0x1b8
+	.string	"/tmp_mnt/swindle/r/misc1/m3-export/new/boot-LINUXELF/m3core/LINUXELF"
+	.2byte	0x8006
+	.4byte	.L_sfnames_b
+	.2byte	0x8016
+	.4byte	.L_srcinfo_b
+.L_D1_e:
+	.previous
+
+.globl MI_RT0u
+.data
+	.align 4
+	.type	 MI_RT0u,@object
+	.size	 MI_RT0u,432
+MI_RT0u:
+	.long MI_RT0u+380
+	.long MI_RT0u+48
+	.zero	48
+	.long 1924506922
+.byte 60
+.byte 97
+.byte 184
+.byte 113
+.byte 22
+.byte 196
+.byte 13
+.byte 3
+	.zero	8
+	.long 4
+	.long 4
+	.zero	20
+	.long MI_RT0u+428
+	.zero	40
+	.long MI_RT0u+160
+	.zero	16
+	.long -296061214
+.byte 1
+.byte 63
+.byte 216
+.byte 243
+.byte 227
+.byte 73
+.byte 130
+.byte 29
+	.zero	8
+	.long 4
+	.long 4
+	.zero	20
+	.long MI_RT0u+426
+	.zero	40
+	.long MI_RT0u+268
+	.zero	12
+	.long 463743954
+.byte 23
+.byte 49
+.byte 47
+.byte 28
+.byte 197
+.byte 26
+.byte 139
+.byte 7
+	.zero	8
+	.long 4194304
+	.long 4
+	.zero	20
+	.long MI_RT0u+419
+	.zero	52
+	.ascii	"/proj/m3/pkg/runtime/src/POSIX/RT0u.i3"
+	.zero	1
+.byte 1
+.byte 14
+.byte 28
+.byte 0
+.byte 0
+.byte 16
+.byte 0
+.byte 5
+.byte 0
+.byte 5
+.byte 0
+	.zero	2
+
+.section	.debug_pubnames
+	.4byte	.L_P0
+	.string	"MI_RT0u"
+	.previous
+
+.section	.debug
+.L_D3:
+	.4byte	.L_D3_e-.L_D3
+	.2byte	0x13
+	.2byte	0x12
+	.4byte	.L_D4
+	.set	.L_T26,.L_D3
+	.2byte	0xb6
+	.4byte	0x1b0
+.L_D3_e:
+.L_D5:
+	.4byte	0x4
+.L_P0:
+.L_D4:
+	.4byte	.L_D4_e-.L_D4
+	.2byte	0x7
+	.2byte	0x12
+	.4byte	.L_D6
+	.2byte	0x38
+	.string	"MI_RT0u"
+	.2byte	0x72
+	.4byte	.L_T26
+	.2byte	0x23
+	.2byte	.L_l4_e-.L_l4
+.L_l4:
+	.byte	0x3
+	.4byte	MI_RT0u
+.L_l4_e:
+.L_D4_e:
+	.previous
+
+.section	.debug
+.L_D6:
+	.4byte	.L_D6_e-.L_D6
+	.2byte	0x13
+	.2byte	0x12
+	.4byte	.L_D7
+	.set	.L_T23,.L_D6
+	.2byte	0xb6
+	.4byte	0x2d0
+.L_D6_e:
+.L_D8:
+	.4byte	0x4
+.L_P1:
+.L_D7:
+	.4byte	.L_D7_e-.L_D7
+	.2byte	0x7
+	.2byte	0x12
+	.4byte	.L_D9
+	.2byte	0x38
+	.string	"MI_RT0"
+	.2byte	0x72
+	.4byte	.L_T23
+.L_D7_e:
+	.previous
+
+.section	.debug
+.L_D9:
+	.4byte	.L_D9_e-.L_D9
+	.2byte	0x13
+	.2byte	0x12
+	.4byte	.L_D10
+	.set	.L_T24,.L_D9
+	.2byte	0xb6
+	.4byte	0x38c
+.L_D9_e:
+.L_D11:
+	.4byte	0x4
+.L_P2:
+.L_D10:
+	.4byte	.L_D10_e-.L_D10
+	.2byte	0x7
+	.2byte	0x12
+	.4byte	.L_D12
+	.2byte	0x38
+	.string	"MI_RTHooks"
+	.2byte	0x72
+	.4byte	.L_T24
+.L_D10_e:
+	.previous
+
+.section	.debug
+.L_P3:
+.L_D12:
+	.4byte	.L_D12_e-.L_D12
+	.2byte	0x7
+	.2byte	0x12
+	.4byte	.L_D13
+	.2byte	0x38
+	.string	"RT0u__inCritical"
+	.2byte	0x55
+	.2byte	0x7
+.L_D12_e:
+	.previous
+
+.section	.debug
+.L_D13:
+	.4byte	.L_D13_e-.L_D13
+	.align 4
+.L_D13_e:
+.L_D2:
+	.previous
+
+.section	.text
+.L_text_e:
+	.previous
+
+.section	.data
+.L_data_e:
+	.previous
+
+.section	.rodata
+.L_rodata_e:
+	.previous
+
+.section	.bss
+.L_bss_e:
+	.previous
+
+.section	.line
+.L_line_last:
+	.4byte	0x0
+	.2byte	0xffff
+	.4byte	.L_text_e-.L_text_b
+.L_line_e:
+	.previous
+
+.section	.debug_srcinfo
+	.4byte	.L_line_last-.L_line_b
+	.4byte	0xffffffff
+	.previous
+
+.section	.debug_pubnames
+	.4byte	0x0
+	.string	""
+	.previous
+
+.section	.debug_aranges
+	.4byte	.L_text_b
+	.4byte	.L_text_e-.L_text_b
+	.4byte	.L_data_b
+	.4byte	.L_data_e-.L_data_b
+	.4byte	.L_rodata_b
+	.4byte	.L_rodata_e-.L_rodata_b
+	.4byte	.L_bss_b
+	.4byte	.L_bss_e-.L_bss_b
+	.4byte	0x0
+	.4byte	0x0
+	.previous
+	.ident	"GCC: (GNU) 2.6.3"

@@ -1,0 +1,64 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: pkgobj/src/POSIX/ultrix/FileSysExtra.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>pkgobj/src/POSIX/ultrix/FileSysExtra.m3</H2></A><HR>
+<inModule>
+<PRE><A HREF="../../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM> FileSysExtra.m3 </EM></BLOCKQUOTE><PRE>
+
+UNSAFE MODULE <module>FileSysExtra</module> EXPORTS <A HREF="../../Common/FileSys.i3.html"><implements>FileSys</A></implements>;
+
+IMPORT <A HREF="../../../../C/src/Common/M3toC.i3.html">M3toC</A>, <A HREF="../../../../os/src/Common/OSError.i3.html">OSError</A>, <A HREF="../../../../os/src/POSIX/OSErrorPosix.i3.html">OSErrorPosix</A>, <A HREF="Umnt.i3.html">Umnt</A>;
+
+FROM <A HREF="../../../../C/src/Common/Ctypes.i3.html">Ctypes</A> IMPORT char_star, int, unsigned_int, unsigned_int_star;
+
+PROCEDURE <A NAME="FreeDiskSpace"><procedure>FreeDiskSpace</procedure></A>(fn: FN) : CARDINAL RAISES {OSError.E} =
+  VAR
+    status: int;
+    start: unsigned_int;
+    p: char_star;
+    fs: Umnt.fs_data;
+  BEGIN
+    p := M3toC.TtoS(fn);
+    status := Umnt.getmnt (
+      LOOPHOLE(ADR(start), unsigned_int_star),
+      LOOPHOLE(ADR(fs), Umnt.fs_data_star),
+      BYTESIZE(fs), Umnt.STAT_ONE, p);
+    IF status = -1 THEN OSErrorPosix.Raise(); END;
+    RETURN MAX(fs.fd_req.bfreen, 0);
+  END FreeDiskSpace;
+
+BEGIN
+END FileSysExtra.
+</PRE>
+</inModule>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

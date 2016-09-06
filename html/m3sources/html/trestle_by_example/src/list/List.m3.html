@@ -1,0 +1,96 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: trestle_by_example/src/list/List.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>trestle_by_example/src/list/List.m3</H2></A><HR>
+<inModule>
+<PRE>MODULE <module><implements><A HREF="../../../main/src/Main.i3.html">Main</A></implements></module>;
+IMPORT <A HREF="../../../ui/src/vbt/Trestle.i3.html">Trestle</A>, <A HREF="../../../ui/src/vbt/VBT.i3.html">VBT</A>, <A HREF="../../../ui/src/split/TextVBT.i3.html">TextVBT</A>, <A HREF="../../../lego/src/ListVBT.i3.html">ListVBT</A>, <A HREF="../../../ui/src/split/HVSplit.i3.html">HVSplit</A>, <A HREF="../../../ui/src/split/RigidVBT.i3.html">RigidVBT</A>, <A HREF="../../../ui/src/vbt/PaintOp.i3.html">PaintOp</A>, <A HREF="../../../geometry/src/Axis.i3.html">Axis</A>,
+       <A HREF="../../../ui/src/vbt/Font.i3.html">Font</A>, <A HREF="../../../ui/src/split/HVBar.i3.html">HVBar</A>;
+
+TYPE
+  T = ListVBT.UniSelector OBJECT
+      OVERRIDES
+        insideClick  := InsideClick;
+        outsideClick := OutsideClick;
+        insideDrag   := InsideDrag;
+        outsideDrag  := OutsideDrag;
+      END;
+
+PROCEDURE <A NAME="InsideClick"><procedure>InsideClick</procedure></A> (v: T; cd: VBT.MouseRec; this: ListVBT.Cell) =
+  BEGIN
+    list.selectOnly(this);
+    TextVBT.Put(txt1, &quot;inside click&quot;);
+    TextVBT.Put(txt2, list.getValue(this));
+  END InsideClick;
+
+PROCEDURE <A NAME="InsideDrag"><procedure>InsideDrag</procedure></A> (v: T; cd: VBT.PositionRec; this: ListVBT.Cell) =
+  BEGIN
+    list.selectOnly(this);
+    TextVBT.Put(txt1, &quot;inside drag&quot;);
+    TextVBT.Put(txt2, list.getValue(this));
+  END InsideDrag;
+
+PROCEDURE <A NAME="OutsideClick"><procedure>OutsideClick</procedure></A> (v: T; cd: VBT.MouseRec) =
+  BEGIN
+    TextVBT.Put(txt1, &quot;outside click&quot;);
+  END OutsideClick;
+
+PROCEDURE <A NAME="OutsideDrag"><procedure>OutsideDrag</procedure></A> (v: T; cd: VBT.PositionRec) =
+  BEGIN
+    TextVBT.Put(txt1, &quot;outside drag&quot;);
+  END OutsideDrag;
+
+CONST
+  times14 = &quot;-*-times-*-r-*-*-14-*-*-*-*-*-*-*&quot;;
+  strings = ARRAY [1 .. 7] OF
+              TEXT{&quot;Africa&quot;, &quot;Antartica&quot;, &quot;Asia&quot;, &quot;Australia&quot;, &quot;Europe&quot;,
+                   &quot;North America&quot;, &quot;South America&quot;};
+VAR
+  font   := Font.FromName(ARRAY OF TEXT{times14});
+  colors := PaintOp.MakeColorQuad(PaintOp.Bg, PaintOp.Fg);
+  list   := NEW(ListVBT.T, selector := NEW(T).init(NIL)).init(colors);
+  txt1   := TextVBT.New(&quot;&quot;, fnt := font);
+  txt2   := TextVBT.New(&quot;&quot;, fnt := font);
+  main := HVSplit.Cons(Axis.T.Ver, RigidVBT.FromHV(list, 30.0, 35.0),
+                       HVBar.New(), txt1, HVBar.New(), txt2);
+BEGIN
+  list.insertCells(at := 0, n := NUMBER(strings)); (* Create 7 new cells *)
+  FOR i := FIRST(strings) TO LAST(strings) DO
+    list.setValue(i - FIRST(strings), strings[i]); (* Set cell value *)
+  END;
+  ListVBT.TextPainter.setFont(list.painter, list, font);
+  Trestle.Install(main);
+  Trestle.AwaitDelete(main)
+END Main.
+</PRE>
+</inModule>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

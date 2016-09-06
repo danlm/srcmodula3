@@ -1,0 +1,127 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: dps/src/DisplayListStack.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>dps/src/DisplayListStack.m3</H2></A><HR>
+<inModule>
+<PRE><A HREF="../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+
+MODULE <module><implements><A HREF="DisplayListStack.i3.html">DisplayListStack</A></implements></module>;
+
+IMPORT <A HREF="DisplayList.i3.html">DisplayList</A>, <A HREF="DPS.i3.html">DPS</A>, <A HREF="Linked2Tree.i3.html">Linked2Tree</A>;
+
+PROCEDURE <A NAME="NewBoxOfChild"><procedure>NewBoxOfChild</procedure></A> (t: T; e: DisplayList.E; box: DPS.Box) =
+  BEGIN
+  e.box := box;
+  t.Stack();
+  END NewBoxOfChild;
+
+PROCEDURE <A NAME="Prepend"><procedure>Prepend</procedure></A> (t: T; e: Linked2Tree.E) =
+  BEGIN
+  Linked2Tree.Prepend (t, e);
+  t.Stack();
+  END Prepend;
+
+PROCEDURE <A NAME="Append"><procedure>Append</procedure></A> (t: T; e: Linked2Tree.E) =
+  BEGIN
+  Linked2Tree.Append (t, e);
+  (* t.Stack(); *)
+  EVAL StackInternal (t);
+  END Append;
+
+PROCEDURE <A NAME="InsertBefore"><procedure>InsertBefore</procedure></A> (t: T; e, before: Linked2Tree.E) =
+  BEGIN
+  Linked2Tree.InsertBefore (t, e, before);
+  t.Stack();
+  END InsertBefore;
+
+PROCEDURE <A NAME="InsertAfter"><procedure>InsertAfter</procedure></A> (t: T; e, after: Linked2Tree.E) =
+  BEGIN
+  Linked2Tree.InsertAfter (t, e, after);
+  (* t.Stack(); *)
+  EVAL StackInternal (t);
+  END InsertAfter;
+
+PROCEDURE <A NAME="RemoveChild"><procedure>RemoveChild</procedure></A> (t: T; e: Linked2Tree.E) =
+  BEGIN
+  Linked2Tree.RemoveChild (t, e);
+  t.Stack();
+  END RemoveChild;
+
+PROCEDURE <A NAME="Stack"><procedure>Stack</procedure></A> (t: T; firstHighY: REAL := -1.0) =
+ VAR dirtyBox: DPS.Box;
+  BEGIN
+  dirtyBox := StackInternal (t, firstHighY);
+  IF dirtyBox # DPS.ZeroBox THEN t.Dirty (dirtyBox, NIL); END;
+  END Stack;
+
+PROCEDURE <A NAME="StackInternal"><procedure>StackInternal</procedure></A> (t: T; firstHighY: REAL := -1.0): DPS.Box =
+ VAR dd: DisplayList.E;
+ VAR y: REAL;
+ VAR dirtyBox: DPS.Box := DPS.ZeroBox;
+  BEGIN
+  dd := t.First();
+  IF dd = NIL THEN RETURN DPS.ZeroBox; END;
+  IF firstHighY &lt; 0.0 THEN y := dd.box.low.y; (* First one stands as-is. *)
+   ELSE (* Restack everyone. *)
+    y := firstHighY;
+    IF dd.box.high.y # y THEN
+      IF dirtyBox = DPS.ZeroBox THEN dirtyBox := dd.box;
+       ELSE dirtyBox := DPS.BoxUnion (dirtyBox, dd.box);
+        END;
+      dd.box.low.y := dd.box.low.y + (y - dd.box.high.y);
+      dd.box.high.y := y;
+      dirtyBox := DPS.BoxUnion (dirtyBox, dd.box);
+      END;
+    y := dd.box.low.y;
+    END;
+  dd := dd.Next();
+  WHILE dd # NIL DO
+    IF dd.box.high.y # y THEN
+      IF dirtyBox = DPS.ZeroBox THEN dirtyBox := dd.box;
+       ELSE dirtyBox := DPS.BoxUnion (dirtyBox, dd.box);
+        END;
+      dd.box.low.y := dd.box.low.y + (y - dd.box.high.y);
+      dd.box.high.y := y;
+      dirtyBox := DPS.BoxUnion (dirtyBox, dd.box);
+      END;
+    y := dd.box.low.y;
+    dd := dd.Next();
+    END;
+  RETURN dirtyBox
+  END StackInternal;
+
+  BEGIN
+
+  END DisplayListStack.
+</PRE>
+</inModule>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

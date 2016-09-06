@@ -1,0 +1,33 @@
+(* A queue for multiple readers/writers. *)
+
+module Queue;
+
+let q: All(X) {write: (X)=>(), read: ()=>X} =
+  (let nonEmpty = condition();
+   var q = [];
+   
+   {protected, serialized,
+      write =>
+        meth(s, e)
+          q := q @ [e];
+          signal(nonEmpty);
+        end,
+     
+     read =>
+       meth(s)
+         watch nonEmpty until #(q)>0 end;
+         let q0 = q[0];
+         q := q[1 for #(q)-1];
+         q0;
+       end
+   });
+
+end module;
+
+let t = 
+  fork(proc() Queue_q.read() end, 0);
+
+Queue_q.write(3);
+
+join(t);
+

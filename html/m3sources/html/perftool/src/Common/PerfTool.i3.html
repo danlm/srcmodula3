@@ -1,0 +1,77 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: perftool/src/Common/PerfTool.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>perftool/src/Common/PerfTool.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE> Last Modified On Fri May 29 16:53:29 PDT 1992 by muller                   
+
+<P>
+<P><PRE>INTERFACE <interface><A HREF="PerfTool.m3.html">PerfTool</A></interface>;
+
+IMPORT <A HREF="../../../rw/src/Common/Rd.i3.html">Rd</A>, <A HREF="../../../rw/src/Common/Wr.i3.html">Wr</A>, <A HREF="../../../text/src/Text.i3.html">Text</A>;
+</PRE> This interface provides procedures to start performance tools. 
+
+<P><PRE>PROCEDURE <A HREF="PerfTool.m3.html#Start">Start</A> (name: Text.T; VAR rd: Rd.T; VAR wr: Wr.T): BOOLEAN;
+  (* start the tool name.
+     If the operation is successful, return true;
+       rd is a reader connected to stdout of the tool;
+       wr is a writer connected to stdin of the tool.
+     If the operation fails, return false. *)
+
+PROCEDURE <A HREF="PerfTool.m3.html#StartAndWait">StartAndWait</A> (name: Text.T; VAR rd: Rd.T; VAR wr: Wr.T): BOOLEAN;
+  (* start the tool name.
+     If the operation is successul,
+       wait until the tool writes a character to its stdout and return TRUE;
+       rd is a reader connected to stdout of the tool;
+       wr is a writer connected to stdin of the  tool.
+     If the operation fails, return FALSE. *)
+
+PROCEDURE <A HREF="PerfTool.m3.html#ParamStart">ParamStart</A> (param: Text.T; VAR rd: Rd.T; wr: Wr.T): BOOLEAN;
+  (* If the Modula runtime parameter &quot;param&quot; is not set, just
+       return FALSE.
+     Otherwise, use the value of that parameter to determine the name
+       of the tool: it is the name of the parameter if its value is &quot;&quot;,
+       it is the value otherwise.  Return Start (name, rd, wr). *)
+
+PROCEDURE <A HREF="PerfTool.m3.html#ParamStartAndWait">ParamStartAndWait</A> (param: Text.T;
+      	      	      	     VAR rd: Rd.T; VAR wr: Wr.T): BOOLEAN;
+  (* If the Modula runtime parameter &quot;param&quot; is not set, just
+       return FALSE.
+     Otherwise, use the value of that parameter to determine the name
+       of the tool: it is the name of the parameter if its value is &quot;&quot;,
+       it is the value otherwise.  Return StartAndWait (name, rd, wr). *)
+
+END PerfTool.
+</PRE>
+</inInterface>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

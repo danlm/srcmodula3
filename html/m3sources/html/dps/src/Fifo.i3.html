@@ -1,0 +1,70 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: dps/src/Fifo.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>dps/src/Fifo.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+
+INTERFACE <interface><A HREF="Fifo.m3.html">Fifo</A></interface>;
+
+IMPORT <A HREF="../../thread/src/Common/Thread.i3.html">Thread</A>;
+
+TYPE E = OBJECT next: E; METHODS END;
+
+TYPE SubsumerProc = PROCEDURE (new, old: E): E;
+
+TYPE T = OBJECT
+  mutex: MUTEX;
+  condition: Thread.Condition;
+  first: E; last: E;
+  subsumerProc: SubsumerProc;
+ METHODS
+  Insert (e: E) := Insert;
+  InsertMaybe (e: E) := Insert;
+  RemoveOrNIL (): E:= RemoveOrNIL;
+  RemoveOrWait (): E := RemoveOrWait;
+  Count (): INTEGER := Count;
+  Empty (): BOOLEAN := Empty;
+  END;
+
+PROCEDURE <A HREF="Fifo.m3.html#New">New</A> (proc: SubsumerProc := NIL): T;
+
+PROCEDURE <A HREF="Fifo.m3.html#Insert">Insert</A> (t: T; e: E);
+PROCEDURE <A HREF="Fifo.m3.html#RemoveOrNIL">RemoveOrNIL</A> (t: T): E;
+PROCEDURE <A HREF="Fifo.m3.html#RemoveOrWait">RemoveOrWait</A> (t: T): E;
+PROCEDURE <A HREF="Fifo.m3.html#Count">Count</A> (t: T): INTEGER;
+PROCEDURE <A HREF="Fifo.m3.html#Empty">Empty</A> (t: T): BOOLEAN;
+
+  END Fifo.
+</PRE>
+</inInterface>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

@@ -1,0 +1,51 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: m3tk/src/asttrans/M3CLockTrans.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>m3tk/src/asttrans/M3CLockTrans.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+
+INTERFACE <interface><A HREF="M3CLockTrans.m3.html">M3CLockTrans</A></interface>;
+
+IMPORT <A HREF="../toolmisc/M3Context.i3.html">M3Context</A>;
+
+EXCEPTION NoThread;
+
+PROCEDURE <A HREF="M3CLockTrans.m3.html#Run">Run</A>(c: M3Context.T) RAISES {NoThread};
+</PRE><BLOCKQUOTE><EM> Perform the LOCK desugaring on all primary source modules in 'c',
+   as defined in the Modula-3 report. If the <CODE>Thread</CODE> interface
+   is not found in <CODE>c</CODE> then <CODE>NoThread</CODE> will be raised. </EM></BLOCKQUOTE><PRE>
+
+END M3CLockTrans.
+</PRE>
+</inInterface>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

@@ -1,0 +1,94 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: atom/src/AtomWeak.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>atom/src/AtomWeak.m3</H2></A><HR>
+<inModule>
+<PRE><A HREF="../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM>                                                           </EM></BLOCKQUOTE><PRE>
+
+MODULE <module>AtomWeak</module> EXPORTS <A HREF="Atom.i3.html"><implements>Atom</A></implements>;
+
+IMPORT <A HREF="../../text/src/TextF.i3.html">TextF</A>, TextToRefanyTable, <A HREF="../../weakref/src/WeakRef.i3.html">WeakRef</A>;
+
+REVEAL <A NAME="T">T</A> = BRANDED REF TEXT;
+
+VAR
+  mutex := NEW(MUTEX);
+  table := TextToRefanyTable.New();
+
+PROCEDURE <A NAME="FromText"><procedure>FromText</procedure></A>(t: TEXT): T =
+  VAR
+    r: REFANY;
+    a: T;
+  BEGIN
+    LOCK mutex DO
+      IF table.in(t, r) THEN
+        a := WeakRef.ToRef(NARROW(r, WeakRef.T))
+      ELSE
+        a := NEW(T);
+        a^ := t;
+        EVAL table.put(t, WeakRef.FromRef(a, CleanUpProc))
+      END
+    END;
+    RETURN a
+  END FromText;
+
+PROCEDURE <A NAME="CleanUpProc"><procedure>CleanUpProc</procedure></A>(READONLY w: T; a: REFANY) =
+  VAR r: REFANY;
+  BEGIN
+    LOCK mutex DO
+      IF NOT table.delete(NARROW(a, T)^, r) THEN &lt;*ASSERT FALSE*&gt; END
+    END
+  END CleanUpProc;
+
+PROCEDURE <A NAME="ToText"><procedure>ToText</procedure></A>(a: T): TEXT =
+  BEGIN
+    RETURN a^
+  END ToText;
+
+PROCEDURE <A NAME="Hash"><procedure>Hash</procedure></A>(a: T): INTEGER =
+  (* Stolen from John Ellis's Modula-2+ TextTable.Hash. *)
+  CONST Multiplier  = -1664117991;
+    (* = LOOPHOLE( Round( .6125423371 * 2^32 ), INTEGER ) *)
+  VAR hash: INTEGER := 0;
+  BEGIN
+    FOR i := 0 TO (* Text.Length(a^)-1 *) MAX (0, NUMBER (a^^) - 1) - 1 DO
+      hash := hash * Multiplier + ORD( (* Text.GetChar(a^) *) a^[i] )
+    END;
+    RETURN hash
+  END Hash;
+
+BEGIN
+END AtomWeak.
+</PRE>
+</inModule>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

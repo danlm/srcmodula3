@@ -1,0 +1,142 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: Installation</TITLE>
+</HEAD>
+<BODY BGCOLOR="#ffffff" VLINK="#006633">
+
+<H2>How to install SRC Modula-3</H2>
+<P>
+
+Once you have <A HREF="where.html">ftp'ed the archives</A>,
+you need to do the following from the top-level directory to build and
+install the system:
+<P>
+
+<OL>
+<LI>Unpack the <TT>boot-<EM>architecture</EM></TT> archive and change
+to its directory:
+<PRE>
+    $ gunzip &lt; <TT>boot-</TT><EM>architecture</EM>.tar.gz | tar xpof -
+    $ rm boot-<EM>architecture</EM>.tar.gz
+    $ cd boot-<EM>architecture</EM>
+</PRE>
+
+<LI>On Unix platforms, unpack the <TT>m3cc</TT> archive inside the bootstrap:
+<PRE>
+    $ gunzip &lt; ../m3cc.tar.gz | tar xpof -
+    $ rm  ../m3cc.tar.gz
+</PRE>
+(Note: if you are going to be doing a port or installing
+the system for several platforms, save <TT>m3cc.tar.gz</TT>!)
+<P>
+
+The <TT>m3cc</TT> archive is not needed on Windows/NT or Windows 95,
+the so-called <I>NT386</I> platform. The installation on that platform
+is not yet as smooth as the other platforms. Please see these
+<A HREF="installingWin32.html">NT386 installation notes</A> for extra
+instructions on installing SRC Modula-3 on either of these platforms.
+<P>
+
+<LI>Edit <TT>m3build/templates/</TT><EM>architecture</EM> to reflect your
+site-specific configuration.  It would be wise to make a backup copy
+of <TT>m3build/templates/<EM>architecture</EM></TT> before you edit it
+ --- just in case.
+<P>
+
+If your <TT>make</TT> does not support the <TT>VPATH</TT> feature, ensure
+that <TT>GNU_MAKE</TT> in your configuration template is set up
+to use GNU <TT>make</TT>.  According to the GNU documentation,
+most BSD-based <TT>make</TT>s do support <TT>VPATH</TT>.
+If you're optimistic, skip this step and return here if the you have
+problems building <TT>m3cc</TT>.
+See <TT>m3cc/gcc/INSTALL</TT> for the gory details about <TT>VPATH</TT>.
+<P>
+
+<LI>Build and install the system and return to the top-level directory:
+<PRE>
+    $ ./m3boot
+    $ ./m3ship
+    $ cd ..
+</PRE>
+<P>
+
+The <A HREF="m3ship.html"><TT>m3ship</TT></A>
+step will copy the essential pieces of the bootstrap
+system to the directories (<TT>BIN_INSTALL</TT>, <TT>LIB_INSTALL</TT>, ...)
+specified in <TT>m3build/templates/<EM>architecture</EM></TT>.
+<P>
+
+At this point, you may need to tell your shell that new executables
+(e.g.
+<A HREF="m3build/m3build.html"><TT>m3build</TT></A> and
+<A HREF="m3ship.html"><TT>m3ship</TT></A>)
+are present, by resetting your <TT>PATH</TT> environment
+variable to include <TT>BIN_INSTALL</TT> and running <TT>rehash</TT>,
+for example.
+<P>
+
+Also, if you are using dynamic libraries and you set
+<TT>LIB_INSTALL</TT> in your configuration file to a directory that is
+not on your linker's normal search path, you will have to edit your
+<TT>LD_LIBRARY_PATH</TT> environment variable to point to that
+directory.
+<P>
+
+<LI>Now, you should have successfully installed the Modula-3
+compiler and driver.
+<P>
+
+<LI>You can now delete the bootstrap directories to conserve space:
+<PRE>
+    $ rm -rf boot-<EM>architecture</EM>
+</PRE>
+<P>
+
+<LI>Build and install the other Modula-3 libraries and tools
+using the version of m3build installed above.
+<P>
+
+<PRE>
+    $ gunzip &lt; m3.tar.gz | tar xpof -
+    $ rm <EM>m3</EM>.tar.gz
+    $ cd <EM>m3</EM>
+</PRE>
+
+Read the <TT>README</TT> and follow any special instructions.
+In particular, edit src/m3makefile to select the components
+you want to build.
+
+<PRE>
+    $ m3build
+    $ cd ..
+    $ rm -rf m3
+</PRE>
+<P>
+
+The top-level m3makefile <TT>m3/src/m3makefile</TT> takes care of
+building each Modula-3 source package and shipping it.  For your own
+packages you must run m3build and then explicitly run m3ship.
+<P>
+
+Note that the two deletion steps are optional, but do save space. Once the
+<A HREF="m3ship.html"><TT>m3build</TT></A> step has completed, nothing
+in the <EM>xyz</EM> directory is needed.
+<P>
+</OL>
+<P>
+
+<HR>
+<A HREF="home.html">[Modula-3 home page]</A>
+<P>
+<A HREF="mailto:m3-request@src.dec.com">
+<ADDRESS>m3-request@src.dec.com</ADDRESS></A>
+<PRE>
+Last modified on Mon Aug 12 10:41:46 PDT 1996 by heydon
+     modified on Fri Jan 20 10:50:45 PST 1995 by kalsow
+     modified on Thu Jan  7 18:40:11 PST 1993 by muller
+</PRE>
+
+Copyright (C) 1992, 1996, Digital Equipment Corporation. All rights reserved.<BR>
+See the <A HREF="http://www.research.digital.com/SRC/m3sources/html/COPYRIGHT.html">COPYRIGHT</A> for a full description.
+</BODY>
+</HTML>

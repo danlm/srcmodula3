@@ -1,0 +1,55 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: Building programs and libraries</TITLE>
+</HEAD>
+<BODY BGCOLOR="#ffffff" VLINK="#006633">
+
+<H2>Building programs and libraries </H2>
+<P>
+
+<B> library(X) </B>  
+          compile the sources in the set <TT>PGM_SOURCES</TT> and build a
+          library, <TT>X</TT>, from the resulting compiled object files.
+          The visibility of the library is hidden.
+ 
+<P>
+
+<B> Library(X) </B>  
+          The same as <TT>library</TT>.
+ 
+<P>
+
+<B> program(X) </B>  
+          constructs an executable program named <TT>X</TT> from the given
+          sources.
+ 
+<P>
+
+<B> Program(X) </B>  
+          like <TT>program</TT>, but <TT>X</TT> is exported to <TT>/bin</TT>.
+ 
+<P>
+
+<B> build_standalone() </B>  
+          ensures that the program being built does not depend on
+          dynamic linking and shared libraries.  To have an effect,
+          this procedure must be called before <TT>program</TT> or
+          <TT>Program</TT> is called.
+ 
+<P>
+
+<HR>
+<A HREF="../home.html">[Modula-3 home page]</A>
+<P>
+<A HREF="mailto:m3-request@src.dec.com">
+<ADDRESS>m3-request@src.dec.com</ADDRESS></A>
+<PRE>
+Last modified on Thu Jan  4 11:07:50 PST 1996 by heydon 
+     modified on Thu Apr 21 16:48:23 PDT 1994 by kalsow 
+     modified on Thu Jan  7 18:40:57 PST 1993 by muller 
+</PRE>
+
+Copyright (C) 1992, 1996, Digital Equipment Corporation. All rights reserved.<BR>
+See the <A HREF="http://www.research.digital.com/SRC/m3sources/html/COPYRIGHT.html">COPYRIGHT</A> for a full description.
+</BODY>
+</HTML>

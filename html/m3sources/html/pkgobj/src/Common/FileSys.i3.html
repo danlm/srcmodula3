@@ -1,0 +1,139 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: pkgobj/src/Common/FileSys.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>pkgobj/src/Common/FileSys.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM> FileSys.i3 </EM></BLOCKQUOTE><PRE>
+
+INTERFACE <interface><A HREF="#x1">FileSys</A></interface>;
+
+IMPORT <A HREF="../../../libm3/DS/TextList.i3.html">TextList</A>, <A HREF="../../../os/src/Common/OSError.i3.html">OSError</A>, <A HREF="../../../rw/src/Common/Rd.i3.html">Rd</A>, <A HREF="../../../time/src/Common/Time.i3.html">Time</A>, <A HREF="../../../rw/src/Common/Wr.i3.html">Wr</A>;
+</PRE><BLOCKQUOTE><EM> (semi) OS-independent file system types and ops </EM></BLOCKQUOTE><PRE>
+
+TYPE
+  FN = TEXT;
+
+  FilePerm = [0..65535];
+  FileType = {Normal, SLink, Dir, Other};
+  FileInfo = RECORD
+    type: BITS 16 FOR FileType;
+    perm: BITS 16 FOR FilePerm;
+    length: BITS 32 FOR [-16_7FFFFFFF-1..16_7FFFFFFF]; (* in bytes *)
+    date: Time.T;
+  END;
+
+TYPE
+  Enumeration = TextList.T;
+
+CONST
+  FilePermNorm = 1;        (* 644 on Ultrix *)
+  FilePermRWX = 2;         (* 755 on Ultrix *)
+  FilePermReadOnly = 3;    (* 444 on Ultrix *)
+  FilePermRX = 4;          (* 555 on Ultrix *)
+
+TYPE ErrorClass = {NoRoomInFS, IO, Access, Lookup, Other};
+
+PROCEDURE <A HREF="../POSIX/FileSysPosix.m3.html#ClassifyError">ClassifyError</A>(e: OSError.Code) : ErrorClass;
+</PRE> open/close file 
+
+<P><PRE>PROCEDURE <A HREF="FileSys.m3.html#OpenRead">OpenRead</A>(fn: FN) : Rd.T RAISES {OSError.E};
+PROCEDURE <A HREF="FileSys.m3.html#OpenWrite">OpenWrite</A>(fn: FN) : Wr.T RAISES {OSError.E};
+PROCEDURE <A HREF="FileSys.m3.html#OpenAppend">OpenAppend</A>(fn: FN) : Wr.T RAISES {OSError.E};
+</PRE> main procedures 
+
+<P><PRE>PROCEDURE <A HREF="FileSys.m3.html#Enumerate">Enumerate</A> (path: FN): Enumeration RAISES {OSError.E};
+  (* *)
+
+PROCEDURE <A HREF="../POSIX/FileSysPosix.m3.html#GetInfo">GetInfo</A>(path: FN; followLink: BOOLEAN := FALSE) : FileInfo
+   RAISES {OSError.E};
+  (* *)
+
+PROCEDURE <A HREF="../POSIX/FileSysPosix.m3.html#GetPath">GetPath</A> (path: FN): FN RAISES {OSError.E};
+  (* *)
+
+PROCEDURE <A HREF="FileSys.m3.html#MakeDir">MakeDir</A> (path: FN) RAISES {OSError.E};
+  (* *)
+
+PROCEDURE <A HREF="FileSys.m3.html#SetModifiedDate">SetModifiedDate</A> (path: FN; date: Time.T) RAISES {OSError.E};
+  (* *)
+
+PROCEDURE <A HREF="../POSIX/FileSysPosix.m3.html#SetMode">SetMode</A> (path: FN; perm: FilePerm) RAISES {OSError.E};
+  (* *)
+
+PROCEDURE <A HREF="FileSys.m3.html#Rename">Rename</A> (source, dest: FN) RAISES {OSError.E};
+  (* *)
+
+PROCEDURE <A HREF="FileSys.m3.html#Remove">Remove</A> (path: FN; recursive: BOOLEAN := FALSE) RAISES {OSError.E};
+  (* iff recursive, we'll remove entire dir, otherwise the target
+     must be a non-directory *)
+
+PROCEDURE <A HREF="../POSIX/FileSysPosix.m3.html#ReadLink">ReadLink</A>(path: FN) : FN RAISES {OSError.E};
+  (* *)
+
+PROCEDURE <A HREF="../POSIX/FileSysPosix.m3.html#HardLink">HardLink</A>(path: FN; referent: FN) RAISES {OSError.E};
+  (* *)
+
+PROCEDURE <A HREF="../POSIX/FileSysPosix.m3.html#SymLink">SymLink</A>(path: FN; referent: FN) RAISES {OSError.E};
+  (* *)
+
+PROCEDURE <A HREF="../POSIX/FileSysPosix.m3.html#CheckAccess">CheckAccess</A> (
+    path: FN;
+    write: BOOLEAN;
+    fail: BOOLEAN := FALSE): BOOLEAN
+    RAISES {OSError.E};
+  (* returns result if not &quot;fail&quot; *)
+
+PROCEDURE <A HREF="#x2">FreeDiskSpace</A>(fn: FN) : CARDINAL RAISES {OSError.E};
+   (* Returns the number of user 1KB block available in the
+      file system volume which contains &quot;fn&quot;. *)
+
+END FileSys.
+</PRE>
+</inInterface>
+<HR>
+<A NAME="x1">FileSys's implementation  is in:
+</A><UL>
+<LI><A HREF="FileSys.m3.html#0TOP0">pkgobj/src/Common/FileSys.m3</A>
+<LI><A HREF="../POSIX/FileSysPosix.m3.html#0TOP0">pkgobj/src/POSIX/FileSysPosix.m3</A>
+<LI><A HREF="../POSIX/osf/FileSysExtra.m3.html#0TOP0">pkgobj/src/POSIX/osf/FileSysExtra.m3</A>
+<LI><A HREF="../POSIX/ultrix/FileSysExtra.m3.html#0TOP0">pkgobj/src/POSIX/ultrix/FileSysExtra.m3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x2">procedure FileSys.FreeDiskSpace is in:
+</A><UL>
+<LI><A HREF="../POSIX/osf/FileSysExtra.m3.html#FreeDiskSpace">pkgobj/src/POSIX/osf/FileSysExtra.m3</A>
+<LI><A HREF="../POSIX/ultrix/FileSysExtra.m3.html#FreeDiskSpace">pkgobj/src/POSIX/ultrix/FileSysExtra.m3</A>
+</UL>
+<P>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

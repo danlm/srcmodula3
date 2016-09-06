@@ -1,0 +1,201 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: m3tk/src/files/Common/M3PathFile.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>m3tk/src/files/Common/M3PathFile.m3</H2></A><HR>
+<inModule>
+<PRE><A HREF="../../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+
+MODULE <module><implements><A HREF="M3PathFile.i3.html">M3PathFile</A></implements></module>;
+
+IMPORT <A HREF="../../../../rw/src/Common/Rd.i3.html">Rd</A>, <A HREF="../../../../os/src/Common/OSError.i3.html">OSError</A>, <A HREF="../../../../rw/src/Common/FileRd.i3.html">FileRd</A>, <A HREF="../../../../text/src/Text.i3.html">Text</A>, <A HREF="../../misc/RdExtras.i3.html">RdExtras</A>, <A HREF="../../../../types/src/ASCII.i3.html">ASCII</A>, <A HREF="../../../../os/src/Common/Pathname.i3.html">Pathname</A>, <A HREF="../../../../libm3/DS/TextList.i3.html">TextList</A>;
+IMPORT <A HREF="M3PathElem.i3.html">M3PathElem</A>, <A HREF="M3PathElemList.i3.html">M3PathElemList</A>, <A HREF="M3PathElemOS.i3.html">M3PathElemOS</A>;
+
+PROCEDURE <A NAME="Read"><procedure>Read</procedure></A>(
+    dir := M3PathElem.CurrentDir;
+    name := FileName;
+    doTransitiveClosure := TRUE)
+    : M3PathElemList.T
+    RAISES {OSError.E, Rd.Failure}=
+  VAR
+    result: M3PathElemList.T := NIL;
+  BEGIN
+    IF NOT doTransitiveClosure THEN result := ReadOneDir(dir, name);
+    ELSE result :=  ReadAllDirs(dir, name);
+    END;
+    RETURN result;
+  END Read;
+
+PROCEDURE <A NAME="ReadOneDir"><procedure>ReadOneDir</procedure></A>(
+    dir := &quot;&quot;;
+    name := FileName)
+    : M3PathElemList.T
+    RAISES {OSError.E, Rd.Failure}=
+  VAR
+    result: M3PathElemList.T := NIL;
+  BEGIN
+    AddOneDir(&quot;&quot;, Concat(dir, name), result);
+    RETURN result;
+  END ReadOneDir;
+</PRE>PRIVATE
+<PRE>PROCEDURE <A NAME="AddOneDir"><procedure>AddOneDir</procedure></A>(
+    relativeTo := &quot;&quot;;
+    m3pathName := FileName;
+    VAR result: M3PathElemList.T)
+    RAISES {OSError.E, Rd.Failure}=
+  VAR
+    s: Rd.T;
+    readOnly := FALSE;
+    name: TEXT;
+  BEGIN
+    TRY
+      s := FileRd.Open(m3pathName);
+    EXCEPT
+    | OSError.E =&gt;  RETURN (* ignore if cannot be opened *)
+    END;
+
+    TRY (*finally close *)
+      LOOP
+        TRY
+	  name := ReadName(s, readOnly);
+	  AddUniqueName(relativeTo, name, readOnly, list := result);
+        EXCEPT Rd.EndOfFile =&gt; EXIT;
+        END;
+      END; (*loop through file *)
+    FINALLY Rd.Close(s);
+    END;
+  END AddOneDir;
+</PRE>PRIVATE
+<PRE>PROCEDURE <A NAME="ReadName"><procedure>ReadName</procedure></A>(
+    s: Rd.T;
+    VAR (*out*) readOnly: BOOLEAN)
+    : Text.T
+    RAISES {Rd.Failure, Rd.EndOfFile} =
+  CONST SpaceOrTab = SET OF CHAR{' ', '\t'};
+  BEGIN
+    readOnly := FALSE;
+    TRY
+      WHILE RdExtras.Skip(s, SpaceOrTab)
+            IN SET OF CHAR{'#'} + SET OF CHAR{'\n', '\r', '\f'} DO
+        FlushLine(s);
+      END;
+      VAR result := RdExtras.GetText(s);
+      BEGIN
+      	IF ASCII.Upper[RdExtras.Skip(s, SpaceOrTab)] = 'R' THEN
+	  readOnly := TRUE;
+	END; (* if *)
+        RETURN result;
+      END;
+    FINALLY FlushLine(s);
+    END;
+  END ReadName;
+</PRE>PRIVATE
+<PRE>PROCEDURE <A NAME="ReadAllDirs"><procedure>ReadAllDirs</procedure></A>(
+    dir, m3PathName: Text.T)
+    : M3PathElemList.T
+    RAISES {Rd.Failure, OSError.E}=
+  VAR
+    initialList: M3PathElemList.T := NIL;
+  BEGIN
+    AddOneDir(&quot;&quot;, Concat(dir, m3PathName), initialList);
+    DirWalk(dir, m3PathName, initialList);
+    RETURN initialList;
+  END ReadAllDirs;
+</PRE>PRIVATE
+<PRE>PROCEDURE <A NAME="DirWalk"><procedure>DirWalk</procedure></A>(
+    relativeTo: Text.T;
+    m3PathName: Text.T;
+    VAR listSoFar: M3PathElemList.T)
+    RAISES {OSError.E, Rd.Failure}=
+  VAR
+    temp := listSoFar;
+  BEGIN
+    WHILE temp # NIL DO
+      WITH t = temp.head.text() DO
+        AddOneDir(t, Concat(relativeTo, Concat(t, m3PathName)), listSoFar);
+        temp := temp.tail;
+      END;
+    END; (*while*)
+  END DirWalk;
+</PRE>PRIVATE
+<PRE>PROCEDURE <A NAME="Concat"><procedure>Concat</procedure></A>(head, tail: Text.T): Text.T RAISES {} =
+  BEGIN
+    IF IsLocalDir(tail) THEN RETURN head;
+    ELSIF IsLocalDir(head) THEN RETURN tail;
+    ELSE RETURN M3PathElemOS.RemoveParentDenotations(
+                    Pathname.Join(head, tail, NIL));
+    END;
+  END Concat;
+
+PROCEDURE <A NAME="IsLocalDir"><procedure>IsLocalDir</procedure></A>(dir: Text.T): BOOLEAN RAISES {} =
+  BEGIN
+    RETURN (Text.Length(dir) = 0) OR Text.Equal(dir, Pathname.Current);
+  END IsLocalDir;
+</PRE>PRIVATE
+<PRE>PROCEDURE <A NAME="AddUniqueName"><procedure>AddUniqueName</procedure></A>(
+    dir, name: Text.T;
+    readOnly := FALSE;
+    VAR list: M3PathElemList.T)
+    RAISES {OSError.E} =
+  VAR
+    expName := M3PathElemOS.EnvExpand(name); (* full name, expanded *)
+    unexpName: Text.T; (* full name, unexpanded *)
+  BEGIN
+    IF Pathname.Absolute(expName) THEN
+      unexpName := name;
+    ELSE
+      (* concat dir &amp; name, both expanded and not *)
+      unexpName := Concat(dir, name);
+      expName := Concat(dir, expName);
+    END;
+    VAR t := list;
+        elem := M3PathElem.FromText(expName, unexpName, readOnly);
+    BEGIN
+      WHILE t # NIL DO
+        IF t.head = elem THEN RETURN
+        ELSE t := t.tail;
+        END
+      END;
+      list := M3PathElemList.AppendD(list, M3PathElemList.List1(elem));
+    END
+  END AddUniqueName;
+</PRE>PRIVATE
+<PRE>PROCEDURE <A NAME="FlushLine"><procedure>FlushLine</procedure></A>(s: Rd.T) RAISES {Rd.Failure, Rd.EndOfFile}=
+  BEGIN
+    EVAL RdExtras.Skip(s, ASCII.Asciis - ASCII.Set{'\n', '\r', '\f'},
+                       unget := FALSE);
+  END FlushLine;
+
+BEGIN
+END M3PathFile.
+</PRE>
+</inModule>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

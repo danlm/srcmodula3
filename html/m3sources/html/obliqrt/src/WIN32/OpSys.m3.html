@@ -1,0 +1,83 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: obliqrt/src/WIN32/OpSys.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>obliqrt/src/WIN32/OpSys.m3</H2></A><HR>
+<inModule>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+
+UNSAFE MODULE <module><implements><A HREF="#x1">OpSys</A></implements></module>;
+
+IMPORT <A HREF="../../../C/src/Common/Ctypes.i3.html">Ctypes</A>, <A HREF="../../../C/src/Common/M3toC.i3.html">M3toC</A>, <A HREF="../../../win32/src/WinDef.i3.html">WinDef</A>, <A HREF="../../../tcp/src/WIN32/WinSock.i3.html">WinSock</A>;
+
+PROCEDURE <A NAME="GetHostName"><procedure>GetHostName</procedure></A> (): TEXT RAISES {Error} =
+  VAR
+    vers  : WinDef.WORD;
+    data  : WinSock.WSAData;
+    status: Ctypes.int;
+    name  : ARRAY [0 .. 255] OF Ctypes.char;
+  BEGIN
+    (* Initialize the WinSock DLL. *)
+    vers := WinDef.MAKEWORD (1, 1);
+    status := WinSock.WSAStartup (vers, ADR (data));
+    IF status # 0 THEN
+      RAISE Error;
+    END;
+
+    TRY
+      (* Determine the host name. *)
+      status := WinSock.gethostname (ADR (name), BYTESIZE(name));
+      IF status # 0 THEN
+        RAISE Error;
+      END;
+      RETURN M3toC.StoT (ADR (name));
+
+    FINALLY
+      (* Unregister the WinSock DLL -- required! *)
+      status := WinSock.WSACleanup ();
+      IF status # 0 THEN
+        RAISE Error;
+      END;
+    END;
+  END GetHostName;
+
+BEGIN
+END OpSys.
+</PRE>
+</inModule>
+<HR>
+<A NAME="x1">interface OpSys is in:
+</A><UL>
+<LI><A HREF="../OpSys.i3.html#0TOP0">obliqrt/src/OpSys.i3</A>
+<LI><A HREF="../../../pkgobj/src/Common/OpSys.i3.html#0TOP0">pkgobj/src/Common/OpSys.i3</A>
+</UL>
+<P>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

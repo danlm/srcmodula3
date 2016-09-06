@@ -1,0 +1,301 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: ui/src/vbt/TrestleAux.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>ui/src/vbt/TrestleAux.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM>                                                                           </EM></BLOCKQUOTE><PRE>
+
+INTERFACE <interface>TrestleAux</interface>;
+
+IMPORT <A HREF="Trestle.i3.html">Trestle</A>, <A HREF="VBT.i3.html">VBT</A>, <A HREF="TrestleComm.i3.html">TrestleComm</A>, <A HREF="../../../geometry/src/Rect.i3.html">Rect</A>, <A HREF="../../../geometry/src/Point.i3.html">Point</A>;
+
+FROM <A HREF="Trestle.i3.html">Trestle</A> IMPORT ScreenID, Unimplemented,
+
+EXCEPTION Unimplemented;
+
+PROCEDURE SetColorMap(v: VBT.T; cm: ScrnColorMap.T);
+&lt;* LL.sup = VBT.mu *&gt;
+</PRE><BLOCKQUOTE><EM> Tell the window manager that <CODE>cm</CODE> is the preferred color map for 
+   the installed window <CODE>v</CODE>.  This is a no-op if <CODE>cm</CODE> is inappropriate 
+   for <CODE>v</CODE>'s screentype. </EM></BLOCKQUOTE><PRE>
+
+PROCEDURE SetScreens(
+    sa: ScreenArray;
+    trsl: T := NIL)
+    : BOOLEAN
+  RAISES {TrestleComm.Failure, Unimplemented};
+</PRE><BLOCKQUOTE><EM> Reposition each screen sa^[i].id of the Trestle instance trsl so that its
+   delta to the global coordinate system is sa^[i].delta, and return TRUE.
+   Return FALSE if this could not be done; for example, if sa refers to
+   non-existent screens, or if the request places screens so that they overlap
+   or fail to abut. LL arbitrary. </EM></BLOCKQUOTE><PRE>
+</PRE> Controlling screens 
+
+<P> The following two procedures allow clients to bypass Trestle and use the
+   screens directly. For example, they can be used by the screensaver process
+   to blank the screens if the workstation has been inactive for a long
+   period. At the root of each trestle screen there is actually a a stack of
+   VBTs, called the screen stack. The top VBT is connected to the screen. All
+   the rest are unconnected to the screen and have empty domains. Initially,
+   each stack contains the VBT that Trestle carves up into windows. 
+
+<P><PRE>PROCEDURE TakeOver(
+    id: ScreenID;
+    v: VBT.T;
+    trsl: T := NIL)
+  RAISES {TrestleComm.Failure, Unimplemented};
+</PRE><BLOCKQUOTE><EM> Push v onto the stack for screen id and connect it to the screen in place
+   of the previous top element of the screen stack, which is reformatted to be
+   empty. v must not already be installed. v has a highlighter inserted above
+   it, so you can set highlights on it if you like. LL &lt;= VBT.mu </EM></BLOCKQUOTE><PRE>
+
+PROCEDURE Restore(
+    id: ScreenID;
+    v: VBT.T)
+  RAISES {TrestleComm.Failure, Unimplemented};
+</PRE><BLOCKQUOTE><EM> Schedules v to be popped off the screen stack for screen id, connecting the
+   new top element to the screen, and reformatting v to be empty. v is
+   nullified, and may be reused. v will receive a <CODE>Deleted</CODE> code, which will
+   be the last event delivered to v, just as in Delete. LL &lt;= VBT.mu </EM></BLOCKQUOTE><PRE>
+
+PROCEDURE TakeOverMouse(
+    id: ScreenID;
+    v: VBT.T;
+    trsl: T := NIL)
+  RAISES {TrestleComm.Failure};
+</PRE><BLOCKQUOTE><EM> Make v receive all mouse events. The window v supercedes any current
+   TakeOverMouse window. (See MouseCage.def.) LL &lt;= VBT.mu </EM></BLOCKQUOTE><PRE>
+
+PROCEDURE ReleaseMouse(id: ScreenID; v: VBT.T) RAISES {TrestleComm.Failure};
+</PRE><BLOCKQUOTE><EM> Schedules v to stop receiving all mouse events. If there is a previous
+   window that has called TakeOverMouse and has not called ReleaseMouse, then
+   that window will now receive all mouse events. (See MouseCage.def.) LL &lt;=
+   VBT.mu </EM></BLOCKQUOTE><PRE>
+
+PROCEDURE SetHighlight(
+    id: ScreenID;
+    READONLY r: Rect.T;
+    border: CARDINAL;
+    trsl: T := NIL)
+  RAISES {TrestleComm.Failure};
+</PRE><BLOCKQUOTE><EM> Like HighlightVBT.SetRect, but it highlights on the screen id of the
+   trestle t. If r is empty, the highlighting is removed. The exact rule for
+   highlighting the region depends on the window manager. LL &lt;= VBT.mu </EM></BLOCKQUOTE><PRE>
+
+PROCEDURE AddParent(
+    prnt: VBT.T;
+    id: ScreenID;
+    trsl: T := NIL)
+  RAISES {TrestleComm.Failure, Unimplemented};
+</PRE><BLOCKQUOTE><EM> This is like JoinVBT.AddParent except that it operates on screen id of
+   trestle t. It is a noop if that screen doesn't exist. LL &lt;= VBT.mu </EM></BLOCKQUOTE><PRE>
+
+PROCEDURE RemParent(
+    prnt: VBT.T;
+    id: ScreenID;
+    trsl: T := NIL)
+  RAISES {TrestleComm.Failure, Unimplemented};
+</PRE><BLOCKQUOTE><EM> This is just like JoinVBT.RemParent except that it operates on screen id of
+   trestle t. It is a noop if that screen doesn't exist or prnt is not a
+   parent. LL &lt;= VBT.mu </EM></BLOCKQUOTE><PRE>
+
+PROCEDURE WarpCursor(
+    id: ScreenID;
+    READONLY pt: Point.T;
+    trsl: T := NIL)
+  RAISES {TrestleComm.Failure};
+</PRE><BLOCKQUOTE><EM> Moves the cursor of the trestle trsl to point pt of screen id. If the screen
+   doesn't exist, this is a noop; if pt is outside the screen, the cursor is
+   moved to the point on the screen nearest pt. LL &lt;= VBT.mu </EM></BLOCKQUOTE><PRE>
+
+TYPE
+  Config &lt;: REFANY;
+</PRE> A Trestle.Config represents an arrangement of the top-level windows of a
+   window system. Essentially it is a list of name-position pairs for windows
+   on the screen. The exact definition of a position depends on the window
+   manager. 
+
+<P><PRE>EXCEPTION
+  BadConfig (TEXT);
+
+TYPE
+  ConfigClosure = OBJECT
+    METHODS
+      apply(id: ScreenID; c: Config)
+    END;
+  (* called with LL = VBT.mu *)
+
+PROCEDURE GetConfig(
+    id: ScreenID;
+    p: ConfigClosure;
+    trsl: T := NIL)
+  RAISES {TrestleComm.Failure, Unimplemented};
+</PRE><BLOCKQUOTE><EM> Fetch the configuration c of the given screen of the Trestle instance t,
+   and arrange that p.apply(id, c) will soon be called. LL = VBT.mu </EM></BLOCKQUOTE><PRE>
+
+PROCEDURE SetConfig(
+    id: ScreenID;
+    c: Config;
+    trsl: T := NIL)
+  RAISES {TrestleComm.Failure, Unimplemented, BadConfig};
+</PRE><BLOCKQUOTE><EM> Move windows of the Trestle instance trsl around to make the configuration of
+   screen id be c. Windows on screen id that are not in the configuration c
+   will be iconized or moved in some window-manager-dependent way. Similarly,
+   windows included in c that do not exist will (of necessity) be omitted from
+   the configuration; a tiling window manager will adjust for this in a
+   window-manager-dependent way. If the config includes two windows with the
+   same name, or if two windows exist with the same name, the naming ambiguity
+   will be resolved non-deterministically. If c is invalid, this operation is
+   either a noop or raises BadConfig. LL = VBT.mu </EM></BLOCKQUOTE><PRE>
+
+PROCEDURE Swap(v, w: VBT.T) RAISES {TrestleComm.Failure, Unimplemented};
+&lt;* LL arbitrary *&gt;
+</PRE><BLOCKQUOTE><EM> Exchange the positions of the two windows <CODE>v</CODE> and <CODE>w</CODE>. This is a noop 
+   unless <CODE>v</CODE> and <CODE>w</CODE> are both installed on the same window system. </EM></BLOCKQUOTE><PRE>
+
+PROCEDURE SwapByName(
+    v: VBT.T;
+    nm: TEXT)
+  RAISES {TrestleComm.Failure, Unimplemented}; &lt;* LL arbitrary *&gt;
+</PRE><BLOCKQUOTE><EM> Exchange the positions of the window <CODE>v</CODE> and the window with full name <CODE>nm</CODE>.
+   This is noop unless <CODE>v</CODE> is installed and the trestle on which it is installed
+   has a window named <CODE>nm</CODE>. </EM></BLOCKQUOTE><PRE>
+
+PROCEDURE GetName(v: VBT.T): TEXT RAISES {TrestleComm.Failure};
+&lt;* LL.sup = VBT.mu *&gt;
+</PRE><BLOCKQUOTE><EM> Returns the full name of the installed window v, which is the
+   concatenation of <CODE>v</CODE>'s <CODE>applName</CODE>, a space, <CODE>v</CODE>'s <CODE>inst</CODE>, a space,
+   and a decimal numeral that guarantees uniqueness of names.  (The
+   procedures <CODE>Install</CODE> and <CODE>Redecorate</CODE> control <CODE>v</CODE>'s <CODE>applName</CODE> and
+   <CODE>inst</CODE> attributes.)  The result of <CODE>GetName</CODE> on an undecorated window
+   is an arbitrary text.  </EM></BLOCKQUOTE><PRE>
+
+PROCEDURE NameList(
+    nm: TEXT;
+    trsl: T := NIL)
+    : REF ARRAY OF TEXT
+  RAISES {TrestleComm.Failure}; &lt;* LL.sup = VBT.mu *&gt;
+</PRE><BLOCKQUOTE><EM> Return the list of full names of windows installed on the trestle <CODE>trsl</CODE> which
+   have <CODE>nm</CODE> as a prefix. The returned array may be padded with <CODE>NILs</CODE>. </EM></BLOCKQUOTE><PRE>
+
+PROCEDURE MoveNearByName(v: VBT.T; nm: TEXT) RAISES {TrestleComm.Failure};
+&lt;* LL.sup = VBT.mu *&gt;
+</PRE><BLOCKQUOTE><EM> Move the<CODE>v</CODE> to be near the window with full name <CODE>nm</CODE>, as in
+   <CODE>MoveNear</CODE>.  If there is no window named <CODE>nm</CODE>, this is like
+   <CODE>MoveNear(v, NIL)</CODE>.  </EM></BLOCKQUOTE><PRE>
+
+PROCEDURE DeleteByName(nm: TEXT; trsl: T := NIL) RAISES {TrestleComm.Failure};
+&lt;* LL.sup = VBT.mu *&gt;
+</PRE><BLOCKQUOTE><EM> Schedule the window named <CODE>nm</CODE> for deletion from the Trestle <CODE>t</CODE>. This has no
+   effect if the window is non-existent. </EM></BLOCKQUOTE><PRE>
+
+PROCEDURE LastCeded(
+    trsl: T := NIL)
+    : VBT.TimeStamp
+  RAISES {TrestleComm.Failure, Unimplemented};
+</PRE><BLOCKQUOTE><EM> Return the time of the last event that has been ceded. This is primarily
+   for the benefit of the ScreenSaver process that wakes up every fifteen
+   minutes or so and blanks the screen if there has been no user input, in
+   order to avoid burning patterns in the phosphor. LL &lt;= VBT.mu </EM></BLOCKQUOTE><PRE>
+</PRE> Getting and setting workstation parameters 
+
+<P><PRE>TYPE
+  Parameters =
+    REF RECORD
+      peekABooCursor: BOOLEAN;
+      blackOnWhite: BOOLEAN;
+      fastTimeout, slowTimeout: CARDINAL;
+      flashNever, flashOnce: BOOLEAN;
+      doubleClickInterval: CARDINAL;
+      safetyRadius: CARDINAL;
+      mouseThreshhold, mouseMultiplier: CARDINAL;
+      autorepeat: BOOLEAN;
+    END;
+</PRE> Associated with every window system is a <CODE>Parameters</CODE> record 
+   whose fields are defined as follows:
+<P>
+   The flag <CODE>peekABooCursor</CODE> is <CODE>TRUE</CODE> if the window system hides the
+   cursor when a character is typed and restores it when the mouse
+   moves; otherwise the flag is <CODE>FALSE</CODE>.
+<P>
+   The value <CODE>slowTimeout</CODE> is the number of milliseconds the window
+   system will wait for a client to respond to an event, assuming the
+   client has responded promptly to its last event; <CODE>fastTimeout</CODE> is
+   the number of milliseconds of the window system will wait for a
+   client to respond to an event, assuming it has not responded promptly
+   to its last event.
+<P>
+   If <CODE>flashNever</CODE> is set, then when a window does not respond to 
+   an event promptly, Trestle stops waiting for it without any
+   indication to the user that this has happened.  Otherwise,
+   if  <CODE>flashOnce</CODE> is set, Trestle flickers the window when it
+   exceeds its <CODE>slowTimeout</CODE>.  Otherwise, Trestle flickers the
+   window whenever it exceeds either the <CODE>fastTimeOut</CODE> or the 
+   <CODE>slowTimeout</CODE>.
+<P>
+   The value <CODE>doubleClickInterval</CODE> is the maximum number of <CODE>VBT.TimeStamp</CODE> 
+   intervals allowed between two mouse transitions that can be 
+   counted as part of a multiple click. 
+<P>
+   The value <CODE>safetyRadius</CODE> is the maximum motion allowed between two mouse
+   transitions that can be counted as part of a mulitiple click.  The
+   two positions must be within <CODE>safetyRadious</CODE> pixels of one another
+   in both the <CODE>h</CODE> and <CODE>v</CODE> axes.
+<P>
+    The value <CODE>mouseThreshhold</CODE> and <CODE>mouseMultiplier</CODE> control the
+    relation between mouse motion and cursor motion.  If the mouse moves
+    more than <CODE>mouseThreshhold</CODE> pixels in a single sample interval,
+    the excess is scaled by <CODE>mouseMultiplier</CODE>.  This applies separately
+    in each coordinate.
+<P>
+    The value <CODE>autorepeat</CODE> is <CODE>TRUE</CODE> if the window system uses 
+    auto-repeat mode for (some) keys that are held down long enough.  
+         
+<P><PRE>PROCEDURE GetParameters(trsl: T := NIL): Parameters RAISES {TrestleComm.Failure};
+&lt;* LL.sup &lt;= VBT.mu *&gt;
+</PRE><BLOCKQUOTE><EM> Retrieve the current settings of all parameters. </EM></BLOCKQUOTE><PRE>
+
+PROCEDURE SetParameters(
+    p: Parameters;
+    trsl: T := NIL)
+  RAISES {TrestleComm.Failure};
+  &lt;* LL.sup &lt;= VBT.mu *&gt;
+</PRE><BLOCKQUOTE><EM> Change the parameter record for <CODE>trsl</CODE> to <CODE>p</CODE>.  If the window system
+   <CODE>trsl</CODE> does not support some of the parameter settings in <CODE>p</CODE>, then
+   these parameters will be unchanged; follow with a call to
+   <CODE>GetParameters</CODE> if this matters.  </EM></BLOCKQUOTE><PRE>
+
+END TrestleAux.
+</PRE>
+</inInterface>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

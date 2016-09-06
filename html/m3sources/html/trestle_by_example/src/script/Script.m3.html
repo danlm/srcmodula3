@@ -1,0 +1,99 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: trestle_by_example/src/script/Script.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>trestle_by_example/src/script/Script.m3</H2></A><HR>
+<inModule>
+<PRE>UNSAFE MODULE <module>Script</module> EXPORTS <A HREF="../../../main/src/Main.i3.html"><implements>Main</A></implements>;
+IMPORT <A HREF="../../../ui/src/vbt/Trestle.i3.html">Trestle</A>, <A HREF="../../../ui/src/vbt/VBT.i3.html">VBT</A>, <A HREF="../../../ui/src/split/ButtonVBT.i3.html">ButtonVBT</A>, <A HREF="../../../ui/src/split/TextVBT.i3.html">TextVBT</A>, <A HREF="../../../ui/src/split/HVSplit.i3.html">HVSplit</A>, <A HREF="../../../etext/src/TypescriptVBT.i3.html">TypescriptVBT</A>;
+IMPORT <A HREF="../../../lego/src/FlexVBT.i3.html">FlexVBT</A>, <A HREF="../../../ui/src/split/RigidVBT.i3.html">RigidVBT</A>, <A HREF="../../../geometry/src/Axis.i3.html">Axis</A>;
+IMPORT <A HREF="../../../rw/src/Common/Wr.i3.html">Wr</A>, <A HREF="#x1">Utime</A>, <A HREF="../../../C/src/Common/M3toC.i3.html">M3toC</A>, <A HREF="../../../C/src/Common/Ctypes.i3.html">Ctypes</A>;
+
+PROCEDURE <A NAME="QuitAction"><procedure>QuitAction</procedure></A> (self: ButtonVBT.T; READONLY cd: VBT.MouseRec) =
+  BEGIN
+    Trestle.Delete(main);
+  END QuitAction;
+
+PROCEDURE <A NAME="DoAction"><procedure>DoAction</procedure></A> (self: ButtonVBT.T; READONLY cd: VBT.MouseRec) =
+  VAR
+    t   : Utime.struct_timeval;
+    z   : Utime.struct_timezone;
+    date: TEXT;
+    w   : Ctypes.LongStar       := NEW(UNTRACED REF Ctypes.Long);
+  BEGIN
+    EVAL Utime.gettimeofday(t, z);
+    w^ := t.tv_sec;
+    date := M3toC.StoT(Utime.asctime(Utime.localtime(w)));
+    (* Write to global writer &quot;wr&quot; and flush output *)
+    Wr.PutText(wr, &quot;The current date and time is &quot; &amp; date);
+    Wr.Flush(wr);
+  END DoAction;
+
+VAR
+  hor  := FlexVBT.Shape{FlexVBT.StretchyRange, FlexVBT.FixedRange};
+  port := NEW(TypescriptVBT.Port).init(readOnly := TRUE);
+  scr  := NEW(TypescriptVBT.T, port := port).init();
+  do   := ButtonVBT.New(TextVBT.New(&quot;do&quot;), DoAction);
+  quit := ButtonVBT.New(TextVBT.New(&quot;quit&quot;), QuitAction);
+  bs   := HVSplit.Cons(Axis.T.Hor, do, quit);
+  main := HVSplit.Cons(Axis.T.Ver, RigidVBT.FromHV(scr, 50.0, 30.0), bs);
+  wr   := TypescriptVBT.GetWr(scr);
+
+BEGIN
+  Wr.PutText(wr, &quot;Typescript demo.\n&quot;);
+  Wr.PutText(wr, &quot;This is a scrollable, read-only text window.\n&quot;);
+  Wr.PutText(wr, &quot;Press \&quot;Do\&quot; to get current date and time.\n&quot;);
+  Wr.Flush(wr);
+  Trestle.Install(main);
+  Trestle.AwaitDelete(main);
+END Script.
+</PRE>
+</inModule>
+<HR>
+<A NAME="x1">interface Utime is in:
+</A><UL>
+<LI><A HREF="../../../unix/src/aix-3-2/Utime.i3.html#0TOP0">unix/src/aix-3-2/Utime.i3</A>
+<LI><A HREF="../../../unix/src/aix-ps2-1-2/Utime.i3.html#0TOP0">unix/src/aix-ps2-1-2/Utime.i3</A>
+<LI><A HREF="../../../unix/src/freebsd-1/Utime.i3.html#0TOP0">unix/src/freebsd-1/Utime.i3</A>
+<LI><A HREF="../../../unix/src/freebsd-2/Utime.i3.html#0TOP0">unix/src/freebsd-2/Utime.i3</A>
+<LI><A HREF="../../../unix/src/hpux-7-0/Utime.i3.html#0TOP0">unix/src/hpux-7-0/Utime.i3</A>
+<LI><A HREF="../../../unix/src/ibm-4-3/Utime.i3.html#0TOP0">unix/src/ibm-4-3/Utime.i3</A>
+<LI><A HREF="../../../unix/src/irix-5.2/Utime.i3.html#0TOP0">unix/src/irix-5.2/Utime.i3</A>
+<LI><A HREF="../../../unix/src/linux/Utime.i3.html#0TOP0">unix/src/linux/Utime.i3</A>
+<LI><A HREF="../../../unix/src/osf-1.ALPHA_OSF/Utime.i3.html#0TOP0">unix/src/osf-1.ALPHA_OSF/Utime.i3</A>
+<LI><A HREF="../../../unix/src/osf-1.DS3100/Utime.i3.html#0TOP0">unix/src/osf-1.DS3100/Utime.i3</A>
+<LI><A HREF="../../../unix/src/solaris-2-x/Utime.i3.html#0TOP0">unix/src/solaris-2-x/Utime.i3</A>
+<LI><A HREF="../../../unix/src/sunos-4-x/Utime.i3.html#0TOP0">unix/src/sunos-4-x/Utime.i3</A>
+<LI><A HREF="../../../unix/src/sysv-4.0/Utime.i3.html#0TOP0">unix/src/sysv-4.0/Utime.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.generic/Utime.i3.html#0TOP0">unix/src/ultrix-3-1.generic/Utime.i3</A>
+</UL>
+<P>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

@@ -1,0 +1,90 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: m3middle/src/POSIX/CoffTime.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>m3middle/src/POSIX/CoffTime.m3</H2></A><HR>
+<inModule>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM>                                                           </EM></BLOCKQUOTE><PRE>
+
+MODULE <module><implements><A HREF="#x1">CoffTime</A></implements></module>;
+
+IMPORT <A HREF="../../../time/src/Common/Time.i3.html">Time</A>, <A HREF="../../../time/src/POSIX/TimePosix.i3.html">TimePosix</A>, <A HREF="#x2">Utime</A>, <A HREF="../../../os/src/Common/File.i3.html">File</A>, <A HREF="../../../os/src/Common/FS.i3.html">FS</A>, <A HREF="../../../os/src/Common/OSError.i3.html">OSError</A>;
+
+PROCEDURE <A NAME="Now"><procedure>Now</procedure></A> (): INTEGER =
+  VAR x := TimePosix.ToUtime (Time.Now ());
+  BEGIN
+    RETURN x.tv_sec;
+  END Now;
+
+PROCEDURE <A NAME="OfFile"><procedure>OfFile</procedure></A> (file: TEXT): INTEGER =
+  VAR s: File.Status;  x: Utime.struct_timeval;
+  BEGIN
+    TRY
+      s := FS.Status (file);
+    EXCEPT OSError.E =&gt;
+      RETURN 0;
+    END;
+    x := TimePosix.ToUtime (s.modificationTime);
+    RETURN x.tv_sec;
+  END OfFile;
+
+BEGIN
+END CoffTime.
+</PRE>
+</inModule>
+<HR>
+<A NAME="x1">interface CoffTime is in:
+</A><UL>
+<LI><A HREF="CoffTime.i3.html#0TOP0">m3middle/src/POSIX/CoffTime.i3</A>
+<LI><A HREF="../WIN32/CoffTime.i3.html#0TOP0">m3middle/src/WIN32/CoffTime.i3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x2">interface Utime is in:
+</A><UL>
+<LI><A HREF="../../../unix/src/aix-3-2/Utime.i3.html#0TOP0">unix/src/aix-3-2/Utime.i3</A>
+<LI><A HREF="../../../unix/src/aix-ps2-1-2/Utime.i3.html#0TOP0">unix/src/aix-ps2-1-2/Utime.i3</A>
+<LI><A HREF="../../../unix/src/freebsd-1/Utime.i3.html#0TOP0">unix/src/freebsd-1/Utime.i3</A>
+<LI><A HREF="../../../unix/src/freebsd-2/Utime.i3.html#0TOP0">unix/src/freebsd-2/Utime.i3</A>
+<LI><A HREF="../../../unix/src/hpux-7-0/Utime.i3.html#0TOP0">unix/src/hpux-7-0/Utime.i3</A>
+<LI><A HREF="../../../unix/src/ibm-4-3/Utime.i3.html#0TOP0">unix/src/ibm-4-3/Utime.i3</A>
+<LI><A HREF="../../../unix/src/irix-5.2/Utime.i3.html#0TOP0">unix/src/irix-5.2/Utime.i3</A>
+<LI><A HREF="../../../unix/src/linux/Utime.i3.html#0TOP0">unix/src/linux/Utime.i3</A>
+<LI><A HREF="../../../unix/src/osf-1.ALPHA_OSF/Utime.i3.html#0TOP0">unix/src/osf-1.ALPHA_OSF/Utime.i3</A>
+<LI><A HREF="../../../unix/src/osf-1.DS3100/Utime.i3.html#0TOP0">unix/src/osf-1.DS3100/Utime.i3</A>
+<LI><A HREF="../../../unix/src/solaris-2-x/Utime.i3.html#0TOP0">unix/src/solaris-2-x/Utime.i3</A>
+<LI><A HREF="../../../unix/src/sunos-4-x/Utime.i3.html#0TOP0">unix/src/sunos-4-x/Utime.i3</A>
+<LI><A HREF="../../../unix/src/sysv-4.0/Utime.i3.html#0TOP0">unix/src/sysv-4.0/Utime.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.generic/Utime.i3.html#0TOP0">unix/src/ultrix-3-1.generic/Utime.i3</A>
+</UL>
+<P>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

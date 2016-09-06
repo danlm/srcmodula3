@@ -1,0 +1,53 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: stable/src/WIN32/FSError.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>stable/src/WIN32/FSError.m3</H2></A><HR>
+<inModule>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM> Digital Internal Use Only                                                 </EM></BLOCKQUOTE><PRE>
+</PRE>                                                                           
+       Created on Wed Oct 11 15:02:48 PDT 1995 by najork                   
+
+<P><PRE>MODULE <module><implements><A HREF="../FSError.i3.html">FSError</A></implements></module>;
+
+IMPORT <A HREF="../../../os/src/Common/OSError.i3.html">OSError</A>, <A HREF="../../../os/src/WIN32/OSErrorWin32.i3.html">OSErrorWin32</A>, <A HREF="../../../win32/src/WinError.i3.html">WinError</A>;
+
+PROCEDURE <A NAME="FileNotFound"><procedure>FileNotFound</procedure></A> (err: OSError.Code): BOOLEAN =
+  BEGIN
+    RETURN err.head = OSErrorWin32.ErrnoAtom (WinError.ERROR_FILE_NOT_FOUND)
+  END FileNotFound;
+
+BEGIN
+END FSError.
+</PRE>
+</inModule>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

@@ -1,0 +1,182 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: unix/src/ultrix-3-1.SUN3/Uin.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>unix/src/ultrix-3-1.SUN3/Uin.m3</H2></A><HR>
+<inModule>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM>                                                                           </EM></BLOCKQUOTE><PRE>
+</PRE> Big-endian version. 
+
+<P><PRE>UNSAFE MODULE <module>Uin</module> EXPORTS <A HREF="#x1"><implements>Uin</A></implements>;
+</PRE><BLOCKQUOTE><EM> Only unsafe because it needs Usocket.AF_INET and Usocket is unsafe. </EM></BLOCKQUOTE><PRE>
+
+FROM <A HREF="#x2">Utypes</A> IMPORT u_long, u_short;
+IMPORT <A HREF="#x3">Usocket</A>, <A HREF="../../../word/src/Word.i3.html">Word</A>;
+
+PROCEDURE <A NAME="IN_CLASSA"><procedure>IN_CLASSA</procedure></A>(i: INTEGER): BOOLEAN =
+  BEGIN
+    RETURN Word.And(i, Word.Shift(16_800000, 8)) = 0;
+  END IN_CLASSA;
+
+PROCEDURE <A NAME="IN_CLASSB"><procedure>IN_CLASSB</procedure></A>(i: INTEGER): BOOLEAN =
+  BEGIN
+    RETURN Word.And(i, Word.Shift(16_c00000, 8)) = Word.Shift(16_800000, 8);
+  END IN_CLASSB;
+
+PROCEDURE <A NAME="IN_CLASSC"><procedure>IN_CLASSC</procedure></A>(i: INTEGER): BOOLEAN =
+  BEGIN
+    RETURN Word.And(i, Word.Shift(16_e00000, 8)) = Word.Shift(16_c00000, 8);
+  END IN_CLASSC;
+
+PROCEDURE <A NAME="IN_CLASSD"><procedure>IN_CLASSD</procedure></A>(i: INTEGER): BOOLEAN =
+  BEGIN
+    RETURN Word.And(i, Word.Shift(16_f00000, 8)) = Word.Shift(16_e00000, 8);
+  END IN_CLASSD;
+
+PROCEDURE <A NAME="IN_MULTICAST"><procedure>IN_MULTICAST</procedure></A>(i: INTEGER): BOOLEAN =
+  BEGIN
+    RETURN IN_CLASSD(i);
+  END IN_MULTICAST;
+
+PROCEDURE <A NAME="IN_EXPERIMENTAL"><procedure>IN_EXPERIMENTAL</procedure></A>(i: INTEGER): BOOLEAN =
+  BEGIN
+    RETURN Word.And(i, Word.Shift(16_e00000, 8)) = Word.Shift(16_e00000, 8);
+  END IN_EXPERIMENTAL;
+
+PROCEDURE <A NAME="IN_BADCLASS"><procedure>IN_BADCLASS</procedure></A>(i: INTEGER): BOOLEAN =
+  BEGIN
+    RETURN Word.And(i, Word.Shift(16_f00000, 8)) = Word.Shift(16_f00000, 8);
+  END IN_BADCLASS;
+
+PROCEDURE <A NAME="IN_SET_LOOPBACK_ADDR"><procedure>IN_SET_LOOPBACK_ADDR</procedure></A>(a: struct_sockaddr_in_star) =
+  BEGIN
+    a.sin_addr.s_addr := htonl(INADDR_LOOPBACK);
+    a.sin_family := Usocket.AF_INET;
+  END IN_SET_LOOPBACK_ADDR;
+</PRE> Big-endian versions; simply return the argument. 
+<PRE>PROCEDURE <A NAME="ntohl"><procedure>ntohl</procedure></A>(x: u_long): u_long =
+  BEGIN
+    RETURN x;
+  END ntohl;
+
+PROCEDURE <A NAME="ntohs"><procedure>ntohs</procedure></A>(x: u_short): u_short =
+  BEGIN
+    RETURN x;
+  END ntohs;
+
+PROCEDURE <A NAME="htonl"><procedure>htonl</procedure></A>(x: u_long): u_long =
+  BEGIN
+    RETURN x;
+  END htonl;
+
+PROCEDURE <A NAME="htons"><procedure>htons</procedure></A>(x: u_short): u_short =
+  BEGIN
+    RETURN x;
+  END htons;
+
+BEGIN
+END Uin.
+</PRE>
+</inModule>
+<HR>
+<A NAME="x1">interface Uin is in:
+</A><UL>
+<LI><A HREF="../aix-3-2/Uin.i3.html#0TOP0">unix/src/aix-3-2/Uin.i3</A>
+<LI><A HREF="../aix-ps2-1-2/Uin.i3.html#0TOP0">unix/src/aix-ps2-1-2/Uin.i3</A>
+<LI><A HREF="../freebsd-1/Uin.i3.html#0TOP0">unix/src/freebsd-1/Uin.i3</A>
+<LI><A HREF="../freebsd-2/Uin.i3.html#0TOP0">unix/src/freebsd-2/Uin.i3</A>
+<LI><A HREF="../hpux-7-0/Uin.i3.html#0TOP0">unix/src/hpux-7-0/Uin.i3</A>
+<LI><A HREF="../ibm-4-3/Uin.i3.html#0TOP0">unix/src/ibm-4-3/Uin.i3</A>
+<LI><A HREF="../irix-5.2/Uin.i3.html#0TOP0">unix/src/irix-5.2/Uin.i3</A>
+<LI><A HREF="../linux/Uin.i3.html#0TOP0">unix/src/linux/Uin.i3</A>
+<LI><A HREF="../osf-1.ALPHA_OSF/Uin.i3.html#0TOP0">unix/src/osf-1.ALPHA_OSF/Uin.i3</A>
+<LI><A HREF="../osf-1.DS3100/Uin.i3.html#0TOP0">unix/src/osf-1.DS3100/Uin.i3</A>
+<LI><A HREF="../solaris-2-x/Uin.i3.html#0TOP0">unix/src/solaris-2-x/Uin.i3</A>
+<LI><A HREF="../sunos-4-x/Uin.i3.html#0TOP0">unix/src/sunos-4-x/Uin.i3</A>
+<LI><A HREF="../sysv-4.0/Uin.i3.html#0TOP0">unix/src/sysv-4.0/Uin.i3</A>
+<LI><A HREF="../ultrix-3-1.AP3000/Uin.i3.html#0TOP0">unix/src/ultrix-3-1.AP3000/Uin.i3</A>
+<LI><A HREF="../ultrix-3-1.ARM/Uin.i3.html#0TOP0">unix/src/ultrix-3-1.ARM/Uin.i3</A>
+<LI><A HREF="../ultrix-3-1.DS3100/Uin.i3.html#0TOP0">unix/src/ultrix-3-1.DS3100/Uin.i3</A>
+<LI><A HREF="../ultrix-3-1.NEXT/Uin.i3.html#0TOP0">unix/src/ultrix-3-1.NEXT/Uin.i3</A>
+<LI><A HREF="../ultrix-3-1.SEQUENT/Uin.i3.html#0TOP0">unix/src/ultrix-3-1.SEQUENT/Uin.i3</A>
+<LI><A HREF="Uin.i3.html#0TOP0">unix/src/ultrix-3-1.SUN3/Uin.i3</A>
+<LI><A HREF="../ultrix-3-1.SUN386/Uin.i3.html#0TOP0">unix/src/ultrix-3-1.SUN386/Uin.i3</A>
+<LI><A HREF="../ultrix-3-1.UMAX/Uin.i3.html#0TOP0">unix/src/ultrix-3-1.UMAX/Uin.i3</A>
+<LI><A HREF="../ultrix-3-1.VAX/Uin.i3.html#0TOP0">unix/src/ultrix-3-1.VAX/Uin.i3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x2">interface Utypes is in:
+</A><UL>
+<LI><A HREF="../aix-3-2/Utypes.i3.html#0TOP0">unix/src/aix-3-2/Utypes.i3</A>
+<LI><A HREF="../aix-ps2-1-2/Utypes.i3.html#0TOP0">unix/src/aix-ps2-1-2/Utypes.i3</A>
+<LI><A HREF="../freebsd-1/Utypes.i3.html#0TOP0">unix/src/freebsd-1/Utypes.i3</A>
+<LI><A HREF="../freebsd-2/Utypes.i3.html#0TOP0">unix/src/freebsd-2/Utypes.i3</A>
+<LI><A HREF="../hpux-7-0/Utypes.i3.html#0TOP0">unix/src/hpux-7-0/Utypes.i3</A>
+<LI><A HREF="../ibm-4-3/Utypes.i3.html#0TOP0">unix/src/ibm-4-3/Utypes.i3</A>
+<LI><A HREF="../irix-5.2/Utypes.i3.html#0TOP0">unix/src/irix-5.2/Utypes.i3</A>
+<LI><A HREF="../linux/Utypes.i3.html#0TOP0">unix/src/linux/Utypes.i3</A>
+<LI><A HREF="../osf-1.ALPHA_OSF/Utypes.i3.html#0TOP0">unix/src/osf-1.ALPHA_OSF/Utypes.i3</A>
+<LI><A HREF="../osf-1.DS3100/Utypes.i3.html#0TOP0">unix/src/osf-1.DS3100/Utypes.i3</A>
+<LI><A HREF="../solaris-2-x/Utypes.i3.html#0TOP0">unix/src/solaris-2-x/Utypes.i3</A>
+<LI><A HREF="../sunos-4-x/Utypes.i3.html#0TOP0">unix/src/sunos-4-x/Utypes.i3</A>
+<LI><A HREF="../sysv-4.0/Utypes.i3.html#0TOP0">unix/src/sysv-4.0/Utypes.i3</A>
+<LI><A HREF="../ultrix-3-1.AP3000/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.AP3000/Utypes.i3</A>
+<LI><A HREF="../ultrix-3-1.ARM/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.ARM/Utypes.i3</A>
+<LI><A HREF="../ultrix-3-1.DS3100/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.DS3100/Utypes.i3</A>
+<LI><A HREF="../ultrix-3-1.NEXT/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.NEXT/Utypes.i3</A>
+<LI><A HREF="../ultrix-3-1.SEQUENT/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.SEQUENT/Utypes.i3</A>
+<LI><A HREF="Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.SUN3/Utypes.i3</A>
+<LI><A HREF="../ultrix-3-1.SUN386/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.SUN386/Utypes.i3</A>
+<LI><A HREF="../ultrix-3-1.UMAX/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.UMAX/Utypes.i3</A>
+<LI><A HREF="../ultrix-3-1.VAX/Utypes.i3.html#0TOP0">unix/src/ultrix-3-1.VAX/Utypes.i3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x3">interface Usocket is in:
+</A><UL>
+<LI><A HREF="../aix-3-2/Usocket.i3.html#0TOP0">unix/src/aix-3-2/Usocket.i3</A>
+<LI><A HREF="../aix-ps2-1-2/Usocket.i3.html#0TOP0">unix/src/aix-ps2-1-2/Usocket.i3</A>
+<LI><A HREF="../freebsd-1/Usocket.i3.html#0TOP0">unix/src/freebsd-1/Usocket.i3</A>
+<LI><A HREF="../freebsd-2/Usocket.i3.html#0TOP0">unix/src/freebsd-2/Usocket.i3</A>
+<LI><A HREF="../hpux-7-0/Usocket.i3.html#0TOP0">unix/src/hpux-7-0/Usocket.i3</A>
+<LI><A HREF="../ibm-4-3/Usocket.i3.html#0TOP0">unix/src/ibm-4-3/Usocket.i3</A>
+<LI><A HREF="../irix-5.2/Usocket.i3.html#0TOP0">unix/src/irix-5.2/Usocket.i3</A>
+<LI><A HREF="../linux/Usocket.i3.html#0TOP0">unix/src/linux/Usocket.i3</A>
+<LI><A HREF="../osf-1.generic/Usocket.i3.html#0TOP0">unix/src/osf-1.generic/Usocket.i3</A>
+<LI><A HREF="../solaris-2-x/Usocket.i3.html#0TOP0">unix/src/solaris-2-x/Usocket.i3</A>
+<LI><A HREF="../sunos-4-x/Usocket.i3.html#0TOP0">unix/src/sunos-4-x/Usocket.i3</A>
+<LI><A HREF="../sysv-4.0/Usocket.i3.html#0TOP0">unix/src/sysv-4.0/Usocket.i3</A>
+<LI><A HREF="../ultrix-3-1.generic/Usocket.i3.html#0TOP0">unix/src/ultrix-3-1.generic/Usocket.i3</A>
+</UL>
+<P>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

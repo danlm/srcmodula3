@@ -1,0 +1,300 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: ui/src/winvbt/WinScrnColorMap.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>ui/src/winvbt/WinScrnColorMap.m3</H2></A><HR>
+<inModule>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM> Digital Internal Use Only                                                 </EM></BLOCKQUOTE><PRE>
+</PRE>                                                                           
+       Created on Tue Jan 17 11:35:36 PST 1995 by najork                   
+
+<P>
+<P><PRE>UNSAFE MODULE <module><implements><A HREF="WinScrnColorMap.i3.html">WinScrnColorMap</A></implements></module>;
+
+IMPORT <A HREF="../../../C/src/Common/Ctypes.i3.html">Ctypes</A>, <A HREF="#x1">Math</A>, <A HREF="../vbt/ScrnColorMap.i3.html">ScrnColorMap</A>, <A HREF="../../../win32/src/WinDef.i3.html">WinDef</A>, <A HREF="../../../win32/src/WinGDI.i3.html">WinGDI</A>, <A HREF="../../../win32/src/WinUser.i3.html">WinUser</A>;
+
+CONST
+  Gamma        = 1.1D0;
+  GammaInverse = 1.0D0 / Gamma;
+
+TYPE
+  T = ScrnColorMap.T BRANDED OBJECT
+  OVERRIDES
+    fromRGB := FromRGB;
+    read    := Read;
+    write   := Write;
+    new     := NewCube;
+    free    := FreeCube;
+  END;
+
+PROCEDURE <A NAME="FromRGB"><procedure>FromRGB</procedure></A> (&lt;*UNUSED*&gt; self: T;
+                              rgb : ScrnColorMap.RGB;
+                   &lt;*UNUSED*&gt; mode: ScrnColorMap.Mode ): ScrnColorMap.Pixel
+    (** RAISES {ScrnColorMap.Failure} **) =
+  BEGIN
+    (* This is an extremely naive implementation; it only utilizes
+       the colors that come with the standard Windows palette.
+
+       Using &quot;WinGDI.RGB&quot; causes dithering, and two shades of red in the
+       solitaire cards. *)
+
+    WITH r = ROUND (Math.pow(FLOAT(rgb.r,LONGREAL), GammaInverse) * 255.0D0),
+         g = ROUND (Math.pow(FLOAT(rgb.g,LONGREAL), GammaInverse) * 255.0D0),
+         b = ROUND (Math.pow(FLOAT(rgb.b,LONGREAL), GammaInverse) * 255.0D0) DO
+      RETURN WinGDI.PALETTERGB (r, g, b);
+    END;
+  END FromRGB;
+
+PROCEDURE <A NAME="Read"><procedure>Read</procedure></A> (&lt;*UNUSED*&gt; self: T;
+                &lt;*UNUSED*&gt; VAR res: ARRAY OF ScrnColorMap.Entry) =
+  BEGIN
+    &lt;* ASSERT FALSE *&gt;  (* not yet implemented *)
+  END Read;
+
+PROCEDURE <A NAME="Write"><procedure>Write</procedure></A> (&lt;*UNUSED*&gt; self: T;
+                 &lt;*UNUSED*&gt; READONLY new : ARRAY OF ScrnColorMap.Entry)
+    (** RAISES {ScrnColorMap.Failure} **) =
+  BEGIN
+    &lt;* ASSERT FALSE *&gt;  (* not yet implemented *)
+  END Write;
+
+PROCEDURE <A NAME="NewCube"><procedure>NewCube</procedure></A> (&lt;*UNUSED*&gt; self: T;
+                   &lt;*UNUSED*&gt; d: CARDINAL): ScrnColorMap.Cube
+    (** RAISES {ScrnColorMap.Failure} **) =
+  BEGIN
+    &lt;* ASSERT FALSE *&gt;  (* not yet implemented *)
+  END NewCube;
+
+PROCEDURE <A NAME="FreeCube"><procedure>FreeCube</procedure></A> (&lt;*UNUSED*&gt; self: T;
+                    &lt;*UNUSED*&gt; READONLY cb: ScrnColorMap.Cube) =
+  BEGIN
+    &lt;* ASSERT FALSE *&gt;  (* not yet implemented *)
+  END FreeCube;
+</PRE>***************************************************************************
+ Oracle                                                                    
+***************************************************************************
+
+<P><PRE>TYPE
+  Oracle = ScrnColorMap.Oracle BRANDED OBJECT
+  OVERRIDES
+    standard := Standard;
+    list     := List;
+    lookup   := Lookup;
+    new      := NewMap;
+  END;
+
+PROCEDURE <A NAME="NewOracle"><procedure>NewOracle</procedure></A> (): ScrnColorMap.Oracle =
+  BEGIN
+    RETURN NEW (Oracle);
+  END NewOracle;
+
+PROCEDURE <A NAME="Standard"><procedure>Standard</procedure></A> (&lt;*UNUSED*&gt; self: Oracle): ScrnColorMap.T =
+  VAR t := NEW (T);
+  BEGIN
+    t.depth     := 8;
+    t.readOnly  := FALSE;
+    t.ramp.base := 0;
+    t.ramp.last [ScrnColorMap.Primary.Red]   := 255;
+    t.ramp.mult [ScrnColorMap.Primary.Red]   := 16_000001;
+    t.ramp.last [ScrnColorMap.Primary.Green] := 255;
+    t.ramp.mult [ScrnColorMap.Primary.Green] := 16_000100;
+    t.ramp.last [ScrnColorMap.Primary.Blue]  := 255;
+    t.ramp.mult [ScrnColorMap.Primary.Blue]  := 16_010000;
+    RETURN t;
+  END Standard;
+</PRE>-----------------------------------------------------------------------------
+   The spec in ScrnColormap.i3 states:
+<P>
+       The method call <CODE>st.cmap.list(pat, maxResults)</CODE> returns the names of 
+       colormaps owned by <CODE>st</CODE> that match the pattern <CODE>pat</CODE>.  The list of 
+       results may be truncated to length <CODE>maxResults</CODE>.  A <CODE>*</CODE> matches any 
+       number of characters and a <CODE>?</CODE> matches any single character.
+<P>
+   However, the X version (XScrnCmap.ColorMapList) always returns NIL.
+   Since this seems to be adequate, we do the same ...
+-----------------------------------------------------------------------------
+
+<P>
+<P><PRE>PROCEDURE <A NAME="List"><procedure>List</procedure></A> (&lt;*UNUSED*&gt; self      : Oracle;
+                &lt;*UNUSED*&gt; pat       : TEXT;
+                &lt;*UNUSED*&gt; maxResults: CARDINAL): REF ARRAY OF TEXT =
+  BEGIN
+    RETURN NIL
+  END List;
+</PRE>-----------------------------------------------------------------------------
+   The spec in ScrnColormap.i3 states:
+<P>
+       The method call <CODE>st.cmap.lookup(name)</CODE> returns the colormap owned by 
+       <CODE>st</CODE> with the given name, or <CODE>NIL</CODE> if no colormap has this name.
+<P>
+   However, the X version (XScrnCmap.ColorMapLookup always returns NIL.
+   Since this seems to be adequate, we do the same ...
+-----------------------------------------------------------------------------
+
+<P>
+<P><PRE>PROCEDURE <A NAME="Lookup"><procedure>Lookup</procedure></A> (&lt;*UNUSED*&gt; self: Oracle;
+                  &lt;*UNUSED*&gt; pat : TEXT): ScrnColorMap.T =
+  BEGIN
+    RETURN NIL
+  END Lookup;
+
+PROCEDURE <A NAME="NewMap"><procedure>NewMap</procedure></A> (&lt;*UNUSED*&gt; self     : Oracle;
+                  &lt;*UNUSED*&gt; nm       : TEXT;
+                  &lt;*UNUSED*&gt; preLoaded: BOOLEAN): ScrnColorMap.T =
+  BEGIN
+    RETURN NEW (T);
+  END NewMap;
+
+CONST
+  MaxPalEntries = 1024;
+
+  (*** for 8x8x8 cube *****
+  NPalEntries = 512;
+  PalValues   = ARRAY [0..7] OF [0..255] { 0, 36, 72, 108, 145, 182, 219, 255 };
+  *************************)
+
+  (*** for 6x6x6 cube *****)
+  NPalEntries = 216;
+  PalValues   = ARRAY [0..5] OF [0..255] { 0, 51, 102, 153, 204, 255 };
+
+  (*** for 5x5x5 cube *****
+  NPalEntries = 125;
+  PalValues   = ARRAY [0..4] OF [0..255] { 0, 64, 128, 192, 255 };
+  *************************)
+
+VAR
+  defaultPal: WinDef.HPALETTE := NIL;
+  defaultPalette: RECORD
+    palVersion   : WinDef.WORD;
+    palNumEntries: WinDef.WORD;
+    palPalEntry  : ARRAY [1 .. MaxPalEntries] OF WinGDI.PALETTEENTRY;
+  END;
+
+PROCEDURE <A NAME="DefaultPalette"><procedure>DefaultPalette</procedure></A> (): WinDef.HPALETTE =
+  (* Create a logical palette *)
+  VAR n_colors: INTEGER;
+  BEGIN
+    IF (defaultPal = NIL) THEN
+      n_colors := NumDeviceColors ();
+      IF (64 &lt; n_colors) AND (n_colors &lt;= MaxPalEntries)
+        THEN MatchCurrentPalette ();
+        ELSE InitDefaultPalette ();
+      END;
+      defaultPal := WinGDI.CreatePalette (LOOPHOLE (ADR(defaultPalette),
+                                                    WinGDI.LPLOGPALETTE));
+      &lt;* ASSERT defaultPal # NIL *&gt;
+    END;
+    RETURN defaultPal;
+  END DefaultPalette;
+
+PROCEDURE <A NAME="InitDefaultPalette"><procedure>InitDefaultPalette</procedure></A> () =
+  (* Fill the colors of a color cube into the &quot;defaultPalette&quot; record. *)
+  VAR i := 1;
+  BEGIN
+    defaultPalette.palVersion    := 16_300;   (* Windows version number *)
+    defaultPalette.palNumEntries := NPalEntries;
+
+    WITH pe = defaultPalette.palPalEntry DO
+      FOR r := FIRST (PalValues) TO LAST (PalValues) DO
+        FOR g := FIRST (PalValues) TO LAST (PalValues) DO
+          FOR b := FIRST (PalValues) TO LAST (PalValues) DO
+            pe[i] := WinGDI.PALETTEENTRY { PalValues[r], PalValues[g],
+                                           PalValues[b],  WinGDI.PC_NOCOLLAPSE};
+            INC (i);
+          END;
+        END;
+      END;
+    END;
+  END InitDefaultPalette;
+
+PROCEDURE <A NAME="MatchCurrentPalette"><procedure>MatchCurrentPalette</procedure></A> () =
+  VAR
+    hwnd   := WinUser.GetDesktopWindow ();
+    hdc    := WinUser.GetDC (hwnd);
+    status : INTEGER;
+  BEGIN
+    defaultPalette.palVersion    := 16_300;   (* Windows version number *)
+    defaultPalette.palNumEntries := 0;
+
+    (* enumerate the solid pens to find the &quot;real&quot; colors that are available *)
+    EVAL WinGDI.EnumObjects (hdc, WinGDI.OBJ_PEN, EnumColors, 0);
+
+    status := WinUser.ReleaseDC (hwnd, hdc);
+    &lt;*ASSERT status # 0 *&gt;
+
+    IF defaultPalette.palNumEntries &lt;= 0 THEN
+      (* we didn't find any solid colors... *)
+      InitDefaultPalette ();
+    END;
+  END MatchCurrentPalette;
+
+&lt;*CALLBACK*&gt;
+PROCEDURE <A NAME="EnumColors"><procedure>EnumColors</procedure></A> (a1: WinDef.LPVOID;  &lt;*UNUSED*&gt;a2: WinDef.LPARAM): Ctypes.int =
+  VAR pen : WinGDI.LPLOGPEN := a1;  r,g,b: WinDef.BYTE;
+  BEGIN
+    IF (pen # NIL) AND (pen.lopnStyle = WinGDI.PS_SOLID) THEN
+      WITH cnt = defaultPalette.palNumEntries,
+           pe  = defaultPalette.palPalEntry     DO
+        IF (cnt &gt;= MaxPalEntries) THEN RETURN 0; (* bail out *) END;
+        r := WinGDI.GetRValue (pen.lopnColor);
+        g := WinGDI.GetGValue (pen.lopnColor);
+        b := WinGDI.GetBValue (pen.lopnColor);
+        INC (cnt);
+        pe [cnt] := WinGDI.PALETTEENTRY {r, g, b, WinGDI.PC_NOCOLLAPSE};
+      END;
+    END;
+    RETURN 1;
+  END EnumColors;
+
+PROCEDURE <A NAME="NumDeviceColors"><procedure>NumDeviceColors</procedure></A> (): INTEGER =
+  VAR
+    hwnd   := WinUser.GetDesktopWindow ();
+    hdc    := WinUser.GetDC (hwnd);
+    cnt    := WinGDI.GetDeviceCaps (hdc, WinGDI.NUMCOLORS);
+    status := WinUser.ReleaseDC (hwnd, hdc);
+  BEGIN
+    &lt;* ASSERT status # 0 *&gt;
+    RETURN cnt;
+  END NumDeviceColors;
+
+BEGIN
+END WinScrnColorMap.
+</PRE>
+</inModule>
+<HR>
+<A NAME="x1">interface Math is in:
+</A><UL>
+<LI><A HREF="../../../arith/src/POSIX/Math.i3.html#0TOP0">arith/src/POSIX/Math.i3</A>
+<LI><A HREF="../../../arith/src/WIN32/Math.i3.html#0TOP0">arith/src/WIN32/Math.i3</A>
+</UL>
+<P>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

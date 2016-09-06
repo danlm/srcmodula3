@@ -1,0 +1,64 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: ui/src/split/TwoTone.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>ui/src/split/TwoTone.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM>                                                                           </EM></BLOCKQUOTE><PRE>
+&lt;*PRAGMA LL*&gt;
+
+INTERFACE <interface><A HREF="TwoTone.m3.html">TwoTone</A></interface>;
+IMPORT <A HREF="../vbt/PaintOp.i3.html">PaintOp</A>, <A HREF="../../../geometry/src/Point.i3.html">Point</A>, <A HREF="../vbt/Pixmap.i3.html">Pixmap</A>, <A HREF="../../../geometry/src/Rect.i3.html">Rect</A>, <A HREF="../vbt/VBT.i3.html">VBT</A>;
+
+TYPE
+  T = RECORD
+        op : PaintOp.T;
+        txt: Pixmap.T;
+      END;
+
+PROCEDURE <A HREF="TwoTone.m3.html#New">New</A> (op: PaintOp.T; bwtxt: Pixmap.T): T;
+  (* Result:
+       &quot;.op&quot; is &quot;PaintOp.BgFg&quot; on a black and white display, &quot;op&quot; otherwise.
+       &quot;.txt&quot; is &quot;bwtxt&quot; on a black and white display, &quot;Pixmap.Solid&quot; otherwise
+   *)
+
+PROCEDURE <A HREF="TwoTone.m3.html#Paint">Paint</A> (         v    : VBT.Leaf;
+                 READONLY clip : Rect.T;
+                 READONLY tone : T;
+                 READONLY delta             := Point.Origin); &lt;* LL.sup &lt; v *&gt;
+</PRE><BLOCKQUOTE><EM> Paint the rectangle <CODE>clip</CODE> with the texture <CODE>tone.txt+delta</CODE> using
+   the operation <CODE>tone.op</CODE>. </EM></BLOCKQUOTE><PRE>
+
+END TwoTone.
+</PRE>
+</inInterface>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

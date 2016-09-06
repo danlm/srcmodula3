@@ -1,0 +1,63 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: ui/src/winvbt/Address.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>ui/src/winvbt/Address.m3</H2></A><HR>
+<inModule>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM> Digital Internal Use Only                                                 </EM></BLOCKQUOTE><PRE>
+</PRE>                                                                           
+       Created on Wed Jan 18 21:06:32 PST 1995 by najork                   
+
+<P><PRE>UNSAFE MODULE <module><implements><A HREF="Address.i3.html">Address</A></implements></module>;
+
+IMPORT <A HREF="../../../types/src/Integer.i3.html">Integer</A>, <A HREF="../../../word/src/Word.i3.html">Word</A>;
+
+PROCEDURE <A NAME="Equal"><procedure>Equal</procedure></A>(a, b: T): BOOLEAN =
+  BEGIN
+    RETURN a = b;
+  END Equal;
+
+PROCEDURE <A NAME="Hash"><procedure>Hash</procedure></A>(a: T): Word.T =
+  BEGIN
+    RETURN LOOPHOLE(a, Word.T);
+  END Hash;
+
+PROCEDURE <A NAME="Compare"><procedure>Compare</procedure></A>(a, b: T): [-1..1] =
+  BEGIN
+    RETURN Integer.Compare(LOOPHOLE(a, INTEGER), LOOPHOLE(b, INTEGER));
+  END Compare;
+
+BEGIN
+END Address.
+</PRE>
+</inModule>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

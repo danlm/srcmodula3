@@ -1,0 +1,227 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: videovbt/src/WIN32/VideoVBT.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>videovbt/src/WIN32/VideoVBT.m3</H2></A><HR>
+<inModule>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM> </EM></BLOCKQUOTE><PRE>
+</PRE> by Steve Freeman 
+
+<P><PRE>MODULE <module><implements><A HREF="../VideoVBT.i3.html">VideoVBT</A></implements></module>;
+
+IMPORT <A HREF="../../../geometry/src/Axis.i3.html">Axis</A>, <A HREF="../../../rw/src/Common/IO.i3.html">IO</A>, <A HREF="#x1">JVDecomp</A>, <A HREF="#x2">JVSink</A>, <A HREF="../../../geometry/src/Rect.i3.html">Rect</A>, <A HREF="../../../geometry/src/Region.i3.html">Region</A>, <A HREF="../../../rw/src/Common/Stdio.i3.html">Stdio</A>, <A HREF="../../../ui/src/vbt/VBT.i3.html">VBT</A>, <A HREF="../../../ui/src/vbt/VBTClass.i3.html">VBTClass</A>;
+
+REVEAL
+  <A NAME="T">T</A> = Public BRANDED OBJECT
+        width      : INTEGER;
+        height     : INTEGER;
+        fixedSize  : BOOLEAN;
+        statistics : JVDecomp.Statistics := NIL;
+      OVERRIDES
+        init     := Init;
+        repaint  := Repaint;
+        reshape  := Reshape;
+        shape    := Shape;
+
+        setQuality       := SetQuality;
+        setSize          := SetSize;
+        setMinFrameMSecs := SetMinFrameMSecs;
+        setSynchronous   := SetSynchronous;
+        setFixedSize     := SetFixedSize;
+
+        getDecomp  := GetDecomp;
+        getSize    := GetSize;
+        setPaused  := SetPaused;
+        startStats := StartStats;
+        stopStats  := StopStats;
+        getStats   := GetStats;
+      END;
+
+PROCEDURE <A NAME="Init"><procedure>Init</procedure></A> (           v            : T;
+                &lt;*UNUSED*&gt; sourceHost   : TEXT;
+                &lt;*UNUSED*&gt; quality      : JVSink.Quality;
+                &lt;*UNUSED*&gt; ncolours     : CARDINAL;
+                           width        : CARDINAL;
+                           height       : CARDINAL;
+                &lt;*UNUSED*&gt; synchronous  : BOOLEAN;
+                           fixedSize    : BOOLEAN;
+                &lt;*UNUSED*&gt; minFrameMSecs: CARDINAL): T =
+  BEGIN
+    v.width     := width;
+    v.height    := height;
+    v.fixedSize := fixedSize;
+
+    RETURN v;
+  END Init;
+
+PROCEDURE <A NAME="Repaint"><procedure>Repaint</procedure></A> (&lt;*UNUSED*&gt; v: T; &lt;*UNUSED*&gt; READONLY rgn: Region.T) =
+  BEGIN
+  END Repaint;
+
+PROCEDURE <A NAME="Reshape"><procedure>Reshape</procedure></A> (v: T; READONLY cd: VBT.ReshapeRec) =
+  BEGIN
+    IF Rect.Congruent(cd.prev, cd.new) OR v.st = NIL THEN
+      (* there's no video work to do *)
+      VBT.Leaf.reshape(v, cd);
+      RETURN;
+    END;
+
+    IF cd.new = Rect.Empty THEN
+    ELSE
+      LOCK v DO
+        IF NOT v.fixedSize THEN
+          v.width  := Rect.HorSize(cd.new);
+          v.height := Rect.VerSize(cd.new);
+        END;
+      END;
+      Start(v);
+    END;
+    VBT.Leaf.reshape(v, cd);
+  END Reshape;
+
+PROCEDURE <A NAME="Shape"><procedure>Shape</procedure></A> (v: T; ax: Axis.T; &lt;*UNUSED*&gt; n: CARDINAL): VBT.SizeRange =
+  VAR res := VBT.DefaultShape;
+  BEGIN
+    IF v.st # NIL THEN
+      LOCK v DO
+        IF v.fixedSize THEN
+          CASE ax OF
+          | Axis.T.Hor =&gt; res.pref := v.width;
+          | Axis.T.Ver =&gt; res.pref := v.height;
+          END;
+        END;
+      END;
+    END;
+    RETURN res;
+  END Shape;
+
+PROCEDURE <A NAME="SetQuality"><procedure>SetQuality</procedure></A> (v: T; &lt;*UNUSED*&gt; quality: JVSink.Quality) =
+  BEGIN
+    SetPictureParams (v);
+  END SetQuality;
+
+PROCEDURE <A NAME="SetSize"><procedure>SetSize</procedure></A> (v: T; &lt;*UNUSED*&gt; width, height: CARDINAL) =
+  BEGIN
+    SetPictureParams (v);
+  END SetSize;
+
+PROCEDURE <A NAME="SetMinFrameMSecs"><procedure>SetMinFrameMSecs</procedure></A> (&lt;*UNUSED*&gt; v: T; &lt;*UNUSED*&gt; msecs: CARDINAL) =
+  BEGIN
+  END SetMinFrameMSecs;
+
+PROCEDURE <A NAME="SetSynchronous"><procedure>SetSynchronous</procedure></A> (&lt;*UNUSED*&gt; v: T; &lt;*UNUSED*&gt; synchronous: BOOLEAN) =
+  BEGIN
+  END SetSynchronous;
+
+PROCEDURE <A NAME="SetFixedSize"><procedure>SetFixedSize</procedure></A> (v: T; fixedSize: BOOLEAN) =
+  BEGIN
+    LOCK v DO v.fixedSize := fixedSize; END;
+    VBT.NewShape(v);
+  END SetFixedSize;
+
+PROCEDURE <A NAME="GetDecomp"><procedure>GetDecomp</procedure></A> (&lt;*UNUSED*&gt; v: T): JVDecomp.T =
+  BEGIN
+    RETURN NIL;
+  END GetDecomp;
+
+PROCEDURE <A NAME="GetSize"><procedure>GetSize</procedure></A> (v: T; VAR width, height: CARDINAL) =
+  BEGIN
+    LOCK v DO
+      width  := v.width;
+      height := v.height;
+    END;
+  END GetSize;
+
+PROCEDURE <A NAME="SetPaused"><procedure>SetPaused</procedure></A> (&lt;*UNUSED*&gt; v: T; &lt;*UNUSED*&gt; paused : BOOLEAN) =
+  BEGIN
+  END SetPaused;
+
+PROCEDURE <A NAME="StartStats"><procedure>StartStats</procedure></A> (t: T) =
+  BEGIN
+    LOCK t DO
+      IF t.statistics = NIL THEN
+        t.statistics := NEW (JVDecomp.Statistics);
+      END;
+      WITH s = t.statistics DO
+        s.framesStarted := 0;
+        s.framesProcessed := 0;
+        s.timesBlocked := 0;
+        s.cumLatency := 0;
+      END;
+    END;
+  END StartStats;
+
+PROCEDURE <A NAME="StopStats"><procedure>StopStats</procedure></A> (t: T) =
+  BEGIN
+    LOCK t DO
+      t.statistics := NIL;
+    END;
+  END StopStats;
+
+PROCEDURE <A NAME="GetStats"><procedure>GetStats</procedure></A> (t: T): JVDecomp.Statistics =
+  BEGIN
+    RETURN t.statistics;
+  END GetStats;
+
+PROCEDURE <A NAME="SetPictureParams"><procedure>SetPictureParams</procedure></A> (v : T) =
+  BEGIN
+    IF NOT v.fixedSize THEN
+      VBT.NewShape(v);
+    ELSE
+      Start(v);
+    END;
+  END SetPictureParams;
+
+PROCEDURE <A NAME="Start"><procedure>Start</procedure></A> (&lt;*UNUSED*&gt; v: T) =
+  BEGIN
+    IO.Put (&quot;JVideo not supported\n&quot;, Stdio.stderr);
+  END Start;
+
+BEGIN
+END VideoVBT.
+</PRE>
+</inModule>
+<HR>
+<A NAME="x1">interface JVDecomp is in:
+</A><UL>
+<LI><A HREF="../../../jvideo/src/POSIX/JVDecomp.i3.html#0TOP0">jvideo/src/POSIX/JVDecomp.i3</A>
+<LI><A HREF="../../../jvideo/src/WIN32/JVDecomp.i3.html#0TOP0">jvideo/src/WIN32/JVDecomp.i3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x2">interface JVSink is in:
+</A><UL>
+<LI><A HREF="../../../jvideo/src/POSIX/JVSink.i3.html#0TOP0">jvideo/src/POSIX/JVSink.i3</A>
+<LI><A HREF="../../../jvideo/src/WIN32/JVSink.i3.html#0TOP0">jvideo/src/WIN32/JVSink.i3</A>
+</UL>
+<P>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

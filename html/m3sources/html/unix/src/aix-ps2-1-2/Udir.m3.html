@@ -1,0 +1,96 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: unix/src/aix-ps2-1-2/Udir.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>unix/src/aix-ps2-1-2/Udir.m3</H2></A><HR>
+<inModule>
+<PRE></PRE> File Udir.m3, created by Dick Orgass at 11:49:05 on Tue Sep 18 1990. 
+
+<P>   Copyright (C) by IBM Corporation, 1990. 
+
+<P><PRE>MODULE <module><implements><A HREF="#x1">Udir</A></implements></module>;
+IMPORT <A HREF="../../../text/src/Text.i3.html">Text</A>;
+
+&lt;*UNUSED*&gt; CONST
+  UdirImplCopyright = &quot;Copyright (C) by IBM Corporation, 1990.&quot;;
+  UdirImplRCSHeader = &quot;$Header: /mnt1/muller/m3/dev/src/libs/aix-ps2-1-2/os/RCS/Udir.m3,v 1.2 1991/03/18 22:38:12 muller Exp $&quot;;
+  UdirImplDate = &quot;$Date: 1991/03/18 22:38:12 $&quot;;
+  UdirImplRevision = &quot;$Revision: 1.2 $&quot;;
+
+PROCEDURE <A NAME="NameToText"><procedure>NameToText</procedure></A>(READONLY name: D_name): TEXT RAISES {} =
+</PRE><BLOCKQUOTE><EM> Converts the d_name field of a struct_dirent to a TEXT and returns it.  </EM></BLOCKQUOTE><PRE>
+  VAR len: CARDINAL := 0;
+  BEGIN
+    FOR i := FIRST(name) TO LAST(name) DO
+      IF name[i] = '\000' THEN EXIT ELSE INC(len) END
+    END;
+    RETURN Text.FromChars(SUBARRAY (name, 0, len))
+  END NameToText;
+
+BEGIN
+END Udir.
+</PRE> Change Log
+<P>
+  $Log: Udir.m3,v $
+# Revision 1.2  1991/03/18  22:38:12  muller
+# *** empty log message ***
+#
+<P>
+
+
+</inModule>
+<HR>
+<A NAME="x1">interface Udir is in:
+</A><UL>
+<LI><A HREF="../aix-3-2/Udir.i3.html#0TOP0">unix/src/aix-3-2/Udir.i3</A>
+<LI><A HREF="Udir.i3.html#0TOP0">unix/src/aix-ps2-1-2/Udir.i3</A>
+<LI><A HREF="../freebsd-1/Udir.i3.html#0TOP0">unix/src/freebsd-1/Udir.i3</A>
+<LI><A HREF="../freebsd-2/Udir.i3.html#0TOP0">unix/src/freebsd-2/Udir.i3</A>
+<LI><A HREF="../hpux-7-0/Udir.i3.html#0TOP0">unix/src/hpux-7-0/Udir.i3</A>
+<LI><A HREF="../ibm-4-3/Udir.i3.html#0TOP0">unix/src/ibm-4-3/Udir.i3</A>
+<LI><A HREF="../irix-5.2/Udir.i3.html#0TOP0">unix/src/irix-5.2/Udir.i3</A>
+<LI><A HREF="../linux/Udir.i3.html#0TOP0">unix/src/linux/Udir.i3</A>
+<LI><A HREF="../osf-1.generic/Udir.i3.html#0TOP0">unix/src/osf-1.generic/Udir.i3</A>
+<LI><A HREF="../solaris-2-x/Udir.i3.html#0TOP0">unix/src/solaris-2-x/Udir.i3</A>
+<LI><A HREF="../sunos-4-x/Udir.i3.html#0TOP0">unix/src/sunos-4-x/Udir.i3</A>
+<LI><A HREF="../sysv-4.0/Udir.i3.html#0TOP0">unix/src/sysv-4.0/Udir.i3</A>
+<LI><A HREF="../ultrix-3-1.AP3000/Udir.i3.html#0TOP0">unix/src/ultrix-3-1.AP3000/Udir.i3</A>
+<LI><A HREF="../ultrix-3-1.ARM/Udir.i3.html#0TOP0">unix/src/ultrix-3-1.ARM/Udir.i3</A>
+<LI><A HREF="../ultrix-3-1.DS3100/Udir.i3.html#0TOP0">unix/src/ultrix-3-1.DS3100/Udir.i3</A>
+<LI><A HREF="../ultrix-3-1.NEXT/Udir.i3.html#0TOP0">unix/src/ultrix-3-1.NEXT/Udir.i3</A>
+<LI><A HREF="../ultrix-3-1.SEQUENT/Udir.i3.html#0TOP0">unix/src/ultrix-3-1.SEQUENT/Udir.i3</A>
+<LI><A HREF="../ultrix-3-1.SUN3/Udir.i3.html#0TOP0">unix/src/ultrix-3-1.SUN3/Udir.i3</A>
+<LI><A HREF="../ultrix-3-1.SUN386/Udir.i3.html#0TOP0">unix/src/ultrix-3-1.SUN386/Udir.i3</A>
+<LI><A HREF="../ultrix-3-1.UMAX/Udir.i3.html#0TOP0">unix/src/ultrix-3-1.UMAX/Udir.i3</A>
+<LI><A HREF="../ultrix-3-1.VAX/Udir.i3.html#0TOP0">unix/src/ultrix-3-1.VAX/Udir.i3</A>
+</UL>
+<P>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

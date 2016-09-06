@@ -1,0 +1,13 @@
+(* Obliq's version of "eval", to evaluate a string containing obliq source. 
+   This technique could be used by an application that has an Obliq runtime 
+   linked-in without parser/printer. It is not very flexible, though because
+   this eval does not take an evaluation environment, and it returns
+   a string that is probably junk. *)
+
+module Eval;
+
+let eval =
+  proc(command)
+    wr_putText(wr_stdout,
+      process_filter(processor, ["/proj/mips/bin/obliq"], command & ";\n"));
+  end;

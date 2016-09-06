@@ -1,0 +1,24 @@
+ 
+To install the Modula-3 compiler do the following:
+ 
+  1) In this directory, unpack (gunzip, tar -x) a copy of "m3cc.tar.gz".
+ 
+  2) Edit "m3build/templates/LINUXELF" so that
+     it contains your site-specific configuration.
+ 
+  3) Run "m3boot" from this directory.
+ 
+  4) Run "m3ship" from this directory.
+ 
+At this point, to get a fully functional system you need
+to install the Modula-3 libraries.  See the file NOTES for
+the details.
+ 
+More documentation can be found on the Modula-3 home page at URL:
+ 
+   http://www.research.digital.com/SRC/modula-3/html/home.html
+ 
+The source for the HTML documents are also available in the
+"html.tar.gz" archive in gatekeeper.  Detailed installation
+instructions are in "html/modula-3/html/install.html"
+ 

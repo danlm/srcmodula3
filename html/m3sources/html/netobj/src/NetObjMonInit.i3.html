@@ -1,0 +1,59 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: netobj/src/NetObjMonInit.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>netobj/src/NetObjMonInit.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM> NetObjMonInit.i3 </EM></BLOCKQUOTE><PRE>
+</PRE> The <CODE>NetObjMonInit</CODE> interface is integral to network object runtime
+   initialization.  It is carefully crafted to avoid initialization
+   circularities.  Beware of changing it. 
+
+<P><PRE>INTERFACE <interface><A HREF="#x1">NetObjMonInit</A></interface>;
+
+PROCEDURE <A HREF="NetObjMon_T_v1.m3.html#InitMonitorStubs">InitMonitorStubs</A>();
+</PRE> <CODE>InitMonitorStubs</CODE> registers stubs for the type <CODE>NetObjMon.T</CODE>. 
+
+<P><PRE>PROCEDURE <A HREF="NetObjMon_Registry_v1.m3.html#InitRegistryStubs">InitRegistryStubs</A>();
+</PRE> <CODE>InitRegistryStubs</CODE> registers stubs for the type <CODE>NetObjMon.Registry</CODE>. 
+
+<P><PRE>END NetObjMonInit.
+</PRE>
+</inInterface>
+<HR>
+<A NAME="x1">NetObjMonInit's implementation  is in:
+</A><UL>
+<LI><A HREF="NetObjMon_Registry_v1.m3.html#0TOP0">netobj/src/NetObjMon_Registry_v1.m3</A>
+<LI><A HREF="NetObjMon_T_v1.m3.html#0TOP0">netobj/src/NetObjMon_T_v1.m3</A>
+</UL>
+<P>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

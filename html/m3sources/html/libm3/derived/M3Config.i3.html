@@ -1,0 +1,74 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: libm3/derived/M3Config.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>libm3/derived/M3Config.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE> This interface exports the configuration information
+   used by m3build and quake.  These constants were defined
+   when Modula-3 was installed. 
+
+<P><PRE>INTERFACE <interface>M3Config</interface>;
+
+CONST  (* misc. configuration *)
+  TARGET    = &quot;DS3100&quot;;
+  OS_TYPE   = &quot;POSIX&quot;;
+  WORD_SIZE = &quot;32BITS&quot;;
+  BUILD_DIR = &quot;DS&quot;;
+  PATH_SEP  = &quot;/&quot;;
+  M3        = &quot;/proj/m3/pkg/m3/DS/m3&quot;; (* the compiler *)
+
+CONST (* installation directories *)
+  BIN_INSTALL   = &quot;/proj/mips/bin&quot;;
+  LIB_INSTALL   = &quot;/proj/m3/lib.DS&quot;;
+  DOC_INSTALL   = &quot;/proj/doc&quot;;
+  PKG_INSTALL   = &quot;/proj/m3/pkg&quot;;
+  MAN_INSTALL   = &quot;/proj/man/mips&quot;;
+  EMACS_INSTALL = &quot;/proj/generic/lib/elisp&quot;;
+  HTML_INSTALL  = &quot;/proj/www/SRC&quot;;
+</PRE> On some systems (e.g. AFS) you must install public files
+   in a different place from where you use them.  The paths
+   below specify where to find the installed files. 
+
+<P><PRE>CONST
+  BIN_USE   = &quot;/proj/mips/bin&quot;;
+  LIB_USE   = &quot;/proj/m3/lib.DS&quot;;
+  DOC_USE   = &quot;/proj/doc&quot;;
+  PKG_USE   = &quot;/proj/m3/pkg&quot;;
+  MAN_USE   = &quot;/proj/man/mips&quot;;
+  EMACS_USE = &quot;/proj/generic/lib/elisp&quot;;
+  HTML_USE  = &quot;/proj/www/SRC&quot;;
+
+END M3Config.
+</PRE>
+</inInterface>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

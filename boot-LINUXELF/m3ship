@@ -1,0 +1,12 @@
+#! /bin/sh
+#
+# top-level bootstrap install script
+#
+ 
+TOP=`pwd`
+QUAKE=$TOP/quake/LINUXELF/quake
+CONFIG=$TOP/m3build/templates/LINUXELF
+ 
+ 
+echo ---- installing ----
+$QUAKE -D_all -DBUILD_PACKAGE=boot $CONFIG m3ship.boot

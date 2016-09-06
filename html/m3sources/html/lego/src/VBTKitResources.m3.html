@@ -1,0 +1,69 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: lego/src/VBTKitResources.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>lego/src/VBTKitResources.m3</H2></A><HR>
+<inModule>
+<PRE><A HREF="../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM> </EM></BLOCKQUOTE><PRE>
+
+MODULE <module><implements><A HREF="VBTKitResources.i3.html">VBTKitResources</A></implements></module>;
+
+IMPORT <A HREF="Image.i3.html">Image</A>, <A HREF="../../ui/src/vbt/Pixmap.i3.html">Pixmap</A>, <A HREF="../../rw/src/Common/Rd.i3.html">Rd</A>, <A HREF="../../vbtkitutils/src/Rsrc.i3.html">Rsrc</A>, <A HREF="../../thread/src/Common/Thread.i3.html">Thread</A>, <A HREF="../../vbtkit/DS/VBTKitBundle.i3.html">VBTKitBundle</A>;
+
+VAR
+  path := Rsrc.BuildPath(&quot;$VBTKITPATH&quot;, VBTKitBundle.Get());
+
+PROCEDURE <A NAME="Get"><procedure>Get</procedure></A> (name: TEXT): TEXT =
+  &lt;* FATAL Rsrc.NotFound, Thread.Alerted, Rd.Failure *&gt;
+  BEGIN
+    WITH t = Rsrc.Get(name, path) DO
+      IF t = NIL THEN &lt;* ASSERT FALSE *&gt; END;
+      RETURN t
+    END
+  END Get;
+
+PROCEDURE <A NAME="GetPixmap"><procedure>GetPixmap</procedure></A> (name: TEXT): Pixmap.T =
+  &lt;* FATAL Rsrc.NotFound, Thread.Alerted, Image.Error, Rd.Failure *&gt;
+  VAR rd := Rsrc.Open(name, path);
+  BEGIN
+    TRY
+      RETURN Image.Scaled(Image.FromRd(rd))
+    FINALLY
+      Rd.Close(rd)
+    END;
+  END GetPixmap;
+
+BEGIN
+END VBTKitResources.
+</PRE>
+</inModule>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

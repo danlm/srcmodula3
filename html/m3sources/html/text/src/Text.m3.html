@@ -1,0 +1,198 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: text/src/Text.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>text/src/Text.m3</H2></A><HR>
+<inModule>
+<PRE><A HREF="../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM>                                                             </EM></BLOCKQUOTE><PRE>
+</PRE> Last Modified On Fri Aug 11 13:05:42 PDT 1995 By detlefs    
+      Modified On Fri Mar 25 12:03:21 PST 1994 By kalsow     
+      Modified On Tue Feb 15 10:19:04 PST 1994 By perl       
+      Modified On Tue Feb 16 10:20:34 PST 1993 By mjordan    
+      Modified On Tue Nov  3 16:19:49 PST 1992 By meehan     
+      Modified On Thu Oct  8 08:53:53 PDT 1992 By mcjones    
+      Modified On Wed Oct  7 11:51:?? PDT 1991 By muller     
+
+<P><PRE>MODULE <module>Text</module> EXPORTS <A HREF="Text.i3.html"><implements>Text</A></implements>, <A HREF="TextF.i3.html"><implements>TextF</A></implements>;
+
+TYPE CharMap = ARRAY CHAR OF T;
+VAR fromCharCache := CharMap {NIL, ..}; (* 1-char texts *)
+
+PROCEDURE <A NAME="New"><procedure>New</procedure></A> (n: CARDINAL): T RAISES {} =
+  BEGIN
+    WITH t = NEW (T, n + 1) DO
+      t[n] := '\000';
+      RETURN t;
+    END;
+  END New;
+
+PROCEDURE <A NAME="Cat"><procedure>Cat</procedure></A> (t, u: T): T =
+  BEGIN
+    WITH nt = NUMBER (t^),  nu = NUMBER (u^) DO
+      IF nt &lt;= 1 THEN RETURN u END;
+      IF nu &lt;= 1 THEN RETURN t END;
+      WITH res = NEW (T, nt + nu - 1) DO
+        SUBARRAY(res^, 0, nt) := t^;
+        SUBARRAY(res^, nt-1, nu) := u^;
+        RETURN res;
+      END;
+    END;
+  END Cat;
+
+PROCEDURE <A NAME="Equal"><procedure>Equal</procedure></A> (t, u: T): BOOLEAN =
+  BEGIN
+    IF NUMBER (t^) &lt;= 1 THEN
+      RETURN NUMBER (u^) &lt;= 1;
+    ELSIF NUMBER (u^) &lt;= 1 THEN
+      RETURN (FALSE);
+    ELSE
+      RETURN (t^ = u^);
+    END;
+  END Equal;
+
+PROCEDURE <A NAME="GetChar"><procedure>GetChar</procedure></A> (t: T; i: CARDINAL): CHAR =
+  BEGIN
+    IF i = LAST (t^) THEN (* force a subscript fault *) INC (i) END;
+    RETURN t[i];
+  END GetChar;
+
+PROCEDURE <A NAME="Length"><procedure>Length</procedure></A> (t: T): CARDINAL =
+  BEGIN
+    RETURN MAX (0, NUMBER (t^) - 1);
+  END Length;
+
+PROCEDURE <A NAME="Empty"><procedure>Empty</procedure></A> (t: T): BOOLEAN =
+  BEGIN
+    RETURN (NUMBER (t^) &lt;= 1);
+  END Empty;
+
+PROCEDURE <A NAME="Sub"><procedure>Sub</procedure></A> (t: T; start, length: CARDINAL): T =
+  BEGIN
+    WITH n   = NUMBER (t^) - 1,
+         len = MIN (n - start, length) DO
+      IF (len &lt;= 0) THEN RETURN &quot;&quot; END;
+      IF (len = n) THEN RETURN t END;
+      IF len = 1 THEN RETURN FromChar (t [start]) END;
+      WITH res = NEW (T, len + 1) DO
+        SUBARRAY(res^, 0, len) := SUBARRAY(t^, start, len);
+        res [len] := '\000';
+        RETURN res;
+      END;
+    END;
+  END Sub;
+
+PROCEDURE <A NAME="SetChars"><procedure>SetChars</procedure></A> (VAR a: ARRAY OF CHAR; t: T) =
+  BEGIN
+    WITH n = MIN (NUMBER (a), NUMBER (t^)-1) DO
+      SUBARRAY(a, 0, n) := SUBARRAY(t^, 0, n)
+    END;
+  END SetChars;
+
+PROCEDURE <A NAME="FromChar"><procedure>FromChar</procedure></A> (c: CHAR): T =
+  BEGIN
+    IF fromCharCache [c] = NIL THEN
+      WITH new = NEW (T, 2) DO
+        new [0] := c;
+        new [1] := '\000';
+        fromCharCache [c] := new;
+        RETURN new
+      END
+    END;
+    RETURN fromCharCache [c]
+  END FromChar;
+
+PROCEDURE <A NAME="FromChars"><procedure>FromChars</procedure></A> (READONLY a: ARRAY OF CHAR): T =
+  BEGIN
+    WITH n = NUMBER (a) DO
+      IF (n = 0) THEN RETURN &quot;&quot; END;
+      IF n = 1 THEN RETURN FromChar (a [0]) END;
+      WITH res = NEW (T, n + 1) DO
+        SUBARRAY(res^, 0, n) := SUBARRAY(a, 0, n);
+        res [n] := '\000';
+        RETURN res;
+      END;
+    END;
+  END FromChars;
+
+PROCEDURE <A NAME="FindChar"><procedure>FindChar</procedure></A> (t: T;  c: CHAR;  start := 0): INTEGER =
+  BEGIN
+    IF (start &lt; 0) THEN RETURN -1 END;
+    WITH len = NUMBER (t^) - 1 DO
+      LOOP
+        IF (start &gt;= len) THEN RETURN -1 END;
+        IF (t[start] = c) THEN RETURN start END;
+        INC (start);
+      END;
+    END;
+  END FindChar;
+
+PROCEDURE <A NAME="FindCharR"><procedure>FindCharR</procedure></A> (t: T;  c: CHAR;  start := LAST (INTEGER)): INTEGER =
+  VAR
+    n := NUMBER (t^) - 2;
+    i := MIN (n, start);
+  BEGIN
+    LOOP
+      IF (i &lt; 0) THEN RETURN -1 END;
+      IF (t[i] = c) THEN RETURN i END;
+      DEC (i);
+    END;
+  END FindCharR;
+
+PROCEDURE <A NAME="Compare"><procedure>Compare</procedure></A> (t, u: T): [-1..1] =
+  BEGIN
+    WITH tEmpty = NUMBER (t^) &lt;= 1,
+         uEmpty = NUMBER (u^) &lt;= 1 DO
+      IF (tEmpty) THEN
+        IF (uEmpty) THEN RETURN 0 ELSE RETURN -1 END;
+      ELSIF (uEmpty) THEN
+        RETURN 1;
+      ELSE
+        WITH tn = NUMBER (t^) - 1, tu = NUMBER (u^) - 1 DO
+          FOR i := 0 TO MIN (tn, tu) DO
+            IF    ORD (t[i]) &lt; ORD (u[i]) THEN RETURN -1;
+            ELSIF ORD (t[i]) &gt; ORD (u[i]) THEN RETURN +1;
+            END;
+          END;
+          IF    (tn = tu) THEN RETURN 0;
+          ELSIF (tn &lt; tu) THEN RETURN -1;
+          ELSE                 RETURN +1;
+          END;
+        END;
+      END;
+    END;
+  END Compare;
+
+BEGIN
+END Text.
+</PRE>
+</inModule>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

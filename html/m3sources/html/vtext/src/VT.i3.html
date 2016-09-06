@@ -1,0 +1,68 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: vtext/src/VT.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>vtext/src/VT.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM>                                                                           </EM></BLOCKQUOTE><PRE>
+&lt;* PRAGMA LL *&gt;
+
+INTERFACE <interface><A HREF="VT.m3.html">VT</A></interface>;
+
+IMPORT <A HREF="../../mtext/src/MText.i3.html">MText</A>, <A HREF="../../rw/src/Common/Rd.i3.html">Rd</A>, <A HREF="../../thread/src/Common/Thread.i3.html">Thread</A>, <A HREF="VTDef.i3.html">VTDef</A>;
+
+PROCEDURE <A HREF="VT.m3.html#New">New</A> (mtext: MText.T): VTDef.T RAISES {VTDef.Error};
+
+PROCEDURE <A HREF="VT.m3.html#Replace">Replace</A> (vt: VTDef.T; begin, end: CARDINAL; text: TEXT)
+  RAISES {Rd.EndOfFile, Rd.Failure, Thread.Alerted};
+
+PROCEDURE <A HREF="VT.m3.html#ReplaceChars">ReplaceChars</A> (         vt        : VTDef.T;
+                                 begin, end: CARDINAL;
+                        READONLY str       : ARRAY OF CHAR)
+  RAISES {Rd.EndOfFile, Rd.Failure, Thread.Alerted};
+
+PROCEDURE <A HREF="VT.m3.html#ReplaceFile">ReplaceFile</A> (vt        : VTDef.T;
+                       begin, end: CARDINAL;
+                       file      : Rd.T;
+                       start     : CARDINAL   := 0;
+                       numChars  : CARDINAL   := LAST (CARDINAL))
+  RAISES {Rd.EndOfFile, Rd.Failure, Thread.Alerted};
+
+PROCEDURE <A HREF="VT.m3.html#Close">Close</A> (vt: VTDef.T); &lt;* LL = vt.mutex *&gt;
+
+PROCEDURE <A HREF="VT.m3.html#Invalidate">Invalidate</A> (vt: VTDef.T; b, e, l: CARDINAL)
+  RAISES {Rd.EndOfFile, Rd.Failure, Thread.Alerted};
+
+END VT.
+</PRE>
+</inInterface>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

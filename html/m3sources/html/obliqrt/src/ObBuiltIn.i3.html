@@ -1,0 +1,105 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: obliqrt/src/ObBuiltIn.i3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>obliqrt/src/ObBuiltIn.i3</H2></A><HR>
+<inInterface>
+<PRE><A HREF="../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+
+INTERFACE <interface><A HREF="ObBuiltIn.m3.html">ObBuiltIn</A></interface>;
+IMPORT <A HREF="../../synloc/src/SynLocation.i3.html">SynLocation</A>, <A HREF="ObValue.i3.html">ObValue</A>, <A HREF="../../thread/src/Common/Thread.i3.html">Thread</A>;
+
+  PROCEDURE <A HREF="ObBuiltIn.m3.html#Setup">Setup</A>();
+  (* To be called before any other use of this module. *)
+</PRE> ============ <CODE>net</CODE> package ============ 
+
+<P>  <PRE>PROCEDURE <A HREF="ObBuiltIn.m3.html#NetObjectWho">NetObjectWho</A>(remObj: ObValue.RemObj; loc: SynLocation.T)
+    : ObValue.Val RAISES {ObValue.Exception};
+
+  PROCEDURE <A HREF="ObBuiltIn.m3.html#NetEngineWho">NetEngineWho</A>(remObj: ObValue.RemEngine; loc: SynLocation.T)
+    : ObValue.Val RAISES {ObValue.Exception};
+
+  PROCEDURE <A HREF="ObBuiltIn.m3.html#NetExport">NetExport</A>(name, server: TEXT; remObj: ObValue.RemObj;
+    loc: SynLocation.T) RAISES {ObValue.Exception};
+
+  PROCEDURE <A HREF="ObBuiltIn.m3.html#NetImport">NetImport</A>(name, server: TEXT;
+    loc: SynLocation.T): ObValue.Val RAISES {ObValue.Exception};
+
+  PROCEDURE <A HREF="ObBuiltIn.m3.html#NetExportEngine">NetExportEngine</A>(name, server: TEXT; arg: ObValue.Val;
+    loc: SynLocation.T) RAISES {ObValue.Exception};
+
+  PROCEDURE <A HREF="ObBuiltIn.m3.html#NetImportEngine">NetImportEngine</A>(name, server: TEXT;
+    loc: SynLocation.T): ObValue.Val RAISES {ObValue.Exception};
+</PRE> ============ <CODE>thread</CODE> package ============ 
+
+<P>  <PRE>TYPE
+    ValMutex =
+      ObValue.ValAnything BRANDED OBJECT
+        mutex: Thread.Mutex;
+      OVERRIDES Is := IsMutex; Copy := CopyMutex;
+      END;
+    ValCondition =
+      ObValue.ValAnything BRANDED OBJECT
+        condition: Thread.Condition;
+      OVERRIDES Is := IsCondition; Copy := CopyCondition;
+      END;
+    ValThread =
+      ObValue.ValAnything BRANDED OBJECT
+        thread: Thread.T;
+        joinedMu: Thread.Mutex;
+        joined: BOOLEAN;
+      OVERRIDES Is := IsThread;
+      END;
+
+  PROCEDURE <A HREF="ObBuiltIn.m3.html#IsMutex">IsMutex</A>(self: ValMutex; other: ObValue.ValAnything): BOOLEAN;
+  PROCEDURE <A HREF="ObBuiltIn.m3.html#IsCondition">IsCondition</A>(self: ValCondition; other: ObValue.ValAnything): BOOLEAN;
+  PROCEDURE <A HREF="ObBuiltIn.m3.html#IsThread">IsThread</A>(self: ValThread; other: ObValue.ValAnything): BOOLEAN;
+
+  PROCEDURE <A HREF="ObBuiltIn.m3.html#CopyMutex">CopyMutex</A>(self: ObValue.ValAnything; tbl: ObValue.Tbl;
+    loc: SynLocation.T): ObValue.ValAnything RAISES {ObValue.Error};
+    (* Creates a new mutex *)
+  PROCEDURE <A HREF="ObBuiltIn.m3.html#CopyCondition">CopyCondition</A>(self: ObValue.ValAnything; tbl: ObValue.Tbl;
+    loc: SynLocation.T): ObValue.ValAnything RAISES {ObValue.Error};
+    (* Creates a new condition *)
+
+  PROCEDURE <A HREF="ObBuiltIn.m3.html#ForkThread">ForkThread</A>(fun: ObValue.ValFun; stackSize: INTEGER;
+	loc: SynLocation.T): ValThread;
+    (* Creates a new thread from a procedure of no arguments.
+       A zero stackSize is converted to a default stackSize. *)
+
+  PROCEDURE <A HREF="ObBuiltIn.m3.html#JoinThread">JoinThread</A>(threadVal: ValThread; loc: SynLocation.T): ObValue.Val
+    RAISES {ObValue.Error, ObValue.Exception};
+    (* Join a thread and report its result. *)
+
+END ObBuiltIn.
+</PRE>
+</inInterface>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

@@ -1,0 +1,195 @@
+<HTML>
+<HEAD>
+<TITLE>SRC Modula-3: pkgobj/src/POSIX/OpSysPosix.m3</TITLE>
+</HEAD>
+<BODY>
+<A NAME="0TOP0">
+<H2>pkgobj/src/POSIX/OpSysPosix.m3</H2></A><HR>
+<inModule>
+<PRE><A HREF="../../../COPYRIGHT.html">Copyright (C) 1994, Digital Equipment Corp.</A>
+</PRE><BLOCKQUOTE><EM> OpSys.m3 -- OS dependent stuff -- Unix version </EM></BLOCKQUOTE><PRE>
+
+UNSAFE MODULE <module>OpSysPosix</module> EXPORTS <A HREF="#x1"><implements>OpSys</A></implements>;
+
+IMPORT <A HREF="../../../C/src/Common/M3toC.i3.html">M3toC</A>, <A HREF="#x2">Unix</A>, <A HREF="#x3">Upwd</A>, <A HREF="#x4">Uugid</A>, <A HREF="#x5">Ustat</A>;
+FROM <A HREF="../../../C/src/Common/Ctypes.i3.html">Ctypes</A> IMPORT int, char_star;
+
+CONST
+  rwMask = Ustat.S_GWRITE + Ustat.S_OWRITE;
+
+PROCEDURE <A NAME="Init"><procedure>Init</procedure></A> () =
+  BEGIN
+        (* set process umask *)
+    EVAL Unix.umask(rwMask);
+    (*
+    sigvecrec.mask := AsyncMask;
+    sigvecrec.flags := UxTypes.SVFlags{};
+    sigvecrec.handler.h := UxTypes.SignalDefault;
+    EVAL Unix.sigvec(SigQuit, sigvecrec, ovec);
+    *)
+  END Init;
+
+PROCEDURE <A NAME="GetHostName"><procedure>GetHostName</procedure></A> (): TEXT RAISES {Error} =
+  VAR
+    buffer: ARRAY [0..255] OF CHAR;
+    nbytes: int;
+  BEGIN
+    nbytes := Unix.gethostname(ADR(buffer), BYTESIZE(buffer)-1);
+    IF nbytes &lt; 0 THEN RAISE Error; END;
+    RETURN M3toC.CopyStoT(ADR(buffer));
+  END GetHostName;
+
+PROCEDURE <A NAME="GetUser"><procedure>GetUser</procedure></A> (): TEXT RAISES {Error} =
+  VAR
+    uid: int;
+    pw: Upwd.struct_passwd_star;
+  BEGIN
+    uid := Uugid.getuid();
+    pw := Upwd.getpwuid(uid);
+    IF pw = NIL THEN RAISE Error; END;
+    RETURN M3toC.CopyStoT(pw^.pw_name);
+  END GetUser;
+
+PROCEDURE <A NAME="SetUser"><procedure>SetUser</procedure></A> (who: TEXT) RAISES {Error} =
+  VAR
+    p: char_star;
+    uid: int;
+    pw: Upwd.struct_passwd_star;
+  BEGIN
+    p := M3toC.TtoS(who);
+    pw := Upwd.getpwnam(p);
+    IF pw = NIL THEN RAISE Error; END;
+    uid := Uugid.getuid();
+    IF uid # pw^.pw_uid THEN
+      IF Uugid.setreuid(pw^.pw_uid, -1) &lt; 0 THEN RAISE Error; END;
+    END;
+    EVAL Uugid.setreuid(-1, pw^.pw_uid);
+  END SetUser;
+
+BEGIN
+END OpSysPosix.
+</PRE>
+</inModule>
+<HR>
+<A NAME="x1">interface OpSys is in:
+</A><UL>
+<LI><A HREF="../../../obliqrt/src/OpSys.i3.html#0TOP0">obliqrt/src/OpSys.i3</A>
+<LI><A HREF="../Common/OpSys.i3.html#0TOP0">pkgobj/src/Common/OpSys.i3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x2">interface Unix is in:
+</A><UL>
+<LI><A HREF="../../../unix/src/aix-3-2/Unix.i3.html#0TOP0">unix/src/aix-3-2/Unix.i3</A>
+<LI><A HREF="../../../unix/src/aix-ps2-1-2/Unix.i3.html#0TOP0">unix/src/aix-ps2-1-2/Unix.i3</A>
+<LI><A HREF="../../../unix/src/freebsd-1/Unix.i3.html#0TOP0">unix/src/freebsd-1/Unix.i3</A>
+<LI><A HREF="../../../unix/src/freebsd-2/Unix.i3.html#0TOP0">unix/src/freebsd-2/Unix.i3</A>
+<LI><A HREF="../../../unix/src/hpux-7-0/Unix.i3.html#0TOP0">unix/src/hpux-7-0/Unix.i3</A>
+<LI><A HREF="../../../unix/src/ibm-4-3/Unix.i3.html#0TOP0">unix/src/ibm-4-3/Unix.i3</A>
+<LI><A HREF="../../../unix/src/irix-5.2/Unix.i3.html#0TOP0">unix/src/irix-5.2/Unix.i3</A>
+<LI><A HREF="../../../unix/src/linux/Unix.i3.html#0TOP0">unix/src/linux/Unix.i3</A>
+<LI><A HREF="../../../unix/src/osf-1.ALPHA_OSF/Unix.i3.html#0TOP0">unix/src/osf-1.ALPHA_OSF/Unix.i3</A>
+<LI><A HREF="../../../unix/src/osf-1.DS3100/Unix.i3.html#0TOP0">unix/src/osf-1.DS3100/Unix.i3</A>
+<LI><A HREF="../../../unix/src/solaris-2-x/Unix.i3.html#0TOP0">unix/src/solaris-2-x/Unix.i3</A>
+<LI><A HREF="../../../unix/src/sunos-4-x/Unix.i3.html#0TOP0">unix/src/sunos-4-x/Unix.i3</A>
+<LI><A HREF="../../../unix/src/sysv-4.0/Unix.i3.html#0TOP0">unix/src/sysv-4.0/Unix.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.AP3000/Unix.i3.html#0TOP0">unix/src/ultrix-3-1.AP3000/Unix.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.ARM/Unix.i3.html#0TOP0">unix/src/ultrix-3-1.ARM/Unix.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.DS3100/Unix.i3.html#0TOP0">unix/src/ultrix-3-1.DS3100/Unix.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.NEXT/Unix.i3.html#0TOP0">unix/src/ultrix-3-1.NEXT/Unix.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.SEQUENT/Unix.i3.html#0TOP0">unix/src/ultrix-3-1.SEQUENT/Unix.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.SUN3/Unix.i3.html#0TOP0">unix/src/ultrix-3-1.SUN3/Unix.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.SUN386/Unix.i3.html#0TOP0">unix/src/ultrix-3-1.SUN386/Unix.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.UMAX/Unix.i3.html#0TOP0">unix/src/ultrix-3-1.UMAX/Unix.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.VAX/Unix.i3.html#0TOP0">unix/src/ultrix-3-1.VAX/Unix.i3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x3">interface Upwd is in:
+</A><UL>
+<LI><A HREF="../../../unix/src/aix-3-2/Upwd.i3.html#0TOP0">unix/src/aix-3-2/Upwd.i3</A>
+<LI><A HREF="../../../unix/src/aix-ps2-1-2/Upwd.i3.html#0TOP0">unix/src/aix-ps2-1-2/Upwd.i3</A>
+<LI><A HREF="../../../unix/src/freebsd-1/Upwd.i3.html#0TOP0">unix/src/freebsd-1/Upwd.i3</A>
+<LI><A HREF="../../../unix/src/freebsd-2/Upwd.i3.html#0TOP0">unix/src/freebsd-2/Upwd.i3</A>
+<LI><A HREF="../../../unix/src/hpux-7-0/Upwd.i3.html#0TOP0">unix/src/hpux-7-0/Upwd.i3</A>
+<LI><A HREF="../../../unix/src/ibm-4-3/Upwd.i3.html#0TOP0">unix/src/ibm-4-3/Upwd.i3</A>
+<LI><A HREF="../../../unix/src/irix-5.2/Upwd.i3.html#0TOP0">unix/src/irix-5.2/Upwd.i3</A>
+<LI><A HREF="../../../unix/src/linux/Upwd.i3.html#0TOP0">unix/src/linux/Upwd.i3</A>
+<LI><A HREF="../../../unix/src/osf-1.generic/Upwd.i3.html#0TOP0">unix/src/osf-1.generic/Upwd.i3</A>
+<LI><A HREF="../../../unix/src/solaris-2-x/Upwd.i3.html#0TOP0">unix/src/solaris-2-x/Upwd.i3</A>
+<LI><A HREF="../../../unix/src/sunos-4-x/Upwd.i3.html#0TOP0">unix/src/sunos-4-x/Upwd.i3</A>
+<LI><A HREF="../../../unix/src/sysv-4.0/Upwd.i3.html#0TOP0">unix/src/sysv-4.0/Upwd.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.generic/Upwd.i3.html#0TOP0">unix/src/ultrix-3-1.generic/Upwd.i3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x4">interface Uugid is in:
+</A><UL>
+<LI><A HREF="../../../unix/src/aix-3-2/Uugid.i3.html#0TOP0">unix/src/aix-3-2/Uugid.i3</A>
+<LI><A HREF="../../../unix/src/aix-ps2-1-2/Uugid.i3.html#0TOP0">unix/src/aix-ps2-1-2/Uugid.i3</A>
+<LI><A HREF="../../../unix/src/freebsd-1/Uugid.i3.html#0TOP0">unix/src/freebsd-1/Uugid.i3</A>
+<LI><A HREF="../../../unix/src/freebsd-2/Uugid.i3.html#0TOP0">unix/src/freebsd-2/Uugid.i3</A>
+<LI><A HREF="../../../unix/src/hpux-7-0/Uugid.i3.html#0TOP0">unix/src/hpux-7-0/Uugid.i3</A>
+<LI><A HREF="../../../unix/src/ibm-4-3/Uugid.i3.html#0TOP0">unix/src/ibm-4-3/Uugid.i3</A>
+<LI><A HREF="../../../unix/src/irix-5.2/Uugid.i3.html#0TOP0">unix/src/irix-5.2/Uugid.i3</A>
+<LI><A HREF="../../../unix/src/linux/Uugid.i3.html#0TOP0">unix/src/linux/Uugid.i3</A>
+<LI><A HREF="../../../unix/src/osf-1.generic/Uugid.i3.html#0TOP0">unix/src/osf-1.generic/Uugid.i3</A>
+<LI><A HREF="../../../unix/src/solaris-2-x/Uugid.i3.html#0TOP0">unix/src/solaris-2-x/Uugid.i3</A>
+<LI><A HREF="../../../unix/src/sunos-4-x/Uugid.i3.html#0TOP0">unix/src/sunos-4-x/Uugid.i3</A>
+<LI><A HREF="../../../unix/src/sysv-4.0/Uugid.i3.html#0TOP0">unix/src/sysv-4.0/Uugid.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.generic/Uugid.i3.html#0TOP0">unix/src/ultrix-3-1.generic/Uugid.i3</A>
+</UL>
+<P>
+<HR>
+<A NAME="x5">interface Ustat is in:
+</A><UL>
+<LI><A HREF="../../../unix/src/aix-3-2/Ustat.i3.html#0TOP0">unix/src/aix-3-2/Ustat.i3</A>
+<LI><A HREF="../../../unix/src/aix-ps2-1-2/Ustat.i3.html#0TOP0">unix/src/aix-ps2-1-2/Ustat.i3</A>
+<LI><A HREF="../../../unix/src/freebsd-1/Ustat.i3.html#0TOP0">unix/src/freebsd-1/Ustat.i3</A>
+<LI><A HREF="../../../unix/src/freebsd-2/Ustat.i3.html#0TOP0">unix/src/freebsd-2/Ustat.i3</A>
+<LI><A HREF="../../../unix/src/hpux-7-0/Ustat.i3.html#0TOP0">unix/src/hpux-7-0/Ustat.i3</A>
+<LI><A HREF="../../../unix/src/ibm-4-3/Ustat.i3.html#0TOP0">unix/src/ibm-4-3/Ustat.i3</A>
+<LI><A HREF="../../../unix/src/irix-5.2/Ustat.i3.html#0TOP0">unix/src/irix-5.2/Ustat.i3</A>
+<LI><A HREF="../../../unix/src/linux/Ustat.i3.html#0TOP0">unix/src/linux/Ustat.i3</A>
+<LI><A HREF="../../../unix/src/osf-1.generic/Ustat.i3.html#0TOP0">unix/src/osf-1.generic/Ustat.i3</A>
+<LI><A HREF="../../../unix/src/solaris-2-x/Ustat.i3.html#0TOP0">unix/src/solaris-2-x/Ustat.i3</A>
+<LI><A HREF="../../../unix/src/sunos-4-x/Ustat.i3.html#0TOP0">unix/src/sunos-4-x/Ustat.i3</A>
+<LI><A HREF="../../../unix/src/sysv-4.0/Ustat.i3.html#0TOP0">unix/src/sysv-4.0/Ustat.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.AP3000/Ustat.i3.html#0TOP0">unix/src/ultrix-3-1.AP3000/Ustat.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.ARM/Ustat.i3.html#0TOP0">unix/src/ultrix-3-1.ARM/Ustat.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.DS3100/Ustat.i3.html#0TOP0">unix/src/ultrix-3-1.DS3100/Ustat.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.NEXT/Ustat.i3.html#0TOP0">unix/src/ultrix-3-1.NEXT/Ustat.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.SEQUENT/Ustat.i3.html#0TOP0">unix/src/ultrix-3-1.SEQUENT/Ustat.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.SUN3/Ustat.i3.html#0TOP0">unix/src/ultrix-3-1.SUN3/Ustat.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.SUN386/Ustat.i3.html#0TOP0">unix/src/ultrix-3-1.SUN386/Ustat.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.UMAX/Ustat.i3.html#0TOP0">unix/src/ultrix-3-1.UMAX/Ustat.i3</A>
+<LI><A HREF="../../../unix/src/ultrix-3-1.VAX/Ustat.i3.html#0TOP0">unix/src/ultrix-3-1.VAX/Ustat.i3</A>
+</UL>
+<P>
+<PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>
